@@ -1,0 +1,53 @@
+# Local secrets and environment files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+secrets/
+credentials/
+credentials*.json
+token*.json
+service-account*.json
+
+# JavaScript / TypeScript
+node_modules/
+.pnpm-store/
+dist/
+build/
+coverage/
+.turbo/
+.vite/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Editors and operating systems
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Logs, caches, and local databases
+*.log
+*.sqlite
+*.sqlite3
+.cache/
+tmp/
+temp/
+
+# Local Codex output and private source material
+.codex-log/
+docs/private/
+Guardian_Agent_Hackathon_Edition.docx

@@ -1,0 +1,34 @@
+name: Feature request
+description: Propose a bounded capability or project improvement.
+title: "feat: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: User outcome
+      description: What should a user be able to accomplish?
+    validations:
+      required: true
+  - type: textarea
+    id: boundary
+    attributes:
+      label: Capability and trust boundary
+      description: What new authority, data, destination, or side effect would this introduce?
+    validations:
+      required: true
+  - type: textarea
+    id: safe_path
+    attributes:
+      label: Proposed safe path
+      description: Explain the narrow typed operation, policy, confirmation, and evidence needed.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and non-goals
+      description: What simpler design was considered, and what should remain unsupported?
+    validations:
+      required: true
