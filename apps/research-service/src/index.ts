@@ -229,6 +229,7 @@ export async function startCredentialHoldingResearchIpcServer(options: {
   readonly environment: Readonly<Record<string, string | undefined>>;
   readonly transport?: TavilyTransport;
   readonly timeoutMs?: number;
+  readonly now?: () => string;
 }): Promise<LocalResearchIpcServer> {
   const config = ResearchServiceProcessConfigSchema.parse(options.config);
   const service = createResearchServiceFromEnvironment({
@@ -238,10 +239,14 @@ export async function startCredentialHoldingResearchIpcServer(options: {
     ...(options.transport === undefined ? {} : { transport: options.transport }),
     ...(options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs }),
   });
-  const server = new LocalResearchIpcServer(config, async (request, requestedAt) => ({
-    result: await service.search(request, requestedAt),
-    budget: service.budget,
-  }));
+  const server = new LocalResearchIpcServer(
+    config,
+    async (request, requestedAt) => ({
+      result: await service.search(request, requestedAt),
+      budget: service.budget,
+    }),
+    { ...(options.now === undefined ? {} : { now: options.now }) },
+  );
   await server.listen();
   return server;
 }

@@ -35,7 +35,8 @@ The trusted launcher:
 The pipe protocol accepts exactly one bounded newline-delimited JSON frame per
 connection. Both peers strictly parse the request and response. The service uses a
 constant-time capability comparison, rejects mismatched bindings, and rechecks
-start and expiry before its handler. The session host deterministically checks
+start and expiry against its own clock before its handler; it does not trust the
+frame timestamp for lifecycle authority. The session host deterministically checks
 outbound content, lifecycle, revocation, tool authority, domain scope, and global
 tool volume before IPC. The research service owns the authoritative request and
 result counters and reserves result capacity across asynchronous provider calls.

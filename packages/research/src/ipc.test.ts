@@ -67,8 +67,12 @@ function clientOptions(serverConfig: ReturnType<typeof config>) {
   } as const;
 }
 
-async function startServer(serverConfig: ReturnType<typeof config>, handler: ResearchIpcHandler) {
-  const server = new LocalResearchIpcServer(serverConfig, handler);
+async function startServer(
+  serverConfig: ReturnType<typeof config>,
+  handler: ResearchIpcHandler,
+  now: () => string = () => activeAt,
+) {
+  const server = new LocalResearchIpcServer(serverConfig, handler, { now });
   await server.listen();
   servers.push(server);
   return server;
@@ -138,15 +142,18 @@ describe("local research IPC boundary", () => {
   it.each([
     ["before start", "2026-08-30T08:59:59.999Z", "not_active"],
     ["at expiry", "2026-08-30T09:05:00.000Z", "expired"],
-  ])("rejects %s before the service handler", async (_label, requestedAt, reason) => {
-    const serverConfig = config();
-    const handler = vi.fn<ResearchIpcHandler>();
-    await startServer(serverConfig, handler);
-    const client = new LocalResearchIpcClient(clientOptions(serverConfig));
+  ])(
+    "rejects %s using the service clock before the handler",
+    async (_label, serviceNow, reason) => {
+      const serverConfig = config();
+      const handler = vi.fn<ResearchIpcHandler>();
+      await startServer(serverConfig, handler, () => serviceNow);
+      const client = new LocalResearchIpcClient(clientOptions(serverConfig));
 
-    await expect(client.search(request, requestedAt)).rejects.toMatchObject({ reason });
-    expect(handler).not.toHaveBeenCalled();
-  });
+      await expect(client.search(request, activeAt)).rejects.toMatchObject({ reason });
+      expect(handler).not.toHaveBeenCalled();
+    },
+  );
 
   it("fails an exhausted session before a second provider invocation", async () => {
     const serverConfig = config();

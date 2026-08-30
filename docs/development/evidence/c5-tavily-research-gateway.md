@@ -64,7 +64,8 @@ Relevant fixtures cover:
   duplicate-source, and off-domain provider behavior;
 - allowlisted evidence, content digests, untrusted labels, minimized provenance,
   and monotonic sequence numbers;
-- wrong IPC capability, caller, profile, session bindings, pre-start, and expiry;
+- wrong IPC capability, caller, profile, session bindings, and service-clock
+  pre-start and expiry, including a backdated client frame;
 - lifecycle and revocation denial before the session host calls IPC; and
 - credential exclusion from results and fixed public error messages.
 

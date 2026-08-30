@@ -121,13 +121,19 @@ export type ResearchIpcHandler = (
 export class LocalResearchIpcServer {
   readonly #config: ResearchServiceProcessConfig;
   readonly #handler: ResearchIpcHandler;
+  readonly #now: () => string;
   readonly #server: Server;
   #listening = false;
 
-  constructor(configValue: unknown, handler: ResearchIpcHandler) {
+  constructor(
+    configValue: unknown,
+    handler: ResearchIpcHandler,
+    options: { readonly now?: () => string } = {},
+  ) {
     const config = ResearchServiceProcessConfigSchema.parse(configValue);
     this.#config = { ...config, endpoint: assertLocalResearchEndpoint(config.endpoint) };
     this.#handler = handler;
+    this.#now = options.now ?? (() => new Date().toISOString());
     this.#server = createServer((socket) => void this.#serve(socket));
   }
 
@@ -179,18 +185,25 @@ export class LocalResearchIpcServer {
       writeResponse(socket, { schemaVersion: 1, ok: false, error: "unauthorized" });
       return;
     }
-    const requestTime = Date.parse(request.requestedAt);
-    if (requestTime < Date.parse(this.#config.startsAt)) {
+    let evaluatedAt: string;
+    try {
+      evaluatedAt = TimestampSchema.parse(this.#now());
+    } catch {
+      writeResponse(socket, { schemaVersion: 1, ok: false, error: "service_unavailable" });
+      return;
+    }
+    const evaluationTime = Date.parse(evaluatedAt);
+    if (evaluationTime < Date.parse(this.#config.startsAt)) {
       writeResponse(socket, { schemaVersion: 1, ok: false, error: "not_active" });
       return;
     }
-    if (requestTime >= Date.parse(this.#config.expiresAt)) {
+    if (evaluationTime >= Date.parse(this.#config.expiresAt)) {
       writeResponse(socket, { schemaVersion: 1, ok: false, error: "expired" });
       return;
     }
 
     try {
-      const handled = await this.#handler(request.request, request.requestedAt);
+      const handled = await this.#handler(request.request, evaluatedAt);
       const result = ResearchJourneyResultSchema.parse(handled.result);
       const budget = ResearchBudgetSnapshotSchema.parse(handled.budget);
       if (

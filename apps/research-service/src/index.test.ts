@@ -222,6 +222,7 @@ describe("credential-holding research service", () => {
       config,
       environment: { TAVILY_API_KEY: "credential-that-stays-in-the-service" },
       transport,
+      now: () => retrievedAt,
     });
     try {
       const client = new LocalResearchIpcClient(config);
@@ -260,6 +261,7 @@ describe("credential-holding research service", () => {
       config,
       environment: { TAVILY_API_KEY: "credential-that-stays-in-the-service" },
       transport,
+      now: () => retrievedAt,
     });
     try {
       const client = new LocalResearchIpcClient(config);
