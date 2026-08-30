@@ -350,7 +350,7 @@ Mandatory reviews:
 | --- | --- | --- | ---: | ---: | --- | --- |
 | 2026-08-29 | C1 | Namespace and mediation feasibility spike | 2-4 days | Not captured | `docs/development/evidence/c1-enforcement-feasibility.md` | Passed ahead of September 4 target; time capture begins at C2 |
 | 2026-08-29 | C2 | ADR-0003, dependency review, workspace, tests, build, and CI scaffold | 2-3 days | 1.1h through 16:05 AKDT | `docs/adr/0003-implementation-stack-and-package-boundaries.md`; local `pnpm check`; [GitHub Actions run 33282416010](https://github.com/Loothore907/guardian-agent/actions/runs/33282416010) | Passed well ahead of the September 8 target |
-| 2026-08-29 | C3 | Mission, profile, assurance, action, provenance, canonical request, digest, approval, audit, and policy contracts | 4-6 days | 0.8h through 23:27 AKDT | Commits `f058d41` and `a295737`; draft PR #5; local `pnpm check` with 9 test files / 32 tests | Exit criteria pass locally; checkpoint remains in review until PR merge |
+| 2026-08-29 | C3 | Mission, profile, assurance, action, provenance, canonical request, digest, approval, audit, and policy contracts | 4-6 days | 1.2h through 23:49 AKDT | Commits `f058d41`, `a295737`, and `479c6c9`; PR #5; local `pnpm check` with 9 test files / 33 tests | Exit criteria and security review pass locally; checkpoint remains in review until PR merge |
 | YYYY-MM-DD | C# | Concise work unit | 0h | 0h | Issue, PR, test, ADR, or artifact | None |
 
 At checkpoint close, record:

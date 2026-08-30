@@ -16,8 +16,9 @@ the security claims matrix, and checkpoint history in the roadmap.
 - C3 is tracked by issue
   [#4](https://github.com/Loothore907/guardian-agent/issues/4) on branch
   `codex/4-mission-deterministic-contracts`, based on `main` at `644328c`.
-- Commits `f058d41` and `a295737` implement the complete C3 contract surface. All C3
-  exit criteria pass locally; draft PR
+- Commits `f058d41`, `a295737`, and review fix `479c6c9` implement the complete C3
+  contract surface. All C3 exit criteria and the commit-by-commit security review
+  pass locally; PR
   [#5](https://github.com/Loothore907/guardian-agent/pull/5) remains to be reviewed,
   pass final remote CI, and merge before the checkpoint is closed.
 - Provider integration, the privileged broker, and approval UI remain downstream of
@@ -44,7 +45,7 @@ the authoritative deliverables and exit criteria.
 
 Verified on this host at pickup:
 
-- `pnpm check` passes: 9 test files and 32 tests, dependency boundaries, and the
+- `pnpm check` passes: 9 test files and 33 tests, dependency boundaries, and the
   production web build.
 - `pnpm test:session-enforcement` passes all 4 host-specific WSL tests when run with
   permission to access the WSL service.
