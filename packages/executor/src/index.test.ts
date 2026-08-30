@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseIsolationProbeOutput } from "./index.js";
+import { parseIsolationProbeOutput, sanitizeLocalCommandOutput } from "./index.js";
 
 const validResult = {
   runtimeProfile: "windows_wsl2_ubuntu_22_04_namespace_v1",
@@ -26,5 +26,16 @@ describe("reference isolation probe output", () => {
       parseIsolationProbeOutput(JSON.stringify({ ...validResult, credential: "secret" })),
     ).toThrow();
     expect(() => parseIsolationProbeOutput("x".repeat(32_769))).toThrow();
+  });
+});
+
+describe("local command output sanitization", () => {
+  it("removes launcher diagnostics and unsafe terminal controls", () => {
+    expect(
+      sanitizeLocalCommandOutput(
+        "wsl: failed for 'host-user'\ncommand error\u001b[31m\u202esecret",
+        1_024,
+      ),
+    ).toEqual({ text: "command error[31msecret", truncated: false });
   });
 });

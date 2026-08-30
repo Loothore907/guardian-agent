@@ -6,5 +6,9 @@
     "tsBuildInfoFile": "dist/.tsbuildinfo"
   },
   "include": ["src/**/*.ts"],
-  "references": [{ "path": "../../packages/contracts" }, { "path": "../../packages/session" }]
+  "references": [
+    { "path": "../../packages/contracts" },
+    { "path": "../../packages/executor" },
+    { "path": "../../packages/session" }
+  ]
 }

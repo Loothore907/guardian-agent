@@ -5,6 +5,7 @@
   "type": "module",
   "dependencies": {
     "@guardian/contracts": "workspace:*",
+    "@guardian/executor": "workspace:*",
     "@guardian/session": "workspace:*",
     "@modelcontextprotocol/client": "2.0.0",
     "@modelcontextprotocol/server": "2.0.0",

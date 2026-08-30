@@ -40,6 +40,14 @@ export const ResearchRequestSchema = z
   });
 export type ResearchRequest = DeepReadonly<z.infer<typeof ResearchRequestSchema>>;
 
+export const LocalCommandRequestSchema = z.strictObject({
+  executable: z.enum(["git", "node", "pnpm", "rg"]),
+  arguments: z.array(boundedVisibleText(256)).max(32),
+  workingDirectory: WorkspacePathSchema,
+  timeoutSeconds: z.number().int().min(1).max(300),
+});
+export type LocalCommandRequest = DeepReadonly<z.infer<typeof LocalCommandRequestSchema>>;
+
 export const GitHubPullRequestVersionSchema = z.strictObject({
   kind: z.literal("github_pull_request"),
   owner: GitHubNameSchema,
@@ -87,12 +95,7 @@ export const ActionProposalSchema = z
     z.strictObject({
       ...ProposalBindingShape,
       operation: z.literal("guardian.local_command"),
-      arguments: z.strictObject({
-        executable: z.enum(["git", "node", "pnpm", "rg"]),
-        arguments: z.array(boundedVisibleText(256)).max(32),
-        workingDirectory: WorkspacePathSchema,
-        timeoutSeconds: z.number().int().min(1).max(300),
-      }),
+      arguments: LocalCommandRequestSchema,
       resourceVersion: z.union([WorkspaceFileVersionSchema, z.null()]),
     }),
     z.strictObject({

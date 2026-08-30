@@ -1,11 +1,13 @@
 import {
   MissionSchema,
+  LocalCommandRequestSchema,
   OpaqueIdSchema,
+  BoundSessionStatusSchema,
   SessionProfileSchema,
   TimestampSchema,
   VersionNumberSchema,
   isSessionProfileWithinMission,
-  type AssuranceLevel,
+  type BoundSessionStatus,
   type Mission,
   type SessionProfile,
   type ToolCapability,
@@ -14,7 +16,14 @@ import {
 import { resolveAssuranceLevel } from "./assurance.js";
 
 export type SessionLifecycleState = "pending" | "active" | "expired" | "revoked";
-export type ToolDenialReason = "not_active" | "expired" | "revoked" | "tool_not_allowed";
+export type ToolDenialReason =
+  | "not_active"
+  | "expired"
+  | "revoked"
+  | "tool_not_allowed"
+  | "filesystem_not_allowed"
+  | "timeout_exceeds_session"
+  | "volume_exhausted";
 
 export interface BoundSessionInput {
   readonly sessionId: unknown;
@@ -25,20 +34,6 @@ export interface BoundSessionInput {
   readonly expiresAt: unknown;
   readonly mission: unknown;
   readonly profile: unknown;
-}
-
-export interface PublicSessionStatus {
-  readonly sessionId: string;
-  readonly missionId: string;
-  readonly missionVersion: number;
-  readonly profileId: string;
-  readonly profileVersion: number;
-  readonly policyVersion: number;
-  readonly callerId: string;
-  readonly state: SessionLifecycleState;
-  readonly assurance: AssuranceLevel;
-  readonly expiresAt: string;
-  readonly tools: readonly ToolCapability[];
 }
 
 export type ToolAuthorization =
@@ -54,6 +49,8 @@ export class BoundSessionRuntime {
   readonly #mission: Mission;
   readonly #profile: SessionProfile;
   readonly #tools: ReadonlySet<ToolCapability>;
+  #toolCalls = 0;
+  #localCommands = 0;
   #revoked = false;
 
   private constructor(input: {
@@ -131,6 +128,39 @@ export class BoundSessionRuntime {
     return { allowed: true };
   }
 
+  authorizeLocalCommandCall(value: unknown, evaluatedAt: unknown): ToolAuthorization {
+    const request = LocalCommandRequestSchema.safeParse(value);
+    if (!request.success) {
+      return { allowed: false, reason: "filesystem_not_allowed" };
+    }
+    const base = this.authorizeToolCall("guardian.local_command", evaluatedAt);
+    if (!base.allowed) {
+      return base;
+    }
+    const timestamp = TimestampSchema.parse(evaluatedAt);
+    const withinRoot = this.#profile.permissions.filesystem.roots.some(
+      (root) =>
+        request.data.workingDirectory === root ||
+        request.data.workingDirectory.startsWith(`${root}/`),
+    );
+    if (this.#profile.permissions.filesystem.mode !== "workspace_write" || !withinRoot) {
+      return { allowed: false, reason: "filesystem_not_allowed" };
+    }
+    const remainingSeconds = (Date.parse(this.#expiresAt) - Date.parse(timestamp)) / 1_000;
+    if (request.data.timeoutSeconds > remainingSeconds) {
+      return { allowed: false, reason: "timeout_exceeds_session" };
+    }
+    if (
+      this.#toolCalls >= this.#profile.permissions.volume.maxToolCalls ||
+      this.#localCommands >= this.#profile.permissions.volume.maxLocalCommands
+    ) {
+      return { allowed: false, reason: "volume_exhausted" };
+    }
+    this.#toolCalls += 1;
+    this.#localCommands += 1;
+    return { allowed: true };
+  }
+
   revoke(handle: unknown): boolean {
     if (typeof handle !== "string" || handle !== this.#revocationHandle) {
       return false;
@@ -139,7 +169,7 @@ export class BoundSessionRuntime {
     return true;
   }
 
-  status(evaluatedAt: string): PublicSessionStatus {
+  status(evaluatedAt: string): BoundSessionStatus {
     const timestamp = TimestampSchema.parse(evaluatedAt);
     const evaluationTime = Date.parse(timestamp);
     const state: SessionLifecycleState = this.#revoked
@@ -149,7 +179,7 @@ export class BoundSessionRuntime {
         : evaluationTime >= Date.parse(this.#expiresAt)
           ? "expired"
           : "active";
-    return {
+    return BoundSessionStatusSchema.parse({
       sessionId: this.#sessionId,
       missionId: this.#mission.missionId,
       missionVersion: this.#mission.version,
@@ -161,6 +191,6 @@ export class BoundSessionRuntime {
       assurance: resolveAssuranceLevel(this.#profile, timestamp),
       expiresAt: this.#expiresAt,
       tools: this.toolCatalog(),
-    };
+    });
   }
 }

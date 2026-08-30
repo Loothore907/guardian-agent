@@ -119,6 +119,38 @@ describe("BoundSessionRuntime", () => {
     ).toThrow();
   });
 
+  it("enforces local-command path, remaining lifetime, and volume", () => {
+    const request = {
+      executable: "node",
+      arguments: ["--version"],
+      workingDirectory: "/workspace/review",
+      timeoutSeconds: 5,
+    } as const;
+    expect(
+      BoundSessionRuntime.create(boundInput()).authorizeLocalCommandCall(
+        { ...request, workingDirectory: "/workspace" },
+        "2026-08-30T08:01:00.000Z",
+      ),
+    ).toEqual({ allowed: false, reason: "filesystem_not_allowed" });
+    expect(
+      BoundSessionRuntime.create(boundInput()).authorizeLocalCommandCall(
+        { ...request, timeoutSeconds: 61 },
+        "2026-08-30T08:04:00.000Z",
+      ),
+    ).toEqual({ allowed: false, reason: "timeout_exceeds_session" });
+
+    const runtime = BoundSessionRuntime.create(boundInput());
+    for (let index = 0; index < 5; index += 1) {
+      expect(runtime.authorizeLocalCommandCall(request, "2026-08-30T08:01:00.000Z")).toEqual({
+        allowed: true,
+      });
+    }
+    expect(runtime.authorizeLocalCommandCall(request, "2026-08-30T08:01:00.000Z")).toEqual({
+      allowed: false,
+      reason: "volume_exhausted",
+    });
+  });
+
   it("property: every unlisted tool name is denied", () => {
     const runtime = BoundSessionRuntime.create(boundInput());
     fc.assert(

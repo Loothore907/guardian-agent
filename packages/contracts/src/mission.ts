@@ -12,6 +12,7 @@ import {
 } from "./common.js";
 
 export const ToolCapabilitySchema = z.enum([
+  "guardian.session_status",
   "guardian.research",
   "guardian.local_command",
   "github.pull_request.read",

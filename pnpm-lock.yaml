@@ -80,6 +80,9 @@ importers:
       '@guardian/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@guardian/executor':
+        specifier: workspace:*
+        version: link:../../packages/executor
       '@guardian/session':
         specifier: workspace:*
         version: link:../../packages/session
