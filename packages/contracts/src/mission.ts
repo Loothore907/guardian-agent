@@ -60,7 +60,7 @@ const GitHubNameSchema = z
   .string()
   .min(1)
   .max(100)
-  .regex(/^[A-Za-z0-9_.-]+$/u);
+  .regex(/^[a-z0-9_.-]+$/u);
 
 export const PublicDomainDestinationSchema = z.strictObject({
   kind: z.literal("public_domain"),

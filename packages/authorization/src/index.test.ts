@@ -20,7 +20,7 @@ const scopeDigest = "d".repeat(64);
 function request(pullRequest = 5) {
   const resourceVersion = {
     kind: "github_pull_request",
-    owner: "Loothore907",
+    owner: "loothore907",
     repository: "guardian-agent",
     pullRequest,
     headCommit: "a".repeat(40),
@@ -48,7 +48,7 @@ function request(pullRequest = 5) {
       proposedAt: "2026-08-30T00:00:00.000Z",
       operation: "github.pull_request.merge",
       arguments: {
-        owner: "Loothore907",
+        owner: "loothore907",
         repository: "guardian-agent",
         pullRequest,
         expectedHeadCommit: "a".repeat(40),
@@ -127,6 +127,9 @@ describe("exact approval validation", () => {
     expect(
       validateExactApproval(exactApproval, boundRequest, scopeDigest, "2026-08-30T00:06:00.000Z"),
     ).toEqual({ ok: false, reason: "expired" });
+    expect(
+      validateExactApproval(exactApproval, boundRequest, scopeDigest, "2026-08-30T00:00:00.000Z"),
+    ).toEqual({ ok: false, reason: "not_active" });
   });
 
   it("property: changing the bound pull request invalidates approval", () => {

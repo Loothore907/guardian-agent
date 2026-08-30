@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveAssuranceLevel } from "./index.js";
+import { foundationStatus, resolveAssuranceLevel } from "./index.js";
 
 const profileId = "11111111-1111-4111-8111-111111111111";
 
@@ -45,6 +45,14 @@ function enforcedProfile() {
 }
 
 describe("resolveAssuranceLevel", () => {
+  it("does not accept a caller-selected foundation assurance label", () => {
+    const callWithUntrustedArgument = foundationStatus as (value: unknown) => unknown;
+    expect(callWithUntrustedArgument("enforced")).toEqual({
+      status: "foundation",
+      assurance: "unknown",
+    });
+  });
+
   it("never reports Enforced for malformed evidence", () => {
     expect(
       resolveAssuranceLevel(

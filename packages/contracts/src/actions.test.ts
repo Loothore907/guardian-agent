@@ -50,7 +50,7 @@ describe("action and evidence contracts", () => {
       ...binding,
       operation: "github.pull_request.merge",
       arguments: {
-        owner: "Loothore907",
+        owner: "loothore907",
         repository: "guardian-agent",
         pullRequest: 5,
         expectedHeadCommit: "a".repeat(40),
@@ -58,13 +58,19 @@ describe("action and evidence contracts", () => {
       },
       resourceVersion: {
         kind: "github_pull_request",
-        owner: "Loothore907",
+        owner: "loothore907",
         repository: "guardian-agent",
         pullRequest: 5,
         headCommit: "a".repeat(40),
       },
     };
     expect(ActionProposalSchema.parse(proposal)).toBeDefined();
+    expect(() =>
+      ActionProposalSchema.parse({
+        ...proposal,
+        arguments: { ...proposal.arguments, owner: "Loothore907" },
+      }),
+    ).toThrow();
     expect(() =>
       ActionProposalSchema.parse({
         ...proposal,
@@ -122,5 +128,12 @@ describe("action and evidence contracts", () => {
     expect(AuditEventSchema.parse(event)).toBeDefined();
     expect(() => AuditEventSchema.parse({ ...event, detail: "Bearer credential" })).toThrow();
     expect(() => AuditEventSchema.parse({ ...event, sanitized: false })).toThrow();
+    expect(() =>
+      AuditEventSchema.parse({
+        ...event,
+        outcome: "succeeded",
+        resultCode: "request_mismatch",
+      }),
+    ).toThrow();
   });
 });

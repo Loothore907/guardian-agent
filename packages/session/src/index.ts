@@ -5,8 +5,8 @@ import {
   type SessionStatus,
 } from "@guardian/contracts";
 
-export function foundationStatus(assurance: AssuranceLevel = "unknown"): SessionStatus {
-  return { status: "foundation", assurance };
+export function foundationStatus(): SessionStatus {
+  return { status: "foundation", assurance: "unknown" };
 }
 
 export function resolveAssuranceLevel(value: unknown, evaluatedAt: string): AssuranceLevel {

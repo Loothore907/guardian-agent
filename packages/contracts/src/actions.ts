@@ -17,7 +17,7 @@ const GitHubNameSchema = z
   .string()
   .min(1)
   .max(100)
-  .regex(/^[A-Za-z0-9_.-]+$/u);
+  .regex(/^[a-z0-9_.-]+$/u);
 const GitCommitSchema = z.string().regex(/^[a-f0-9]{40}$/u);
 const ProviderRequestIdSchema = z
   .string()
@@ -125,8 +125,8 @@ export const ActionProposalSchema = z
     ) {
       const resource = proposal.resourceVersion;
       if (
-        resource.owner.toLowerCase() !== proposal.arguments.owner.toLowerCase() ||
-        resource.repository.toLowerCase() !== proposal.arguments.repository.toLowerCase() ||
+        resource.owner !== proposal.arguments.owner ||
+        resource.repository !== proposal.arguments.repository ||
         resource.pullRequest !== proposal.arguments.pullRequest
       ) {
         context.addIssue({

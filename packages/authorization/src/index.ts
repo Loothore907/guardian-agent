@@ -16,7 +16,10 @@ export function digestCanonicalRequest(value: unknown): string {
 
 export type ApprovalValidationResult =
   | { readonly ok: true; readonly request: CanonicalRequest; readonly approval: ExactApproval }
-  | { readonly ok: false; readonly reason: "malformed" | "request_mismatch" | "expired" };
+  | {
+      readonly ok: false;
+      readonly reason: "malformed" | "request_mismatch" | "not_active" | "expired";
+    };
 
 export function validateExactApproval(
   approvalValue: unknown,
@@ -51,6 +54,9 @@ export function validateExactApproval(
   }
   if (Date.parse(timestamp.data) >= Date.parse(approval.data.expiresAt)) {
     return { ok: false, reason: "expired" };
+  }
+  if (Date.parse(timestamp.data) < Date.parse(approval.data.approvedAt)) {
+    return { ok: false, reason: "not_active" };
   }
   return { ok: true, request: request.data, approval: approval.data };
 }

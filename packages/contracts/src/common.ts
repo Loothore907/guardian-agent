@@ -37,8 +37,8 @@ export const AuthorizationLevelSchema = z.enum(["allow", "confirm", "step_up", "
 export type AuthorizationLevel = z.infer<typeof AuthorizationLevelSchema>;
 export const PublicHttpUrlSchema = z.httpUrl().refine((value) => {
   const parsed = new URL(value);
-  return parsed.username === "" && parsed.password === "";
-}, "URL user information is not allowed");
+  return parsed.username === "" && parsed.password === "" && parsed.toString() === value;
+}, "URL must be canonical and must not contain user information");
 
 export function addDuplicateIssue(
   values: readonly string[],
