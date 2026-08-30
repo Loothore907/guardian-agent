@@ -14,8 +14,8 @@ The model is not the root of trust.
 
 Guardian Agent has completed its product contract and local enforcement-feasibility
 checkpoint. The TypeScript workspace, package boundaries, real MCP v2 status tool,
-tests, build, and baseline CI workflow are scaffolded locally. C2 remains open until
-the first remote CI run passes. No broader security guarantee should be treated as
+tests, build, and baseline CI workflow are scaffolded, and the first remote CI run
+passes. No broader security guarantee should be treated as
 implemented until it appears in [Security claims](docs/security-claims.md) with
 corresponding evidence.
 

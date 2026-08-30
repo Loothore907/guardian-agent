@@ -349,7 +349,7 @@ Mandatory reviews:
 | Date | Checkpoint | Activity | Planned | Actual | Evidence or output | Variance or blocker |
 | --- | --- | --- | ---: | ---: | --- | --- |
 | 2026-08-29 | C1 | Namespace and mediation feasibility spike | 2-4 days | Not captured | `docs/development/evidence/c1-enforcement-feasibility.md` | Passed ahead of September 4 target; time capture begins at C2 |
-| 2026-08-29 | C2 | ADR-0003, dependency review, workspace, tests, build, and CI scaffold | 2-3 days | 0.8h through 15:42 AKDT | `docs/adr/0003-implementation-stack-and-package-boundaries.md`; local `pnpm check` | Remote CI evidence requires an explicitly authorized commit and push |
+| 2026-08-29 | C2 | ADR-0003, dependency review, workspace, tests, build, and CI scaffold | 2-3 days | 1.1h through 16:05 AKDT | `docs/adr/0003-implementation-stack-and-package-boundaries.md`; local `pnpm check`; [GitHub Actions run 33282416010](https://github.com/Loothore907/guardian-agent/actions/runs/33282416010) | Passed well ahead of the September 8 target |
 | YYYY-MM-DD | C# | Concise work unit | 0h | 0h | Issue, PR, test, ADR, or artifact | None |
 
 At checkpoint close, record:
@@ -369,5 +369,5 @@ At checkpoint close, record:
 | Gate 0 - Governance foundation | Passed | Repository, initial scope, trust boundaries, threat model, claims discipline, competition plan, and governance are established. |
 | C0 - Product contract | Passed | The enforced-session pivot and consistency review are complete. The unavailable private concept document remains a recorded reconciliation task, not an implementation authority. |
 | C1 - Enforcement feasibility | Passed | Live Nebius proposal, live Tavily research, namespace, filesystem, credential, direct-egress, direct-Git, fake-provider, fail-closed, and tool-denial evidence pass. |
-| C2 - Stack and session architecture | In progress | ADR-0003 accepted; local dependency, workspace, MCP, format, lint, type, test, boundary, audit, license, and build checks pass. First remote CI run remains. |
+| C2 - Stack and session architecture | Passed | ADR-0003 accepted; local dependency, workspace, MCP, format, lint, type, test, boundary, audit, license, and build checks pass; the first remote GitHub Actions run passed. |
 | C3-C11 | Not started | Advancement depends on the preceding checkpoint evidence. |
