@@ -1,9 +1,7 @@
-import type { SessionId } from "@guardian/contracts";
+import { AuditEventSchema, type AuditEvent } from "@guardian/contracts";
 
-export interface AuditEvent {
-  readonly sessionId: SessionId;
-  readonly sequence: number;
-  readonly type: string;
-  readonly occurredAt: string;
-  readonly sanitized: true;
+export type { AuditEvent } from "@guardian/contracts";
+
+export function parseAuditEvent(value: unknown): AuditEvent {
+  return AuditEventSchema.parse(value);
 }

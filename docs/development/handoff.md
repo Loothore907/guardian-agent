@@ -12,22 +12,24 @@ the security claims matrix, and checkpoint history in the roadmap.
 - PR [#2](https://github.com/Loothore907/guardian-agent/pull/2) was squash-merged
   into `main` as `33e3d72`; issue
   [#1](https://github.com/Loothore907/guardian-agent/issues/1) closed with it.
-- The local checkout is on `main` at the merged revision, with the handoff-library
-  cleanup intentionally left uncommitted for review.
 - The next checkpoint is C3: Mission and deterministic contracts.
-- No C3 issue or branch has been created.
+- C3 is tracked by issue
+  [#4](https://github.com/Loothore907/guardian-agent/issues/4) on branch
+  `codex/4-mission-deterministic-contracts`, based on `main` at `644328c`.
+- Commits `f058d41`, `a295737`, and review fix `479c6c9` implement the complete C3
+  contract surface. All C3 exit criteria and the commit-by-commit security review
+  pass locally; PR
+  [#5](https://github.com/Loothore907/guardian-agent/pull/5) remains to be reviewed,
+  pass final remote CI, and merge before the checkpoint is closed.
 - Provider integration, the privileged broker, and approval UI remain downstream of
   C3's exit criteria.
 
 ## Next actions
 
-1. Review and record the handoff-library cleanup.
-2. Create a focused C3 issue and a `codex/...` branch from updated `main`.
-3. Turn the C3 contract list into the smallest reviewable schema and property-test
-   slices.
-4. Implement strict mission, profile, assurance, proposal, provenance,
-   authorization, canonical request, digest, approval, and audit contracts.
-5. Update security claims only when the required reproducible evidence exists.
+1. Review PR #5 against the C3 exit criteria and claims matrix.
+2. Merge only after final remote CI passes and review finds no blocking issue.
+3. Close issue #4 and begin the smallest reviewable C4 runtime plan from updated
+   `main`.
 
 ## C3 completion gate
 
@@ -43,7 +45,7 @@ the authoritative deliverables and exit criteria.
 
 Verified on this host at pickup:
 
-- `pnpm check` passes: 5 test files and 8 tests, dependency boundaries, and the
+- `pnpm check` passes: 9 test files and 33 tests, dependency boundaries, and the
   production web build.
 - `pnpm test:session-enforcement` passes all 4 host-specific WSL tests when run with
   permission to access the WSL service.
@@ -54,8 +56,6 @@ The protected live Tavily and Nebius checks are not part of ordinary public CI.
 
 ## Open decisions affecting upcoming work
 
-- Exact C3 issue scope and review slices.
-- Canonical serialization compatibility and domain-separated digest contracts.
 - Final interaction model after the C1 hosted Nemotron stand-in.
 - Production hardening and hosted parity for the proven WSL/Linux namespace
   mechanism.
