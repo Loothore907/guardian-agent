@@ -11,6 +11,12 @@ importers:
       '@eslint/js':
         specifier: 10.0.1
         version: 10.0.1(eslint@10.9.1(supports-color@7.2.0))
+      '@modelcontextprotocol/client':
+        specifier: 2.0.0
+        version: 2.0.0
+      '@modelcontextprotocol/server':
+        specifier: 2.0.0
+        version: 2.0.0
       '@types/node':
         specifier: 24.13.3
         version: 24.13.3
@@ -71,6 +77,9 @@ importers:
 
   apps/research-service:
     dependencies:
+      '@guardian/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@guardian/research':
         specifier: workspace:*
         version: link:../../packages/research
@@ -83,6 +92,9 @@ importers:
       '@guardian/executor':
         specifier: workspace:*
         version: link:../../packages/executor
+      '@guardian/research':
+        specifier: workspace:*
+        version: link:../../packages/research
       '@guardian/session':
         specifier: workspace:*
         version: link:../../packages/session
@@ -188,6 +200,9 @@ importers:
       '@guardian/audit':
         specifier: workspace:*
         version: link:../audit
+      '@guardian/canonical':
+        specifier: workspace:*
+        version: link:../canonical
       '@guardian/contracts':
         specifier: workspace:*
         version: link:../contracts

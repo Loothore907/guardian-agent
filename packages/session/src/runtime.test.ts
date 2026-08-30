@@ -151,6 +151,49 @@ describe("BoundSessionRuntime", () => {
     });
   });
 
+  it("enforces research destinations, lifecycle, and request volume", () => {
+    const request = {
+      query: "GitHub pull request branch protection documentation",
+      maxResults: 2,
+      allowedDomains: ["docs.github.com"],
+    } as const;
+    expect(
+      BoundSessionRuntime.create(boundInput()).authorizeResearchCall(
+        { ...request, allowedDomains: ["example.com"] },
+        "2026-08-30T08:01:00.000Z",
+      ),
+    ).toEqual({ allowed: false, reason: "destination_not_allowed" });
+    expect(
+      BoundSessionRuntime.create(boundInput()).authorizeResearchCall(
+        request,
+        "2026-08-30T08:05:00.000Z",
+      ),
+    ).toEqual({ allowed: false, reason: "expired" });
+
+    const input = boundInput();
+    const volume = { ...authority().volume, maxToolCalls: 4 };
+    const runtime = BoundSessionRuntime.create({
+      ...input,
+      mission: {
+        ...input.mission,
+        authority: { ...input.mission.authority, volume },
+      },
+      profile: {
+        ...input.profile,
+        permissions: { ...input.profile.permissions, volume },
+      },
+    });
+    for (let index = 0; index < 4; index += 1) {
+      expect(runtime.authorizeResearchCall(request, "2026-08-30T08:01:00.000Z")).toEqual({
+        allowed: true,
+      });
+    }
+    expect(runtime.authorizeResearchCall(request, "2026-08-30T08:01:00.000Z")).toEqual({
+      allowed: false,
+      reason: "volume_exhausted",
+    });
+  });
+
   it("property: every unlisted tool name is denied", () => {
     const runtime = BoundSessionRuntime.create(boundInput());
     fc.assert(

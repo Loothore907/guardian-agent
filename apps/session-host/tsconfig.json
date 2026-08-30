@@ -9,6 +9,7 @@
   "references": [
     { "path": "../../packages/contracts" },
     { "path": "../../packages/executor" },
+    { "path": "../../packages/research" },
     { "path": "../../packages/session" }
   ]
 }

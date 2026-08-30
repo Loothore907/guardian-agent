@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@guardian/contracts": "workspace:*",
     "@guardian/research": "workspace:*"
   }
 }

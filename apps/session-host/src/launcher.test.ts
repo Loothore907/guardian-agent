@@ -1,4 +1,23 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+import { createResearchIpcCredentials } from "@guardian/research";
+
+vi.mock("@guardian/executor", () => ({
+  runReferenceIsolationProbe: vi.fn(() =>
+    Promise.resolve({
+      runtimeProfile: "windows_wsl2_ubuntu_22_04_namespace_v1",
+      observedAt: "2026-08-30T08:30:00.000Z",
+      checks: {
+        localCommandSucceeded: true,
+        directPublicEgressBlocked: true,
+        directGitPushBlocked: true,
+        hostFilesystemHidden: true,
+        providerCredentialsAbsent: true,
+        runtimeIdentityReduced: true,
+      },
+    }),
+  ),
+}));
 
 import { launchReferenceSession } from "./launcher.js";
 
@@ -85,6 +104,70 @@ describe("trusted reference session launcher", () => {
     const widenedPermissions = {
       ...permissions,
       tools: [...permissions.tools, "guardian.research"],
+    } as const;
+    await expect(
+      launchReferenceSession({
+        ...input,
+        mission: { ...input.mission, authority: widenedPermissions },
+        profile: { ...input.profile, permissions: widenedPermissions },
+      }),
+    ).rejects.toThrow("not enforceable");
+  });
+
+  it("binds an exact local research connection and derives its service configuration", async () => {
+    const input = launchInput();
+    const researchPermissions = {
+      ...permissions,
+      tools: [...permissions.tools, "guardian.research"],
+      network: {
+        mode: "guardian_only",
+        destinations: [{ kind: "public_domain", hostname: "docs.github.com" }],
+      },
+      volume: {
+        ...permissions.volume,
+        maxResearchRequests: 2,
+        maxResearchResults: 4,
+      },
+    } as const;
+    const connection = createResearchIpcCredentials();
+
+    const launched = await launchReferenceSession({
+      ...input,
+      mission: { ...input.mission, authority: researchPermissions },
+      profile: { ...input.profile, permissions: researchPermissions },
+      research: { ...connection, requiredTerms: ["pull request", "branch protection"] },
+    });
+
+    expect(launched.runtime.toolCatalog()).toContain("guardian.research");
+    expect(launched.research?.scope).toMatchObject({
+      allowedDomains: ["docs.github.com"],
+      remainingRequests: 2,
+      remainingResults: 4,
+    });
+    expect(launched.research?.serviceConfig).toMatchObject({
+      sessionId: input.sessionId,
+      callerId: input.callerId,
+      missionId: input.mission.missionId,
+      profileId: input.profile.profileId,
+      endpoint: connection.endpoint,
+      capability: connection.capability,
+    });
+  });
+
+  it("rejects research authority without a bound local service connection", async () => {
+    const input = launchInput();
+    const widenedPermissions = {
+      ...permissions,
+      tools: [...permissions.tools, "guardian.research"],
+      network: {
+        mode: "guardian_only",
+        destinations: [{ kind: "public_domain", hostname: "docs.github.com" }],
+      },
+      volume: {
+        ...permissions.volume,
+        maxResearchRequests: 1,
+        maxResearchResults: 2,
+      },
     } as const;
     await expect(
       launchReferenceSession({

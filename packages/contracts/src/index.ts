@@ -11,6 +11,7 @@ export * from "./authorization.js";
 export * from "./common.js";
 export * from "./executor.js";
 export * from "./mission.js";
+export * from "./research-ipc.js";
 
 export const SessionIdSchema = z.string().uuid();
 export type SessionId = z.infer<typeof SessionIdSchema>;

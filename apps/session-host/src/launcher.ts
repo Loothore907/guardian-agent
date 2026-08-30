@@ -1,8 +1,13 @@
 import {
   MissionSchema,
+  OpaqueIdSchema,
+  ResearchScopeSchema,
+  ResearchServiceProcessConfigSchema,
   SessionProfileSchema,
   VersionNumberSchema,
   type SessionProfile,
+  type ResearchScope,
+  type ResearchServiceProcessConfig,
 } from "@guardian/contracts";
 import { runReferenceIsolationProbe } from "@guardian/executor";
 import {
@@ -10,6 +15,13 @@ import {
   createReferenceAssuranceEvidence,
   type BoundSessionInput,
 } from "@guardian/session";
+import { LocalResearchIpcClient, type ResearchServiceClient } from "@guardian/research";
+
+export interface ReferenceResearchConnectionInput {
+  readonly endpoint: unknown;
+  readonly capability: unknown;
+  readonly requiredTerms: unknown;
+}
 
 export interface ReferenceSessionLaunchInput {
   readonly sessionId: unknown;
@@ -19,17 +31,28 @@ export interface ReferenceSessionLaunchInput {
   readonly durationSeconds: unknown;
   readonly mission: unknown;
   readonly profile: unknown;
+  readonly research?: ReferenceResearchConnectionInput;
+}
+
+export interface LaunchedResearchBinding {
+  readonly client: ResearchServiceClient;
+  readonly scope: ResearchScope;
+  readonly serviceConfig: ResearchServiceProcessConfig;
 }
 
 export interface LaunchedReferenceSession {
   readonly runtime: BoundSessionRuntime;
   readonly profile: SessionProfile;
+  readonly research?: LaunchedResearchBinding;
 }
 
 export async function launchReferenceSession(
   input: ReferenceSessionLaunchInput,
 ): Promise<LaunchedReferenceSession> {
   const mission = MissionSchema.parse(input.mission);
+  const sessionId = OpaqueIdSchema.parse(input.sessionId);
+  const callerId = OpaqueIdSchema.parse(input.callerId);
+  const revocationHandle = OpaqueIdSchema.parse(input.revocationHandle);
   const requestedProfile = SessionProfileSchema.parse(input.profile);
   const policyVersion = VersionNumberSchema.parse(input.policyVersion);
   const durationSeconds = VersionNumberSchema.max(604_800).parse(input.durationSeconds);
@@ -46,15 +69,30 @@ export async function launchReferenceSession(
   if (durationSeconds > requestedProfile.permissions.time.maxDurationSeconds) {
     throw new TypeError("requested duration exceeds the profile time budget");
   }
-  const supportedTools = new Set(["guardian.session_status", "guardian.local_command"]);
+  const expectedTools = ["guardian.session_status", "guardian.local_command"];
+  if (input.research !== undefined) expectedTools.push("guardian.research");
+  const supportedTools = new Set(expectedTools);
+  const publicDestinations = requestedProfile.permissions.network.destinations.filter(
+    (destination) => destination.kind === "public_domain",
+  );
+  const researchNetworkIsEnforceable =
+    input.research === undefined
+      ? requestedProfile.permissions.network.mode === "none" &&
+        requestedProfile.permissions.network.destinations.length === 0 &&
+        requestedProfile.permissions.volume.maxResearchRequests === 0 &&
+        requestedProfile.permissions.volume.maxResearchResults === 0
+      : requestedProfile.permissions.network.mode === "guardian_only" &&
+        publicDestinations.length === requestedProfile.permissions.network.destinations.length &&
+        publicDestinations.length > 0 &&
+        requestedProfile.permissions.volume.maxResearchRequests > 0 &&
+        requestedProfile.permissions.volume.maxResearchResults > 0;
   if (
     requestedProfile.permissions.tools.length !== supportedTools.size ||
     !requestedProfile.permissions.tools.every((tool) => supportedTools.has(tool)) ||
     requestedProfile.permissions.filesystem.mode !== "workspace_write" ||
     requestedProfile.permissions.filesystem.roots.length !== 1 ||
     requestedProfile.permissions.filesystem.roots[0] !== "/workspace" ||
-    requestedProfile.permissions.network.mode !== "none" ||
-    requestedProfile.permissions.network.destinations.length !== 0 ||
+    !researchNetworkIsEnforceable ||
     !requestedProfile.permissions.sideEffects.includes("write_workspace")
   ) {
     throw new TypeError("profile is not enforceable by the C4 reference runtime");
@@ -69,9 +107,9 @@ export async function launchReferenceSession(
     assurance: { level: "enforced", evidence },
   });
   const runtimeInput: BoundSessionInput = {
-    sessionId: input.sessionId,
-    callerId: input.callerId,
-    revocationHandle: input.revocationHandle,
+    sessionId,
+    callerId,
+    revocationHandle,
     policyVersion,
     startsAt,
     expiresAt,
@@ -79,5 +117,42 @@ export async function launchReferenceSession(
     profile,
   };
 
-  return { profile, runtime: BoundSessionRuntime.create(runtimeInput) };
+  const runtime = BoundSessionRuntime.create(runtimeInput);
+  if (input.research === undefined) return { profile, runtime };
+
+  const scope = ResearchScopeSchema.parse({
+    allowedDomains: publicDestinations.map((destination) => destination.hostname),
+    maxResultsPerRequest: Math.min(3, requestedProfile.permissions.volume.maxResearchResults),
+    remainingRequests: requestedProfile.permissions.volume.maxResearchRequests,
+    remainingResults: requestedProfile.permissions.volume.maxResearchResults,
+    requiredTerms: input.research.requiredTerms,
+  });
+  const serviceConfig: ResearchServiceProcessConfig = ResearchServiceProcessConfigSchema.parse({
+    schemaVersion: 1,
+    sessionId,
+    callerId,
+    missionId: mission.missionId,
+    missionVersion: mission.version,
+    profileId: profile.profileId,
+    profileVersion: profile.version,
+    policyVersion,
+    capability: input.research.capability,
+    endpoint: input.research.endpoint,
+    startsAt,
+    expiresAt,
+    scope,
+  });
+  const client = new LocalResearchIpcClient({
+    endpoint: serviceConfig.endpoint,
+    capability: serviceConfig.capability,
+    sessionId: serviceConfig.sessionId,
+    callerId: serviceConfig.callerId,
+    missionId: mission.missionId,
+    missionVersion: mission.version,
+    profileId: profile.profileId,
+    profileVersion: profile.version,
+    policyVersion,
+  });
+
+  return { profile, runtime, research: { client, scope, serviceConfig } };
 }

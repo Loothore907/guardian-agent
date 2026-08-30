@@ -42,6 +42,8 @@
 11. Privileged execution uses typed operations with constrained destinations and arguments.
 12. Allowed research cannot become an unchecked private-data exfiltration channel.
 13. Audit evidence is sufficient to reconstruct the decision without recording secrets or unnecessary raw public content.
+14. Evidence that preceded an agent attempt is recorded as temporal context, not
+    asserted as proof that the public content caused the attempt.
 
 ## Primary threats and controls
 
@@ -94,3 +96,6 @@
 - malformed guardian output, provider failure, and uncertainty;
 - hidden Unicode and ambiguous destination; and
 - oversized or secret-like research and adapter responses.
+- polluted public content followed by an unsafe proposal, with a minimized
+  evidence-to-attempt-to-denial record and no retained hostile page or secret-like
+  rejected value.
