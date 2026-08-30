@@ -31,8 +31,14 @@ export function boundedVisibleText(maxLength: number) {
 
 export const OpaqueIdSchema = z.uuid();
 export const Sha256DigestSchema = z.string().regex(/^[a-f0-9]{64}$/u);
-export const TimestampSchema = z.iso.datetime({ offset: true });
+export const TimestampSchema = z.iso.datetime({ offset: false, precision: 3 });
 export const VersionNumberSchema = z.number().int().positive().max(Number.MAX_SAFE_INTEGER);
+export const AuthorizationLevelSchema = z.enum(["allow", "confirm", "step_up", "deny"]);
+export type AuthorizationLevel = z.infer<typeof AuthorizationLevelSchema>;
+export const PublicHttpUrlSchema = z.httpUrl().refine((value) => {
+  const parsed = new URL(value);
+  return parsed.username === "" && parsed.password === "";
+}, "URL user information is not allowed");
 
 export function addDuplicateIssue(
   values: readonly string[],

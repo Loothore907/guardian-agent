@@ -62,13 +62,18 @@ const GitHubNameSchema = z
   .max(100)
   .regex(/^[A-Za-z0-9_.-]+$/u);
 
+export const PublicDomainDestinationSchema = z.strictObject({
+  kind: z.literal("public_domain"),
+  hostname: z.hostname(),
+});
+export const GitHubRepositoryDestinationSchema = z.strictObject({
+  kind: z.literal("github_repository"),
+  owner: GitHubNameSchema,
+  repository: GitHubNameSchema,
+});
 export const DestinationSchema = z.discriminatedUnion("kind", [
-  z.strictObject({ kind: z.literal("public_domain"), hostname: z.hostname() }),
-  z.strictObject({
-    kind: z.literal("github_repository"),
-    owner: GitHubNameSchema,
-    repository: GitHubNameSchema,
-  }),
+  PublicDomainDestinationSchema,
+  GitHubRepositoryDestinationSchema,
 ]);
 export type Destination = DeepReadonly<z.infer<typeof DestinationSchema>>;
 
