@@ -125,3 +125,6 @@ The competition build proves one enforced PR-review mission:
 - approval, nonce, and audit persistence;
 - selected Nemotron model and Token Factory endpoint; and
 - public demo hosting approach.
+
+Longer-horizon ideas that are not part of the competition architecture or current
+security claims are recorded in [Future Directions](future-directions.md).

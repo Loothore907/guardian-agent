@@ -49,6 +49,7 @@ This checklist translates the official requirements into project gates. It was l
 - [ ] Audio explains the use of Nebius and the selected NVIDIA model.
 - [ ] The video visibly connects Tavily-retrieved evidence to Guardian's research journey and decision context.
 - [ ] The project description clearly explains what was created, why, and how it works.
+- [ ] Any future-looking video language is brief and clearly separated from implemented controls and verified evidence.
 - [ ] Required product feedback covers the Nebius and NVIDIA tools actually used.
 - [ ] Submission text distinguishes implemented controls, verified evidence, goals, and non-claims.
 

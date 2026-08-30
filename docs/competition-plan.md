@@ -33,8 +33,8 @@ The MVP is one complete enforced-session story:
 6. Direct public network and Git push bypass attempts fail in the reference runtime.
 7. An unauthorized merge request fails deterministic mission policy.
 8. Nemotron classifies contextual risk and produces a concise consequence explanation without weakening the denial.
-9. The user deliberately expands the mission for one exact merge bound to the PR head commit.
-10. The broker revalidates and performs that action without credential exposure.
+9. The user creates a human-authored mission revision permitting one merge, and Guardian binds a new profile.
+10. The user approves the exact request bound to the PR head commit; the broker revalidates and performs it without credential exposure.
 11. Mutation, resource-version change, expiry, and replay attempts fail.
 12. The UI connects mission, runtime assurance, public research, policy, guardian, approval, execution, and sanitized outcome.
 
@@ -71,3 +71,11 @@ Maintain a claim-to-evidence map for:
 - Nebius and NVIDIA usage;
 - Tavily usage and research-journey contribution; and
 - significant work completed during the submission period.
+
+## Video narrative
+
+The working video structure is maintained in the
+[three-minute demo narrative](competition/video-outline.md). Future-looking
+material is optional, must remain subordinate to demonstrated behavior and
+evidence, and must be described as a research direction rather than an
+implemented control.
