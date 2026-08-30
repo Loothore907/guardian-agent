@@ -30,7 +30,9 @@ the security claims matrix, and checkpoint history in the roadmap.
   evidence records before the session can report Enforced.
 - C5 (Tavily research gateway) is active in issue
   [#11](https://github.com/Loothore907/guardian-agent/issues/11) on branch
-  `codex/11-tavily-research-gateway`, synchronized with the remote at `b5031cc`.
+  `codex/11-tavily-research-gateway`. Commit `2abdd53` is pushed in pull request
+  [#12](https://github.com/Loothore907/guardian-agent/pull/12), whose remote build
+  passed.
 - C5 commit `72c774e` adds strict research scope, domain, relevance, result, and
   remaining-budget checks; rejects secret-like, private, encoded, and high-entropy
   outbound content; and proves rejected requests never invoke a provider.
@@ -40,12 +42,12 @@ the security claims matrix, and checkpoint history in the roadmap.
   duplicate-source rejection. Provider prose is explicitly labeled
   `untrusted_public_content`, and raw queries and source content are excluded from
   provenance.
-- The current uncommitted C5 slice adds a fixed-endpoint Tavily Search adapter, a
+- C5 commit `2abdd53` adds a fixed-endpoint Tavily Search adapter, a
   credential-holding research service, strict provider projection, redirect and
   response-size controls, timeout/unavailable/malformed behavior, and a
   concurrency-safe session budget. Preflight denials consume nothing; an invoked
   provider consumes one request; only accepted evidence consumes result budget.
-- ADR-0004 and the current uncommitted C5 slice add a launcher-derived local named
+- ADR-0004 and C5 commit `2abdd53` add a launcher-derived local named
   pipe / Unix-socket boundary. It binds the exact session, caller, mission, profile,
   policy, lifecycle, domain scope, and budget with an opaque IPC capability while
   keeping `TAVILY_API_KEY` only in the research-service process.
@@ -55,9 +57,9 @@ the security claims matrix, and checkpoint history in the roadmap.
   basic depth, no generated answer, no raw content or images, a maximum of two
   results, and the exact `docs.github.com` destination.
 - The C5 local implementation and evidence gate has passed. Budget and journey
-  state remain in-memory, authenticated remote MCP identity remains open, and the
-  checkpoint still requires a committed revision, green remote CI, pull-request
-  security review, and merge before it is closed.
+  state remain in-memory, general remote MCP authentication is deferred beyond the
+  launcher-bound competition runtime, and the checkpoint still requires
+  pull-request security review and merge before it is closed.
 - ADR-0005 records the approved C6-C9 posture: SQLite is the planned single-host
   durable non-secret authority store subject to a C6 evidence spike; crashes
   interrupt active sessions rather than transparently resuming them; the Enforced
@@ -69,11 +71,8 @@ the security claims matrix, and checkpoint history in the roadmap.
 
 ## Next actions
 
-1. Complete the security review of the current C5 diff, then create the requested
-   implementation revision without including `.env.local`, provider output, IPC
-   capabilities, or other credential-equivalent material.
-2. Open the C5 pull request, obtain green remote CI, address review findings, and
-   merge before marking the checkpoint Passed.
+1. Complete the security review of pull request #12 and address any findings.
+2. Merge pull request #12 before marking C5 Passed.
 3. Begin C6 with the ADR-0005 SQLite transaction, uniqueness, concurrency, crash,
    restart, permission, and session-ID reuse spike, then implement durable session,
    budget, approval, nonce, and minimized rejection-context repositories.
@@ -113,8 +112,8 @@ Verified on this host in the current working tree:
   provider response.
 
 The protected live Tavily and Nebius checks are not part of ordinary public CI.
-The C5 local implementation gate is complete, but public claim upgrades remain
-limited until a committed revision, remote CI, and pull-request security review.
+The C5 local implementation gate and remote build are complete, but public claim
+upgrades remain limited until pull-request security review and merge.
 
 ## Open decisions affecting upcoming work
 
