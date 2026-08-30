@@ -372,4 +372,5 @@ At checkpoint close, record:
 | C1 - Enforcement feasibility | Passed | Live Nebius proposal, live Tavily research, namespace, filesystem, credential, direct-egress, direct-Git, fake-provider, fail-closed, and tool-denial evidence pass. |
 | C2 - Stack and session architecture | Passed | ADR-0003 accepted; local dependency, workspace, MCP, format, lint, type, test, boundary, audit, license, and build checks pass; the first remote GitHub Actions run passed. |
 | C3 - Mission and deterministic contracts | Passed | Strict contracts, scope enforcement, assurance evidence, canonical digests, exact bindings, policy precedence, unit/property tests, security review, and remote CI pass at `65405ff`. |
-| C4-C11 | Not started | C4 is next; later checkpoints depend on the preceding checkpoint evidence. |
+| C4 - Reference session runtime | In progress | Issue #7 and branch `codex/7-reference-session-runtime` implement the trusted lifecycle and isolation boundary in reviewable slices. |
+| C5-C11 | Not started | Later checkpoints depend on the preceding checkpoint evidence. |

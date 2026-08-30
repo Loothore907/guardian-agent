@@ -147,6 +147,16 @@ export const PermissionEnvelopeSchema = z
         path: ["sideEffects"],
       });
     }
+    if (
+      permissions.tools.includes("github.pull_request.merge") &&
+      !permissions.sideEffects.includes("merge_pull_request")
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "the typed merge capability requires merge_pull_request authority",
+        path: ["tools"],
+      });
+    }
   });
 export type PermissionEnvelope = DeepReadonly<z.infer<typeof PermissionEnvelopeSchema>>;
 

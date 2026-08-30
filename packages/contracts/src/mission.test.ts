@@ -188,8 +188,8 @@ describe("mission and session profile contracts", () => {
     ];
 
     for (const expanded of expandedProfiles) {
-      const parsed = SessionProfileSchema.parse(expanded);
-      expect(isSessionProfileWithinMission(parsed, mission)).toBe(false);
+      const parsed = SessionProfileSchema.safeParse(expanded);
+      expect(parsed.success && isSessionProfileWithinMission(parsed.data, mission)).toBe(false);
     }
   });
 

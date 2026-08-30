@@ -15,17 +15,22 @@ the security claims matrix, and checkpoint history in the roadmap.
 - PR [#5](https://github.com/Loothore907/guardian-agent/pull/5) merged C3 into
   `main` as `65405ff` and closed issue
   [#4](https://github.com/Loothore907/guardian-agent/issues/4).
-- The next checkpoint is C4: Reference session runtime. No C4 issue or branch has
-  been created.
+- The active checkpoint is C4: Reference session runtime, tracked by issue
+  [#7](https://github.com/Loothore907/guardian-agent/issues/7) on branch
+  `codex/7-reference-session-runtime`.
+- The first C4 slice binds mission, profile, caller, policy, lifetime, and
+  revocation; derives the allowed tool catalog; and denies calls before start,
+  after expiry or revocation, and outside the catalog.
 - Provider integration, the privileged broker, and approval UI remain downstream of
   the C4 runtime boundary.
 
 ## Next actions
 
-1. Create the focused C4 issue and branch from updated `main`.
-2. Define the smallest production replacement for the C1 spike that binds one
-   mission, profile, caller, policy version, lifetime, and revocation handle.
-3. Prove the tool catalog, disposable filesystem, credential absence, network
+1. Implement the production-structured WSL executor using the proven C1 namespace
+   mechanism without importing the spike.
+2. Bind tool-catalog, filesystem, credential, and network evidence to the exact
+   profile and resolve assurance from current evidence.
+3. Prove the disposable filesystem, credential absence, network
    policy, expiry, revocation, and assurance evidence before provider work begins.
 
 ## C4 completion gate
@@ -42,7 +47,7 @@ the authoritative deliverables and exit criteria.
 
 Verified on this host at pickup:
 
-- `pnpm check` passes: 9 test files and 33 tests, dependency boundaries, and the
+- `pnpm check` passes: 10 test files and 37 tests, dependency boundaries, and the
   production web build.
 - `pnpm test:session-enforcement` passes all 4 host-specific WSL tests when run with
   permission to access the WSL service.
