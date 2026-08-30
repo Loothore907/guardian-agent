@@ -19,7 +19,7 @@ const GitHubNameSchema = z
   .max(100)
   .regex(/^[a-z0-9_.-]+$/u);
 const GitCommitSchema = z.string().regex(/^[a-f0-9]{40}$/u);
-const ProviderRequestIdSchema = z
+export const ProviderRequestIdSchema = z
   .string()
   .min(1)
   .max(128)
@@ -39,6 +39,28 @@ export const ResearchRequestSchema = z
     );
   });
 export type ResearchRequest = DeepReadonly<z.infer<typeof ResearchRequestSchema>>;
+
+export const ResearchProviderResultSchema = z.strictObject({
+  url: z.string().min(1).max(2_048),
+  title: z.string().min(1).max(1_000),
+  content: z.string().min(1).max(20_000),
+});
+export const ResearchProviderResponseSchema = z.strictObject({
+  requestId: ProviderRequestIdSchema,
+  results: z.array(ResearchProviderResultSchema).max(3),
+});
+export type ResearchProviderResponse = DeepReadonly<z.infer<typeof ResearchProviderResponseSchema>>;
+
+export const ResearchEvidenceSchema = z.strictObject({
+  schemaVersion: ContractVersionSchema,
+  title: boundedVisibleText(200),
+  excerpt: boundedVisibleText(1_000),
+  sourceUrl: PublicHttpUrlSchema,
+  sourceContentDigest: Sha256DigestSchema,
+  contentTrust: z.literal("untrusted_public_content"),
+  retrievedAt: TimestampSchema,
+});
+export type ResearchEvidence = DeepReadonly<z.infer<typeof ResearchEvidenceSchema>>;
 
 export const ResearchScopeSchema = z
   .strictObject({

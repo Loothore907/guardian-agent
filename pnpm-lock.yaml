@@ -188,6 +188,9 @@ importers:
       '@guardian/audit':
         specifier: workspace:*
         version: link:../audit
+      '@guardian/canonical':
+        specifier: workspace:*
+        version: link:../canonical
       '@guardian/contracts':
         specifier: workspace:*
         version: link:../contracts
