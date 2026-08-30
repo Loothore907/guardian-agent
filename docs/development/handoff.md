@@ -8,37 +8,34 @@ the security claims matrix, and checkpoint history in the roadmap.
 
 ## Current state
 
-- C0, C1, and C2 have passed.
+- C0, C1, C2, and C3 have passed.
 - PR [#2](https://github.com/Loothore907/guardian-agent/pull/2) was squash-merged
   into `main` as `33e3d72`; issue
   [#1](https://github.com/Loothore907/guardian-agent/issues/1) closed with it.
-- The next checkpoint is C3: Mission and deterministic contracts.
-- C3 is tracked by issue
-  [#4](https://github.com/Loothore907/guardian-agent/issues/4) on branch
-  `codex/4-mission-deterministic-contracts`, based on `main` at `644328c`.
-- Commits `f058d41`, `a295737`, and review fix `479c6c9` implement the complete C3
-  contract surface. All C3 exit criteria and the commit-by-commit security review
-  pass locally; PR
-  [#5](https://github.com/Loothore907/guardian-agent/pull/5) remains to be reviewed,
-  pass final remote CI, and merge before the checkpoint is closed.
+- PR [#5](https://github.com/Loothore907/guardian-agent/pull/5) merged C3 into
+  `main` as `65405ff` and closed issue
+  [#4](https://github.com/Loothore907/guardian-agent/issues/4).
+- The next checkpoint is C4: Reference session runtime. No C4 issue or branch has
+  been created.
 - Provider integration, the privileged broker, and approval UI remain downstream of
-  C3's exit criteria.
+  the C4 runtime boundary.
 
 ## Next actions
 
-1. Review PR #5 against the C3 exit criteria and claims matrix.
-2. Merge only after final remote CI passes and review finds no blocking issue.
-3. Close issue #4 and begin the smallest reviewable C4 runtime plan from updated
-   `main`.
+1. Create the focused C4 issue and branch from updated `main`.
+2. Define the smallest production replacement for the C1 spike that binds one
+   mission, profile, caller, policy version, lifetime, and revocation handle.
+3. Prove the tool catalog, disposable filesystem, credential absence, network
+   policy, expiry, revocation, and assurance evidence before provider work begins.
 
-## C3 completion gate
+## C4 completion gate
 
-C3 is complete only when its roadmap exit criteria pass, including fail-closed
-unknown and malformed input, canonical equivalence, mutation-sensitive digests,
-non-grantable mission expansion, evidence-backed assurance, and deterministic
-policy precedence over Guardian output.
+C4 is complete only when the trusted launcher enforces the bound mission and
+profile, exposes only approved tools, isolates local commands from credentials and
+public egress, stops calls after expiry or revocation, and produces sufficient
+evidence for an honest assurance label.
 
-See [Development roadmap](roadmap.md#c3---mission-and-deterministic-contracts) for
+See [Development roadmap](roadmap.md#c4---reference-session-runtime) for
 the authoritative deliverables and exit criteria.
 
 ## Verification state
