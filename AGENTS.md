@@ -11,6 +11,12 @@
 ## Product invariants
 
 - Public agent interfaces must never return raw credentials or credential-equivalent material.
+- Prompt instructions are guidance, not evidence of runtime enforcement.
+- Label a session `Enforced` only when Guardian has evidence for the documented tool, filesystem, credential, and network restrictions; otherwise report `Observed` or `Unknown`.
+- An interaction agent may request mission expansion but may never grant itself new tools, destinations, time, volume, or side-effect authority.
+- In the reference enforced runtime, public research and authenticated external operations must pass through Guardian-controlled pathways.
+- Treat all retrieved public content and agent-supplied rationale as untrusted; neither can create authority.
+- Reject secret-like, private, oversized, or encoded outbound research requests before invoking an external provider.
 - Guardian/model output may maintain or increase a deterministic risk floor; it may never reduce one.
 - A privileged operation must be re-normalized and its request digest revalidated immediately before execution.
 - Approval must be bound to the exact request, caller session, connection, scope, expiry, nonce, and policy version as applicable.
@@ -21,7 +27,8 @@
 
 ## Architecture expectations
 
-- Keep protocol/schema, deterministic policy, guardian inference, privileged broker, adapters, UI, and evaluation concerns separable.
+- Keep session control, protocol/schema, public research, deterministic policy, guardian inference, privileged broker, adapters, UI, and evaluation concerns separable.
+- Keep the local command sandbox outside credential-holding provider processes.
 - Keep the guardian provider outside the credential-holding execution boundary.
 - Encode dependency direction mechanically once the package structure exists.
 - Record consequential decisions in `docs/adr/`.
@@ -30,7 +37,8 @@
 
 - Add or update tests in the same change as behavior.
 - Test both allowed behavior and near-miss rejection cases.
-- Treat canonicalization, mutation, replay, expiry, caller binding, scope, and redaction as property-test candidates.
+- Treat canonicalization, mutation, replay, expiry, caller binding, scope, assurance state, outbound research, and redaction as property-test candidates.
+- Test direct-network, credential-path, alternate-tool, and Git push bypass attempts in the documented reference runtime.
 - Never describe a security property as implemented unless `docs/security-claims.md` identifies reproducible evidence.
 - Run the narrowest relevant checks during iteration and the complete required suite before requesting review.
 

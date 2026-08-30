@@ -1,0 +1,23 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/contracts" },
+    { "path": "packages/canonical" },
+    { "path": "packages/audit" },
+    { "path": "packages/policy" },
+    { "path": "packages/session" },
+    { "path": "packages/executor" },
+    { "path": "packages/research" },
+    { "path": "packages/guardian" },
+    { "path": "packages/authorization" },
+    { "path": "packages/adapter-github" },
+    { "path": "packages/broker" },
+    { "path": "packages/test-support" },
+    { "path": "apps/control-api" },
+    { "path": "apps/session-host" },
+    { "path": "apps/research-service" },
+    { "path": "apps/guardian-service" },
+    { "path": "apps/broker-service" },
+    { "path": "apps/web" }
+  ]
+}

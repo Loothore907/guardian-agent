@@ -6,7 +6,7 @@
 - Track: Best Apps and Agents
 - Submission deadline: October 30, 2026 at 10:00 a.m. Pacific / 9:00 a.m. Alaska daylight time
 - Working name: Guardian Agent
-- Formulation: a capability firewall that lets AI agents use accounts without receiving credentials or unchecked authority
+- Formulation: a task-scoped agent runtime and capability firewall that forces public research and authenticated actions through observable, policy-controlled pathways
 
 ## Required competition integrations
 
@@ -23,32 +23,42 @@ Use the [submission checklist](competition/submission-checklist.md) as the opera
 
 ## Competition MVP
 
-The MVP is one complete authorization story:
+The MVP is one complete enforced-session story:
 
-1. A routine Git-like read proceeds under a scoped grant.
-2. A merge-like action crosses a deterministic boundary.
-3. Nemotron classifies contextual risk and produces a concise consequence summary.
-4. The user approves the exact action.
-5. Mutation and replay attempts fail.
-6. The audit view explains the complete decision without exposing credentials.
+1. The user creates a read-only PR-review mission directly through Guardian.
+2. Guardian launches the documented reference runtime with a mission-specific tool set, no provider credentials, and default-denied public egress for local commands.
+3. Routine local analysis and a typed GitHub read proceed without repeated login.
+4. Tavily supplies bounded public evidence and Guardian records a visible, minimized research journey.
+5. Hostile public content attempts to convince the interaction agent to merge or disclose information.
+6. Direct public network and Git push bypass attempts fail in the reference runtime.
+7. An unauthorized merge request fails deterministic mission policy.
+8. Nemotron classifies contextual risk and produces a concise consequence explanation without weakening the denial.
+9. The user deliberately expands the mission for one exact merge bound to the PR head commit.
+10. The broker revalidates and performs that action without credential exposure.
+11. Mutation, resource-version change, expiry, and replay attempts fail.
+12. The UI connects mission, runtime assurance, public research, policy, guardian, approval, execution, and sanitized outcome.
 
-## Optional Tavily integration
+## Tavily integration
 
-Tavily may retrieve real external content for the untrusted demo layer. A fixture can contain a prompt-injection attempt that asks the interaction agent to expose a credential or widen an operation. Guardian must demonstrate that retrieved text cannot create authority.
+Tavily is optional under the general competition rules but required by the selected Guardian competition experience and necessary for Best Use of Tavily bonus eligibility. The build will make functional runtime calls to bounded Search and/or Extract operations as part of the PR-review mission.
 
-This integration must remain optional to the core and must not send credentials, approval records, private audit data, or unnecessary user information to Tavily.
+Tavily provides public discovery and content. Guardian, not Tavily, records the agent's mediated research journey and applies deterministic activity limits. Search relevance must not be represented as source trust or safety.
+
+Guardian must not send credentials, approval records, private audit data, private repository content, or unnecessary user information to Tavily. Query and traversal limits, secret-like outbound checks, provenance labels, provider failure behavior, and deterministic fixtures are required.
 
 ## Build gates
 
 | Gate | Output | Exit criterion |
 | --- | --- | --- |
-| 0 - Governance | Scope, invariants, threat model, repository policy, claims matrix | No ambiguity about what the prototype does or claims |
-| 1 - Core | Schemas, canonicalization, policy precedence, grants, nonce and expiry checks | Tests reject mutation, replay, and scope expansion |
-| 2 - Model | Token Factory provider, constrained output, failure fallback, evaluation fixtures | Invalid or unavailable output escalates or denies |
-| 3 - Action | Demo credential boundary and typed Git-like adapter | End-to-end action works without credential exposure |
-| 4 - Experience | Approval and audit interface | A new viewer understands what is approved and why |
-| 5 - Attack | Adversarial suite and redaction checks | Every showcased security claim has passing evidence |
-| 6 - Submit | Public repository, demo, clean install, video, description, feedback | Submission matches the tested build |
+| 0 - Contract | Product promise, assurance levels, mission, scope, threat model, claims matrix | No ambiguity about what the prototype does or claims |
+| 1 - Feasibility | Reference agent loop, constrained command executor, controlled external path | Direct bypass fails while Guardian research succeeds |
+| 2 - Core | Mission, session, schema, canonicalization, policy, grant, nonce, expiry, and assurance contracts | Tests reject unknown input, false assurance, mutation, replay, and scope expansion |
+| 3 - Research | Tavily provider, outbound checks, provenance, journey ledger, deterministic fixtures | Public research is functional, bounded, visible, and credential-free |
+| 4 - Action | Demo credential boundary, typed GitHub adapter, final revalidation | End-to-end read and exact merge work without credential exposure |
+| 5 - Model | Token Factory provider, constrained output, failure fallback, evaluation fixtures | Invalid or unavailable output escalates or denies |
+| 6 - Experience | Mission, assurance, research, approval, and audit interface | A new viewer understands what the agent could do, encountered, attempted, and executed |
+| 7 - Attack | Runtime bypass, adversarial, mutation, replay, egress, and redaction evidence | Every showcased security claim has reproducible passing evidence |
+| 8 - Submit | Public repository, hosted demo, clean install, video, description, and feedback | Submission matches the tested tagged build |
 
 ## Submission evidence
 
@@ -59,5 +69,5 @@ Maintain a claim-to-evidence map for:
 - potential impact;
 - quality and originality of the idea;
 - Nebius and NVIDIA usage;
-- Tavily usage, if included; and
+- Tavily usage and research-journey contribution; and
 - significant work completed during the submission period.
