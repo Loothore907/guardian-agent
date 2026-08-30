@@ -12,6 +12,7 @@ import {
 } from "./common.js";
 
 export const ToolCapabilitySchema = z.enum([
+  "guardian.session_status",
   "guardian.research",
   "guardian.local_command",
   "github.pull_request.read",
@@ -145,6 +146,16 @@ export const PermissionEnvelopeSchema = z
         code: "custom",
         message: "merge_pull_request requires the typed merge capability",
         path: ["sideEffects"],
+      });
+    }
+    if (
+      permissions.tools.includes("github.pull_request.merge") &&
+      !permissions.sideEffects.includes("merge_pull_request")
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "the typed merge capability requires merge_pull_request authority",
+        path: ["tools"],
       });
     }
   });

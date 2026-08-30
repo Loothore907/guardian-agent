@@ -19,6 +19,7 @@
     "start:control-api": "node apps/control-api/dist/main.js",
     "start:session-host": "node apps/session-host/dist/main.js",
     "test": "vitest run",
+    "test:reference-runtime": "pnpm build && node --test scripts/reference-runtime.test.mjs",
     "test:session-enforcement": "node --test spikes/enforced-session/spike.test.mjs",
     "typecheck": "tsc -b --pretty false"
   },
