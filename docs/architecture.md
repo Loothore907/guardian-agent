@@ -118,7 +118,6 @@ The competition build proves one enforced PR-review mission:
 
 - final interaction model after the C1 hosted Nemotron stand-in;
 - production hardening and hosted parity for the proven WSL/Linux namespace mechanism;
-- acceptance or revision of the TypeScript workspace proposed in ADR-0003;
 - canonical serialization format and compatibility policy;
 - authenticated MCP transport and session-caller identity;
 - session evidence and runtime-attestation representation;

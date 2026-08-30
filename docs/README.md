@@ -11,6 +11,7 @@ This directory separates product intent from verified implementation evidence.
 - [Repository strategy](development/repository-strategy.md)
 - [CI policy](development/ci-policy.md)
 - [Development roadmap](development/roadmap.md)
+- [Current development handoff](development/handoff.md)
 - [Provenance](competition/provenance.md)
 - [Architecture decisions](adr/README.md)
 
