@@ -191,6 +191,9 @@ importers:
 
   packages/session:
     dependencies:
+      '@guardian/canonical':
+        specifier: workspace:*
+        version: link:../canonical
       '@guardian/contracts':
         specifier: workspace:*
         version: link:../contracts
