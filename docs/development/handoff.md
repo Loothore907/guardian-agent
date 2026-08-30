@@ -15,8 +15,9 @@ the security claims matrix, and checkpoint history in the roadmap.
 - PR [#5](https://github.com/Loothore907/guardian-agent/pull/5) merged C3 into
   `main` as `65405ff` and closed issue
   [#4](https://github.com/Loothore907/guardian-agent/issues/4).
-- C4 is implemented on issue [#7](https://github.com/Loothore907/guardian-agent/issues/7)
-  and branch `codex/7-reference-session-runtime`; merge/closeout remains.
+- PR [#8](https://github.com/Loothore907/guardian-agent/pull/8) merged C4 into
+  `main` as `8d1eee1` and closed issue
+  [#7](https://github.com/Loothore907/guardian-agent/issues/7).
 - The trusted launcher now binds the mission, profile, caller, policy, lifetime,
   revocation, filesystem scope, and volume; it derives the MCP catalog from the
   exact profile and refuses caller-supplied assurance or unsupported catalogs.
@@ -29,13 +30,13 @@ the security claims matrix, and checkpoint history in the roadmap.
 
 ## Next actions
 
-1. Review and merge the C4 pull request, close issue #7, and record its final merge
-   revision.
-2. Open C5 with strict outbound research and provenance contracts before adding a
+1. Open C5 with strict outbound research and provenance contracts before adding a
    live Tavily path.
-3. Preserve the empty, per-command C4 workspace as an explicit limitation until a
+2. Preserve the empty, per-command C4 workspace as an explicit limitation until a
    credential-safe session workspace materialization design is implemented and
    tested.
+3. Keep C6 adapter/broker work behind the C5 research boundary and existing exact
+   authorization contracts.
 
 ## C4 completion gate
 
