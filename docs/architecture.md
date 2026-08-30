@@ -84,6 +84,13 @@ Research events should retain the minimum fields needed to explain decisions, su
 
 The research gateway must prevent the approved path from becoming an exfiltration channel. Query length, opaque encodings, secret-like material, private content, destinations, and traversal parameters require deterministic checks before any provider call.
 
+In the reference runtime, the launcher binds each research-enabled session to one
+local named pipe or Unix-domain socket and an opaque IPC capability. The session
+host receives that capability but not the Tavily credential; the separate research
+process receives the strict service configuration and credential. Both peers
+validate bounded schemas and exact session, caller, mission, profile, policy, and
+lifecycle bindings. See [ADR-0004](adr/0004-session-bound-research-ipc.md).
+
 ## Dependency direction
 
 The exact package layout is deferred to ADR-0003. The intended dependency direction is:
@@ -117,14 +124,21 @@ The competition build proves one enforced PR-review mission:
 ## Open implementation decisions
 
 - final interaction model after the C1 hosted Nemotron stand-in;
-- production hardening and hosted parity for the proven WSL/Linux namespace mechanism;
+- hosting provider and production hardening for Linux parity; ADR-0005 makes
+  equivalent hosted enforcement evidence a release gate;
 - canonical serialization format and compatibility policy;
-- authenticated MCP transport and session-caller identity;
+- general authenticated remote MCP transport after the launcher-bound competition
+  runtime;
 - session evidence and runtime-attestation representation;
 - approval interface and development-mode user-presence substitute;
-- approval, nonce, and audit persistence;
 - selected Nemotron model and Token Factory endpoint; and
 - public demo hosting approach.
+
+[ADR-0005](adr/0005-durable-authority-and-rejection-context.md) selects SQLite,
+subject to a C6 evidence spike, for durable non-secret authority and audit state.
+It also selects fail-closed session interruption rather than transparent restart
+recovery and defines the minimized rejection-context chain that C6-C9 must
+implement and evaluate.
 
 Longer-horizon ideas that are not part of the competition architecture or current
 security claims are recorded in [Future Directions](future-directions.md).

@@ -29,7 +29,7 @@ export const ResearchRequestSchema = z
   .strictObject({
     query: boundedVisibleText(120),
     maxResults: z.number().int().min(1).max(3),
-    allowedDomains: z.array(z.hostname()).max(10),
+    allowedDomains: z.array(z.hostname()).min(1).max(10),
   })
   .superRefine((request, context) => {
     addDuplicateIssue(

@@ -15,8 +15,11 @@ The model is not the root of trust.
 Guardian Agent has completed its product contract, enforcement feasibility, mission
 contracts, and local C4 reference-runtime gate. The supported Windows/WSL launcher
 now creates evidence-bound sessions with a profile-derived MCP catalog and a
-credential-free, network-disabled disposable command executor. No broader security
-guarantee should be treated as
+credential-free, network-disabled disposable command executor. C5 has a bounded,
+credential-holding Tavily Search service connected through a launcher-bound local
+pipe and the profile-derived MCP tool catalog. Its local implementation gate and
+protected live test pass, while commit, remote review, and merge remain. No broader
+security guarantee should be treated as
 implemented until it appears in [Security claims](docs/security-claims.md) with
 corresponding evidence.
 
@@ -60,6 +63,15 @@ pnpm install --frozen-lockfile
 pnpm check
 ```
 
+On the Codex Desktop Windows host, if the bundled `pnpm` command is visible but
+`node` is not on `PATH`, use the repository launcher instead. It resolves the
+bundled runtime and supplies Node to nested package scripts without changing the
+machine-wide environment:
+
+```powershell
+.\scripts\pnpm.ps1 check
+```
+
 Useful commands:
 
 ```sh
@@ -68,6 +80,8 @@ pnpm start:control-api
 pnpm start:session-host
 pnpm test:reference-runtime
 pnpm test:session-enforcement
+# Protected and credentialed; never runs in ordinary public CI:
+pnpm test:live:tavily
 ```
 
 Build before using either `start` command. The reference-runtime and enforcement

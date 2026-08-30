@@ -120,6 +120,12 @@ export interface ResearchJourneyResult {
   readonly provenance: readonly ResearchProvenanceEvent[];
 }
 
+export interface ResearchBudgetSnapshot {
+  readonly sessionId: string;
+  readonly remainingRequests: number;
+  readonly remainingResults: number;
+}
+
 function sanitizeProviderText(value: string, limit: number): string {
   const visible = Array.from(value)
     .map((character) => {
@@ -243,3 +249,71 @@ export class ResearchJourneyLedger {
     return { evidence, provenance };
   }
 }
+
+/**
+ * Owns one session's research budget and journey sequence.
+ *
+ * A request is charged immediately before provider invocation. Result capacity is
+ * reserved across the asynchronous call so concurrent searches cannot overcommit
+ * it, then only accepted evidence remains charged. Preflight denials consume
+ * neither counter; provider and validation failures consume one request but no
+ * results.
+ */
+export class SessionResearchGateway {
+  readonly #sessionId: string;
+  readonly #allowedDomains: ResearchScope["allowedDomains"];
+  readonly #maxResultsPerRequest: number;
+  readonly #requiredTerms: ResearchScope["requiredTerms"];
+  readonly #ledger: ResearchJourneyLedger;
+  #remainingRequests: number;
+  #remainingResults: number;
+
+  constructor(sessionIdValue: unknown, scopeValue: unknown) {
+    const sessionId = OpaqueIdSchema.parse(sessionIdValue);
+    const scope = ResearchScopeSchema.parse(scopeValue);
+    this.#sessionId = sessionId;
+    this.#allowedDomains = scope.allowedDomains;
+    this.#maxResultsPerRequest = scope.maxResultsPerRequest;
+    this.#requiredTerms = scope.requiredTerms;
+    this.#remainingRequests = scope.remainingRequests;
+    this.#remainingResults = scope.remainingResults;
+    this.#ledger = new ResearchJourneyLedger(sessionId);
+  }
+
+  get budget(): ResearchBudgetSnapshot {
+    return {
+      sessionId: this.#sessionId,
+      remainingRequests: this.#remainingRequests,
+      remainingResults: this.#remainingResults,
+    };
+  }
+
+  async search(
+    requestValue: unknown,
+    provider: ResearchProvider<unknown>,
+    retrievedAtValue: unknown,
+  ): Promise<ResearchJourneyResult> {
+    const request = guardResearchRequest(requestValue, {
+      allowedDomains: this.#allowedDomains,
+      maxResultsPerRequest: this.#maxResultsPerRequest,
+      remainingRequests: this.#remainingRequests,
+      remainingResults: this.#remainingResults,
+      requiredTerms: this.#requiredTerms,
+    });
+
+    // Reserve synchronously before crossing the asynchronous provider boundary.
+    this.#remainingRequests -= 1;
+    this.#remainingResults -= request.maxResults;
+    try {
+      const response = await provider.search(request);
+      const journey = this.#ledger.record(request, response, retrievedAtValue);
+      this.#remainingResults += request.maxResults - journey.evidence.length;
+      return journey;
+    } catch (error) {
+      this.#remainingResults += request.maxResults;
+      throw error;
+    }
+  }
+}
+
+export * from "./ipc.js";

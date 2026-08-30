@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { guardResearchRequest, invokeBoundedResearch, ResearchJourneyLedger } from "./index.js";
+import {
+  guardResearchRequest,
+  invokeBoundedResearch,
+  ResearchJourneyLedger,
+  SessionResearchGateway,
+} from "./index.js";
 import type { ResearchRequestDeniedError } from "./index.js";
 
 const request = {
@@ -39,6 +44,10 @@ describe("outbound research gate", () => {
     expect(() => guardResearchRequest(request, { ...scope, remainingRequests: 0 })).toThrowError(
       expect.objectContaining({ reason: "budget_exhausted" }),
     );
+  });
+
+  it("rejects an empty provider destination list", () => {
+    expect(() => guardResearchRequest({ ...request, allowedDomains: [] }, scope)).toThrow();
   });
 
   it("never invokes a provider for rejected outbound content", async () => {
@@ -177,5 +186,104 @@ describe("research evidence boundary", () => {
         "2026-08-30T09:00:00.000Z",
       ),
     ).toThrow("duplicate source URL");
+  });
+});
+
+describe("session research budget", () => {
+  const sessionId = "11111111-1111-4111-8111-111111111111";
+  const retrievedAt = "2026-08-30T09:00:00.000Z";
+  const providerResult = {
+    requestId: "tavily_req_budget",
+    results: [
+      {
+        url: "https://docs.github.com/pull-requests",
+        title: "Pull request guidance",
+        content: "Branch protection rules can require reviews before merging.",
+      },
+    ],
+  } as const;
+
+  it("does not consume either counter when preflight rejects a request", async () => {
+    const gateway = new SessionResearchGateway(sessionId, scope);
+    const search = vi.fn(() => Promise.resolve(providerResult));
+
+    await expect(
+      gateway.search(
+        { ...request, query: "token=ghp_abcdefghijklmnopqrstuvwxyz1234" },
+        { search },
+        retrievedAt,
+      ),
+    ).rejects.toMatchObject({ reason: "unsafe_outbound_content" });
+
+    expect(search).not.toHaveBeenCalled();
+    expect(gateway.budget).toEqual({ sessionId, remainingRequests: 2, remainingResults: 4 });
+  });
+
+  it("charges an invoked request but no results when the provider fails", async () => {
+    const gateway = new SessionResearchGateway(sessionId, scope);
+    const search = vi.fn(() => Promise.reject(new Error("provider unavailable")));
+
+    await expect(gateway.search(request, { search }, retrievedAt)).rejects.toThrow(
+      "provider unavailable",
+    );
+
+    expect(search).toHaveBeenCalledOnce();
+    expect(gateway.budget).toEqual({ sessionId, remainingRequests: 1, remainingResults: 4 });
+  });
+
+  it("charges only accepted results rather than the reserved maximum", async () => {
+    const gateway = new SessionResearchGateway(sessionId, scope);
+
+    const journey = await gateway.search(
+      request,
+      { search: vi.fn(() => Promise.resolve(providerResult)) },
+      retrievedAt,
+    );
+
+    expect(journey.evidence).toHaveLength(1);
+    expect(gateway.budget).toEqual({ sessionId, remainingRequests: 1, remainingResults: 3 });
+  });
+
+  it("releases result capacity after malformed provider output", async () => {
+    const gateway = new SessionResearchGateway(sessionId, scope);
+
+    await expect(
+      gateway.search(
+        request,
+        { search: vi.fn(() => Promise.resolve({ requestId: "bad", results: [{ title: 42 }] })) },
+        retrievedAt,
+      ),
+    ).rejects.toThrow();
+
+    expect(gateway.budget).toEqual({ sessionId, remainingRequests: 1, remainingResults: 4 });
+  });
+
+  it("reserves capacity before awaiting a provider so concurrent calls cannot overcommit", async () => {
+    const gateway = new SessionResearchGateway(sessionId, {
+      ...scope,
+      remainingResults: 2,
+    });
+    let releaseProvider!: (value: typeof providerResult) => void;
+    const firstProvider = {
+      search: vi.fn(
+        () =>
+          new Promise<typeof providerResult>((resolve) => {
+            releaseProvider = resolve;
+          }),
+      ),
+    };
+    const first = gateway.search(request, firstProvider, retrievedAt);
+
+    const secondSearch = vi.fn(() => Promise.resolve(providerResult));
+    await expect(
+      gateway.search(request, { search: secondSearch }, retrievedAt),
+    ).rejects.toMatchObject({
+      reason: "budget_exhausted",
+    });
+    expect(secondSearch).not.toHaveBeenCalled();
+
+    releaseProvider(providerResult);
+    await expect(first).resolves.toMatchObject({ evidence: [expect.any(Object)] });
+    expect(gateway.budget).toEqual({ sessionId, remainingRequests: 1, remainingResults: 1 });
   });
 });

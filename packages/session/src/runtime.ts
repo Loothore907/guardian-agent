@@ -2,6 +2,8 @@ import {
   MissionSchema,
   LocalCommandRequestSchema,
   OpaqueIdSchema,
+  ResearchRequestSchema,
+  ResearchScopeSchema,
   BoundSessionStatusSchema,
   SessionProfileSchema,
   TimestampSchema,
@@ -22,6 +24,7 @@ export type ToolDenialReason =
   | "revoked"
   | "tool_not_allowed"
   | "filesystem_not_allowed"
+  | "destination_not_allowed"
   | "timeout_exceeds_session"
   | "volume_exhausted";
 
@@ -159,6 +162,53 @@ export class BoundSessionRuntime {
     this.#toolCalls += 1;
     this.#localCommands += 1;
     return { allowed: true };
+  }
+
+  authorizeResearchCall(value: unknown, evaluatedAt: unknown): ToolAuthorization {
+    const request = ResearchRequestSchema.safeParse(value);
+    if (!request.success) {
+      return { allowed: false, reason: "destination_not_allowed" };
+    }
+    const base = this.authorizeToolCall("guardian.research", evaluatedAt);
+    if (!base.allowed) return base;
+
+    const allowedDomains = new Set(
+      this.#profile.permissions.network.destinations
+        .filter((destination) => destination.kind === "public_domain")
+        .map((destination) => destination.hostname.toLowerCase()),
+    );
+    if (
+      this.#profile.permissions.network.mode !== "guardian_only" ||
+      !request.data.allowedDomains.every((domain) => allowedDomains.has(domain.toLowerCase()))
+    ) {
+      return { allowed: false, reason: "destination_not_allowed" };
+    }
+    if (
+      this.#toolCalls >= this.#profile.permissions.volume.maxToolCalls ||
+      this.#profile.permissions.volume.maxResearchRequests < 1 ||
+      request.data.maxResults > this.#profile.permissions.volume.maxResearchResults
+    ) {
+      return { allowed: false, reason: "volume_exhausted" };
+    }
+    this.#toolCalls += 1;
+    return { allowed: true };
+  }
+
+  isResearchScopeWithinProfile(value: unknown): boolean {
+    const scope = ResearchScopeSchema.safeParse(value);
+    if (!scope.success || !this.#tools.has("guardian.research")) return false;
+    const allowedDomains = new Set(
+      this.#profile.permissions.network.destinations
+        .filter((destination) => destination.kind === "public_domain")
+        .map((destination) => destination.hostname.toLowerCase()),
+    );
+    return (
+      this.#profile.permissions.network.mode === "guardian_only" &&
+      scope.data.allowedDomains.every((domain) => allowedDomains.has(domain.toLowerCase())) &&
+      scope.data.maxResultsPerRequest <= this.#profile.permissions.volume.maxResearchResults &&
+      scope.data.remainingRequests <= this.#profile.permissions.volume.maxResearchRequests &&
+      scope.data.remainingResults <= this.#profile.permissions.volume.maxResearchResults
+    );
   }
 
   revoke(handle: unknown): boolean {

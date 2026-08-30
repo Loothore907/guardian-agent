@@ -78,8 +78,8 @@ No optional feature may delay or weaken a higher-priority outcome.
 | C2 - Stack and session architecture | September 8 | 2-3 days | Accept ADR-0003; scaffold workspace, package boundaries, test runner, CI, and dependency enforcement around the proven spike. |
 | C3 - Mission and deterministic contracts | September 14 | 4-6 days | Strict mission, profile, assurance, proposal, canonicalization, digest, policy-lattice, and fail-closed input contracts pass unit and property tests. |
 | C4 - Reference session runtime | September 21 | 4-6 days | Trusted launcher creates a disposable credential-free runtime with an enforced tool catalog, filesystem scope, lifetime, revocation, and network policy. |
-| C5 - Tavily research gateway | September 26 | 3-5 days | Bounded live Search/Extract, outbound-data checks, untrusted provenance, journey ledger, failure behavior, and deterministic fixtures work end to end. |
-| C6 - Authorization and GitHub broker | October 2 | 5-7 days | Scoped connection, typed PR read, exact merge approval, atomic replay protection, final revalidation, resource-version binding, and sanitized audit pass tests. |
+| C5 - Tavily research gateway | September 26 | 3-5 days | Bounded live Search, outbound-data checks, untrusted provenance, journey ledger, failure behavior, and deterministic fixtures work end to end. |
+| C6 - Authorization and GitHub broker | October 2 | 5-7 days | Durable authority state, scoped connection, typed PR read, exact merge approval, atomic replay protection, final revalidation, resource-version binding, and sanitized audit pass tests. |
 | C7 - Nemotron guardian | October 7 | 3-5 days | Token Factory runtime inference, constrained output, credential-free envelope, precedence, timeout/failure fallback, and evaluation fixtures pass. |
 | C8 - Product experience | October 12 | 4-6 days | Mission creation, assurance display, agent activity, research journey, approval, denial, result, revocation, and audit form one coherent experience. |
 | C9 - Attack and claims gate | October 17 | 4-6 days | Runtime bypass, egress, adversarial, mutation, replay, expiry, provider, redaction, and architecture evidence supports every showcased claim. |
@@ -192,10 +192,10 @@ Exit criteria:
 
 Implement:
 
-- mission-bound Search and Extract first;
+- mission-bound Search through a fixed provider operation;
 - deterministic query length, shape, topic, destination, and result limits;
 - secret-like, private, encoded, and oversized outbound rejection;
-- bounded domains, pages, excerpts, and total research budget;
+- bounded domains, excerpts, and total research budget;
 - untrusted source labels and content digests;
 - minimized journey events; and
 - fake, captured, live, timeout, malformed, and unavailable provider behavior.
@@ -208,18 +208,26 @@ Exit criteria:
 - Provider failure cannot lower authorization requirements.
 - No credential, approval record, private audit history, or unnecessary private repository content reaches Tavily.
 
-Map and Crawl remain optional until Search and Extract, privacy controls, and C9 evidence are stable.
+Extract, Map, and Crawl remain optional until Search, privacy controls, and C9
+evidence are stable. Add only a narrow typed operation when the reference mission
+demonstrates a need for it.
 
 ### C6 - Authorization and GitHub broker
 
 Implement:
 
+- the ADR-0005 SQLite spike and a durable store outside disposable session
+  workspaces;
+- immutable session bindings, interruption and revocation state, volume and
+  research-budget state, sanitized audit events, and session-ID reuse rejection;
 - one scoped GitHub connection suitable for a dedicated demo repository;
 - typed PR read;
 - typed PR merge with fixed endpoint and allowed merge methods;
 - expected head commit binding;
 - opaque one-time approval;
 - atomic nonce consumption for the supported runtime;
+- minimized evidence-exposure, attempt, decision, boundary-crossing, consumption,
+  and control-outcome records using bounded signal and reason codes;
 - final schema validation, normalization, digest comparison, scope, caller, connection, expiry, policy, and resource-version checks; and
 - allowlisted result and audit fields.
 
@@ -230,7 +238,11 @@ Exit criteria:
 - Unauthorized merge fails before adapter execution.
 - Exactly approved merge succeeds against the dedicated test target.
 - Changed head commit, mutation, replay, expiry, cross-session, cross-connection, and scope expansion fail.
-- Restart and persistence limitations are explicitly tested and documented.
+- Transaction, uniqueness, concurrent budget, atomic nonce, crash, restart,
+  uncertain-outcome, filesystem-permission, and session-ID reuse behavior is
+  explicitly tested and documented.
+- An unexpected trusted-process restart interrupts the active session and cannot
+  reset authority, revocation, volume, research budget, or replay state.
 
 ### C7 - Nemotron guardian
 
@@ -240,6 +252,8 @@ Exit criteria:
 - The model receives only minimized credential-free risk envelopes.
 - Output is strict, bounded, structured, and mapped through deterministic precedence.
 - Fixtures include intent-action mismatch, untrusted imperative content, suspicious authority expansion, clean research, and ambiguous evidence.
+- Guardian assessments attach to minimized attempt records and may preserve or
+  increase, but never lower, the deterministic authorization floor.
 - Timeout, unavailability, malformed output, and uncertainty escalate or deny.
 - Evaluation reports false escalation and missed escalation rather than claiming complete detection.
 - Deterministic tests use a fake provider; live tests are isolated and protected.
@@ -254,6 +268,9 @@ The experience must show:
 - Tavily-mediated research journey and source provenance;
 - deterministic and Nemotron risk reasons;
 - unexpected action denial;
+- the ordered public evidence available before an attempt, structured suspicious
+  content signals, the requested effect, the control decision, and whether a
+  provider or adapter boundary was crossed;
 - exact approval showing repository, PR, head commit, method, expiry, and one-time use;
 - execution result, revocation, and sanitized audit; and
 - clear limitation language for Observed or Unknown environments.
@@ -271,6 +288,9 @@ Exit criteria:
 - Property tests cover canonicalization, mutation, replay, expiry, caller and connection binding, scope, assurance, outbound research, and redaction where appropriate.
 - Tool-catalog, credential-path, direct-network, Git push, alternate-tool, and false-assurance tests pass in the documented reference runtime.
 - Secret-like values injected through mission input, research queries, provider results, adapter results, failures, and diagnostics do not reach unauthorized outputs.
+- A polluted-page fixture produces a reconstructable evidence-to-attempt-to-denial
+  chain without persisting the hostile page, rejected secret-like values, or model
+  chain-of-thought, and the UI does not claim temporal association proves causation.
 - `docs/security-claims.md` names exact commands and evidence for every upgraded claim.
 - Residual risks and prototype limitations are visible in the product and setup materials.
 
@@ -374,5 +394,5 @@ At checkpoint close, record:
 | C2 - Stack and session architecture | Passed | ADR-0003 accepted; local dependency, workspace, MCP, format, lint, type, test, boundary, audit, license, and build checks pass; the first remote GitHub Actions run passed. |
 | C3 - Mission and deterministic contracts | Passed | Strict contracts, scope enforcement, assurance evidence, canonical digests, exact bindings, policy precedence, unit/property tests, security review, and remote CI pass at `65405ff`. |
 | C4 - Reference session runtime | Passed | The trusted launcher, exact catalog, lifecycle, profile-bound evidence, disposable command executor, host isolation probes, and remote CI pass at `8d1eee1`. |
-| C5 - Tavily research gateway | In progress | Issue #11 and branch `codex/11-tavily-research-gateway` begin with deterministic outbound-data, domain, relevance, and budget enforcement before provider integration. |
+| C5 - Tavily research gateway | In progress | The local implementation/evidence gate passes through the launcher, MCP catalog, session-bound local pipe, separate credential service, fixed Search adapter, budget, provenance, deterministic failures, and protected live call. Commit, remote CI, PR security review, and merge remain. |
 | C6-C11 | Not started | Later checkpoints remain dependency ordered. |

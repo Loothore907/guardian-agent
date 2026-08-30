@@ -17,13 +17,17 @@
     "format:check": "prettier --check \"apps/**/*.{ts,tsx,css,html,json}\" \"packages/**/*.{ts,json}\" \".github/**/*.{json,yaml,yml}\" \"*.{ts,js,cjs,json,yaml,yml}\"",
     "lint": "eslint \"apps/**/*.{ts,tsx}\" \"packages/**/*.ts\" \"*.ts\" --max-warnings=0",
     "start:control-api": "node apps/control-api/dist/main.js",
+    "start:research-service": "node apps/research-service/dist/main.js",
     "start:session-host": "node apps/session-host/dist/main.js",
     "test": "vitest run",
+    "test:live:tavily": "pnpm build && node --env-file=.env.local --test scripts/tavily-live.test.mjs",
     "test:reference-runtime": "pnpm build && node --test scripts/reference-runtime.test.mjs",
     "test:session-enforcement": "node --test spikes/enforced-session/spike.test.mjs",
     "typecheck": "tsc -b --pretty false"
   },
   "devDependencies": {
+    "@modelcontextprotocol/client": "2.0.0",
+    "@modelcontextprotocol/server": "2.0.0",
     "@eslint/js": "10.0.1",
     "@types/node": "24.13.3",
     "@types/react": "19.2.18",
