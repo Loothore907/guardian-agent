@@ -16,20 +16,19 @@ the security claims matrix, and checkpoint history in the roadmap.
 - C3 is tracked by issue
   [#4](https://github.com/Loothore907/guardian-agent/issues/4) on branch
   `codex/4-mission-deterministic-contracts`, based on `main` at `644328c`.
-- Commit `f058d41` implements the first contract foundation: strict missions and
-  profiles, scope-subset enforcement, assurance evidence, canonical digests, and
-  Guardian policy precedence. C3 is not yet complete.
+- Commits `f058d41` and `a295737` implement the complete C3 contract surface. All C3
+  exit criteria pass locally; draft PR
+  [#5](https://github.com/Loothore907/guardian-agent/pull/5) remains to be reviewed,
+  pass final remote CI, and merge before the checkpoint is closed.
 - Provider integration, the privileged broker, and approval UI remain downstream of
   C3's exit criteria.
 
 ## Next actions
 
-1. Implement typed action proposals, resource versions, bounded research requests,
-   and provenance events.
-2. Add exact canonical request, approval, and audit event schemas around the digest
-   and policy foundations now in place.
-3. Run narrow tests with each slice and the complete required suite before review.
-4. Update security claims only when the required reproducible evidence exists.
+1. Review PR #5 against the C3 exit criteria and claims matrix.
+2. Merge only after final remote CI passes and review finds no blocking issue.
+3. Close issue #4 and begin the smallest reviewable C4 runtime plan from updated
+   `main`.
 
 ## C3 completion gate
 
@@ -45,7 +44,7 @@ the authoritative deliverables and exit criteria.
 
 Verified on this host at pickup:
 
-- `pnpm check` passes: 7 test files and 24 tests, dependency boundaries, and the
+- `pnpm check` passes: 9 test files and 32 tests, dependency boundaries, and the
   production web build.
 - `pnpm test:session-enforcement` passes all 4 host-specific WSL tests when run with
   permission to access the WSL service.
@@ -56,7 +55,6 @@ The protected live Tavily and Nebius checks are not part of ordinary public CI.
 
 ## Open decisions affecting upcoming work
 
-- Canonical serialization compatibility and domain-separated digest contracts.
 - Final interaction model after the C1 hosted Nemotron stand-in.
 - Production hardening and hosted parity for the proven WSL/Linux namespace
   mechanism.
