@@ -4,12 +4,21 @@ CI is an enforcement layer. Agent instructions, review prompts, local hooks, and
 
 ## Pull-request checks
 
+The C2 baseline workflow is `.github/workflows/ci.yml`. Its `build` job installs
+the frozen pnpm graph, runs `pnpm check`, and audits production dependencies. All
+external actions are pinned to immutable commit SHAs and checkout does not persist
+GitHub credentials. The first remote run remains pending until the branch is
+explicitly committed and pushed.
+
 Once the implementation stack exists, every pull request should run:
 
 - formatting and linting;
 - type checking;
 - unit tests;
 - property-based tests for canonicalization and authorization;
+- mission, session-profile, and assurance-state tests;
+- reference-runtime tool, credential-path, and direct-egress checks;
+- outbound research and provenance tests;
 - architectural dependency checks;
 - adversarial fixtures;
 - secret scanning;
@@ -21,6 +30,8 @@ Once the implementation stack exists, every pull request should run:
 Security-relevant checks should use stable names:
 
 - `policy-invariants`
+- `session-enforcement`
+- `research-egress`
 - `digest-and-replay`
 - `credential-non-disclosure`
 - `adversarial-evaluation`
@@ -34,6 +45,7 @@ Security-relevant checks should use stable names:
 - Do not use `pull_request_target` for code execution.
 - Do not expose provider secrets to fork-originated or otherwise untrusted pull requests.
 - Run live-provider tests only through manual or scheduled workflows with a protected environment.
+- Keep live Tavily, Nebius, and GitHub credentials outside the interaction-agent and local command environments.
 - Keep mock and deterministic suites sufficient for public pull-request verification.
 - Update GitHub Actions dependencies through reviewed automation.
 

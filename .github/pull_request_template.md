@@ -10,6 +10,8 @@ Closes #
 
 - [ ] No trust boundary changes
 - [ ] Protocol or canonicalization
+- [ ] Mission, session profile, sandbox, or assurance state
+- [ ] Public research gateway or journey provenance
 - [ ] Deterministic policy
 - [ ] Guardian/model provider
 - [ ] Credential broker or privileged execution
@@ -22,6 +24,8 @@ Explain the impact:
 ## Security review
 
 - [ ] No credential or credential-equivalent value enters model-visible context, public output, errors, logs, or audit records
+- [ ] Enforced, Observed, and Unknown assurance labels remain evidence-backed
+- [ ] Alternate external pathways and outbound research leakage were considered
 - [ ] Model output cannot weaken deterministic policy
 - [ ] Mutation, replay, expiry, caller binding, and scope behavior were considered
 - [ ] External side effects and destinations are explicit

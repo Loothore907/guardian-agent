@@ -32,6 +32,8 @@ The hackathon prototype does not claim to defend against:
 - compromised host operating systems or privileged local malware;
 - compromised vaults, authenticators, model providers, or service providers;
 - compromised adapters running inside the trusted execution boundary;
+- arbitrary third-party agent harnesses that do not provide the documented Guardian Session restrictions;
+- direct external pathways or credentials deliberately enabled outside Guardian;
 - all prompt injection or social engineering;
 - side channels outside the documented test environment; or
 - production-grade biometric, hardware-backed, or cryptographic assurance unless specifically implemented and verified.

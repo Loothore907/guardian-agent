@@ -20,11 +20,12 @@ Guardian Agent welcomes focused contributions that preserve its trust boundaries
 
 ## Required change evidence
 
-A pull request that changes authorization, policy, schemas, canonicalization, adapters, credentials, audit output, or model integration must include:
+A pull request that changes session enforcement, assurance state, public research, authorization, policy, schemas, canonicalization, adapters, credentials, audit output, or model integration must include:
 
 - the affected trust boundary;
 - tests for intended and rejected behavior;
 - a credential and logging exposure review;
+- alternate-path and outbound-data analysis where applicable;
 - replay, expiry, scope, and mutation analysis where applicable;
 - an update to security claims or an explicit statement that claims are unchanged; and
 - documentation for any user-visible consequence.
@@ -42,4 +43,17 @@ Explain every new production dependency in the pull request. Prefer small, maint
 
 ## Verification
 
-Canonical commands will be added after the implementation stack is selected. Until then, documentation changes must at minimum pass link, spelling, and Markdown checks when those checks become available.
+Install the exact locked dependency graph and run the complete ordinary suite:
+
+```sh
+pnpm install --frozen-lockfile
+pnpm check
+```
+
+`pnpm check` runs formatting, linting, strict type checking, deterministic tests,
+package-boundary enforcement, and the production build. On the documented
+Windows/WSL reference host, also run `pnpm test:session-enforcement` for changes to
+the launcher, sandbox, executor, assurance evidence, or credential boundary.
+
+Public pull-request checks must not receive Tavily, Nebius, GitHub, or interaction
+model credentials. Live-provider verification is explicit and protected.

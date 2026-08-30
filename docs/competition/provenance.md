@@ -9,6 +9,7 @@ The Guardian Agent concept and preliminary architecture existed before software 
 - August 26, 2026 - competition submission period opened.
 - August 28, 2026 - concept document reviewed; local empty Git repository initialized; entrant registered; Builder Program and platform accounts created.
 - August 28, 2026 - governance, security, architecture, competition, and repository policies established in the initial commit.
+- August 29, 2026 - product scope refined from optional MCP mediation to a reference enforced Guardian Session with mission-scoped runtime controls and Tavily-mediated public-research provenance; implementation remained unstarted.
 
 ## AI-assisted development
 

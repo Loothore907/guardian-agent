@@ -1,0 +1,10 @@
+{
+  "name": "@guardian/control-api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@guardian/contracts": "workspace:*",
+    "fastify": "5.12.1"
+  }
+}

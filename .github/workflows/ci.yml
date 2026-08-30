@@ -1,0 +1,46 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          run_install: false
+          version: 11.19.0
+
+      - name: Install Node.js
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          cache: pnpm
+          node-version-file: .node-version
+
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run required checks
+        run: pnpm check
+
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level high

@@ -1,0 +1,84 @@
+:root {
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  color: #eef7f2;
+  background: #07110e;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at 85% 15%, rgba(72, 179, 126, 0.18), transparent 32rem), #07110e;
+}
+
+.shell {
+  width: min(72rem, calc(100% - 3rem));
+  margin: 0 auto;
+  padding: clamp(5rem, 12vh, 9rem) 0;
+}
+
+.eyebrow {
+  margin: 0 0 1.25rem;
+  color: #65d69f;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+h1 {
+  max-width: 13ch;
+  margin: 0;
+  font-size: clamp(3rem, 8vw, 6.75rem);
+  font-weight: 620;
+  letter-spacing: -0.065em;
+  line-height: 0.94;
+}
+
+.summary {
+  max-width: 43rem;
+  margin: 2rem 0 3rem;
+  color: #a9bbb2;
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  line-height: 1.65;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 1px;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid #243a30;
+  border-radius: 1rem;
+  background: #243a30;
+}
+
+.status-grid div {
+  padding: 1.25rem;
+  background: #0b1712;
+}
+
+dt {
+  margin-bottom: 0.55rem;
+  color: #7e9489;
+  font-size: 0.78rem;
+}
+
+dd {
+  margin: 0;
+  font-weight: 650;
+}

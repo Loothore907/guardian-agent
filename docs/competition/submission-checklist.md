@@ -13,6 +13,7 @@ This checklist translates the official requirements into project gates. It was l
 
 - [ ] The working application makes a runtime call to Nebius Token Factory or runs on Nebius AI Cloud compute.
 - [ ] The working application uses at least one NVIDIA open-source model.
+- [ ] The submitted Tavily bonus candidate makes a functional runtime Tavily API call that materially contributes to the demonstrated research journey.
 - [ ] The selected category is **Best Apps and Agents**.
 - [ ] The application installs and runs consistently on its stated platform.
 - [ ] The demonstrated behavior matches the submitted description and video.
@@ -31,6 +32,7 @@ This checklist translates the official requirements into project gates. It was l
 - [ ] All source code, required assets, and instructions needed to run the project are included.
 - [ ] The README contains clean-environment setup and run instructions.
 - [ ] The README explains the NVIDIA model, Token Factory or AI Cloud usage, and any other Nebius services.
+- [ ] The README explains Tavily's public-research role, outbound-data limits, provenance treatment, and failure behavior.
 - [ ] The tagged revision matches the tested build, demo, video, and public claims.
 
 ## Demo and judging access
@@ -45,6 +47,7 @@ This checklist translates the official requirements into project gates. It was l
 - [ ] The public YouTube demonstration is less than three minutes.
 - [ ] The video shows the application functioning on its intended platform.
 - [ ] Audio explains the use of Nebius and the selected NVIDIA model.
+- [ ] The video visibly connects Tavily-retrieved evidence to Guardian's research journey and decision context.
 - [ ] The project description clearly explains what was created, why, and how it works.
 - [ ] Required product feedback covers the Nebius and NVIDIA tools actually used.
 - [ ] Submission text distinguishes implemented controls, verified evidence, goals, and non-claims.
