@@ -12,22 +12,21 @@ the security claims matrix, and checkpoint history in the roadmap.
 - PR [#2](https://github.com/Loothore907/guardian-agent/pull/2) was squash-merged
   into `main` as `33e3d72`; issue
   [#1](https://github.com/Loothore907/guardian-agent/issues/1) closed with it.
-- The local checkout is on `main` at the merged revision, with the handoff-library
-  cleanup intentionally left uncommitted for review.
 - The next checkpoint is C3: Mission and deterministic contracts.
-- No C3 issue or branch has been created.
+- C3 is tracked by issue
+  [#4](https://github.com/Loothore907/guardian-agent/issues/4) on branch
+  `codex/4-mission-deterministic-contracts`, based on `main` at `644328c`.
 - Provider integration, the privileged broker, and approval UI remain downstream of
   C3's exit criteria.
 
 ## Next actions
 
-1. Review and record the handoff-library cleanup.
-2. Create a focused C3 issue and a `codex/...` branch from updated `main`.
-3. Turn the C3 contract list into the smallest reviewable schema and property-test
-   slices.
-4. Implement strict mission, profile, assurance, proposal, provenance,
-   authorization, canonical request, digest, approval, and audit contracts.
-5. Update security claims only when the required reproducible evidence exists.
+1. Implement the first review slice: mission, session profile, scope primitives,
+   budgets, and assurance evidence.
+2. Continue through the typed proposal/provenance, authorization-lattice,
+   canonical-request/digest, and cross-cutting property-test slices in issue #4.
+3. Run narrow tests with each slice and the complete required suite before review.
+4. Update security claims only when the required reproducible evidence exists.
 
 ## C3 completion gate
 
@@ -54,7 +53,6 @@ The protected live Tavily and Nebius checks are not part of ordinary public CI.
 
 ## Open decisions affecting upcoming work
 
-- Exact C3 issue scope and review slices.
 - Canonical serialization compatibility and domain-separated digest contracts.
 - Final interaction model after the C1 hosted Nemotron stand-in.
 - Production hardening and hosted parity for the proven WSL/Linux namespace
