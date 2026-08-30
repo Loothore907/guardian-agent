@@ -16,15 +16,18 @@ the security claims matrix, and checkpoint history in the roadmap.
 - C3 is tracked by issue
   [#4](https://github.com/Loothore907/guardian-agent/issues/4) on branch
   `codex/4-mission-deterministic-contracts`, based on `main` at `644328c`.
+- Commit `f058d41` implements the first contract foundation: strict missions and
+  profiles, scope-subset enforcement, assurance evidence, canonical digests, and
+  Guardian policy precedence. C3 is not yet complete.
 - Provider integration, the privileged broker, and approval UI remain downstream of
   C3's exit criteria.
 
 ## Next actions
 
-1. Implement the first review slice: mission, session profile, scope primitives,
-   budgets, and assurance evidence.
-2. Continue through the typed proposal/provenance, authorization-lattice,
-   canonical-request/digest, and cross-cutting property-test slices in issue #4.
+1. Implement typed action proposals, resource versions, bounded research requests,
+   and provenance events.
+2. Add exact canonical request, approval, and audit event schemas around the digest
+   and policy foundations now in place.
 3. Run narrow tests with each slice and the complete required suite before review.
 4. Update security claims only when the required reproducible evidence exists.
 
@@ -42,7 +45,7 @@ the authoritative deliverables and exit criteria.
 
 Verified on this host at pickup:
 
-- `pnpm check` passes: 5 test files and 8 tests, dependency boundaries, and the
+- `pnpm check` passes: 7 test files and 24 tests, dependency boundaries, and the
   production web build.
 - `pnpm test:session-enforcement` passes all 4 host-specific WSL tests when run with
   permission to access the WSL service.
