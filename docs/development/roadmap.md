@@ -374,4 +374,5 @@ At checkpoint close, record:
 | C2 - Stack and session architecture | Passed | ADR-0003 accepted; local dependency, workspace, MCP, format, lint, type, test, boundary, audit, license, and build checks pass; the first remote GitHub Actions run passed. |
 | C3 - Mission and deterministic contracts | Passed | Strict contracts, scope enforcement, assurance evidence, canonical digests, exact bindings, policy precedence, unit/property tests, security review, and remote CI pass at `65405ff`. |
 | C4 - Reference session runtime | Passed | The trusted launcher, exact catalog, lifecycle, profile-bound evidence, disposable command executor, host isolation probes, and remote CI pass at `8d1eee1`. |
-| C5-C11 | Not started | C5 is next; later checkpoints remain dependency ordered. |
+| C5 - Tavily research gateway | In progress | Issue #11 and branch `codex/11-tavily-research-gateway` begin with deterministic outbound-data, domain, relevance, and budget enforcement before provider integration. |
+| C6-C11 | Not started | Later checkpoints remain dependency ordered. |

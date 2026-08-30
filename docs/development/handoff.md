@@ -25,18 +25,23 @@ the security claims matrix, and checkpoint history in the roadmap.
   namespaces, a tmpfs/chroot root, no effective capabilities, no public network,
   and exact `--exec` argv handling. Successful probes create four profile-bound
   evidence records before the session can report Enforced.
-- C5 (Tavily research gateway) is next. The privileged broker and approval UI remain
-  downstream.
+- C5 (Tavily research gateway) is active in issue
+  [#11](https://github.com/Loothore907/guardian-agent/issues/11) on branch
+  `codex/11-tavily-research-gateway`.
+- The first C5 slice adds strict research scope, domain, relevance, result, and
+  remaining-budget checks; rejects secret-like, private, encoded, and high-entropy
+  outbound content; and proves rejected requests never invoke a provider.
+- The privileged broker and approval UI remain downstream.
 
 ## Next actions
 
-1. Open C5 with strict outbound research and provenance contracts before adding a
-   live Tavily path.
-2. Preserve the empty, per-command C4 workspace as an explicit limitation until a
+1. Add strict sanitized provider-result contracts, untrusted content digests,
+   provenance, and the minimized research-journey ledger.
+2. Add fake, captured, malformed, unavailable, and timeout provider behavior before
+   introducing a protected live Tavily path.
+3. Preserve the empty, per-command C4 workspace as an explicit limitation until a
    credential-safe session workspace materialization design is implemented and
    tested.
-3. Keep C6 adapter/broker work behind the C5 research boundary and existing exact
-   authorization contracts.
 
 ## C4 completion gate
 
