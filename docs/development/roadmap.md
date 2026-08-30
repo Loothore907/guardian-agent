@@ -351,7 +351,7 @@ Mandatory reviews:
 | 2026-08-29 | C1 | Namespace and mediation feasibility spike | 2-4 days | Not captured | `docs/development/evidence/c1-enforcement-feasibility.md` | Passed ahead of September 4 target; time capture begins at C2 |
 | 2026-08-29 | C2 | ADR-0003, dependency review, workspace, tests, build, and CI scaffold | 2-3 days | 1.1h through 16:05 AKDT | `docs/adr/0003-implementation-stack-and-package-boundaries.md`; local `pnpm check`; [GitHub Actions run 33282416010](https://github.com/Loothore907/guardian-agent/actions/runs/33282416010) | Passed well ahead of the September 8 target |
 | 2026-08-29 | C3 | Mission, profile, assurance, action, provenance, canonical request, digest, approval, audit, and policy contracts | 4-6 days | 1.2h through 23:49 AKDT | Revision `65405ff`; PR #5; local and remote `pnpm check` with 9 test files / 33 tests | Passed after commit-by-commit security review, review fixes, and green CI |
-| 2026-08-30 | C4 | Trusted reference launcher, lifecycle, evidence, WSL isolation, exact MCP catalog, and typed local commands | 4-6 days | Approximately 0.7h through 00:50 AKDT; exact start was not separately recorded | Revisions `502a0f2`, `99add6f`, `d3c63a2`; `pnpm check` with 13 test files / 46 tests; `pnpm test:reference-runtime` | Passed locally; PR review/merge remains; empty per-command workspace is carried as an explicit limitation |
+| 2026-08-30 | C4 | Trusted reference launcher, lifecycle, evidence, WSL isolation, exact MCP catalog, and typed local commands | 4-6 days | Approximately 0.7h through 00:50 AKDT; exact start was not separately recorded | Revision `8d1eee1`; PR #8; local and remote `pnpm check` with 13 test files / 46 tests; `pnpm test:reference-runtime` | Passed after clean-build dependency repair and green CI; empty per-command workspace is carried as an explicit limitation |
 | YYYY-MM-DD | C# | Concise work unit | 0h | 0h | Issue, PR, test, ADR, or artifact | None |
 
 At checkpoint close, record:
@@ -373,5 +373,5 @@ At checkpoint close, record:
 | C1 - Enforcement feasibility | Passed | Live Nebius proposal, live Tavily research, namespace, filesystem, credential, direct-egress, direct-Git, fake-provider, fail-closed, and tool-denial evidence pass. |
 | C2 - Stack and session architecture | Passed | ADR-0003 accepted; local dependency, workspace, MCP, format, lint, type, test, boundary, audit, license, and build checks pass; the first remote GitHub Actions run passed. |
 | C3 - Mission and deterministic contracts | Passed | Strict contracts, scope enforcement, assurance evidence, canonical digests, exact bindings, policy precedence, unit/property tests, security review, and remote CI pass at `65405ff`. |
-| C4 - Reference session runtime | Passed locally | The trusted launcher, exact catalog, lifecycle, profile-bound evidence, disposable command executor, and host isolation probes pass on the documented Windows/WSL runtime; PR review/merge remains. |
-| C5-C11 | Not started | C5 can begin after C4 review/merge; later checkpoints remain dependency ordered. |
+| C4 - Reference session runtime | Passed | The trusted launcher, exact catalog, lifecycle, profile-bound evidence, disposable command executor, host isolation probes, and remote CI pass at `8d1eee1`. |
+| C5-C11 | Not started | C5 is next; later checkpoints remain dependency ordered. |
