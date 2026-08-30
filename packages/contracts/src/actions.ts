@@ -40,6 +40,28 @@ export const ResearchRequestSchema = z
   });
 export type ResearchRequest = DeepReadonly<z.infer<typeof ResearchRequestSchema>>;
 
+export const ResearchScopeSchema = z
+  .strictObject({
+    allowedDomains: z.array(z.hostname()).min(1).max(10),
+    maxResultsPerRequest: z.number().int().min(1).max(3),
+    remainingRequests: z.number().int().min(0).max(1_000),
+    remainingResults: z.number().int().min(0).max(10_000),
+    requiredTerms: z.array(boundedVisibleText(64)).min(1).max(16),
+  })
+  .superRefine((scope, context) => {
+    addDuplicateIssue(
+      scope.allowedDomains.map((domain) => domain.toLowerCase()),
+      context,
+      ["allowedDomains"],
+    );
+    addDuplicateIssue(
+      scope.requiredTerms.map((term) => term.toLowerCase()),
+      context,
+      ["requiredTerms"],
+    );
+  });
+export type ResearchScope = DeepReadonly<z.infer<typeof ResearchScopeSchema>>;
+
 export const LocalCommandRequestSchema = z.strictObject({
   executable: z.enum(["git", "node", "pnpm", "rg"]),
   arguments: z.array(boundedVisibleText(256)).max(32),
