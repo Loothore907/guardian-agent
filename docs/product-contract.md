@@ -64,7 +64,7 @@ The mission permits bounded local analysis, tests, GitHub reads, and Tavily-medi
 3. a merge request rejected because it exceeds the read-only mission;
 4. direct network and Git push bypass attempts failing in the reference runtime;
 5. Nemotron explaining contextual risk without weakening deterministic policy;
-6. a later, explicit one-time merge authorization bound to the pull-request head commit;
+6. a later human-authored mission revision, new bound profile, and explicit one-time merge authorization tied to the pull-request head commit;
 7. post-approval mutation and replay rejection; and
 8. a sanitized audit and research journey explaining the complete decision.
 
