@@ -12,10 +12,11 @@ The model is not the root of trust.
 
 ## Current status
 
-Guardian Agent has completed its product contract and local enforcement-feasibility
-checkpoint. The TypeScript workspace, package boundaries, real MCP v2 status tool,
-tests, build, and baseline CI workflow are scaffolded, and the first remote CI run
-passes. No broader security guarantee should be treated as
+Guardian Agent has completed its product contract, enforcement feasibility, mission
+contracts, and local C4 reference-runtime gate. The supported Windows/WSL launcher
+now creates evidence-bound sessions with a profile-derived MCP catalog and a
+credential-free, network-disabled disposable command executor. No broader security
+guarantee should be treated as
 implemented until it appears in [Security claims](docs/security-claims.md) with
 corresponding evidence.
 
@@ -65,11 +66,12 @@ Useful commands:
 pnpm dev:web
 pnpm start:control-api
 pnpm start:session-host
+pnpm test:reference-runtime
 pnpm test:session-enforcement
 ```
 
-Build before using either `start` command. The enforcement test is currently a
-Windows/WSL reference-runtime check; ordinary public CI uses deterministic,
+Build before using either `start` command. The reference-runtime and enforcement
+tests are Windows/WSL host checks; ordinary public CI uses deterministic,
 credential-free tests. Live Tavily and Nebius checks are explicit protected local
 operations and are not part of `pnpm check`.
 
