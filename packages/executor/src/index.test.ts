@@ -38,4 +38,16 @@ describe("local command output sanitization", () => {
       ),
     ).toEqual({ text: "command error[31msecret", truncated: false });
   });
+
+  it("redacts recognizable credentials and host-user paths before returning output", () => {
+    expect(
+      sanitizeLocalCommandOutput(
+        "token=do-not-return ghp_abcdefghijklmnopqrstuvwxyz C:\\Users\\guardian\\private.txt /mnt/c/Users/guardian/project",
+        1_024,
+      ),
+    ).toEqual({
+      text: "token=[redacted] [redacted] [redacted] [redacted]",
+      truncated: false,
+    });
+  });
 });

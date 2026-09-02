@@ -1,6 +1,6 @@
 # Contributing
 
-Guardian Agent welcomes focused contributions that preserve its trust boundaries and keep the prototype auditable.
+Agentic Guardian welcomes focused contributions that preserve its trust boundaries and keep the prototype auditable.
 
 ## Before opening a change
 

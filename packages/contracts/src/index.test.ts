@@ -15,6 +15,21 @@ describe("ToolProposalSchema", () => {
     });
   });
 
+  it("accepts a minimized exact GitHub merge proposal", () => {
+    expect(
+      ToolProposalSchema.parse({
+        tool: "github.pull_request.merge",
+        arguments: {
+          owner: "loothore907",
+          repository: "guardian-agent-demo",
+          pullRequest: 2,
+          expectedHeadCommit: "a".repeat(40),
+          method: "squash",
+        },
+      }),
+    ).toMatchObject({ tool: "github.pull_request.merge" });
+  });
+
   it("rejects unknown authority instead of stripping it", () => {
     expect(() =>
       ToolProposalSchema.parse({

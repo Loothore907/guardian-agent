@@ -4,6 +4,14 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@guardian/broker": "workspace:*"
+    "@guardian/authority-client": "workspace:*",
+    "@guardian/broker": "workspace:*",
+    "@guardian/contracts": "workspace:*",
+    "@guardian/credential-store": "workspace:*"
+  },
+  "devDependencies": {
+    "@guardian/authority-service": "workspace:*",
+    "@guardian/authorization": "workspace:*",
+    "@guardian/authorization-service": "workspace:*"
   }
 }

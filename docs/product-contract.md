@@ -27,19 +27,82 @@ In shorter form:
 - A person delegating a long-running research or engineering task who wants routine progress without repeated authentication or approval fatigue.
 - An agent developer or operator who needs a reference pattern for credential isolation, bounded capabilities, exact approval, and evidence-backed audit.
 
-For the competition prototype, the delegating user, account owner, and operator may be the same person.
+For the competition prototype, the delegating user, provider-account owner, and
+Guardian operator are normally the same person. Agentic Guardian is local-first
+and self-hosted; the project maintainers are not the user's credential custodian.
 
 ## Product model
 
-1. The user creates a mission directly through Guardian before the interaction agent starts.
-2. Guardian selects a versioned session profile defining tools, filesystem scope, network policy, time, volume, destinations, and side-effect limits.
-3. A trusted launcher starts a disposable reference runtime with no service credentials and no uncontrolled external pathway.
-4. The interaction agent performs local work and calls only mission-approved Guardian capabilities for public research or authenticated service operations.
-5. Tavily supplies bounded public evidence. Guardian records a minimized research journey and labels all retrieved content untrusted.
-6. Deterministic policy establishes the minimum authorization requirement for every proposal.
-7. A constrained Nemotron guardian receives a minimized, credential-free risk envelope and may preserve or increase the requirement.
-8. A human approves consequential boundary crossings when no existing mission grant authorizes them.
-9. The privileged broker independently revalidates and executes only the exact authorized typed operation.
+1. The user delegates work to a Guardian worker. The competition reference worker uses a versioned coding model through Nebius; future external-scaffold and local adapters may implement the same contract. A prompt-level Guardian invocation submits an untrusted natural-language session draft but creates no authority.
+2. Guardian deterministically validates the draft envelope. In the normal cloud route, bounded Qwen review reports either semantic readiness or missing-field codes and targeted clarification questions. Qwen does not validate authority.
+3. Guardian revalidates every answer, normalizes and clamps the completed draft to supported capabilities, and produces a candidate mission and versioned session profile defining tools, filesystem scope, network policy, time, volume, destinations, and side-effect limits.
+4. A constrained Nemotron guardian may assess a minimized credential-free mission-risk envelope and may preserve or increase the deterministic scrutiny requirement. It cannot expand the candidate mission or activate it.
+5. Guardian displays the exact normalized candidate and consequences. Direct human confirmation of its digest is required before it becomes mission authority.
+6. For Enforced mode, a trusted Guardian launcher starts a fresh selected worker process inside a disposable reference runtime with no service credentials and no uncontrolled external pathway. An unrestricted existing host is Observed or Unknown.
+7. The worker performs local reasoning, coding, and research and calls only mission-approved Guardian capabilities. Its model assignment is trusted deployment policy, never prompt-controlled session authority.
+8. Tavily supplies bounded public evidence. Guardian records a minimized research journey and labels all retrieved content untrusted.
+9. Deterministic policy establishes the minimum authorization requirement for every proposal. Runtime Nemotron review may preserve or increase that floor at selected semantic-risk boundaries.
+10. A central local authority service is the sole owner of durable authorization state and exposes narrow authenticated operations to trusted components.
+11. A human uses a user-verifying passkey to approve an exact consequential boundary crossing when the revised mission permits it but no existing grant authorizes it.
+12. The privileged broker independently revalidates and executes only the exact authorized typed operation using a just-in-time, short-lived service credential.
+13. Denial contains the rejected boundary attempt and normally returns a typed result so permitted work can continue. Immediate-severity events or a bounded repeated-violation pattern may trigger deterministic revocation or interruption; model output cannot choose or weaken that policy.
+
+## Host-agent and Guardian model roles
+
+The terminal is the primary work surface. A user can start Guardian with a
+natural-language task without first completing a broad web form. A host agent or
+scaffold integration may pre-populate a proposed mission, but that draft
+is untrusted and cannot create or expand authority. Guardian presents the
+normalized goal, resources, tools, destinations, lifetime, volume, filesystem and
+network scope, and side-effect consequences for direct human confirmation.
+
+The canonical `https://agentic-guardian.com` origin supplies documentation,
+downloads, release metadata, competition demonstration, and—only where a later
+threat model justifies it—a narrow independent human ceremony. Routine session
+creation, provider credential enrollment, agent work, policy, and audit remain in
+the user's self-hosted environment.
+
+The competition reference integration launches Guardian's provider-neutral native
+worker inside the controlled runtime and serves its versioned coding model through
+Nebius Token Factory. Future Codex, Claude Code, Cursor, and local-model adapters
+remain compatible targets. Merely installing Guardian
+tools in an existing unrestricted harness is useful mediation but is Observed or
+Unknown, not Enforced.
+
+Before activation, the normal cloud `qwen_assisted` route gives the versioned
+policy's mission-dialogue model (currently Qwen) a bounded, credential-free draft
+envelope after deterministic input screening. It reviews semantic completeness
+and returns only readiness or bounded missing-field codes and targeted questions.
+Guardian code revalidates the answers and remains the only mission compiler. A
+deliberately selected structured integration may bypass model review, and any
+fallback is visible and auditable.
+
+After deterministic compilation, Qwen may explain the candidate mission and its
+consequences. After activation it may explain denials, expansion requests, and
+approval consequences. It cannot perform the delegated task, inspect the
+repository, propose or execute tools, validate authority, confirm a digest,
+activate a session, or expand authority. Nemotron separately evaluates minimized
+credential-free mission-risk or action-risk envelopes and may only preserve or
+increase scrutiny. Model assignments are trusted, versioned evidence pins rather
+than permanent choices; session prompts cannot select them, and the competition
+policy must retain NVIDIA Nemotron risk roles. The competition runtime needs no
+OpenAI API key: Nebius serves the worker, Qwen dialogue, and Nemotron risk calls,
+while their contracts and contexts stay separate. See ADR-0012, ADR-0013, and
+ADR-0015.
+
+`guardian setup` is a trusted local ceremony. It will place user-owned Nebius,
+optional Tavily, and operation-specific credentials directly into the operating
+system credential store or a documented secured local alternative. Secrets never
+enter mission text, model arguments, MCP requests, command arguments, browser
+URLs, the public domain, or the authority database. Credential-holding services
+resolve them only for fixed, typed provider operations and return sanitized
+results. `.env.local` is development-only, not an installation mechanism.
+
+Cloud mode sends only selected minimized Guardian context to Nebius and, when research is enabled,
+bounded public-research queries to Tavily. The user owns those accounts and their
+billing. Future provider adapters may support hybrid or local modes, but current
+competition implementation still depends on Nebius and the research story uses
+Tavily.
 
 ## Assurance levels
 
@@ -53,26 +116,29 @@ The competition demonstration targets **Enforced** for the documented reference 
 
 ## Competition mission
 
-The reference mission is:
+The reference mission operates against a dedicated, disposable demo repository:
 
-> Review pull request 17 and report findings. Do not modify the remote repository.
+> Review the seeded pull request and report findings. Do not modify the remote repository.
 
 The mission permits bounded local analysis, tests, GitHub reads, and Tavily-mediated public research. It denies external writes. The demonstration then shows:
 
 1. useful research and review proceeding without repeated login;
-2. hostile public content attempting to influence the interaction agent;
-3. a merge request rejected because it exceeds the read-only mission;
+2. a controlled live public page delivering indirect prompt-injection content through Guardian's bounded retrieval path;
+3. an unsafe merge or authority-expansion proposal rejected by the read-only mission before approval, credential minting, or GitHub mutation consumes anything;
 4. direct network and Git push bypass attempts failing in the reference runtime;
-5. Nemotron explaining contextual risk without weakening deterministic policy;
-6. a later human-authored mission revision, new bound profile, and explicit one-time merge authorization tied to the pull-request head commit;
-7. post-approval mutation and replay rejection; and
-8. a sanitized audit and research journey explaining the complete decision.
+5. Nemotron explaining or increasing contextual risk without weakening deterministic policy;
+6. a minimized evidence-to-attempt-to-decision view that does not claim the public content caused the proposal;
+7. a later human-authored mission revision and legitimate merge request approved with a user-verifying passkey bound to the repository, pull-request head commit, squash method, expiry, and nonce;
+8. immediate re-fetch, re-normalization, digest verification, atomic nonce consumption, and execution through a narrow GitHub adapter using a locally resolved short-lived or narrowly scoped credential;
+9. post-approval mutation and replay rejection; and
+10. a sanitized audit contrasting the injected denied attempt with the separately authorized legitimate action.
 
 ## Product goals and prototype success metrics
 
 ### Credential isolation
 
-- No GitHub, Tavily, Nebius, or other reusable provider credential is available to the interaction model or local command sandbox.
+- No GitHub, Tavily, Nebius, or other reusable provider credential is available to
+  the external host agent, Guardian models, or local command sandbox.
 - Provider capture, public results, errors, logs, traces, and audit events pass secret-corpus and negative retrieval tests.
 - Direct credential-retrieval capabilities do not exist.
 
@@ -93,6 +159,12 @@ The mission permits bounded local analysis, tests, GitHub reads, and Tavily-medi
 
 - Mutation, expiry, replay, cross-session use, cross-connection use, scope expansion, and resource-version changes are rejected by reproducible tests.
 - A privileged operation is re-normalized and its digest revalidated immediately before execution.
+- The showcased approval uses a user-verifying WebAuthn assertion whose challenge is bound to the exact request and authority context.
+- The showcased GitHub credential is short-lived or narrowly scoped, resolved by
+  the self-hosting user's local credential service, and unavailable to the agent,
+  models, authority database, logs, and public results. The final GitHub
+  enrollment mechanism remains to be reconciled with ADR-0008 before this is an
+  implementation claim.
 
 ### Guardian contribution
 
@@ -104,6 +176,7 @@ The mission permits bounded local analysis, tests, GitHub reads, and Tavily-medi
 ### Human comprehension
 
 - A new viewer can identify the mission, active restrictions, attempted action, relevant public influence, required approval, and outcome without reading the architecture documentation.
+- A new user can start and resume the reference session from the Guardian-owned terminal CLI, with browser transitions limited to clearly identified trusted ceremonies.
 - The complete judged story fits within a public demonstration video of less than three minutes.
 
 ## Non-goals for the competition prototype
@@ -115,8 +188,14 @@ The mission permits bounded local analysis, tests, GitHub reads, and Tavily-medi
 - Supporting unrestricted shell, arbitrary external destinations, or generic authenticated HTTP.
 - Implementing purchases, payments, financial transfers, or production commerce authorization.
 - Building multiple service adapters, a plugin marketplace, or production multi-tenant administration.
-- Claiming production biometric, hardware-backed, or formally verified authorization.
+- Supporting every terminal agent or IDE, general OAuth brokerage, a generic
+  secrets vault, or arbitrary provider credentials. Narrow local enrollment for
+  the selected providers is in scope.
+- Claiming that every passkey is biometric or hardware-backed, or that the prototype provides production identity recovery or formally verified authorization.
 
 ## Scope rule
 
-If schedule or complexity creates a conflict, preserve the enforced reference session, deterministic authority boundary, one real GitHub vertical slice, required Nemotron integration, Tavily research journey, and reproducible evidence before adding breadth.
+If schedule or complexity creates a conflict, preserve the terminal-first Enforced
+reference session, deterministic authority boundary, one real GitHub vertical
+slice, required Nemotron integration, Tavily research journey, and reproducible
+evidence before adding scaffold, connection, or credential breadth.

@@ -1,4 +1,5 @@
 import {
+  AuthorityCapabilityBindingSchema,
   MissionSchema,
   OpaqueIdSchema,
   ResearchScopeSchema,
@@ -9,13 +10,15 @@ import {
   type ResearchScope,
   type ResearchServiceProcessConfig,
 } from "@guardian/contracts";
-import { runReferenceIsolationProbe } from "@guardian/executor";
+import { LocalAuthorityIpcClient } from "@guardian/authority-client";
+import { runReferenceIsolationProbe, runReferenceLocalCommand } from "@guardian/executor";
 import {
   BoundSessionRuntime,
   createReferenceAssuranceEvidence,
   type BoundSessionInput,
 } from "@guardian/session";
 import { LocalResearchIpcClient, type ResearchServiceClient } from "@guardian/research";
+import { assertPreparedSessionWorkspace, type PreparedSessionWorkspace } from "@guardian/workspace";
 
 export interface ReferenceResearchConnectionInput {
   readonly endpoint: unknown;
@@ -31,7 +34,13 @@ export interface ReferenceSessionLaunchInput {
   readonly durationSeconds: unknown;
   readonly mission: unknown;
   readonly profile: unknown;
+  readonly workspace: PreparedSessionWorkspace;
   readonly research?: ReferenceResearchConnectionInput;
+  readonly authority?: {
+    readonly endpoint: unknown;
+    readonly binding: unknown;
+    readonly connectionIds?: readonly unknown[];
+  };
 }
 
 export interface LaunchedResearchBinding {
@@ -44,6 +53,9 @@ export interface LaunchedReferenceSession {
   readonly runtime: BoundSessionRuntime;
   readonly profile: SessionProfile;
   readonly research?: LaunchedResearchBinding;
+  readonly durableAuthority: boolean;
+  readonly workspace: PreparedSessionWorkspace["result"];
+  readonly localCommand: (request: unknown) => ReturnType<typeof runReferenceLocalCommand>;
 }
 
 export async function launchReferenceSession(
@@ -56,6 +68,10 @@ export async function launchReferenceSession(
   const requestedProfile = SessionProfileSchema.parse(input.profile);
   const policyVersion = VersionNumberSchema.parse(input.policyVersion);
   const durationSeconds = VersionNumberSchema.max(604_800).parse(input.durationSeconds);
+  const workspace = assertPreparedSessionWorkspace(input.workspace);
+  if (workspace.sessionId !== sessionId) {
+    throw new TypeError("prepared workspace is bound to a different session");
+  }
 
   if (
     requestedProfile.assurance.level !== "unknown" ||
@@ -118,7 +134,55 @@ export async function launchReferenceSession(
   };
 
   const runtime = BoundSessionRuntime.create(runtimeInput);
-  if (input.research === undefined) return { profile, runtime };
+  if (input.authority !== undefined) {
+    const binding = AuthorityCapabilityBindingSchema.parse(input.authority.binding);
+    if (
+      binding.callerRole !== "launcher" ||
+      binding.sessionId !== sessionId ||
+      binding.callerId !== callerId
+    ) {
+      throw new TypeError("launcher authority capability binding is invalid");
+    }
+    const authority = new LocalAuthorityIpcClient({
+      endpoint: input.authority.endpoint,
+      binding,
+    });
+    await authority.createSession(
+      {
+        schemaVersion: 1,
+        sessionId,
+        callerId,
+        missionId: mission.missionId,
+        missionVersion: mission.version,
+        profileId: profile.profileId,
+        profileVersion: profile.version,
+        policyVersion,
+        startsAt,
+        expiresAt,
+        status: "active",
+        createdAt: startsAt,
+        updatedAt: startsAt,
+      },
+      {
+        sessionId,
+        remainingToolCalls: profile.permissions.volume.maxToolCalls,
+        remainingLocalCommands: profile.permissions.volume.maxLocalCommands,
+        remainingResearchRequests: profile.permissions.volume.maxResearchRequests,
+        remainingResearchResults: profile.permissions.volume.maxResearchResults,
+      },
+      input.authority.connectionIds ?? [],
+    );
+  }
+  if (input.research === undefined) {
+    return {
+      profile,
+      runtime,
+      durableAuthority: input.authority !== undefined,
+      workspace: workspace.result,
+      localCommand: (request) =>
+        runReferenceLocalCommand(request, { workspaceHostPath: workspace.hostPath }),
+    };
+  }
 
   const scope = ResearchScopeSchema.parse({
     allowedDomains: publicDestinations.map((destination) => destination.hostname),
@@ -154,5 +218,13 @@ export async function launchReferenceSession(
     policyVersion,
   });
 
-  return { profile, runtime, research: { client, scope, serviceConfig } };
+  return {
+    profile,
+    runtime,
+    research: { client, scope, serviceConfig },
+    durableAuthority: input.authority !== undefined,
+    workspace: workspace.result,
+    localCommand: (request) =>
+      runReferenceLocalCommand(request, { workspaceHostPath: workspace.hostPath }),
+  };
 }

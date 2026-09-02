@@ -6,12 +6,16 @@ import {
   type ResearchScope,
 } from "@guardian/contracts";
 import {
+  ResearchJourneyLedger,
+  ResearchRequestDeniedError,
   SessionResearchGateway,
   LocalResearchIpcServer,
+  guardResearchRequest,
   type ResearchBudgetSnapshot,
   type ResearchJourneyResult,
   type ResearchProvider,
 } from "@guardian/research";
+import type { AuthorityControlClient } from "@guardian/authority-client";
 
 const TAVILY_SEARCH_ENDPOINT = "https://api.tavily.com/search";
 const DEFAULT_TIMEOUT_MS = 10_000;
@@ -212,6 +216,56 @@ export class CredentialHoldingResearchService {
   }
 }
 
+export class DurableCredentialHoldingResearchService {
+  readonly #sessionId: string;
+  readonly #scope: ResearchScope;
+  readonly #authority: AuthorityControlClient;
+  readonly #provider: TavilySearchProvider;
+  readonly #ledger: ResearchJourneyLedger;
+
+  constructor(options: {
+    readonly sessionId: string;
+    readonly scope: ResearchScope;
+    readonly authority: AuthorityControlClient;
+    readonly apiKey: string;
+    readonly transport?: TavilyTransport;
+    readonly timeoutMs?: number;
+  }) {
+    this.#sessionId = options.sessionId;
+    this.#scope = options.scope;
+    this.#authority = options.authority;
+    this.#provider = new TavilySearchProvider(options);
+    this.#ledger = new ResearchJourneyLedger(options.sessionId);
+  }
+
+  async search(requestValue: unknown, retrievedAt: unknown) {
+    const request = guardResearchRequest(requestValue, this.#scope);
+    const reservation = await this.#authority.reserveResearch(this.#sessionId, request.maxResults);
+    if (reservation === null) throw new ResearchRequestDeniedError("budget_exhausted");
+    let result: ResearchJourneyResult;
+    try {
+      const response = await this.#provider.search(request);
+      result = this.#ledger.record(request, response, retrievedAt);
+    } catch (error) {
+      await this.#authority.settleResearchResults(reservation.reservationId, this.#sessionId, 0);
+      throw error;
+    }
+    const budget = await this.#authority.settleResearchResults(
+      reservation.reservationId,
+      this.#sessionId,
+      result.evidence.length,
+    );
+    return {
+      result,
+      budget: {
+        sessionId: this.#sessionId,
+        remainingRequests: budget.remainingResearchRequests,
+        remainingResults: budget.remainingResearchResults,
+      },
+    };
+  }
+}
+
 export function createResearchServiceFromEnvironment(options: {
   readonly sessionId: unknown;
   readonly scope: ResearchScope;
@@ -230,8 +284,28 @@ export async function startCredentialHoldingResearchIpcServer(options: {
   readonly transport?: TavilyTransport;
   readonly timeoutMs?: number;
   readonly now?: () => string;
+  readonly authority?: AuthorityControlClient;
 }): Promise<LocalResearchIpcServer> {
   const config = ResearchServiceProcessConfigSchema.parse(options.config);
+  if (options.authority !== undefined) {
+    const apiKey = options.environment.TAVILY_API_KEY;
+    if (apiKey === undefined) throw new TavilyProviderError("unavailable");
+    const service = new DurableCredentialHoldingResearchService({
+      sessionId: config.sessionId,
+      scope: config.scope,
+      authority: options.authority,
+      apiKey,
+      ...(options.transport === undefined ? {} : { transport: options.transport }),
+      ...(options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs }),
+    });
+    const server = new LocalResearchIpcServer(
+      config,
+      (request, requestedAt) => service.search(request, requestedAt),
+      { ...(options.now === undefined ? {} : { now: options.now }) },
+    );
+    await server.listen();
+    return server;
+  }
   const service = createResearchServiceFromEnvironment({
     sessionId: config.sessionId,
     scope: config.scope,

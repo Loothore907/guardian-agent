@@ -12,7 +12,7 @@ The competition build must also use Nebius infrastructure and an NVIDIA open-sou
 
 ## Decision
 
-Guardian Agent will be a capability and authorization broker, not a password manager or general autonomous assistant.
+Agentic Guardian will be a capability and authorization broker, not a password manager or general autonomous assistant.
 
 The architecture separates:
 

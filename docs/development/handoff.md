@@ -1,130 +1,332 @@
 # Current development handoff
 
-Last updated: 2026-08-30 (AKDT)
+Last updated: 2026-09-02 (AKDT)
 
-This is the project's single rotating pickup page. Replace resolved state instead of
-archiving handoffs here. Durable decisions belong in ADRs, verified guarantees in
-the security claims matrix, and checkpoint history in the roadmap.
+This is the single rotating pickup page for a fresh development session. Treat it
+as context and sequencing guidance, not as the next session's goal by itself.
+Durable choices live in ADRs, verified guarantees in `docs/security-claims.md`,
+and checkpoint history in `docs/development/roadmap.md`.
 
-## Current state
+## Start here
 
-- C0 through C4 have passed.
-- PR [#2](https://github.com/Loothore907/guardian-agent/pull/2) was squash-merged
-  into `main` as `33e3d72`; issue
-  [#1](https://github.com/Loothore907/guardian-agent/issues/1) closed with it.
-- PR [#5](https://github.com/Loothore907/guardian-agent/pull/5) merged C3 into
-  `main` as `65405ff` and closed issue
-  [#4](https://github.com/Loothore907/guardian-agent/issues/4).
-- PR [#8](https://github.com/Loothore907/guardian-agent/pull/8) merged C4 into
-  `main` as `8d1eee1` and closed issue
-  [#7](https://github.com/Loothore907/guardian-agent/issues/7).
-- PR [#10](https://github.com/Loothore907/guardian-agent/pull/10) merged the
-  non-normative future-trajectory guide into `main` as `3c7adf3`. It is an
-  incubation guide, not an implementation commitment or authority source.
-- The trusted launcher now binds the mission, profile, caller, policy, lifetime,
-  revocation, filesystem scope, and volume; it derives the MCP catalog from the
-  exact profile and refuses caller-supplied assurance or unsupported catalogs.
-- A production-structured Windows/WSL executor uses an empty environment, private
-  namespaces, a tmpfs/chroot root, no effective capabilities, no public network,
-  and exact `--exec` argv handling. Successful probes create four profile-bound
-  evidence records before the session can report Enforced.
-- C5 (Tavily research gateway) is active in issue
-  [#11](https://github.com/Loothore907/guardian-agent/issues/11) on branch
-  `codex/11-tavily-research-gateway`. Commit `2abdd53` is pushed in pull request
-  [#12](https://github.com/Loothore907/guardian-agent/pull/12), whose remote build
-  passed.
-- C5 commit `72c774e` adds strict research scope, domain, relevance, result, and
-  remaining-budget checks; rejects secret-like, private, encoded, and high-entropy
-  outbound content; and proves rejected requests never invoke a provider.
-- C5 commit `b5031cc` adds strict provider-response and public-evidence contracts,
-  exact returned-domain validation, bounded and credential-redacted evidence,
-  source-content digests, monotonic in-memory provenance sequencing, and
-  duplicate-source rejection. Provider prose is explicitly labeled
-  `untrusted_public_content`, and raw queries and source content are excluded from
-  provenance.
-- C5 commit `2abdd53` adds a fixed-endpoint Tavily Search adapter, a
-  credential-holding research service, strict provider projection, redirect and
-  response-size controls, timeout/unavailable/malformed behavior, and a
-  concurrency-safe session budget. Preflight denials consume nothing; an invoked
-  provider consumes one request; only accepted evidence consumes result budget.
-- ADR-0004 and C5 commit `2abdd53` add a launcher-derived local named
-  pipe / Unix-socket boundary. It binds the exact session, caller, mission, profile,
-  policy, lifecycle, domain scope, and budget with an opaque IPC capability while
-  keeping `TAVILY_API_KEY` only in the research-service process.
-- A protected live Tavily Search passed through the trusted launcher,
-  profile-derived MCP catalog, local pipe, separate credential-holding process,
-  fixed adapter, evidence projection, and provenance path. Search uses explicit
-  basic depth, no generated answer, no raw content or images, a maximum of two
-  results, and the exact `docs.github.com` destination.
-- The C5 local implementation and evidence gate has passed. Budget and journey
-  state remain in-memory, general remote MCP authentication is deferred beyond the
-  launcher-bound competition runtime, and the checkpoint still requires
-  pull-request security review and merge before it is closed.
-- ADR-0005 records the approved C6-C9 posture: SQLite is the planned single-host
-  durable non-secret authority store subject to a C6 evidence spike; crashes
-  interrupt active sessions rather than transparently resuming them; the Enforced
-  competition MCP path remains launcher-bound; Linux parity is a release gate; and
-  rejection audit will link minimized evidence exposure, attempt, decision,
-  boundary crossing, consumption, and control outcome without retaining hostile
-  pages, secret-like rejected values, or model chain-of-thought.
-- The privileged broker and approval UI remain downstream.
+- **Active checkpoint:** C6 on issue
+  [#13](https://github.com/Loothore907/guardian-agent/issues/13), branch
+  `codex/13-c6-durable-authorization-broker`.
+- **Logical transition:** pre-activation mission formation, trusted worker
+  assignment, W1 exact turns, the W2 credential-safe workspace, and the W3 exact
+  one-tool/result round-trip are locally implemented. The next coherent slice is
+  W4 contained denial and deterministic repeated-violation handling. Do not
+  reopen the settled worker, workspace-copy, or one-round-trip W3 decisions.
+- **Immediate objective:** distinguish an ordinary rejected worker action from a
+  failed trusted boundary. Return only a typed sanitized denial for the exact
+  attempt, keep otherwise permitted work alive, and apply deterministic severity,
+  bounded-window repeat thresholds, revocation, and interruption. Model output
+  may not choose severity or suppress revocation.
+- **Critical sequencing decision:** W3 deliberately permits only one request and
+  requires turn 2 to finish. W4 should add denial containment around that exact
+  lifecycle before considering a generalized multi-turn loop.
+- **Commit checkpoint decision:** create a local checkpoint commit for the
+  accumulated C6 authority, pre-activation, W1, W2, and W3 work **before** starting
+  W4. W1-W3 now form a coherent tested trust-boundary slice; extending this same
+  uncommitted change with denial/revocation state would make review and recovery
+  materially harder. No technical local-commit blocker is known at this handoff.
+- **Commit authority and remote boundary:** the user has not yet explicitly
+  authorized the commit itself. Preserve the complete worktree until that
+  direction is given. A local commit does not authorize a push, pull request,
+  merge, publication, release, remote rename, or other remote mutation. Suggested
+  subject: `feat: establish C6 authority and exact worker runtime`.
+- **Worktree scope:** the proposed checkpoint currently includes 59 modified
+  tracked files and 142 untracked source, test, configuration, ADR, and evidence
+  files. Treat it as one integrated checkpoint; do not selectively discard or
+  omit files merely to reduce the apparent diff.
+- **Secret caution:** `.env.local` is ignored development input. Never print,
+  stage, copy, summarize, or use it as the installation design. Never print or
+  export credential-store values.
 
-## Next actions
+## Settled architecture
 
-1. Complete the security review of pull request #12 and address any findings.
-2. Merge pull request #12 before marking C5 Passed.
-3. Begin C6 with the ADR-0005 SQLite transaction, uniqueness, concurrency, crash,
-   restart, permission, and session-ID reuse spike, then implement durable session,
-   budget, approval, nonce, and minimized rejection-context repositories.
-4. Preserve the empty, per-command C4 workspace as an explicit limitation until a
-   credential-safe session workspace materialization design is implemented and
-   tested.
+ADR-0015 supersedes ADR-0011 only where ADR-0011 assumed a third-party coding
+scaffold would be the first competition worker. The separation of responsibilities
+remains:
 
-## C4 completion gate
+1. A human begins a Guardian flow with an untrusted task request. A prompt-level
+   `@guard`-style invocation is only a signal to begin formation; it creates no
+   authority.
+2. Deterministic intake rejects malformed, secret-like, unsupported, or
+   mechanically incomplete input.
+3. Qwen receives a bounded credential-free projection and returns either
+   readiness or targeted clarification questions. It cannot compile or approve
+   authority.
+4. Deterministic Guardian code revalidates the completed draft, clamps it to
+   supported capabilities, and compiles the mission/profile candidate.
+5. Nemotron receives a separate minimized setup-risk envelope. It may maintain or
+   increase the deterministic floor; it may never reduce it or grant authority.
+6. Guardian displays the exact mission, permissions, integration mode, and worker
+   assignment. Direct human confirmation binds the complete preview digest.
+7. A fresh constrained runtime starts only after confirmation.
+8. The native worker performs the task and can request only typed Guardian
+   capabilities. It never receives reusable provider credentials.
+9. Deterministic policy, optional minimized Nemotron action-risk review,
+   exact-request approval, the privileged broker, and typed adapters control every
+   consequential boundary crossing.
+10. An individual denial should eventually contain only the rejected action so
+    permitted work can continue. Deterministic severity and bounded repeat rules,
+    not model preference, decide revocation or interruption.
 
-C4 passed locally: the trusted launcher enforces the bound mission and profile,
-exposes only approved implemented tools, isolates local commands from credentials
-and public egress, stops action calls after expiry or revocation, and produces
-current profile-bound evidence for an honest assurance label.
+### Competition model and hosting policy
 
-See [Development roadmap](roadmap.md#c4---reference-session-runtime) for
-the authoritative deliverables and exit criteria.
+The `competition-2026-09-01` version 1 policy currently assigns:
 
-## Verification state
+- native worker: `Qwen/Qwen3-Coder-30B-A3B-Instruct`;
+- mission dialogue: `Qwen/Qwen3-235B-A22B-Instruct-2507`;
+- primary contextual risk: `nvidia/nemotron-3-super-120b-a12b`;
+- invalid-output escalation: `nvidia/Nemotron-3-Ultra-550b-a55b`.
 
-Verified on this host in the current working tree:
+These are versioned evidence pins, not permanent model choices. A reviewed policy
+version may upgrade them. Session prompts, retrieved content, workers, and model
+output cannot choose arbitrary model IDs. Every competition policy must retain
+the mechanically validated NVIDIA Nemotron presence.
 
-- `pnpm check` passes: 16 test files and 85 tests, dependency boundaries, and the
-  production web build.
-- `pnpm test:reference-runtime` passes the production launcher, evidence, local
-  command, filesystem, credential, capability, direct HTTPS, and direct Git probes.
-- `pnpm test:session-enforcement` passes all 4 host-specific WSL tests when run with
-  permission to access the WSL service.
-- `.env.local` is present and ignored. Never print, stage, commit, or copy it into
-  evidence.
-- A transient bundled-runner mismatch required rebuilding `node_modules` from the
-  frozen lockfile before verification. The full gate then passed; this is local
-  tooling state, not a product or lockfile failure.
-- `scripts/pnpm.ps1` now resolves the Codex bundled Node/pnpm runtime and supplies
-  Node to nested package scripts when the desktop shell omits it from `PATH`.
-- `pnpm test:live:tavily` passes one protected bounded Search through the full
-  launcher-to-MCP-to-local-pipe path. The test does not print the credential or raw
-  provider response.
+The planned judge deployment uses Nebius AI Cloud for application hosting and
+Nebius Token Factory for all model inference. It needs no OpenAI API key. Sharing
+one Nebius account is a correlated availability risk, not a merger of roles: the
+worker, Qwen dialogue, and Nemotron risk calls retain separate contracts,
+processes, minimized contexts, budgets, and output schemas. Tavily and GitHub
+remain separate optional typed integrations.
 
-The protected live Tavily and Nebius checks are not part of ordinary public CI.
-The C5 local implementation gate and remote build are complete, but public claim
-upgrades remain limited until pull-request security review and merge.
+The judge deployment may use project-funded, rate-limited credentials and must be
+free to judges during judging. General product custody remains local-first and
+self-hosted with user-owned provider accounts. A hosted judge build is not the
+default production trust model.
 
-## Open decisions affecting upcoming work
+## What is implemented now
 
-- Final interaction model after the C1 hosted Nemotron stand-in.
-- Hosting provider and implementation for the required Linux enforcement parity.
-- General remote MCP authentication after the launcher-bound competition runtime.
-- Persistent credential-safe workspace materialization; C4 intentionally starts
-  each local command in an empty disposable workspace.
-- Approval interface and development-mode user-presence substitute.
-- Selected Nemotron model and Token Factory endpoint.
-- Public demo hosting approach.
+### Pre-activation and exact confirmation
+
+- Strict objective-only and assisted mission drafts, deterministic screening,
+  bounded clarification, revision limits, explicit assisted/structured/fallback
+  routing, deterministic compilation, and minimized setup-risk review pass.
+- Qwen draft review and Nemotron setup risk use separate one-use supervised child
+  processes. Missing, malformed, mismatched, replayed, unavailable, denied, or
+  unsupported step-up outcomes cannot create a confirmable preview.
+- Qwen output is limited to readiness/questions before activation and a sanitized
+  mission brief after activation. It cannot represent a tool proposal.
+- Exact lower-assurance development confirmation is fresh, digest-bound, and
+  one-use. WebAuthn remains a later competition requirement.
+
+### Worker assignment and W1 boundary
+
+- `GuardianModelPolicy` now includes the trusted `native_worker` role.
+- Session previews and bootstrap results carry a strict worker selection:
+  `deterministic_reference` or `nebius_native`.
+- The Nebius selection binds provider, role, policy ID, policy version, and exact
+  model ID.
+- The final confirmation digest covers the mission-formation digest, integration
+  assessment, and worker selection. Changing the worker or model assignment
+  changes what the human must confirm.
+- The reference supervisor accepts only trusted deployment configuration for
+  worker mode. User task text cannot select it.
+- The CLI displays the selected worker before and after launch.
+- Tests cover default selection, Nebius selection, policy upgradeability, digest
+  differences, malformed input, mutation, replay, and exact confirmation.
+- Strict worker-turn contracts bind the confirmed session, caller,
+  mission/profile versions, deterministic and model policies, worker assignment,
+  turn, lifetime, allowed tools, and remaining budgets under a canonical digest.
+- A one-use local IPC service rejects wrong capability/session/turn/digest,
+  activation, expiry, replay, oversized frames, unsupported tools, and exhausted
+  budgets before any effect can occur.
+- Deterministic fake and fixed-origin Nebius Token Factory providers implement the
+  same narrow interface. Only the short-lived worker-service process resolves
+  `nebius/default`; provider context excludes credentials and trusted IDs.
+- Provider output is limited to a credential-safe final response or one pending
+  typed request. W1 does not create a trusted proposal or execute that request.
+- `docs/security-claims.md` keeps the W1 inference claim separate from later
+  trusted execution evidence.
+
+### W2 session workspace boundary
+
+- Session previews bind a strict workspace selection containing only the project
+  label, source and snapshot digests, fixed `/workspace` mount, limits,
+  session-persistence, no-writeback, and delete-on-close policy. Host paths are
+  never public.
+- The materializer selects tracked and non-ignored untracked regular files from
+  an exact Git root while excluding reserved `.guardian` state. It rejects unsafe
+  paths, symlink or junction ancestors,
+  collisions, credential-bearing paths or high-confidence content, and bounded
+  size/count excess.
+- Preparation occurs only after exact confirmation and revalidates the source
+  identity plus the complete path, metadata, and content manifest.
+- The Guardian-owned copy receives a fresh no-remote Git baseline with inherited
+  configuration disabled and an empty credential helper.
+- Every local command binds the same exact-session copy at writable `/workspace`;
+  the remaining chroot is disposable, network remains denied, and changes never
+  write back automatically to the source checkout.
+- Close deletes only the exact session root created by that lifecycle. Target
+  reuse fails without deleting the pre-existing target.
+- ADR-0017 and `docs/development/evidence/w2-session-workspace.md` record the
+  decision, tests, protected Windows/WSL gate, and residual limits.
+
+### W3 exact worker tool round-trip
+
+- Trusted code wraps one pending W1 request in an execution envelope bound to the
+  exact session/caller, mission/profile and policy versions, assigned worker,
+  source turn/digest, request digest, lifetime, and prepared W2 workspace result.
+- The exhaustive dispatcher supports only `guardian.session_status` and
+  `guardian.local_command`. The command path is the already-bound W2 executor
+  closure; neither the worker nor its model can supply a host path.
+- A dedicated `worker_dispatcher` authority role can consume only exact worker
+  status and local-command operations. Schema-v3 SQLite records the unique
+  execution ID/digest in the same immediate transaction that decrements total and
+  capability-specific budgets, so replay and mutation cannot repeat the effect.
+- Command stdout/stderr are bounded, control-cleaned, recognizable-credential and
+  host-path redacted, and then bound into result and turn digests through UTF-8
+  byte lengths and SHA-256 digests.
+- Turn 2 receives only the minimized sanitized result, has an empty tool catalog,
+  and must return a final response. A second request fails closed.
+- ADR-0018 and `docs/development/evidence/w3-worker-tool-round-trip.md` record the
+  decision, near-miss coverage, and protected supervised Windows/WSL pass.
+
+### Existing security and execution foundation
+
+- The trusted launcher binds mission, profile, caller, policy, lifetime,
+  revocation, filesystem scope, tool catalog, network policy, and volume.
+- The Windows/WSL reference executor passes current isolation probes for reduced
+  identity, credential absence, host-filesystem hiding, and direct public-network
+  and Git-push denial. It now binds only the Guardian-owned session copy at
+  `/workspace`, preserving changes across commands.
+- The central authority service is the sole SQLite owner. Trusted components use
+  bounded, role-specific, session-bound local IPC.
+- Durable sessions, budgets, connections, approvals, nonces, minimized rejection
+  context, and interruption-on-restart pass deterministic tests.
+- The Tavily research service uses a fixed provider path, strict outbound checks,
+  bounded evidence, provenance, and session budgets. Public content remains
+  untrusted and cannot create authority.
+- The GitHub path uses a narrow fixed-origin typed adapter, final re-normalization,
+  exact-head binding, one-use approval, bounded results, and credential resolution
+  only inside the privileged boundary.
+- Qwen, Nemotron Super, and Nemotron Ultra already have credential-isolated Nebius
+  adapters and protected compatibility evidence. Those services are not the
+  worker loop.
+
+## What is explicitly not implemented
+
+- A persistent, bounded multi-turn worker state machine.
+- Contained denial plus deterministic repeated-violation revocation.
+- User-verifying WebAuthn approval.
+- Complete Linux runtime, credential-store, and IPC peer-identity parity.
+- Public judge deployment, TLS validation, or hosted-runtime assurance evidence.
+- Protected live pre-activation and Nemotron-through-broker evidence.
+
+Do not call any of these implemented, and do not label the future hosted worker
+`Enforced` merely because it runs on Nebius. Enforced requires reproducible tool,
+filesystem, credential, network, lifecycle, and authority evidence.
+
+## Next implementation slices
+
+1. **Local checkpoint first:** after explicit user authorization, inspect the
+   proposed set, stage the complete intended C6 snapshot, create the conventional
+   local commit above, and verify the resulting status. Stop before any remote
+   operation unless separately directed.
+2. **W4 containment (next implementation):** distinguish an ordinary action
+   denial from runtime failure. Keep permitted work alive after a denial; add
+   deterministic severity and bounded-window repeat thresholds for
+   revocation/interruption.
+3. Decide after W4 whether to generalize beyond W3's exact one-round-trip limit
+   or proceed directly to the controlled research/GitHub journey.
+4. Capture protected live worker, pre-activation, and Nemotron-through-broker
+   evidence without logging provider content or credentials.
+5. Resume the controlled Extract/adversarial journey, WebAuthn ceremony, Linux
+   parity, and C8 experience work after W4 containment is proven.
+
+## External state and known blockers
+
+- `nebius/default` is available in Windows Credential Manager. Never print or
+  export it.
+- `github/default`, `github/refresh`, and `github/metadata` are available in
+  Windows Credential Manager. Never print or export them.
+- Protected GitHub access, exact-head read, and one-use squash merge passed on the
+  disposable demo repository. That used lower-assurance development confirmation,
+  not WebAuthn.
+- GitHub device-flow refresh reproducibly reaches the fixed provider endpoint but
+  receives `HTTP 500` before an accepted response or local credential write.
+  Deterministic failure behavior preserves or restores safe state. Do not spin on
+  retries or weaken the response contract; fresh device enrollment is the bounded
+  fallback until provider state changes.
+- Public `Loothore907/guardian-agent-demo` is provisioned and squash-only. PR #1
+  passed exact-head read and merge. Deterministic reset created open demo PR #2 for
+  the next exact-approval demonstration.
+- `agentic-guardian.com` is registered and delegated to Cloudflare nameservers.
+  This is not evidence of an application deployment, valid TLS, or WebAuthn origin.
+
+## Verification at this transition
+
+The current ordinary component set passes on this Windows host:
+
+- TypeScript build and typecheck;
+- ESLint and Prettier checks;
+- dependency boundaries: 151 modules and 279 dependencies, no violations;
+- Vitest: 51 files and 265 tests passed; three protected files and five protected
+  tests skipped, for 54 files / 270 tests total;
+- SQLite authority spike: seven passed and the expected POSIX permission test
+  skipped on Windows;
+- deterministic demo reset planner: two passed;
+- production Vite build;
+- protected Windows/WSL reference runtime: one passed, including the existing C4
+  isolation probe, persistent workspace, no source writeback, hidden host paths,
+  credential absence, direct-egress denial, and the supervised exact W3 local-
+  command/result/final-turn path with durable budget consumption.
+
+The last `git diff --check` was clean except for the pre-existing
+`scripts/pnpm.ps1` LF-to-CRLF working-copy warning. The desktop `pnpm` wrapper's
+supply-chain metadata check attempted blocked registry access, so the same frozen
+`check` components were run directly with the pinned bundled Node and repository
+binaries; all passed. No live credentialed provider test ran during W3. No commit,
+push, publish, release, or remote mutation was performed.
+
+A commit-readiness audit at this handoff found no untracked database, archive,
+binary, log, key, certificate, or environment files. `.env.local` remains ignored.
+A pattern scan of the complete proposed file contents found no private-key block,
+GitHub-token, AWS-access-key, JWT, or bearer-token pattern. This is a bounded
+local readiness check, not a substitute for repository secret scanning and remote
+CI after an explicitly authorized commit and push. The GitHub refresh endpoint's
+documented HTTP 500 and the absence of a new live-provider run are C6 residuals;
+they do not block this local checkpoint because no broader guarantee is claimed.
+
+Previously captured protected evidence still records successful Windows
+Credential Manager isolation, Tavily research, Qwen mission brief, Nemotron
+Super-to-Ultra compatibility, production WSL isolation, GitHub read, and exact
+merge. Protected tests are intentionally outside ordinary public CI.
+
+Use the bundled Node executable directly if the desktop shell omits it:
+
+`C:\Users\looth\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe`
+
+Do not run dependency installation merely to satisfy the desktop dependency-status
+wrapper when the frozen workspace is already usable.
+
+## Non-negotiable implementation rules
+
+- Public interfaces never return raw credentials or credential-equivalent data.
+- Prompt instructions and model statements are not enforcement evidence.
+- Model output may maintain or increase a deterministic floor; it may never lower
+  one.
+- Unknown, malformed, unsupported, ambiguous, expired, replayed, or expanded
+  operations fail closed.
+- Re-normalize and revalidate exact requests immediately before privileged
+  execution.
+- Approval binds the exact request, session, caller, connection, scope, resource
+  version, policy, expiry, nonce, and use count as applicable.
+- Adapters expose narrow typed capabilities. Do not add arbitrary authenticated
+  HTTP, caller-controlled destinations/headers, arbitrary commands, or shell
+  expansion.
+- Retrieved content and worker rationale are untrusted and cannot create
+  authority.
+- Keep the worker/provider process outside the credential-holding privileged
+  execution boundary; keep local command sandboxes outside all credential-holding
+  provider processes.
+- Add allowed behavior and near-miss rejection tests with every behavior change.
+- Do not claim a security property until `docs/security-claims.md` identifies
+  reproducible evidence.
 
 ## Sources of truth
 
@@ -134,9 +336,19 @@ upgrades remain limited until pull-request security review and merge.
 - [Threat model](../threat-model.md)
 - [Security claims](../security-claims.md)
 - [Development roadmap](roadmap.md)
-- [ADR-0002: Enforced Guardian Sessions](../adr/0002-enforced-guardian-sessions.md)
-- [ADR-0003: Implementation stack and package boundaries](../adr/0003-implementation-stack-and-package-boundaries.md)
-- [ADR-0004: Session-bound research IPC](../adr/0004-session-bound-research-ipc.md)
-- [ADR-0005: Durable authority state and minimized rejection context](../adr/0005-durable-authority-and-rejection-context.md)
-- [C1 enforcement evidence](evidence/c1-enforcement-feasibility.md)
-- [C5 Tavily research evidence](evidence/c5-tavily-research-gateway.md)
+- [ADR-0011: Host-agent and Guardian model roles](../adr/0011-host-agent-and-guardian-model-roles.md)
+- [ADR-0012: Pre-activation mission formation](../adr/0012-pre-activation-mission-formation.md)
+- [ADR-0013: Versioned model-role policy](../adr/0013-versioned-model-role-policy.md)
+- [ADR-0014: One-use pre-activation model channels](../adr/0014-one-use-pre-activation-model-channels.md)
+- [ADR-0015: Nebius-native worker and judge runtime](../adr/0015-nebius-native-worker-and-judge-runtime.md)
+- [ADR-0016: Exact-bound native-worker turns](../adr/0016-exact-bound-native-worker-turns.md)
+- [ADR-0017: Credential-safe session workspaces](../adr/0017-credential-safe-session-workspaces.md)
+- [ADR-0018: Exact one-round-trip worker tool execution](../adr/0018-exact-one-round-trip-worker-tool-execution.md)
+- [W2 session workspace evidence](evidence/w2-session-workspace.md)
+- [W3 worker tool round-trip evidence](evidence/w3-worker-tool-round-trip.md)
+- [C6 authority service evidence](evidence/c6-authority-service.md)
+- [C6 terminal bootstrap evidence](evidence/c6-terminal-bootstrap.md)
+- [C6 interaction boundary evidence](evidence/c6-interaction-boundary.md)
+- [C6 process supervision evidence](evidence/c6-process-supervision.md)
+- [C6 credential-isolated Nebius model evidence](evidence/c6-nebius-model-adapters.md)
+- [C6 secret-corpus evidence](evidence/c6-secret-corpus.md)

@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { LocalResearchIpcClient, createResearchIpcCredentials } from "@guardian/research";
+import type { AuthorityControlClient } from "@guardian/authority-client";
 
 import {
   CredentialHoldingResearchService,
+  DurableCredentialHoldingResearchService,
   TavilySearchProvider,
   createResearchServiceFromEnvironment,
   startCredentialHoldingResearchIpcServer,
@@ -132,6 +134,57 @@ describe("Tavily Search adapter", () => {
 });
 
 describe("credential-holding research service", () => {
+  it("reserves and settles research budget through the authority client", async () => {
+    const reserveResearch = vi.fn(() =>
+      Promise.resolve({
+        reservationId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        sessionId,
+        reservedResults: 2,
+        budget: {
+          sessionId,
+          remainingToolCalls: 3,
+          remainingLocalCommands: 0,
+          remainingResearchRequests: 1,
+          remainingResearchResults: 2,
+        },
+      }),
+    );
+    const settleResearchResults = vi.fn(() =>
+      Promise.resolve({
+        sessionId,
+        remainingToolCalls: 3,
+        remainingLocalCommands: 0,
+        remainingResearchRequests: 1,
+        remainingResearchResults: 3,
+      }),
+    );
+    const authority: AuthorityControlClient = {
+      createConnection: () => Promise.resolve(),
+      createSession: () => Promise.resolve(),
+      storeApproval: () => Promise.resolve(),
+      reserveResearch,
+      settleResearchResults,
+    };
+    const service = new DurableCredentialHoldingResearchService({
+      sessionId,
+      scope,
+      authority,
+      apiKey: "test-provider-credential",
+      transport: capturedTransport({ status: 200, body: JSON.stringify(rawResponse) }),
+    });
+
+    await expect(service.search(request, retrievedAt)).resolves.toMatchObject({
+      result: { evidence: [{ sourceUrl: "https://docs.github.com/pull-requests" }] },
+      budget: { sessionId, remainingRequests: 1, remainingResults: 3 },
+    });
+    expect(reserveResearch).toHaveBeenCalledWith(sessionId, 2);
+    expect(settleResearchResults).toHaveBeenCalledWith(
+      "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      sessionId,
+      1,
+    );
+  });
+
   it("integrates request gating, exact-domain evidence, provenance, and budget consumption", async () => {
     const transport = capturedTransport({ status: 200, body: JSON.stringify(rawResponse) });
     const service = new CredentialHoldingResearchService({

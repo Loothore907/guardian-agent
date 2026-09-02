@@ -1,4 +1,4 @@
-# Guardian Agent repository guidance
+# Agentic Guardian repository guidance
 
 ## Working agreement
 

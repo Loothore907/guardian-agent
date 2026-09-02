@@ -6,8 +6,8 @@ import {
   SessionStatusSchema,
   type ResearchRequest,
   type ResearchScope,
+  type LocalCommandResult,
 } from "@guardian/contracts";
-import { runReferenceLocalCommand } from "@guardian/executor";
 import { foundationStatus, type BoundSessionRuntime } from "@guardian/session";
 import {
   guardResearchRequest,
@@ -21,6 +21,7 @@ import { z } from "zod";
 export interface GuardianMcpServerOptions {
   readonly runtime?: BoundSessionRuntime;
   readonly now?: () => string;
+  readonly localCommand?: (request: unknown) => Promise<LocalCommandResult>;
   readonly research?: {
     readonly client: ResearchServiceClient;
     readonly scope: ResearchScope;
@@ -59,11 +60,16 @@ export function createGuardianMcpServer(options: GuardianMcpServerOptions = {}) 
       continue;
     }
     if (tool === "guardian.local_command") {
+      if (options.localCommand === undefined) {
+        throw new TypeError("the reference session host has no bound session workspace");
+      }
+      const localCommand = options.localCommand;
       server.registerTool(
         tool,
         {
           title: "Guardian isolated local command",
-          description: "Run one typed command in the disposable, network-disabled workspace.",
+          description:
+            "Run one typed command in the session-persistent, network-disabled Guardian workspace.",
           inputSchema: LocalCommandRequestSchema,
           outputSchema: LocalCommandResultSchema,
         },
@@ -80,7 +86,7 @@ export function createGuardianMcpServer(options: GuardianMcpServerOptions = {}) 
               ],
             };
           }
-          const result = await runReferenceLocalCommand(request);
+          const result = await localCommand(request);
           return {
             content: [{ type: "text", text: JSON.stringify(result) }],
             structuredContent: result,

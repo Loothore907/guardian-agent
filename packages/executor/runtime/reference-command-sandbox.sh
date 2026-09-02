@@ -1,17 +1,34 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-working_directory="${1:?working directory is required}"
-timeout_seconds="${2:?timeout is required}"
-executable="${3:?executable is required}"
-shift 3
+workspace_source="${1:?workspace source is required}"
+working_directory="${2:?working directory is required}"
+timeout_seconds="${3:?timeout is required}"
+executable="${4:?executable is required}"
+shift 4
 sandbox_root="$(mktemp -d /tmp/guardian-command.XXXXXX)"
 
 cleanup() {
-  umount -Rl "$sandbox_root" 2>/dev/null || true
+  if ! umount -Rl "$sandbox_root" 2>/dev/null; then
+    return
+  fi
   rm -rf -- "$sandbox_root" 2>/dev/null || true
 }
 trap cleanup EXIT
+
+case "$workspace_source" in
+  /mnt/[a-z]/*) ;;
+  *) exit 125 ;;
+esac
+[ -d "$workspace_source" ] || exit 125
+[ ! -L "$workspace_source" ] || exit 125
+workspace_real="$(readlink -f -- "$workspace_source")"
+[ "$workspace_real" = "$workspace_source" ] || exit 125
+
+case "$working_directory" in
+  /workspace|/workspace/*) ;;
+  *) exit 125 ;;
+esac
 
 mount --make-rprivate /
 mount -t tmpfs -o mode=0755,nosuid,nodev tmpfs "$sandbox_root"
@@ -30,7 +47,16 @@ mount -t proc -o nosuid,nodev,noexec proc "$sandbox_root/proc"
 printf 'nameserver 127.0.0.1\n' > "$sandbox_root/etc/resolv.conf"
 printf 'guardian:x:0:0:Guardian Session:/workspace:/usr/bin/false\n' > "$sandbox_root/etc/passwd"
 printf 'guardian:x:0:\n' > "$sandbox_root/etc/group"
-chmod 1777 "$sandbox_root/tmp" "$sandbox_root/workspace"
+chmod 1777 "$sandbox_root/tmp"
+chmod 0755 "$sandbox_root/workspace"
+mount --bind "$workspace_source" "$sandbox_root/workspace"
+mount -o remount,bind,rw,nosuid,nodev,noexec "$sandbox_root/workspace"
+
+working_directory_real="$(readlink -f -- "$sandbox_root$working_directory")"
+case "$working_directory_real" in
+  "$sandbox_root/workspace"|"$sandbox_root/workspace/"*) ;;
+  *) exit 125 ;;
+esac
 
 chroot "$sandbox_root" /usr/bin/setpriv \
   --bounding-set=-all \

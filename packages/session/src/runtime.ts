@@ -164,6 +164,16 @@ export class BoundSessionRuntime {
     return { allowed: true };
   }
 
+  authorizeSessionStatusCall(evaluatedAt: unknown): ToolAuthorization {
+    const base = this.authorizeToolCall("guardian.session_status", evaluatedAt);
+    if (!base.allowed) return base;
+    if (this.#toolCalls >= this.#profile.permissions.volume.maxToolCalls) {
+      return { allowed: false, reason: "volume_exhausted" };
+    }
+    this.#toolCalls += 1;
+    return { allowed: true };
+  }
+
   authorizeResearchCall(value: unknown, evaluatedAt: unknown): ToolAuthorization {
     const request = ResearchRequestSchema.safeParse(value);
     if (!request.success) {

@@ -79,6 +79,7 @@ describe("Guardian MCP server", () => {
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     const server = createGuardianMcpServer({
       runtime,
+      localCommand: vi.fn(),
       now: () => "2026-08-30T08:31:00.000Z",
     });
     const client = new Client({ name: "guardian-test-client", version: "0.0.0" });
@@ -203,6 +204,7 @@ describe("Guardian MCP server", () => {
     expect(() =>
       createGuardianMcpServer({
         runtime,
+        localCommand: vi.fn(),
         research: {
           ...research,
           scope: { ...research.scope, allowedDomains: ["attacker.example"] },
@@ -212,6 +214,7 @@ describe("Guardian MCP server", () => {
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     const server = createGuardianMcpServer({
       runtime,
+      localCommand: vi.fn(),
       research,
       now: () => "2026-08-30T08:31:00.000Z",
     });

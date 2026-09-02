@@ -1,6 +1,7 @@
 import { canonicalDigest } from "@guardian/canonical";
 import {
   CanonicalRequestSchema,
+  DurableConnectionRecordSchema,
   ExactApprovalSchema,
   TimestampSchema,
   type CanonicalRequest,
@@ -12,6 +13,17 @@ export type ApprovalBinding = ExactApproval;
 export function digestCanonicalRequest(value: unknown): string {
   const request = CanonicalRequestSchema.parse(value);
   return canonicalDigest("canonical_request", request.schemaVersion, request);
+}
+
+export function digestGitHubConnectionScope(connectionValue: unknown): string {
+  const connection = DurableConnectionRecordSchema.parse(connectionValue);
+  return canonicalDigest("github_connection_scope", connection.schemaVersion, {
+    connectionId: connection.connectionId,
+    provider: connection.provider,
+    owner: connection.owner,
+    repository: connection.repository,
+    permissions: [...connection.permissions].sort(),
+  });
 }
 
 export type ApprovalValidationResult =

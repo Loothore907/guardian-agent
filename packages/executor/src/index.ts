@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { realpath, stat } from "node:fs/promises";
 
 import {
   IsolationProbeResultSchema,
@@ -14,7 +15,7 @@ import {
 export const REFERENCE_EXECUTOR_BOUNDARY = {
   network: "denied",
   credentials: "absent",
-  filesystem: "disposable",
+  filesystem: "session_persistent_guardian_copy",
 } as const;
 
 function toWslPath(windowsPath: string): string {
@@ -124,14 +125,35 @@ export function sanitizeLocalCommandOutput(
       );
     })
     .join("");
+  const redacted = withoutControls
+    .replace(
+      /\b(api[_-]?key|authorization|bearer|password|secret|token)\b\s*[:=]\s*(?:"[^"]*"|'[^']*'|\S+)/giu,
+      "$1=[redacted]",
+    )
+    .replace(/-----BEGIN ((?:[A-Z0-9]+ )*PRIVATE KEY)-----.*?-----END \1-----/gsu, "[redacted]")
+    .replace(/\bgh[pousr]_[A-Za-z0-9]{20,}\b/gu, "[redacted]")
+    .replace(/\bAKIA[A-Z0-9]{16}\b/gu, "[redacted]")
+    .replace(/\beyJ[A-Za-z0-9_-]{12,}\.[A-Za-z0-9_-]{12,}\.[A-Za-z0-9_-]{12,}\b/gu, "[redacted]")
+    .replace(/(?:[A-Za-z]:\\Users\\|\/mnt\/[a-z]\/Users\/|\/(?:home|root)\/)\S*/giu, "[redacted]");
   return {
-    text: withoutControls.slice(0, limit),
-    truncated: withoutControls.length > limit,
+    text: redacted.slice(0, limit),
+    truncated: withoutControls.length > limit || redacted.length > limit,
   };
 }
 
-export async function runReferenceLocalCommand(value: unknown): Promise<LocalCommandResult> {
+export async function runReferenceLocalCommand(
+  value: unknown,
+  options: { readonly workspaceHostPath: unknown },
+): Promise<LocalCommandResult> {
   const request = LocalCommandRequestSchema.parse(value);
+  if (typeof options.workspaceHostPath !== "string" || options.workspaceHostPath.length === 0) {
+    throw new TypeError("a trusted session workspace is required");
+  }
+  const workspaceHostPath = await realpath(path.resolve(options.workspaceHostPath));
+  if (!(await stat(workspaceHostPath)).isDirectory()) {
+    throw new TypeError("the trusted session workspace is unavailable");
+  }
+  const workspaceWslPath = toWslPath(workspaceHostPath);
   const sandboxPath = toWslPath(
     fileURLToPath(new URL("../runtime/reference-command-sandbox.sh", import.meta.url)),
   );
@@ -157,6 +179,7 @@ export async function runReferenceLocalCommand(value: unknown): Promise<LocalCom
       "--mount-proc",
       "bash",
       sandboxPath,
+      workspaceWslPath,
       request.workingDirectory,
       String(request.timeoutSeconds),
       request.executable,

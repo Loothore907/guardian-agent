@@ -16,5 +16,18 @@ Architecture decision records document consequential choices, rejected alternati
 - [ADR-0003: Implementation stack and package boundaries](0003-implementation-stack-and-package-boundaries.md)
 - [ADR-0004: Session-bound research IPC](0004-session-bound-research-ipc.md)
 - [ADR-0005: Durable authority state and minimized rejection context](0005-durable-authority-and-rejection-context.md)
+- [ADR-0006: Competition authority boundary and adversarial demo](0006-competition-authority-and-adversarial-demo.md)
+- [ADR-0007: Terminal-first session bridge and trusted ceremonies](0007-terminal-first-session-bridge.md)
+- [ADR-0008: Local-first self-hosting and user-owned credentials](0008-local-first-self-hosting-and-user-owned-credentials.md)
+- [ADR-0009: GitHub App device-flow enrollment](0009-github-app-device-enrollment.md)
+- [ADR-0010: Supervised trusted service processes](0010-supervised-trusted-service-processes.md)
+- [ADR-0011: Host-agent and Guardian model roles](0011-host-agent-and-guardian-model-roles.md)
+- [ADR-0012: Pre-activation mission formation and boundary failure semantics](0012-pre-activation-mission-formation.md)
+- [ADR-0013: Versioned Guardian model-role policy](0013-versioned-model-role-policy.md)
+- [ADR-0014: One-use pre-activation model channels](0014-one-use-pre-activation-model-channels.md)
+- [ADR-0015: Nebius-native worker and judge runtime](0015-nebius-native-worker-and-judge-runtime.md)
+- [ADR-0016: Exact-bound native-worker turns](0016-exact-bound-native-worker-turns.md)
+- [ADR-0017: Credential-safe session workspaces](0017-credential-safe-session-workspaces.md)
+- [ADR-0018: Exact one-round-trip worker tool execution](0018-exact-one-round-trip-worker-tool-execution.md)
 
 Use the next sequential four-digit number. Do not silently rewrite an accepted decision; add a superseding ADR.

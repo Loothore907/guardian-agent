@@ -54,11 +54,58 @@ importers:
         specifier: 4.1.11
         version: 4.1.11(@types/node@24.13.3)(vite@8.2.2(@types/node@24.13.3))
 
+  apps/authority-service:
+    dependencies:
+      '@guardian/authority-client':
+        specifier: workspace:*
+        version: link:../../packages/authority-client
+      '@guardian/authority-store':
+        specifier: workspace:*
+        version: link:../../packages/authority-store
+      '@guardian/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+
+  apps/authorization-service:
+    dependencies:
+      '@guardian/authority-client':
+        specifier: workspace:*
+        version: link:../../packages/authority-client
+      '@guardian/authorization':
+        specifier: workspace:*
+        version: link:../../packages/authorization
+      '@guardian/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+    devDependencies:
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.13.3)(vite@8.2.2(@types/node@24.13.3))
+
   apps/broker-service:
     dependencies:
+      '@guardian/authority-client':
+        specifier: workspace:*
+        version: link:../../packages/authority-client
       '@guardian/broker':
         specifier: workspace:*
         version: link:../../packages/broker
+      '@guardian/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@guardian/credential-store':
+        specifier: workspace:*
+        version: link:../../packages/credential-store
+    devDependencies:
+      '@guardian/authority-service':
+        specifier: workspace:*
+        version: link:../authority-service
+      '@guardian/authorization':
+        specifier: workspace:*
+        version: link:../../packages/authorization
+      '@guardian/authorization-service':
+        specifier: workspace:*
+        version: link:../authorization-service
 
   apps/control-api:
     dependencies:
@@ -69,14 +116,127 @@ importers:
         specifier: 5.12.1
         version: 5.12.1
 
+  apps/guardian-cli:
+    dependencies:
+      '@guardian/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@guardian/credential-store':
+        specifier: workspace:*
+        version: link:../../packages/credential-store
+      '@guardian/credential-verification':
+        specifier: workspace:*
+        version: link:../../packages/credential-verification
+      '@guardian/reference-supervisor':
+        specifier: workspace:*
+        version: link:../reference-supervisor
+    devDependencies:
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.13.3)(vite@8.2.2(@types/node@24.13.3))
+
   apps/guardian-service:
     dependencies:
+      '@guardian/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@guardian/credential-store':
+        specifier: workspace:*
+        version: link:../../packages/credential-store
       '@guardian/guardian':
         specifier: workspace:*
         version: link:../../packages/guardian
+      '@guardian/policy':
+        specifier: workspace:*
+        version: link:../../packages/policy
+    devDependencies:
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.13.3)(vite@8.2.2(@types/node@24.13.3))
+
+  apps/interaction-service:
+    dependencies:
+      '@guardian/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@guardian/credential-store':
+        specifier: workspace:*
+        version: link:../../packages/credential-store
+      '@guardian/interaction':
+        specifier: workspace:*
+        version: link:../../packages/interaction
+    devDependencies:
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.13.3)(vite@8.2.2(@types/node@24.13.3))
+
+  apps/worker-service:
+    dependencies:
+      '@guardian/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@guardian/credential-store':
+        specifier: workspace:*
+        version: link:../../packages/credential-store
+      '@guardian/worker':
+        specifier: workspace:*
+        version: link:../../packages/worker
+    devDependencies:
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.13.3)(vite@8.2.2(@types/node@24.13.3))
+
+  apps/reference-supervisor:
+    dependencies:
+      '@guardian/authority-client':
+        specifier: workspace:*
+        version: link:../../packages/authority-client
+      '@guardian/authority-service':
+        specifier: workspace:*
+        version: link:../authority-service
+      '@guardian/authorization-service':
+        specifier: workspace:*
+        version: link:../authorization-service
+      '@guardian/canonical':
+        specifier: workspace:*
+        version: link:../../packages/canonical
+      '@guardian/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@guardian/guardian':
+        specifier: workspace:*
+        version: link:../../packages/guardian
+      '@guardian/interaction':
+        specifier: workspace:*
+        version: link:../../packages/interaction
+      '@guardian/interaction-service':
+        specifier: workspace:*
+        version: link:../interaction-service
+      '@guardian/session':
+        specifier: workspace:*
+        version: link:../../packages/session
+      '@guardian/session-host':
+        specifier: workspace:*
+        version: link:../session-host
+      '@guardian/worker':
+        specifier: workspace:*
+        version: link:../../packages/worker
+      '@guardian/worker-service':
+        specifier: workspace:*
+        version: link:../worker-service
+      '@guardian/workspace':
+        specifier: workspace:*
+        version: link:../../packages/workspace
+    devDependencies:
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.13.3)(vite@8.2.2(@types/node@24.13.3))
 
   apps/research-service:
     dependencies:
+      '@guardian/authority-client':
+        specifier: workspace:*
+        version: link:../../packages/authority-client
       '@guardian/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
@@ -86,6 +246,9 @@ importers:
 
   apps/session-host:
     dependencies:
+      '@guardian/authority-client':
+        specifier: workspace:*
+        version: link:../../packages/authority-client
       '@guardian/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
@@ -98,6 +261,9 @@ importers:
       '@guardian/session':
         specifier: workspace:*
         version: link:../../packages/session
+      '@guardian/workspace':
+        specifier: workspace:*
+        version: link:../../packages/workspace
       '@modelcontextprotocol/client':
         specifier: 2.0.0
         version: 2.0.0
@@ -107,6 +273,10 @@ importers:
       zod:
         specifier: 4.5.1
         version: 4.5.1
+    devDependencies:
+      '@guardian/authority-service':
+        specifier: workspace:*
+        version: link:../authority-service
 
   apps/web:
     dependencies:
@@ -124,6 +294,18 @@ importers:
         version: link:../contracts
 
   packages/audit:
+    dependencies:
+      '@guardian/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+
+  packages/authority-client:
+    dependencies:
+      '@guardian/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+
+  packages/authority-store:
     dependencies:
       '@guardian/contracts':
         specifier: workspace:*
@@ -152,6 +334,9 @@ importers:
       '@guardian/audit':
         specifier: workspace:*
         version: link:../audit
+      '@guardian/authority-client':
+        specifier: workspace:*
+        version: link:../authority-client
       '@guardian/authorization':
         specifier: workspace:*
         version: link:../authorization
@@ -161,6 +346,10 @@ importers:
       '@guardian/policy':
         specifier: workspace:*
         version: link:../policy
+    devDependencies:
+      '@guardian/authority-store':
+        specifier: workspace:*
+        version: link:../authority-store
 
   packages/canonical:
     dependencies:
@@ -174,6 +363,26 @@ importers:
         specifier: 4.5.1
         version: 4.5.1
 
+  packages/credential-store:
+    dependencies:
+      '@guardian/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+    devDependencies:
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.13.3)(vite@8.2.2(@types/node@24.13.3))
+
+  packages/credential-verification:
+    dependencies:
+      '@guardian/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+    devDependencies:
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.13.3)(vite@8.2.2(@types/node@24.13.3))
+
   packages/executor:
     dependencies:
       '@guardian/contracts':
@@ -181,6 +390,12 @@ importers:
         version: link:../contracts
 
   packages/guardian:
+    dependencies:
+      '@guardian/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+
+  packages/interaction:
     dependencies:
       '@guardian/contracts':
         specifier: workspace:*
@@ -215,6 +430,32 @@ importers:
       '@guardian/contracts':
         specifier: workspace:*
         version: link:../contracts
+
+  packages/worker:
+    dependencies:
+      '@guardian/canonical':
+        specifier: workspace:*
+        version: link:../canonical
+      '@guardian/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+    devDependencies:
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.13.3)(vite@8.2.2(@types/node@24.13.3))
+
+  packages/workspace:
+    dependencies:
+      '@guardian/canonical':
+        specifier: workspace:*
+        version: link:../canonical
+      '@guardian/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+    devDependencies:
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.13.3)(vite@8.2.2(@types/node@24.13.3))
 
   packages/test-support:
     dependencies:

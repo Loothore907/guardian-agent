@@ -1,0 +1,17 @@
+{
+  "name": "@guardian/authority-service",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@guardian/authority-client": "workspace:*",
+    "@guardian/authority-store": "workspace:*",
+    "@guardian/contracts": "workspace:*"
+  }
+}
