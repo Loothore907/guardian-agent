@@ -280,6 +280,17 @@ process receives the strict service configuration and credential. Both peers
 validate bounded schemas and exact session, caller, mission, profile, policy, and
 lifecycle bindings. See [ADR-0004](adr/0004-session-bound-research-ipc.md).
 
+The controlled competition journey is a trusted orchestration layer above the
+typed research client and GitHub broker, not another provider or a general worker
+loop. It strictly reparses non-empty research evidence, forwards only unique
+session-bound provenance event IDs to the broker, submits the intentionally
+out-of-scope repository attempt without approval, and requires the exact
+deterministic `scope_mismatch` outcome before submitting the separately normalized
+and exact-approved legitimate merge. Unexpected success, malformed results,
+different denial codes, binding substitution, or result-target mutation stop the
+journey. Retrieved text never constructs either canonical request. See
+[ADR-0020](adr/0020-controlled-research-and-github-competition-journey.md).
+
 ## Dependency direction
 
 The exact package layout is deferred to ADR-0003. The intended dependency direction is:

@@ -14,26 +14,26 @@ and checkpoint history in `docs/development/roadmap.md`.
   `codex/13-c6-durable-authorization-broker`.
 - **Logical transition:** pre-activation mission formation, trusted worker
   assignment, W1 exact turns, the W2 credential-safe workspace, W3 exact
-  one-tool/result execution, and W4 contained denial/revocation are locally
-  implemented. Do not reopen the settled workspace-copy or exact W3 lifecycle
-  while choosing the next slice.
+  one-tool/result execution, W4 contained denial/revocation, and the W5 controlled
+  competition coordinator are locally implemented. Do not reopen the settled
+  workspace-copy or exact W3 lifecycle while choosing the next slice.
 - **W4 outcome:** an ordinary rejected action returns only an exact sanitized
   denial and can reach the mandatory final turn. Version-1 trusted policy contains
   the first two ordinary events in an inclusive five-minute window, revokes on
   the third, excludes older events, immediately revokes replay/binding near
   misses, and interrupts trusted boundary failure. Model output cannot supply
   severity, counts, thresholds, or disposition.
-- **Critical sequencing decision:** W4 deliberately preserves W3's one-request,
-  two-turn lifecycle. The next session should explicitly choose between a
-  generalized bounded loop and the controlled research/GitHub competition
-  journey; do not obtain multi-turn behavior accidentally by weakening the W3
-  result contract.
+- **Critical sequencing decision:** the user selected the controlled
+  research/GitHub competition journey before a generalized bounded worker loop.
+  W5 implements that fixed ordering in trusted orchestration while preserving
+  W3/W4's one-request, two-turn lifecycle.
 - **Checkpoint state:** the user authorized and the repository created local
-  commit `0dd3323` (`feat: establish C6 authority and exact worker runtime`) for
-  the complete pre-activation/W1-W3 snapshot. No push, pull request, merge,
+  commit `2de8d21` (`feat: contain worker denials and revoke deterministically`)
+  for W4 on top of checkpoint `0dd3323`. No push, pull request, merge,
   publication, release, or other remote mutation followed.
-- **Current worktree:** W4 code, tests, ADR-0019, evidence, and documentation are
-  intentionally uncommitted pending review and explicit commit direction.
+- **Current worktree:** W5 coordinator code, tests, ADR-0020, evidence, and
+  documentation are intentionally uncommitted pending complete verification,
+  review, and explicit commit direction.
 - **Secret caution:** `.env.local` is ignored development input. Never print,
   stage, copy, summarize, or use it as the installation design. Never print or
   export credential-store values.
@@ -203,6 +203,25 @@ default production trust model.
 - ADR-0019 and `docs/development/evidence/w4-denial-containment.md` record the
   policy, public minimization, threshold edges, lifecycle behavior, and limits.
 
+### W5 controlled research and GitHub competition journey
+
+- Trusted orchestration, rather than a wider worker loop, fixes the sequence:
+  bounded research, out-of-scope GitHub merge denial, then a separately
+  exact-approved legitimate merge.
+- Research must return at least one unique provenance event bound to the same
+  session as both normalized GitHub requests. Only provenance event IDs cross to
+  the broker; hostile excerpts, URLs, provider prose, and credentials do not.
+- Both GitHub requests share exact session, caller, connection, mission, profile,
+  and policy bindings but must target different repositories.
+- The first attempt carries no approval and only exact deterministic
+  `scope_mismatch` permits the second attempt. Unexpected success, any other
+  denial, malformed boundary output, or arbitrary broker error text stops safely.
+- The legitimate approval is validated against the canonical request before
+  research begins, and the successful merge result must bind the exact repository,
+  pull request, and expected head.
+- ADR-0020 and `docs/development/evidence/w5-controlled-competition-journey.md`
+  record the decision, focused tests, and remaining live attachment work.
+
 ### Existing security and execution foundation
 
 - The trusted launcher binds mission, profile, caller, policy, lifetime,
@@ -232,6 +251,8 @@ default production trust model.
 - Complete Linux runtime, credential-store, and IPC peer-identity parity.
 - Public judge deployment, TLS validation, or hosted-runtime assurance evidence.
 - Protected live pre-activation and Nemotron-through-broker evidence.
+- CLI and supervised credential-holding service attachment for the W5 coordinator,
+  plus protected end-to-end research/denial/merge evidence.
 
 Do not call any of these implemented, and do not label the future hosted worker
 `Enforced` merely because it runs on Nebius. Enforced requires reproducible tool,
@@ -239,13 +260,14 @@ filesystem, credential, network, lifecycle, and authority evidence.
 
 ## Next implementation slices
 
-1. Review the W4 diff and, only after explicit user authorization, create a local
-   W4 checkpoint. Stop before any remote operation unless separately directed.
-2. Prefer the controlled research/GitHub competition journey as the next
-   vertical slice: it exercises the already-typed services and demo outcome
-   without first widening the worker lifecycle. Record a contrary decision if a
-   generalized bounded loop becomes necessary.
-3. Capture protected live worker, pre-activation, and Nemotron-through-broker
+1. Complete the W5 full local gate, review the diff, and create a local checkpoint
+   only after explicit user authorization. Stop before any remote operation unless
+   separately directed.
+2. Attach the existing durable Tavily research client and credential-holding
+   GitHub broker to the W5 coordinator under supervised reference execution, then
+   expose the minimized journey state in the CLI.
+3. Capture protected live worker, pre-activation, journey, and
+   Nemotron-through-broker
    evidence without logging provider content or credentials.
 4. Resume the controlled Extract/adversarial journey, WebAuthn ceremony, Linux
    parity, and C8 experience work in dependency order.
@@ -276,9 +298,9 @@ The current ordinary component set passes on this Windows host:
 
 - TypeScript build and typecheck;
 - ESLint and Prettier checks;
-- dependency boundaries: 152 modules and 286 dependencies, no violations;
-- Vitest: 51 files and 279 tests passed; three protected files and five protected
-  tests skipped, for 54 files / 284 tests total;
+- dependency boundaries: 154 modules and 288 dependencies, no violations;
+- Vitest: 52 files and 289 tests passed; three protected files and five protected
+  tests skipped, for 55 files / 294 tests total;
 - SQLite authority spike: seven passed and the expected POSIX permission test
   skipped on Windows;
 - deterministic demo reset planner: two passed;
@@ -289,14 +311,14 @@ The current ordinary component set passes on this Windows host:
   command/result/final-turn path with durable budget consumption under the W4
   success-result contract.
 
-The last `git diff --check` was clean except for the pre-existing
-`scripts/pnpm.ps1` LF-to-CRLF working-copy warning. The desktop `pnpm` wrapper's
-supply-chain metadata check attempted blocked registry access, so the same frozen
-`check` components were run directly with the pinned bundled Node and repository
-binaries; all passed. The protected runtime initially encountered sandbox-denied
-WSL service access, then passed unchanged with approved WSL access. No live
-credentialed provider test ran during W4. The prior local checkpoint commit is
-`0dd3323`; no W4 commit, push, publish, release, or remote mutation was performed.
+The last `git diff --check` was clean. The desktop `pnpm` wrapper's supply-chain
+metadata check attempted blocked registry access, so the same frozen `check`
+components were run directly with the pinned bundled Node and repository binaries;
+all passed. The protected runtime passed unchanged during W4 with approved WSL
+access and was not rerun for W5 because this slice does not change the launched
+runtime or executor path. No live credentialed provider test ran during W5. The
+current local checkpoint commit is `2de8d21`; no W5 commit, push, publish, release,
+or remote mutation was performed.
 
 A commit-readiness audit at this handoff found no untracked database, archive,
 binary, log, key, certificate, or environment files. `.env.local` remains ignored.

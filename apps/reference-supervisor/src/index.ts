@@ -45,6 +45,15 @@ import { startSupervisedServiceProcess } from "./supervised-process.js";
 import { TrustedWorkerToolDispatcher } from "./worker-execution.js";
 
 export { ReferenceSessionBootstrapCoordinator } from "./bootstrap.js";
+export {
+  ControlledCompetitionJourney,
+  type CompetitionJourneyBroker,
+  type CompetitionJourneyBrokerDenialCode,
+  type CompetitionJourneyBrokerResult,
+  type CompetitionJourneyResearchClient,
+  type ControlledCompetitionJourneyInput,
+  type ControlledCompetitionJourneyResult,
+} from "./competition-journey.js";
 export { TrustedWorkerToolDispatcher, WorkerToolExecutionError } from "./worker-execution.js";
 
 const ROLE_OPERATIONS = {

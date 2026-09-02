@@ -146,7 +146,12 @@ mandatory final second worker turn. W4 now returns an exact sanitized denial thr
 that same final-turn path, durably contains ordinary violations, revokes on the
 third violation in a five-minute window, revokes replay/binding near misses
 immediately, and interrupts trusted-boundary failures. A persistent general
-worker loop remains unimplemented.
+worker loop remains unimplemented. W5 now fixes the competition ordering outside
+that loop: bounded research must produce non-empty session-bound provenance, an
+out-of-scope GitHub merge attempt receives no approval and must stop with the exact
+deterministic `scope_mismatch` denial, and only then may a separately exact-approved
+demo-repository merge proceed. The coordinator is locally tested; live service and
+CLI attachment remain.
 
 [ADR-0015](docs/adr/0015-nebius-native-worker-and-judge-runtime.md) selects the
 provider-neutral Nebius-native worker for the competition build while preserving
@@ -161,8 +166,9 @@ distinguishes contained action denial from trusted-runtime interruption.
 
 The dedicated public demonstration target is
 [`Loothore907/guardian-agent-demo`](https://github.com/Loothore907/guardian-agent-demo).
-It is currently empty and configured for squash-only merges; fixture seeding,
-reset automation, the final minimum-permission GitHub enrollment, and protected
+It is configured for squash-only merges. PR #1 supplied the protected read/merge
+evidence, and the deterministic reset procedure created open PR #2 for the next
+demonstration. The final user-verifying approval and complete protected journey
 evidence remain.
 
 ## Security boundaries
