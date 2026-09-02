@@ -7,6 +7,7 @@ import {
   WorkerToolRequestSchema,
   WorkerTurnEnvelopeWithoutDigestSchema,
 } from "./worker.js";
+import { WorkerViolationCodeSchema, workerViolationSeverity } from "./worker-policy.js";
 
 const TURN = {
   schemaVersion: 1,
@@ -38,6 +39,16 @@ const TURN = {
 } as const;
 
 describe("worker boundary contracts", () => {
+  it("assigns every accepted violation code a fixed deterministic severity", () => {
+    const severities = new Map(
+      WorkerViolationCodeSchema.options.map((code) => [code, workerViolationSeverity(code)]),
+    );
+    expect([...severities.values()].filter((severity) => severity === "ordinary")).toHaveLength(4);
+    expect([...severities.values()].filter((severity) => severity === "critical")).toHaveLength(4);
+    expect(workerViolationSeverity("execution_replay")).toBe("critical");
+    expect(() => workerViolationSeverity("model_selected_low")).toThrow();
+  });
+
   it("binds every trusted turn field and rejects assignment-policy mismatch", () => {
     expect(WorkerTurnEnvelopeWithoutDigestSchema.parse(TURN)).toEqual(TURN);
     expect(() =>

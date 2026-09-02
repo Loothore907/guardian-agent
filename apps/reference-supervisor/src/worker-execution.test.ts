@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
+import type { AuthorityWorkerClient } from "@guardian/authority-client";
+import { DEFAULT_WORKER_VIOLATION_POLICY } from "@guardian/contracts";
 import { BoundSessionRuntime } from "@guardian/session";
 import {
   assertExactWorkerToolResult,
@@ -122,9 +124,94 @@ function budget() {
   } as const;
 }
 
+function allowed() {
+  return {
+    schemaVersion: 1,
+    policyId: DEFAULT_WORKER_VIOLATION_POLICY.policyId,
+    policyVersion: DEFAULT_WORKER_VIOLATION_POLICY.version,
+    outcome: "allowed",
+    budget: budget(),
+  } as const;
+}
+
+function denied(disposition: "continue" | "revoked") {
+  return {
+    schemaVersion: 1,
+    policyId: DEFAULT_WORKER_VIOLATION_POLICY.policyId,
+    policyVersion: DEFAULT_WORKER_VIOLATION_POLICY.version,
+    outcome: "denied",
+    disposition,
+    publicCode: "request_denied",
+    budget: budget(),
+  } as const;
+}
+
+function unavailable(reason: "not_active" | "expired" | "revoked") {
+  return {
+    schemaVersion: 1,
+    policyId: DEFAULT_WORKER_VIOLATION_POLICY.policyId,
+    policyVersion: DEFAULT_WORKER_VIOLATION_POLICY.version,
+    outcome: "unavailable",
+    reason,
+    budget: budget(),
+  } as const;
+}
+
+function authority(overrides: Partial<AuthorityWorkerClient> = {}): AuthorityWorkerClient {
+  return {
+    consumeWorkerToolCall: () => Promise.resolve(allowed()),
+    consumeLocalCommand: () => Promise.resolve(allowed()),
+    recordWorkerViolation: () => Promise.resolve(denied("continue")),
+    interruptWorkerSession: () =>
+      Promise.resolve({
+        schemaVersion: 1,
+        policyId: DEFAULT_WORKER_VIOLATION_POLICY.policyId,
+        policyVersion: DEFAULT_WORKER_VIOLATION_POLICY.version,
+        outcome: "interrupted",
+      }),
+    ...overrides,
+  };
+}
+
+function dispatcher(options: {
+  readonly authority?: AuthorityWorkerClient;
+  readonly runtime?: BoundSessionRuntime;
+  readonly runLocalCommand?: () => Promise<{
+    readonly exitCode: number;
+    readonly stdout: string;
+    readonly stderr: string;
+    readonly timedOut: boolean;
+    readonly truncated: boolean;
+  }>;
+}) {
+  const exactRuntime = options.runtime ?? runtime();
+  return new TrustedWorkerToolDispatcher({
+    authority: options.authority ?? authority(),
+    runtime: exactRuntime,
+    workspace,
+    runLocalCommand:
+      options.runLocalCommand ??
+      (() =>
+        Promise.resolve({
+          exitCode: 0,
+          stdout: "bounded output",
+          stderr: "",
+          timedOut: false,
+          truncated: false,
+        })),
+    revokeRuntime: () => {
+      if (!exactRuntime.revoke(IDS.revocation)) throw new TypeError("test revocation failed");
+    },
+    interruptRuntime: () => {
+      if (!exactRuntime.interrupt(IDS.revocation)) throw new TypeError("test interruption failed");
+    },
+    now: () => NOW,
+  });
+}
+
 describe("trusted worker tool dispatcher", () => {
   it("reparses, authorizes, meters, executes, and binds one local command", async () => {
-    const consumeLocalCommand = vi.fn(() => Promise.resolve(budget()));
+    const consumeLocalCommand = vi.fn(() => Promise.resolve(allowed()));
     const runLocalCommand = vi.fn(() =>
       Promise.resolve({
         exitCode: 0,
@@ -143,19 +230,14 @@ describe("trusted worker tool dispatcher", () => {
         timeoutSeconds: 10,
       },
     });
-    const result = await new TrustedWorkerToolDispatcher({
-      authority: {
-        consumeWorkerToolCall: () => Promise.resolve(null),
-        consumeLocalCommand,
-      },
-      runtime: runtime(),
-      workspace,
+    const result = await dispatcher({
+      authority: authority({ consumeLocalCommand }),
       runLocalCommand,
-      now: () => NOW,
     }).execute(exactExecution);
 
     expect(assertExactWorkerToolResult(result)).toEqual(result);
     expect(result).toMatchObject({
+      outcome: "succeeded",
       executionId: exactExecution.executionId,
       executionDigest: exactExecution.executionDigest,
       requestDigest: exactExecution.requestDigest,
@@ -163,92 +245,116 @@ describe("trusted worker tool dispatcher", () => {
       output: { stdout: "bounded output" },
       remainingBudget: { remainingToolCalls: 3, remainingLocalCommands: 1 },
     });
-    expect(consumeLocalCommand).toHaveBeenCalledWith(
-      IDS.session,
-      exactExecution.executionId,
-      exactExecution.executionDigest,
-    );
     expect(runLocalCommand).toHaveBeenCalledWith(exactExecution.request.arguments);
   });
 
-  it("meters read-only session status without consuming a local-command budget", async () => {
-    const consumeWorkerToolCall = vi.fn(() => Promise.resolve(budget()));
-    const result = await new TrustedWorkerToolDispatcher({
-      authority: {
-        consumeWorkerToolCall,
-        consumeLocalCommand: () => Promise.resolve(null),
-      },
-      runtime: runtime(),
-      workspace,
-      runLocalCommand: () => Promise.reject(new Error("must not run")),
-      now: () => NOW,
-    }).execute(execution({ name: "guardian.session_status", arguments: {} }));
-
-    expect(result).toMatchObject({
-      name: "guardian.session_status",
-      output: { sessionId: IDS.session, state: "active" },
-      remainingBudget: { remainingLocalCommands: 1 },
-    });
-    expect(consumeWorkerToolCall).toHaveBeenCalledTimes(1);
-  });
-
-  it("rejects request mutation and workspace substitution before authority or effects", async () => {
-    const consumeLocalCommand = vi.fn(() => Promise.resolve(budget()));
+  it("returns an exact sanitized denial while an ordinary rejected action stays contained", async () => {
+    const recordWorkerViolation = vi.fn(() => Promise.resolve(denied("continue")));
     const runLocalCommand = vi.fn();
-    const dispatcher = new TrustedWorkerToolDispatcher({
-      authority: {
-        consumeWorkerToolCall: () => Promise.resolve(null),
-        consumeLocalCommand,
-      },
-      runtime: runtime(),
-      workspace,
-      runLocalCommand,
-      now: () => NOW,
-    });
     const exactExecution = execution({
       name: "guardian.local_command",
       arguments: {
         executable: "rg",
         arguments: ["TODO"],
-        workingDirectory: "/workspace",
+        workingDirectory: "/outside",
         timeoutSeconds: 10,
       },
     });
-    await expect(
-      dispatcher.execute({
-        ...exactExecution,
-        request: {
-          ...exactExecution.request,
-          arguments: { ...exactExecution.request.arguments, arguments: ["SECRET"] },
-        },
-      }),
-    ).rejects.toMatchObject({ reason: "tool_denied" });
-    await expect(
-      dispatcher.execute({
-        ...exactExecution,
-        workspace: {
-          ...exactExecution.workspace,
-          selection: {
-            ...exactExecution.workspace.selection,
-            sourceSnapshotDigest: "d".repeat(64),
-          },
-        },
-      }),
-    ).rejects.toMatchObject({ reason: "tool_denied" });
-    const { executionDigest: _executionDigest, ...executionWithoutDigest } = exactExecution;
-    void _executionDigest;
-    const crossSessionExecution = createWorkerToolExecutionEnvelope({
-      ...executionWithoutDigest,
-      sessionId: "99999999-9999-4999-8999-999999999999",
+    const result = await dispatcher({
+      authority: authority({ recordWorkerViolation }),
+      runLocalCommand,
+    }).execute(exactExecution);
+
+    expect(assertExactWorkerToolResult(result)).toEqual(result);
+    expect(result).toMatchObject({
+      outcome: "denied",
+      name: "guardian.local_command",
+      denial: { code: "request_denied", disposition: "continue" },
+      remainingBudget: { remainingToolCalls: 3, remainingLocalCommands: 1 },
     });
-    await expect(dispatcher.execute(crossSessionExecution)).rejects.toMatchObject({
-      reason: "tool_denied",
-    });
-    expect(consumeLocalCommand).not.toHaveBeenCalled();
+    expect(result).not.toHaveProperty("reason");
+    expect(recordWorkerViolation).toHaveBeenCalledWith(
+      IDS.session,
+      IDS.execution,
+      exactExecution.executionDigest,
+      "filesystem_not_allowed",
+    );
     expect(runLocalCommand).not.toHaveBeenCalled();
   });
 
-  it("fails closed on durable replay, authority failure, and secret-like output", async () => {
+  it("applies an authority-selected revocation and never executes a critical near miss", async () => {
+    const exactRuntime = runtime();
+    const recordWorkerViolation = vi.fn(() => Promise.resolve(denied("revoked")));
+    const runLocalCommand = vi.fn();
+    const exactExecution = execution({ name: "guardian.session_status", arguments: {} });
+    const result = await dispatcher({
+      authority: authority({ recordWorkerViolation }),
+      runtime: exactRuntime,
+      runLocalCommand,
+    }).execute({ ...exactExecution, executionDigest: "f".repeat(64) });
+
+    expect(result).toMatchObject({
+      outcome: "denied",
+      denial: { code: "request_denied", disposition: "revoked" },
+    });
+    expect(recordWorkerViolation).toHaveBeenCalledWith(
+      IDS.session,
+      IDS.execution,
+      "f".repeat(64),
+      "execution_binding_mismatch",
+    );
+    expect(exactRuntime.status(NOW).state).toBe("revoked");
+    expect(runLocalCommand).not.toHaveBeenCalled();
+  });
+
+  it("attributes cross-session and workspace substitution to the bound runtime session", async () => {
+    const base = execution({ name: "guardian.session_status", arguments: {} });
+    const { executionDigest: _baseDigest, ...withoutDigest } = base;
+    void _baseDigest;
+    const crossSession = createWorkerToolExecutionEnvelope({
+      ...withoutDigest,
+      sessionId: "99999999-9999-4999-8999-999999999999",
+    });
+    const crossSessionRecord = vi.fn(() => Promise.resolve(denied("revoked")));
+    await dispatcher({
+      authority: authority({ recordWorkerViolation: crossSessionRecord }),
+    }).execute(crossSession);
+    expect(crossSessionRecord).toHaveBeenCalledWith(
+      IDS.session,
+      crossSession.executionId,
+      crossSession.executionDigest,
+      "execution_binding_mismatch",
+    );
+
+    const substitutedWorkspace = createWorkerToolExecutionEnvelope({
+      ...withoutDigest,
+      workspace: {
+        ...workspace,
+        selection: { ...workspace.selection, sourceSnapshotDigest: "d".repeat(64) },
+      },
+    });
+    const workspaceRecord = vi.fn(() => Promise.resolve(denied("revoked")));
+    await dispatcher({
+      authority: authority({ recordWorkerViolation: workspaceRecord }),
+    }).execute(substitutedWorkspace);
+    expect(workspaceRecord).toHaveBeenCalledWith(
+      IDS.session,
+      substitutedWorkspace.executionId,
+      substitutedWorkspace.executionDigest,
+      "workspace_binding_mismatch",
+    );
+  });
+
+  it("interrupts the trusted runtime when execution or result sanitization fails", async () => {
+    const exactRuntime = runtime();
+    const interruptWorkerSession = vi.fn(() =>
+      Promise.resolve({
+        schemaVersion: 1 as const,
+        policyId: DEFAULT_WORKER_VIOLATION_POLICY.policyId,
+        policyVersion: DEFAULT_WORKER_VIOLATION_POLICY.version,
+        outcome: "interrupted" as const,
+      }),
+    );
     const exactExecution = execution({
       name: "guardian.local_command",
       arguments: {
@@ -258,68 +364,63 @@ describe("trusted worker tool dispatcher", () => {
         timeoutSeconds: 10,
       },
     });
-    let consumed = false;
-    const dispatcher = new TrustedWorkerToolDispatcher({
-      authority: {
-        consumeWorkerToolCall: () => Promise.resolve(null),
-        consumeLocalCommand: () => {
-          if (consumed) return Promise.resolve(null);
-          consumed = true;
-          return Promise.resolve(budget());
-        },
-      },
-      runtime: runtime(),
-      workspace,
-      runLocalCommand: () =>
-        Promise.resolve({
-          exitCode: 0,
-          stdout: "token=unredacted-value",
-          stderr: "",
-          timedOut: false,
-          truncated: false,
-        }),
-      now: () => NOW,
-    });
-    await expect(dispatcher.execute(exactExecution)).rejects.toMatchObject({
-      reason: "tool_unavailable",
-    });
-    await expect(dispatcher.execute(exactExecution)).rejects.toMatchObject({
-      reason: "tool_denied",
-    });
-
-    const hostPathOutput = new TrustedWorkerToolDispatcher({
-      authority: {
-        consumeWorkerToolCall: () => Promise.resolve(null),
-        consumeLocalCommand: () => Promise.resolve(budget()),
-      },
-      runtime: runtime(),
-      workspace,
-      runLocalCommand: () =>
-        Promise.resolve({
-          exitCode: 0,
-          stdout: "C:\\Users\\guardian\\private.txt",
-          stderr: "",
-          timedOut: false,
-          truncated: false,
-        }),
-      now: () => NOW,
-    });
-    await expect(hostPathOutput.execute(exactExecution)).rejects.toMatchObject({
-      reason: "tool_unavailable",
-    });
-
-    const unavailable = new TrustedWorkerToolDispatcher({
-      authority: {
-        consumeWorkerToolCall: () => Promise.reject(new Error("offline")),
-        consumeLocalCommand: () => Promise.reject(new Error("offline")),
-      },
-      runtime: runtime(),
-      workspace,
-      runLocalCommand: () => Promise.reject(new Error("must not run")),
-      now: () => NOW,
-    });
     await expect(
-      unavailable.execute(execution({ name: "guardian.session_status", arguments: {} })),
+      dispatcher({
+        authority: authority({ interruptWorkerSession }),
+        runtime: exactRuntime,
+        runLocalCommand: () =>
+          Promise.resolve({
+            exitCode: 0,
+            stdout: "token=unredacted-value",
+            stderr: "",
+            timedOut: false,
+            truncated: false,
+          }),
+      }).execute(exactExecution),
+    ).rejects.toMatchObject({ reason: "tool_unavailable" });
+    expect(interruptWorkerSession).toHaveBeenCalledWith(
+      IDS.session,
+      IDS.execution,
+      exactExecution.executionDigest,
+      "result_invalid",
+    );
+    expect(exactRuntime.status(NOW).state).toBe("interrupted");
+  });
+
+  it("fails closed and interrupts locally when durable authority is unavailable", async () => {
+    const exactRuntime = runtime();
+    await expect(
+      dispatcher({
+        authority: authority({
+          consumeWorkerToolCall: () => Promise.reject(new Error("offline")),
+        }),
+        runtime: exactRuntime,
+      }).execute(execution({ name: "guardian.session_status", arguments: {} })),
     ).rejects.toMatchObject({ reason: "authority_unavailable" });
+    expect(exactRuntime.status(NOW).state).toBe("interrupted");
+  });
+
+  it("mirrors a durable revoked or interrupted state into the local runtime", async () => {
+    const revokedRuntime = runtime();
+    await expect(
+      dispatcher({
+        authority: authority({
+          consumeWorkerToolCall: () => Promise.resolve(unavailable("revoked")),
+        }),
+        runtime: revokedRuntime,
+      }).execute(execution({ name: "guardian.session_status", arguments: {} })),
+    ).rejects.toMatchObject({ reason: "not_active" });
+    expect(revokedRuntime.status(NOW).state).toBe("revoked");
+
+    const interruptedRuntime = runtime();
+    await expect(
+      dispatcher({
+        authority: authority({
+          consumeWorkerToolCall: () => Promise.resolve(unavailable("not_active")),
+        }),
+        runtime: interruptedRuntime,
+      }).execute(execution({ name: "guardian.session_status", arguments: {} })),
+    ).rejects.toMatchObject({ reason: "not_active" });
+    expect(interruptedRuntime.status(NOW).state).toBe("interrupted");
   });
 });

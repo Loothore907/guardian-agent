@@ -193,29 +193,114 @@ describe("SQLite authority store", () => {
     store.createSession(session(), budget());
     const firstExecution = randomUUID();
     const firstDigest = "e".repeat(64);
-    expect(store.consumeLocalCommand(IDS.session, firstExecution, firstDigest)).toEqual({
-      ...budget(),
-      remainingToolCalls: 2,
-      remainingLocalCommands: 0,
+    expect(store.consumeLocalCommand(IDS.session, firstExecution, firstDigest)).toMatchObject({
+      outcome: "allowed",
+      budget: { remainingToolCalls: 2, remainingLocalCommands: 0 },
     });
-    expect(store.consumeLocalCommand(IDS.session, firstExecution, firstDigest)).toBeNull();
-    expect(store.consumeLocalCommand(IDS.session, firstExecution, "f".repeat(64))).toBeNull();
-    expect(store.consumeLocalCommand(IDS.session, randomUUID(), "1".repeat(64))).toBeNull();
+    expect(store.consumeLocalCommand(IDS.session, firstExecution, firstDigest)).toMatchObject({
+      outcome: "denied",
+      disposition: "revoked",
+    });
+    expect(store.consumeLocalCommand(IDS.session, firstExecution, "f".repeat(64))).toMatchObject({
+      outcome: "unavailable",
+      reason: "revoked",
+    });
+    expect(store.consumeLocalCommand(IDS.session, randomUUID(), "1".repeat(64))).toMatchObject({
+      outcome: "unavailable",
+      reason: "revoked",
+    });
     expect(store.getBudget(IDS.session)).toEqual({
       ...budget(),
       remainingToolCalls: 2,
       remainingLocalCommands: 0,
     });
+    expect(store.getSession(IDS.session)?.status).toBe("revoked");
+    store.close();
+  });
 
-    const statusExecution = randomUUID();
-    const statusDigest = "2".repeat(64);
-    expect(store.consumeWorkerToolCall(IDS.session, statusExecution, statusDigest)).toEqual({
-      ...budget(),
-      remainingToolCalls: 1,
-      remainingLocalCommands: 0,
-    });
-    expect(store.consumeWorkerToolCall(IDS.session, statusExecution, statusDigest)).toBeNull();
-    expect(store.getBudget(IDS.session)?.remainingToolCalls).toBe(1);
+  it("contains ordinary denials below the inclusive threshold and revokes deterministically", async () => {
+    let evaluatedAt = ACTIVE_AT;
+    const path = await databasePath();
+    const store = new SqliteAuthorityStore(path, { now: () => evaluatedAt });
+    store.initialize();
+    store.createSession(session(), budget());
+    const record = () =>
+      store.recordWorkerViolation(
+        IDS.session,
+        randomUUID(),
+        randomUUID().replaceAll("-", "").padEnd(64, "0").slice(0, 64),
+        "filesystem_not_allowed",
+      );
+
+    expect(record()).toMatchObject({ outcome: "denied", disposition: "continue" });
+    evaluatedAt = "2026-08-30T22:36:59.999Z";
+    expect(record()).toMatchObject({ outcome: "denied", disposition: "continue" });
+    evaluatedAt = "2026-08-30T22:37:00.000Z";
+    expect(record()).toMatchObject({ outcome: "denied", disposition: "revoked" });
+    expect(store.getSession(IDS.session)?.status).toBe("revoked");
+    store.close();
+  });
+
+  it("drops ordinary denials outside the bounded window", async () => {
+    let evaluatedAt = ACTIVE_AT;
+    const path = await databasePath();
+    const store = new SqliteAuthorityStore(path, { now: () => evaluatedAt });
+    store.initialize();
+    store.createSession(session(), budget());
+    const record = () =>
+      store.recordWorkerViolation(
+        IDS.session,
+        randomUUID(),
+        randomUUID().replaceAll("-", "").padEnd(64, "0").slice(0, 64),
+        "timeout_exceeds_session",
+      );
+
+    expect(record()).toMatchObject({ disposition: "continue" });
+    evaluatedAt = "2026-08-30T22:37:00.001Z";
+    expect(record()).toMatchObject({ disposition: "continue" });
+    evaluatedAt = "2026-08-30T22:37:00.002Z";
+    expect(record()).toMatchObject({ disposition: "continue" });
+    expect(store.getSession(IDS.session)?.status).toBe("active");
+    store.close();
+  });
+
+  it("fails closed when the worker-boundary clock moves behind durable history", async () => {
+    let evaluatedAt = ACTIVE_AT;
+    const path = await databasePath();
+    const store = new SqliteAuthorityStore(path, { now: () => evaluatedAt });
+    store.initialize();
+    store.createSession(session(), budget());
+    expect(
+      store.recordWorkerViolation(
+        IDS.session,
+        randomUUID(),
+        "c".repeat(64),
+        "filesystem_not_allowed",
+      ),
+    ).toMatchObject({ disposition: "continue" });
+    evaluatedAt = "2026-08-30T22:31:59.999Z";
+    expect(() =>
+      store.recordWorkerViolation(
+        IDS.session,
+        randomUUID(),
+        "d".repeat(64),
+        "filesystem_not_allowed",
+      ),
+    ).toThrow(/clock precedes the latest worker boundary event/u);
+    expect(store.getSession(IDS.session)?.status).toBe("active");
+    store.close();
+  });
+
+  it("interrupts trusted worker-boundary failures without treating them as denials", async () => {
+    const { store } = await openStore();
+    store.createSession(session(), budget());
+    expect(
+      store.interruptWorkerSession(IDS.session, randomUUID(), "a".repeat(64), "tool_unavailable"),
+    ).toMatchObject({ outcome: "interrupted" });
+    expect(store.getSession(IDS.session)?.status).toBe("interrupted");
+    expect(
+      store.interruptWorkerSession(IDS.session, randomUUID(), "b".repeat(64), "tool_unavailable"),
+    ).toMatchObject({ outcome: "already_inactive" });
     store.close();
   });
 
@@ -378,6 +463,49 @@ describe("SQLite authority store", () => {
     migrated.close();
   });
 
+  it("migrates schema-v3 worker authority state to versioned boundary events", async () => {
+    const path = await databasePath();
+    const raw = new DatabaseSync(path);
+    raw.exec(`
+      CREATE TABLE sessions (
+        session_id TEXT PRIMARY KEY NOT NULL, caller_id TEXT NOT NULL, mission_id TEXT NOT NULL,
+        mission_version INTEGER NOT NULL, profile_id TEXT NOT NULL, profile_version INTEGER NOT NULL,
+        policy_version INTEGER NOT NULL, starts_at TEXT NOT NULL, expires_at TEXT NOT NULL,
+        status TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+      ) STRICT;
+      CREATE TABLE session_budgets (
+        session_id TEXT PRIMARY KEY NOT NULL REFERENCES sessions(session_id),
+        remaining_tool_calls INTEGER NOT NULL, remaining_local_commands INTEGER NOT NULL,
+        remaining_research_requests INTEGER NOT NULL, remaining_research_results INTEGER NOT NULL
+      ) STRICT;
+      CREATE TABLE worker_tool_executions (
+        execution_id TEXT PRIMARY KEY NOT NULL, session_id TEXT NOT NULL REFERENCES sessions(session_id),
+        execution_digest TEXT NOT NULL, tool TEXT NOT NULL, consumed_at TEXT NOT NULL,
+        UNIQUE(session_id, execution_digest)
+      ) STRICT;
+      CREATE TABLE session_connections (
+        session_id TEXT NOT NULL REFERENCES sessions(session_id), connection_id TEXT NOT NULL,
+        PRIMARY KEY(session_id, connection_id)
+      ) STRICT;
+      PRAGMA user_version = 3;
+    `);
+    raw.close();
+    if (process.platform !== "win32") await chmod(path, 0o600);
+
+    const migrated = new SqliteAuthorityStore(path, { now: () => ACTIVE_AT });
+    migrated.initialize();
+    migrated.createSession(session(), budget());
+    expect(
+      migrated.recordWorkerViolation(
+        IDS.session,
+        randomUUID(),
+        "e".repeat(64),
+        "filesystem_not_allowed",
+      ),
+    ).toMatchObject({ outcome: "denied", disposition: "continue" });
+    migrated.close();
+  });
+
   it("denies consumption and research after fail-closed restart interruption", async () => {
     const { store } = await openStore();
     store.createConnection(connection());
@@ -442,7 +570,7 @@ describe("SQLite authority store", () => {
     );
 
     const raw = new DatabaseSync(path);
-    raw.exec("PRAGMA user_version = 4;");
+    raw.exec("PRAGMA user_version = 5;");
     raw.close();
     if (process.platform !== "win32") await chmod(path, 0o600);
     const unsupported = new SqliteAuthorityStore(path);

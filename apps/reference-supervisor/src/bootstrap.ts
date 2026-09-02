@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
 
+import type { AuthorityWorkerClient } from "@guardian/authority-client";
+
 import {
   DEFAULT_REFERENCE_WORKER_SELECTION,
   DEFAULT_GUARDIAN_MODEL_POLICY,
@@ -52,6 +54,13 @@ const MAXIMUM_CONFIRMATION_AGE_MS = 30_000;
 const MAXIMUM_PENDING_DRAFTS = 16;
 const POLICY_VERSION = 1;
 const PROFILE_DURATION_SECONDS = 300;
+
+function bootstrapSessionState(
+  state: ReturnType<LaunchedReferenceSession["runtime"]["status"]>["state"],
+): SessionBootstrapResult["state"] {
+  if (state === "pending") throw new TypeError("launched worker session returned to pending");
+  return state;
+}
 
 const REFERENCE_CONSTRAINTS = [
   "Do not perform external service operations.",
@@ -121,6 +130,7 @@ export interface ReferenceSessionBootstrapOptions {
   readonly runMissionSetupRisk?: RunMissionSetupRisk;
   readonly runWorkerTurn?: RunWorkerTurn;
   readonly executeWorkerTool?: ExecuteWorkerTool;
+  readonly workerAuthority?: AuthorityWorkerClient;
   readonly workerSelection?: SessionWorkerSelection;
   readonly now?: () => string;
   readonly randomId?: () => string;
@@ -137,6 +147,7 @@ export class ReferenceSessionBootstrapCoordinator {
   readonly #runMissionSetupRisk: RunMissionSetupRisk | undefined;
   readonly #runWorkerTurn: RunWorkerTurn | undefined;
   readonly #executeWorkerTool: ExecuteWorkerTool | undefined;
+  readonly #workerAuthority: AuthorityWorkerClient | undefined;
   readonly #workerSelection: SessionWorkerSelection;
   readonly #now: () => string;
   readonly #randomId: () => string;
@@ -155,6 +166,7 @@ export class ReferenceSessionBootstrapCoordinator {
     this.#runMissionSetupRisk = options.runMissionSetupRisk;
     this.#runWorkerTurn = options.runWorkerTurn;
     this.#executeWorkerTool = options.executeWorkerTool;
+    this.#workerAuthority = options.workerAuthority;
     this.#workerSelection = SessionWorkerSelectionSchema.parse(
       options.workerSelection ?? DEFAULT_REFERENCE_WORKER_SELECTION,
     );
@@ -402,6 +414,8 @@ export class ReferenceSessionBootstrapCoordinator {
       },
     });
     let workerTurn: SessionBootstrapResult["workerTurn"] = { state: "not_attached" };
+    let sessionState: SessionBootstrapResult["state"] = status.state;
+    let lastBoundary = { id: turn.turnId, digest: turn.turnDigest };
     if (this.#runWorkerTurn !== undefined) {
       let fallbackFailure: WorkerTurnIpcFailureReason = "provider_unavailable";
       try {
@@ -461,38 +475,44 @@ export class ReferenceSessionBootstrapCoordinator {
               reason: "tool_denied" as const,
             });
           }
-          const secondTurnStartsAt = TimestampSchema.parse(this.#now());
-          fallbackFailure = "provider_malformed";
-          const secondTurn = createWorkerTurnEnvelope({
-            schemaVersion: 1,
-            turnId: this.#randomId(),
-            sessionId: turn.sessionId,
-            callerId: turn.callerId,
-            missionId: turn.missionId,
-            missionVersion: turn.missionVersion,
-            profileId: turn.profileId,
-            profileVersion: turn.profileVersion,
-            policyVersion: turn.policyVersion,
-            modelPolicyId: turn.modelPolicyId,
-            modelPolicyVersion: turn.modelPolicyVersion,
-            worker: turn.worker,
-            turnNumber: 2,
-            startsAt: secondTurnStartsAt,
-            expiresAt: new Date(
-              Math.min(Date.parse(status.expiresAt), Date.parse(secondTurnStartsAt) + 60_000),
-            ).toISOString(),
-            objective: turn.objective,
-            constraints: turn.constraints,
-            allowedTools: [],
-            remainingBudget: toolResult.remainingBudget,
-            previousToolResult: toolResult,
-          });
-          fallbackFailure = "provider_unavailable";
-          const finalResult = assertWorkerTurnResultForTurn(
-            await this.#runWorkerTurn(secondTurn),
-            secondTurn,
-          );
-          workerTurn = { state: "completed", result: finalResult, toolResult };
+          if (toolResult.outcome === "denied" && toolResult.denial.disposition === "revoked") {
+            launched.revoke();
+            workerTurn = { state: "revoked", toolResult };
+          } else {
+            const secondTurnStartsAt = TimestampSchema.parse(this.#now());
+            fallbackFailure = "provider_malformed";
+            const secondTurn = createWorkerTurnEnvelope({
+              schemaVersion: 1,
+              turnId: this.#randomId(),
+              sessionId: turn.sessionId,
+              callerId: turn.callerId,
+              missionId: turn.missionId,
+              missionVersion: turn.missionVersion,
+              profileId: turn.profileId,
+              profileVersion: turn.profileVersion,
+              policyVersion: turn.policyVersion,
+              modelPolicyId: turn.modelPolicyId,
+              modelPolicyVersion: turn.modelPolicyVersion,
+              worker: turn.worker,
+              turnNumber: 2,
+              startsAt: secondTurnStartsAt,
+              expiresAt: new Date(
+                Math.min(Date.parse(status.expiresAt), Date.parse(secondTurnStartsAt) + 60_000),
+              ).toISOString(),
+              objective: turn.objective,
+              constraints: turn.constraints,
+              allowedTools: [],
+              remainingBudget: toolResult.remainingBudget,
+              previousToolResult: toolResult,
+            });
+            lastBoundary = { id: secondTurn.turnId, digest: secondTurn.turnDigest };
+            fallbackFailure = "provider_unavailable";
+            const finalResult = assertWorkerTurnResultForTurn(
+              await this.#runWorkerTurn(secondTurn),
+              secondTurn,
+            );
+            workerTurn = { state: "completed", result: finalResult, toolResult };
+          }
         }
       } catch (error) {
         const reason = WorkerTurnIpcFailureReasonSchema.safeParse(
@@ -500,11 +520,56 @@ export class ReferenceSessionBootstrapCoordinator {
             ? error.reason
             : undefined,
         );
+        let failure = reason.success ? reason.data : fallbackFailure;
+        const violationFailures = new Set<WorkerTurnIpcFailureReason>([
+          "invalid_request",
+          "provider_malformed",
+          "tool_denied",
+          "turn_consumed",
+          "unauthorized",
+        ]);
+        try {
+          if (violationFailures.has(failure)) {
+            const disposition = await this.#workerAuthority?.recordWorkerViolation(
+              status.sessionId,
+              lastBoundary.id,
+              lastBoundary.digest,
+              "worker_output_malformed",
+            );
+            if (
+              disposition !== undefined &&
+              (disposition.outcome !== "denied" || disposition.disposition !== "revoked")
+            ) {
+              launched.interrupt();
+              failure = "authority_unavailable";
+            } else {
+              launched.revoke();
+            }
+          } else if (
+            failure === "provider_unavailable" ||
+            failure === "authority_unavailable" ||
+            failure === "tool_unavailable"
+          ) {
+            launched.interrupt();
+            await this.#workerAuthority?.interruptWorkerSession(
+              status.sessionId,
+              lastBoundary.id,
+              lastBoundary.digest,
+              failure,
+            );
+          }
+        } catch {
+          launched.interrupt();
+          failure = "authority_unavailable";
+        }
         workerTurn = {
           state: "failed_closed",
-          error: reason.success ? reason.data : fallbackFailure,
+          error: failure,
         };
       }
+      sessionState = bootstrapSessionState(
+        launched.runtime.status(TimestampSchema.parse(this.#now())).state,
+      );
     }
     return SessionBootstrapResultSchema.parse({
       schemaVersion: 1,
@@ -514,7 +579,7 @@ export class ReferenceSessionBootstrapCoordinator {
       missionVersion: status.missionVersion,
       profileId: status.profileId,
       profileVersion: status.profileVersion,
-      state: status.state,
+      state: sessionState,
       assurance: status.assurance,
       expiresAt: status.expiresAt,
       tools: status.tools,

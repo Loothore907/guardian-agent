@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { DEFAULT_NEBIUS_WORKER_SELECTION } from "@guardian/contracts";
 import { InMemoryCredentialStore } from "@guardian/credential-store";
-import { createWorkerTurnEnvelope } from "@guardian/worker";
+import { createWorkerToolResult, createWorkerTurnEnvelope } from "@guardian/worker";
 
 import {
   NativeWorkerProviderError,
@@ -11,7 +11,7 @@ import {
   projectNebiusWorkerResponse,
 } from "./nebius.js";
 
-function turn(worker = DEFAULT_NEBIUS_WORKER_SELECTION) {
+function turn(worker = DEFAULT_NEBIUS_WORKER_SELECTION, overrides: Record<string, unknown> = {}) {
   return createWorkerTurnEnvelope({
     schemaVersion: 1,
     turnId: "11111111-1111-4111-8111-111111111111",
@@ -40,6 +40,7 @@ function turn(worker = DEFAULT_NEBIUS_WORKER_SELECTION) {
       remainingLocalCommands: 1,
       remainingPrivilegedActions: 0,
     },
+    ...overrides,
   });
 }
 
@@ -121,6 +122,85 @@ describe("Nebius native worker provider", () => {
     await expect(provider.runTurn(mismatched)).rejects.toBeInstanceOf(NativeWorkerProviderError);
     expect(useSpy).not.toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("projects only the public denial code and disposition into the final turn", async () => {
+    const credentialStore = new InMemoryCredentialStore();
+    await credentialStore.write(
+      nativeWorkerBoundary.credential,
+      new TextEncoder().encode("worker-provider-denial-fixture"),
+    );
+    const firstTurn = turn();
+    const denial = createWorkerToolResult({
+      schemaVersion: 1,
+      executionId: "66666666-6666-4666-8666-666666666666",
+      executionDigest: "a".repeat(64),
+      sessionId: firstTurn.sessionId,
+      callerId: firstTurn.callerId,
+      missionId: firstTurn.missionId,
+      missionVersion: firstTurn.missionVersion,
+      profileId: firstTurn.profileId,
+      profileVersion: firstTurn.profileVersion,
+      policyVersion: firstTurn.policyVersion,
+      sourceTurnId: firstTurn.turnId,
+      sourceTurnNumber: firstTurn.turnNumber,
+      sourceTurnDigest: firstTurn.turnDigest,
+      requestDigest: "b".repeat(64),
+      completedAt: "2026-09-01T00:00:20.000Z",
+      remainingBudget: {
+        remainingDurationSeconds: 40,
+        remainingToolCalls: 2,
+        remainingResearchRequests: 0,
+        remainingResearchResults: 0,
+        remainingLocalCommands: 1,
+        remainingPrivilegedActions: 0,
+      },
+      outcome: "denied",
+      name: "guardian.session_status",
+      denial: {
+        code: "request_denied",
+        disposition: "continue",
+        policyId: "reference-worker-violations-2026-09-02",
+        policyVersion: 1,
+      },
+    });
+    const finalTurn = turn(DEFAULT_NEBIUS_WORKER_SELECTION, {
+      turnId: "77777777-7777-4777-8777-777777777777",
+      turnNumber: 2,
+      startsAt: "2026-09-01T00:00:20.000Z",
+      allowedTools: [],
+      remainingBudget: denial.remainingBudget,
+      previousToolResult: denial,
+    });
+    const fetchMock = vi.fn<typeof fetch>(() =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            id: "nebius_worker_denial_2",
+            model: nativeWorkerBoundary.model,
+            choices: [
+              {
+                finish_reason: "stop",
+                message: {
+                  content: JSON.stringify({ kind: "final_response", response: "Finished." }),
+                },
+              },
+            ],
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+      ),
+    );
+    const provider = new NebiusNativeWorkerProvider({ credentialStore, fetch: fetchMock });
+    await expect(provider.runTurn(finalTurn)).resolves.toMatchObject({
+      outcome: { kind: "final_response" },
+    });
+    const init = fetchMock.mock.calls[0]?.[1];
+    if (typeof init?.body !== "string") throw new TypeError("provider body was not text");
+    expect(init.body).toContain("request_denied");
+    expect(init.body).toContain("continue");
+    expect(init.body).not.toContain("filesystem_not_allowed");
+    expect(init.body).not.toContain("reference-worker-violations");
   });
 
   it("fails closed on provider timeout and oversized provider frames", async () => {

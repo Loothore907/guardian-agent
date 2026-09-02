@@ -17,6 +17,12 @@ import {
   DurableSessionRecordSchema,
 } from "./persistence.js";
 import { DurableConnectionRecordSchema } from "./authority-context.js";
+import {
+  WorkerBoundaryFailureCodeSchema,
+  WorkerBoundaryInterruptionSchema,
+  WorkerExecutionAuthorizationSchema,
+  WorkerViolationCodeSchema,
+} from "./worker-policy.js";
 
 export const AuthorityIpcOperationSchema = z.enum([
   "connection.create",
@@ -31,6 +37,8 @@ export const AuthorityIpcOperationSchema = z.enum([
   "budget.consume_tool",
   "budget.consume_worker_tool",
   "budget.consume_local_command",
+  "worker.record_violation",
+  "worker.interrupt",
   "approval.consume",
   "context.append_attempt",
   "context.append_decision",
@@ -108,6 +116,20 @@ export const AuthorityIpcRequestSchema = z.discriminatedUnion("operation", [
     operation: z.literal("budget.consume_local_command"),
     executionId: OpaqueIdSchema,
     executionDigest: z.string().regex(/^[a-f0-9]{64}$/u),
+  }),
+  z.strictObject({
+    ...AuthorityRequestBindingShape,
+    operation: z.literal("worker.record_violation"),
+    boundaryId: OpaqueIdSchema,
+    boundaryDigest: z.string().regex(/^[a-f0-9]{64}$/u),
+    code: WorkerViolationCodeSchema,
+  }),
+  z.strictObject({
+    ...AuthorityRequestBindingShape,
+    operation: z.literal("worker.interrupt"),
+    boundaryId: OpaqueIdSchema,
+    boundaryDigest: z.string().regex(/^[a-f0-9]{64}$/u),
+    failure: WorkerBoundaryFailureCodeSchema,
   }),
   z.strictObject({
     ...AuthorityRequestBindingShape,
@@ -214,13 +236,25 @@ export const AuthorityIpcSuccessResponseSchema = z.discriminatedUnion("operation
     ...AuthorityResponseBindingShape,
     ok: z.literal(true),
     operation: z.literal("budget.consume_worker_tool"),
-    result: DurableSessionBudgetSchema.nullable(),
+    result: WorkerExecutionAuthorizationSchema,
   }),
   z.strictObject({
     ...AuthorityResponseBindingShape,
     ok: z.literal(true),
     operation: z.literal("budget.consume_local_command"),
-    result: DurableSessionBudgetSchema.nullable(),
+    result: WorkerExecutionAuthorizationSchema,
+  }),
+  z.strictObject({
+    ...AuthorityResponseBindingShape,
+    ok: z.literal(true),
+    operation: z.literal("worker.record_violation"),
+    result: WorkerExecutionAuthorizationSchema,
+  }),
+  z.strictObject({
+    ...AuthorityResponseBindingShape,
+    ok: z.literal(true),
+    operation: z.literal("worker.interrupt"),
+    result: WorkerBoundaryInterruptionSchema,
   }),
   z.strictObject({
     ...AuthorityResponseBindingShape,

@@ -19,7 +19,7 @@ export const BoundSessionStatusSchema = z.strictObject({
   profileVersion: z.number().int().positive(),
   policyVersion: z.number().int().positive(),
   callerId: z.uuid(),
-  state: z.enum(["pending", "active", "expired", "revoked"]),
+  state: z.enum(["pending", "active", "expired", "revoked", "interrupted"]),
   assurance: AssuranceLevelSchema,
   expiresAt: z.iso.datetime({ offset: false, precision: 3 }),
   tools: z.array(ToolCapabilitySchema),

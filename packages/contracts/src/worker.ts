@@ -25,6 +25,7 @@ import {
   GuardianModelIdSchema,
   GuardianModelPolicyIdSchema,
 } from "./model-policy.js";
+import { DEFAULT_WORKER_VIOLATION_POLICY } from "./worker-policy.js";
 
 const WorkerLocalCommandRequestSchema = LocalCommandRequestSchema.superRefine(
   (request, context) => {
@@ -254,41 +255,84 @@ function localCommandOutputIsSafe(output: { readonly stdout: string; readonly st
   );
 }
 
+const WorkerToolSuccessResultWithoutDigestSchema = z.discriminatedUnion("name", [
+  z.strictObject({
+    ...WorkerToolResultBindingShape,
+    outcome: z.literal("succeeded"),
+    name: z.literal("guardian.session_status"),
+    output: BoundSessionStatusSchema,
+  }),
+  z.strictObject({
+    ...WorkerToolResultBindingShape,
+    outcome: z.literal("succeeded"),
+    name: z.literal("guardian.local_command"),
+    output: LocalCommandResultSchema,
+  }),
+]);
+
+const WorkerToolDenialShape = {
+  ...WorkerToolResultBindingShape,
+  outcome: z.literal("denied"),
+  denial: z.strictObject({
+    code: z.literal("request_denied"),
+    disposition: z.enum(["continue", "revoked"]),
+    policyId: z.literal(DEFAULT_WORKER_VIOLATION_POLICY.policyId),
+    policyVersion: z.literal(DEFAULT_WORKER_VIOLATION_POLICY.version),
+  }),
+} as const;
+
+const WorkerToolDeniedResultWithoutDigestSchema = z.discriminatedUnion("name", [
+  z.strictObject({ ...WorkerToolDenialShape, name: z.literal("guardian.session_status") }),
+  z.strictObject({ ...WorkerToolDenialShape, name: z.literal("guardian.local_command") }),
+]);
+
 export const WorkerToolResultWithoutDigestSchema = z
-  .discriminatedUnion("name", [
-    z.strictObject({
-      ...WorkerToolResultBindingShape,
-      name: z.literal("guardian.session_status"),
-      output: BoundSessionStatusSchema,
-    }),
-    z.strictObject({
-      ...WorkerToolResultBindingShape,
-      name: z.literal("guardian.local_command"),
-      output: LocalCommandResultSchema,
-    }),
-  ])
+  .union([WorkerToolSuccessResultWithoutDigestSchema, WorkerToolDeniedResultWithoutDigestSchema])
   .refine(
-    (result) => result.name !== "guardian.local_command" || localCommandOutputIsSafe(result.output),
+    (result) =>
+      result.outcome !== "succeeded" ||
+      result.name !== "guardian.local_command" ||
+      localCommandOutputIsSafe(result.output),
     { message: "worker tool result cannot contain secret-like material or a private host path" },
   );
 
+const WorkerToolSuccessResultSchema = z.discriminatedUnion("name", [
+  z.strictObject({
+    ...WorkerToolResultBindingShape,
+    resultDigest: Sha256DigestSchema,
+    outcome: z.literal("succeeded"),
+    name: z.literal("guardian.session_status"),
+    output: BoundSessionStatusSchema,
+  }),
+  z.strictObject({
+    ...WorkerToolResultBindingShape,
+    resultDigest: Sha256DigestSchema,
+    outcome: z.literal("succeeded"),
+    name: z.literal("guardian.local_command"),
+    output: LocalCommandResultSchema,
+  }),
+]);
+
+const WorkerToolDeniedResultSchema = z.discriminatedUnion("name", [
+  z.strictObject({
+    ...WorkerToolDenialShape,
+    resultDigest: Sha256DigestSchema,
+    name: z.literal("guardian.session_status"),
+  }),
+  z.strictObject({
+    ...WorkerToolDenialShape,
+    resultDigest: Sha256DigestSchema,
+    name: z.literal("guardian.local_command"),
+  }),
+]);
+
 export const WorkerToolResultSchema = z
-  .discriminatedUnion("name", [
-    z.strictObject({
-      ...WorkerToolResultBindingShape,
-      resultDigest: Sha256DigestSchema,
-      name: z.literal("guardian.session_status"),
-      output: BoundSessionStatusSchema,
-    }),
-    z.strictObject({
-      ...WorkerToolResultBindingShape,
-      resultDigest: Sha256DigestSchema,
-      name: z.literal("guardian.local_command"),
-      output: LocalCommandResultSchema,
-    }),
-  ])
+  .union([WorkerToolSuccessResultSchema, WorkerToolDeniedResultSchema])
   .refine(
-    (result) => result.name !== "guardian.local_command" || localCommandOutputIsSafe(result.output),
+    (result) =>
+      result.outcome !== "succeeded" ||
+      result.name !== "guardian.local_command" ||
+      localCommandOutputIsSafe(result.output),
     { message: "worker tool result cannot contain secret-like material or a private host path" },
   );
 export type WorkerToolResult = DeepReadonly<z.infer<typeof WorkerToolResultSchema>>;
@@ -446,8 +490,25 @@ export const WorkerTurnBoundaryStateSchema = z
       state: z.literal("failed_closed"),
       error: WorkerTurnIpcFailureReasonSchema,
     }),
+    z.strictObject({
+      state: z.literal("revoked"),
+      toolResult: WorkerToolResultSchema,
+    }),
   ])
   .superRefine((boundary, context) => {
+    if (boundary.state === "revoked") {
+      if (
+        boundary.toolResult.outcome !== "denied" ||
+        boundary.toolResult.denial.disposition !== "revoked"
+      ) {
+        context.addIssue({
+          code: "custom",
+          message: "a revoked worker boundary requires an exact revocation denial",
+          path: ["toolResult"],
+        });
+      }
+      return;
+    }
     if (boundary.state !== "completed") return;
     if (
       boundary.toolResult !== undefined &&

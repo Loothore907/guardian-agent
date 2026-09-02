@@ -1,9 +1,9 @@
 # C6 Durable Authority Store Evidence
 
-- Date: 2026-08-30 (AKDT); schema-v3 update 2026-09-02
+- Date: 2026-08-30 (AKDT); schema-v4 update 2026-09-02
 - Issue: [#13](https://github.com/Loothore907/guardian-agent/issues/13)
 - Branch: `codex/13-c6-durable-authorization-broker`
-- Status: Schema-v3 repository, broker, and W3 worker-dispatch integration passed
+- Status: Schema-v4 repository, broker, W3 dispatch, and W4 lifecycle integration passed
 
 ## Implemented boundary
 
@@ -17,7 +17,7 @@ adapter operation, prompt interpretation, or arbitrary SQL interface. Its path i
 selected by trusted orchestration and must be an absolute `.sqlite` file outside
 supplied disposable workspace roots.
 
-Schema version 3 stores:
+Schema version 4 stores:
 
 - immutable session, caller, mission, profile, policy, lifecycle, and timestamp
   bindings;
@@ -31,7 +31,9 @@ Schema version 3 stores:
 - minimized evidence exposures, typed attempts, decisions, boundary crossings,
   consumption, and control outcomes; and
 - unique W3 worker execution IDs/digests bound to session, typed capability, and
-  atomic total/capability-specific budget consumption.
+  atomic total/capability-specific budget consumption; and
+- exact W4 boundary events with trusted code, derived severity, deterministic
+  disposition, policy binding, and bounded-window timestamps.
 
 It does not store reusable credentials, credential-store values, IPC capabilities,
 socket or pipe endpoints, raw provider output, hostile page content, rejected
@@ -58,8 +60,8 @@ queries, or model chain-of-thought.
 - Approval consumption uses the store clock and atomically checks approval ID,
   nonce, request digest, session, caller, connection, policy, lifecycle, expiry,
   active bound connection, and prior consumption.
-- Schema-v1 and schema-v2 databases migrate atomically without resetting existing
-  authority.
+- Schema-v1, schema-v2, and schema-v3 databases migrate atomically without
+  resetting existing authority.
 - Evidence-to-attempt association verifies that every referenced exposure belongs
   to the same session and existed no later than the attempt. Strict records have
   no field for page bodies, rejected values, arbitrary rationale, or chain-of-thought.
@@ -96,7 +98,9 @@ decision records. The broker reaches those operations only through authenticated
 typed IPC. This does not yet prove complete reference-runtime persistence.
 Accordingly:
 
-- revocation remains in-memory until its durable runtime integration lands;
+- W4 worker revocation and trusted-boundary interruption update durable authority
+  state and the bound local runtime; other future lifecycle sources require their
+  own exact trusted operations;
 - W3 status and local-command budgets and research-service budgets use trusted
   authority-service operations; other future worker capabilities require their
   own atomic operations;

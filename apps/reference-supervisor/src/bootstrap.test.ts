@@ -82,6 +82,7 @@ function coordinator(
     launchInput = input;
     const mission = input.mission as { missionId: string; version: number };
     const profile = input.profile as { profileId: string; version: number };
+    let runtimeState: "active" | "revoked" | "interrupted" = "active";
     return Promise.resolve({
       runtime: {
         status: () => ({
@@ -92,7 +93,7 @@ function coordinator(
           profileVersion: profile.version,
           policyVersion: 1,
           callerId: IDS.caller,
-          state: "active",
+          state: runtimeState,
           assurance: "enforced",
           expiresAt: "2026-08-31T10:05:00.000Z",
           tools: ["guardian.local_command", "guardian.session_status"],
@@ -102,6 +103,12 @@ function coordinator(
       durableAuthority: true,
       workspace: WORKSPACE_RESULT,
       localCommand: vi.fn(),
+      revoke: () => {
+        runtimeState = "revoked";
+      },
+      interrupt: () => {
+        runtimeState = "interrupted";
+      },
     } as never);
   });
   const bootstrap = new ReferenceSessionBootstrapCoordinator({
@@ -502,6 +509,7 @@ describe("reference terminal session bootstrap", () => {
             remainingLocalCommands: 10,
             remainingPrivilegedActions: 0,
           },
+          outcome: "succeeded",
           name: "guardian.session_status",
           output: {
             sessionId: IDS.session,
@@ -551,6 +559,155 @@ describe("reference terminal session bootstrap", () => {
     });
   });
 
+  it("keeps the exact lifecycle active after a contained sanitized denial", async () => {
+    const runWorkerTurn = vi.fn((turn: WorkerTurnEnvelope) =>
+      Promise.resolve({
+        providerRequestId: `fake_worker_denial_${turn.turnNumber}`,
+        turnId: turn.turnId,
+        turnNumber: turn.turnNumber,
+        turnDigest: turn.turnDigest,
+        outcome:
+          turn.turnNumber === 1
+            ? {
+                kind: "tool_request" as const,
+                request: { name: "guardian.session_status" as const, arguments: {} },
+              }
+            : { kind: "final_response" as const, response: "The denied action was contained." },
+      }),
+    );
+    const executeWorkerTool = vi.fn((execution: WorkerToolExecutionEnvelope) =>
+      Promise.resolve(
+        createWorkerToolResult({
+          schemaVersion: 1,
+          executionId: execution.executionId,
+          executionDigest: execution.executionDigest,
+          sessionId: execution.sessionId,
+          callerId: execution.callerId,
+          missionId: execution.missionId,
+          missionVersion: execution.missionVersion,
+          profileId: execution.profileId,
+          profileVersion: execution.profileVersion,
+          policyVersion: execution.policyVersion,
+          sourceTurnId: execution.sourceTurnId,
+          sourceTurnNumber: execution.sourceTurnNumber,
+          sourceTurnDigest: execution.sourceTurnDigest,
+          requestDigest: execution.requestDigest,
+          completedAt: CREATED_AT,
+          remainingBudget: {
+            remainingDurationSeconds: 300,
+            remainingToolCalls: 20,
+            remainingResearchRequests: 0,
+            remainingResearchResults: 0,
+            remainingLocalCommands: 10,
+            remainingPrivilegedActions: 0,
+          },
+          outcome: "denied",
+          name: "guardian.session_status",
+          denial: {
+            code: "request_denied",
+            disposition: "continue",
+            policyId: "reference-worker-violations-2026-09-02",
+            policyVersion: 1,
+          },
+        }),
+      ),
+    );
+    const harness = coordinator(runWorkerTurn, executeWorkerTool);
+    const preview = harness.bootstrap.createDraft({
+      schemaVersion: 1,
+      objective: "Finish safely after an ordinary denied action.",
+    });
+    const result = await harness.bootstrap.confirmAndLaunch(
+      confirmation(preview.draftId, preview.previewDigest),
+    );
+
+    expect(runWorkerTurn).toHaveBeenCalledTimes(2);
+    expect(runWorkerTurn.mock.calls[1]?.[0]).toMatchObject({
+      allowedTools: [],
+      previousToolResult: {
+        outcome: "denied",
+        denial: { code: "request_denied", disposition: "continue" },
+      },
+    });
+    expect(result).toMatchObject({
+      state: "active",
+      workerTurn: {
+        state: "completed",
+        result: { outcome: { kind: "final_response" } },
+        toolResult: { outcome: "denied" },
+      },
+    });
+  });
+
+  it("stops before a second turn when deterministic policy revokes", async () => {
+    const runWorkerTurn = vi.fn((turn: WorkerTurnEnvelope) =>
+      Promise.resolve({
+        providerRequestId: "fake_worker_revoked_1",
+        turnId: turn.turnId,
+        turnNumber: turn.turnNumber,
+        turnDigest: turn.turnDigest,
+        outcome: {
+          kind: "tool_request" as const,
+          request: { name: "guardian.session_status" as const, arguments: {} },
+        },
+      }),
+    );
+    const executeWorkerTool = vi.fn((execution: WorkerToolExecutionEnvelope) =>
+      Promise.resolve(
+        createWorkerToolResult({
+          schemaVersion: 1,
+          executionId: execution.executionId,
+          executionDigest: execution.executionDigest,
+          sessionId: execution.sessionId,
+          callerId: execution.callerId,
+          missionId: execution.missionId,
+          missionVersion: execution.missionVersion,
+          profileId: execution.profileId,
+          profileVersion: execution.profileVersion,
+          policyVersion: execution.policyVersion,
+          sourceTurnId: execution.sourceTurnId,
+          sourceTurnNumber: execution.sourceTurnNumber,
+          sourceTurnDigest: execution.sourceTurnDigest,
+          requestDigest: execution.requestDigest,
+          completedAt: CREATED_AT,
+          remainingBudget: {
+            remainingDurationSeconds: 300,
+            remainingToolCalls: 20,
+            remainingResearchRequests: 0,
+            remainingResearchResults: 0,
+            remainingLocalCommands: 10,
+            remainingPrivilegedActions: 0,
+          },
+          outcome: "denied",
+          name: "guardian.session_status",
+          denial: {
+            code: "request_denied",
+            disposition: "revoked",
+            policyId: "reference-worker-violations-2026-09-02",
+            policyVersion: 1,
+          },
+        }),
+      ),
+    );
+    const harness = coordinator(runWorkerTurn, executeWorkerTool);
+    const preview = harness.bootstrap.createDraft({
+      schemaVersion: 1,
+      objective: "Stop after deterministic revocation.",
+    });
+    const result = await harness.bootstrap.confirmAndLaunch(
+      confirmation(preview.draftId, preview.previewDigest),
+    );
+
+    expect(runWorkerTurn).toHaveBeenCalledTimes(1);
+    expect(result).toMatchObject({
+      state: "revoked",
+      workerTurn: {
+        state: "revoked",
+        toolResult: { denial: { code: "request_denied", disposition: "revoked" } },
+      },
+    });
+  });
+
   it("fails closed when the second worker turn requests another tool", async () => {
     const runWorkerTurn = vi.fn((turn: WorkerTurnEnvelope) =>
       Promise.resolve({
@@ -590,6 +747,7 @@ describe("reference terminal session bootstrap", () => {
             remainingLocalCommands: 10,
             remainingPrivilegedActions: 0,
           },
+          outcome: "succeeded",
           name: "guardian.session_status",
           output: {
             sessionId: IDS.session,
@@ -616,6 +774,7 @@ describe("reference terminal session bootstrap", () => {
       confirmation(preview.draftId, preview.previewDigest),
     );
     expect(result.workerTurn).toEqual({ state: "failed_closed", error: "provider_malformed" });
+    expect(result.state).toBe("revoked");
     expect(runWorkerTurn).toHaveBeenCalledTimes(2);
     expect(executeWorkerTool).toHaveBeenCalledTimes(1);
   });

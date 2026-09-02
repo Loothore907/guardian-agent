@@ -153,7 +153,11 @@ async function confirmAndLaunchPreview(options: {
           : `Worker response: ${result.workerTurn.result.outcome.response}`
         : result.workerTurn.state === "failed_closed"
           ? `Worker turn failed closed: ${result.workerTurn.error}`
-          : "No worker-turn boundary is attached.",
+          : result.workerTurn.state === "revoked"
+            ? result.workerTurn.toolResult.outcome === "denied"
+              ? `Worker request denied; session revoked by policy: ${result.workerTurn.toolResult.denial.code}`
+              : "Worker session revoked by policy."
+            : "No worker-turn boundary is attached.",
       "",
     ].join("\n"),
   );

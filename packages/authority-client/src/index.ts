@@ -27,6 +27,10 @@ import {
   type DurableSessionBudget,
   type DurableSessionRecord,
   type ExactApproval,
+  type WorkerBoundaryFailureCode,
+  type WorkerBoundaryInterruption,
+  type WorkerExecutionAuthorization,
+  type WorkerViolationCode,
 } from "@guardian/contracts";
 
 const MAX_IPC_RESPONSE_BYTES = 64 * 1_024;
@@ -155,12 +159,24 @@ export interface AuthorityWorkerClient {
     sessionId: unknown,
     executionId: unknown,
     executionDigest: unknown,
-  ): Promise<DurableSessionBudget | null>;
+  ): Promise<WorkerExecutionAuthorization>;
   consumeLocalCommand(
     sessionId: unknown,
     executionId: unknown,
     executionDigest: unknown,
-  ): Promise<DurableSessionBudget | null>;
+  ): Promise<WorkerExecutionAuthorization>;
+  recordWorkerViolation(
+    sessionId: unknown,
+    boundaryId: unknown,
+    boundaryDigest: unknown,
+    code: WorkerViolationCode,
+  ): Promise<WorkerExecutionAuthorization>;
+  interruptWorkerSession(
+    sessionId: unknown,
+    boundaryId: unknown,
+    boundaryDigest: unknown,
+    failure: WorkerBoundaryFailureCode,
+  ): Promise<WorkerBoundaryInterruption>;
 }
 
 export class LocalAuthorityIpcClient
@@ -342,7 +358,7 @@ export class LocalAuthorityIpcClient
     sessionIdValue: unknown,
     executionIdValue: unknown,
     executionDigestValue: unknown,
-  ): Promise<DurableSessionBudget | null> {
+  ): Promise<WorkerExecutionAuthorization> {
     const sessionId = OpaqueIdSchema.parse(sessionIdValue);
     if (sessionId !== this.#binding.sessionId) throw new AuthorityIpcError("binding_mismatch");
     const executionId = OpaqueIdSchema.parse(executionIdValue);
@@ -361,7 +377,7 @@ export class LocalAuthorityIpcClient
     sessionIdValue: unknown,
     executionIdValue: unknown,
     executionDigestValue: unknown,
-  ): Promise<DurableSessionBudget | null> {
+  ): Promise<WorkerExecutionAuthorization> {
     const sessionId = OpaqueIdSchema.parse(sessionIdValue);
     if (sessionId !== this.#binding.sessionId) throw new AuthorityIpcError("binding_mismatch");
     const executionId = OpaqueIdSchema.parse(executionIdValue);
@@ -371,6 +387,48 @@ export class LocalAuthorityIpcClient
       executionDigest,
     });
     if (response.operation !== "budget.consume_local_command") {
+      throw new AuthorityIpcError("authority_unavailable");
+    }
+    return response.result;
+  }
+
+  async recordWorkerViolation(
+    sessionIdValue: unknown,
+    boundaryIdValue: unknown,
+    boundaryDigestValue: unknown,
+    code: WorkerViolationCode,
+  ): Promise<WorkerExecutionAuthorization> {
+    const sessionId = OpaqueIdSchema.parse(sessionIdValue);
+    if (sessionId !== this.#binding.sessionId) throw new AuthorityIpcError("binding_mismatch");
+    const boundaryId = OpaqueIdSchema.parse(boundaryIdValue);
+    const boundaryDigest = Sha256DigestSchema.parse(boundaryDigestValue);
+    const response = await this.#call("worker.record_violation", {
+      boundaryId,
+      boundaryDigest,
+      code,
+    });
+    if (response.operation !== "worker.record_violation") {
+      throw new AuthorityIpcError("authority_unavailable");
+    }
+    return response.result;
+  }
+
+  async interruptWorkerSession(
+    sessionIdValue: unknown,
+    boundaryIdValue: unknown,
+    boundaryDigestValue: unknown,
+    failure: WorkerBoundaryFailureCode,
+  ): Promise<WorkerBoundaryInterruption> {
+    const sessionId = OpaqueIdSchema.parse(sessionIdValue);
+    if (sessionId !== this.#binding.sessionId) throw new AuthorityIpcError("binding_mismatch");
+    const boundaryId = OpaqueIdSchema.parse(boundaryIdValue);
+    const boundaryDigest = Sha256DigestSchema.parse(boundaryDigestValue);
+    const response = await this.#call("worker.interrupt", {
+      boundaryId,
+      boundaryDigest,
+      failure,
+    });
+    if (response.operation !== "worker.interrupt") {
       throw new AuthorityIpcError("authority_unavailable");
     }
     return response.result;

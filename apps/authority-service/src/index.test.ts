@@ -106,6 +106,8 @@ describe("central authority service", () => {
     const workerBinding = binding(randomUUID(), "worker_dispatcher", [
       "budget.consume_worker_tool",
       "budget.consume_local_command",
+      "worker.record_violation",
+      "worker.interrupt",
     ]);
     const service = await startAuthorityService(
       {
@@ -130,19 +132,65 @@ describe("central authority service", () => {
       const executionDigest = "a".repeat(64);
       await expect(
         worker.consumeLocalCommand(SESSION, executionId, executionDigest),
-      ).resolves.toMatchObject({ remainingToolCalls: 1, remainingLocalCommands: 0 });
+      ).resolves.toMatchObject({
+        outcome: "allowed",
+        budget: { remainingToolCalls: 1, remainingLocalCommands: 0 },
+      });
       await expect(
         worker.consumeLocalCommand(SESSION, executionId, executionDigest),
-      ).resolves.toBeNull();
+      ).resolves.toMatchObject({ outcome: "denied", disposition: "revoked" });
       await expect(
         worker.consumeLocalCommand(SESSION, executionId, "b".repeat(64)),
-      ).resolves.toBeNull();
+      ).resolves.toMatchObject({ outcome: "unavailable", reason: "revoked" });
       await expect(
         worker.consumeWorkerToolCall(SESSION, randomUUID(), "c".repeat(64)),
-      ).resolves.toMatchObject({ remainingToolCalls: 0, remainingLocalCommands: 0 });
+      ).resolves.toMatchObject({ outcome: "unavailable", reason: "revoked" });
       await expect(worker.consumeToolCall(SESSION)).rejects.toMatchObject({
         reason: "operation_not_allowed",
       });
+    } finally {
+      await service.close();
+    }
+  });
+
+  it("contains ordinary worker violations and durably interrupts trusted-boundary failure", async () => {
+    const { databasePath } = await location();
+    const endpoint = createAuthorityIpcEndpoint();
+    const launcherBinding = binding(randomUUID(), "launcher", ["session.create"]);
+    const workerBinding = binding(randomUUID(), "worker_dispatcher", [
+      "worker.record_violation",
+      "worker.interrupt",
+    ]);
+    const brokerBinding = binding(randomUUID(), "broker_service", ["session.get"]);
+    const service = await startAuthorityService(
+      {
+        schemaVersion: 1,
+        serviceInstanceId: randomUUID(),
+        endpoint,
+        authorityStorePath: databasePath,
+        workspaceRoots: [],
+        capabilities: [launcherBinding, workerBinding, brokerBinding],
+      },
+      { now: () => NOW },
+    );
+    try {
+      const launcher = new LocalAuthorityIpcClient({ endpoint, binding: launcherBinding });
+      await launcher.createSession(session(), budget());
+      const worker = new LocalAuthorityIpcClient({ endpoint, binding: workerBinding });
+      await expect(
+        worker.recordWorkerViolation(
+          SESSION,
+          randomUUID(),
+          "d".repeat(64),
+          "filesystem_not_allowed",
+        ),
+      ).resolves.toMatchObject({ outcome: "denied", disposition: "continue" });
+      const broker = new LocalAuthorityIpcClient({ endpoint, binding: brokerBinding });
+      await expect(broker.getSession(SESSION)).resolves.toMatchObject({ status: "active" });
+      await expect(
+        worker.interruptWorkerSession(SESSION, randomUUID(), "e".repeat(64), "tool_unavailable"),
+      ).resolves.toMatchObject({ outcome: "interrupted" });
+      await expect(broker.getSession(SESSION)).resolves.toMatchObject({ status: "interrupted" });
     } finally {
       await service.close();
     }

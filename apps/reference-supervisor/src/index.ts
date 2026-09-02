@@ -61,7 +61,12 @@ const ROLE_OPERATIONS = {
     "context.append_attempt",
     "context.append_decision",
   ],
-  worker_dispatcher: ["budget.consume_worker_tool", "budget.consume_local_command"],
+  worker_dispatcher: [
+    "budget.consume_worker_tool",
+    "budget.consume_local_command",
+    "worker.record_violation",
+    "worker.interrupt",
+  ],
 } as const satisfies Readonly<Record<AuthorityCallerRole, readonly AuthorityIpcOperation[]>>;
 
 export interface ReferenceAuthoritySupervisorConfig {
@@ -356,8 +361,11 @@ export async function startReferenceAuthoritySupervisor(
             runtime: launched.runtime,
             workspace: launched.workspace,
             runLocalCommand: launched.localCommand,
+            revokeRuntime: launched.revoke,
+            interruptRuntime: launched.interrupt,
             ...(options.now === undefined ? {} : { now: options.now }),
           }).execute(execution),
+        workerAuthority,
         workerSelection:
           options.workerMode === "nebius_native"
             ? DEFAULT_NEBIUS_WORKER_SELECTION

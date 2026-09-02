@@ -33,7 +33,12 @@ const ROLE_OPERATIONS: Readonly<Record<AuthorityCallerRole, ReadonlySet<Authorit
     "context.append_attempt",
     "context.append_decision",
   ]),
-  worker_dispatcher: new Set(["budget.consume_worker_tool", "budget.consume_local_command"]),
+  worker_dispatcher: new Set([
+    "budget.consume_worker_tool",
+    "budget.consume_local_command",
+    "worker.record_violation",
+    "worker.interrupt",
+  ]),
 };
 
 function capabilitiesMatch(actual: string, expected: string): boolean {
@@ -354,6 +359,30 @@ export class LocalAuthorityIpcServer implements AuthorityServiceBoundary {
               request.sessionId,
               request.executionId,
               request.executionDigest,
+            ),
+          });
+          return;
+        case "worker.record_violation":
+          writeResponse(socket, {
+            ...base,
+            operation: request.operation,
+            result: this.#store.recordWorkerViolation(
+              request.sessionId,
+              request.boundaryId,
+              request.boundaryDigest,
+              request.code,
+            ),
+          });
+          return;
+        case "worker.interrupt":
+          writeResponse(socket, {
+            ...base,
+            operation: request.operation,
+            result: this.#store.interruptWorkerSession(
+              request.sessionId,
+              request.boundaryId,
+              request.boundaryDigest,
+              request.failure,
             ),
           });
           return;

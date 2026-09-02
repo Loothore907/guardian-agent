@@ -177,9 +177,11 @@ Sanitized bounded output is returned under an exact result digest. Multiline
 stdout and stderr are represented in canonical inputs by byte length and SHA-256
 digest while the worker receives the sanitized text. Turn 2 includes the result,
 exposes no trusted bindings in its provider projection, has an empty tool catalog,
-and must finish. A second request fails closed. This is a two-turn vertical slice,
-not a persistent general loop or denial-containment implementation; see
-[ADR-0018](adr/0018-exact-one-round-trip-worker-tool-execution.md).
+and must finish. A second request fails closed. W4 permits the exact result to be
+either successful or a sanitized contained denial while preserving this two-turn
+limit; it does not create a persistent general loop. See
+[ADR-0018](adr/0018-exact-one-round-trip-worker-tool-execution.md) and
+[ADR-0019](adr/0019-contained-worker-denial-and-deterministic-revocation.md).
 
 ## Session workspace boundary
 
@@ -225,19 +227,24 @@ Assurance state is part of the audit record and approval presentation. A lower-a
 
 ## Denial, revocation, and interruption
 
-The target runtime distinguishes a rejected action from a failed trust boundary.
+The W4 reference runtime distinguishes a rejected worker action from a failed
+trust boundary.
 A policy, scope, budget, destination, or approval rejection contains that exact
 attempt, records a sanitized decision, and normally returns a typed result so the
 host can continue otherwise permitted work. Qwen may explain the sanitized result
 but cannot alter it.
 
-Deterministic policy may revoke or interrupt a session immediately for a defined
-high-severity event or after a bounded pattern of repeated violations within a
-configured window. Counts, severity classes, windows, and thresholds are versioned
-policy—not model recommendations. Unexpected trusted-service or runtime failure
-interrupts the session and requires explicit human creation of a fresh session;
-it is not treated as an ordinary action denial. The current one-turn CLI does not
-yet implement the continuing host loop or repeated-violation policy.
+The current version-1 worker policy classifies catalog, filesystem, timeout, and
+volume violations as ordinary. The third ordinary violation in an inclusive
+five-minute session-bound window revokes; events older than the window do not
+count. Replay, exact execution/workspace binding mismatch, and malformed worker
+output revoke immediately. Counts, classifications, windows, and thresholds are
+trusted versioned policy—not model recommendations or IPC input. Unexpected
+provider, authority, executor, or result-validation failure interrupts the
+session and is not returned as an ordinary denial. The worker-visible denial
+contains only `request_denied`, continue/revoked disposition, policy binding, and
+remaining budget. The continuing general host loop remains unimplemented; see
+[ADR-0019](adr/0019-contained-worker-denial-and-deterministic-revocation.md).
 
 ## Mission and session profile
 

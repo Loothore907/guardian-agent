@@ -16,6 +16,12 @@ import {
   OpaqueIdSchema,
   Sha256DigestSchema,
   TimestampSchema,
+  WorkerBoundaryFailureCodeSchema,
+  WorkerBoundaryInterruptionSchema,
+  WorkerExecutionAuthorizationSchema,
+  WorkerViolationCodeSchema,
+  DEFAULT_WORKER_VIOLATION_POLICY,
+  workerViolationSeverity,
   type ApprovalConsumptionRequest,
   type AuditEvent,
   type AuthorityAttemptRecord,
@@ -25,9 +31,30 @@ import {
   type DurableSessionRecord,
   type EvidenceExposureRecord,
   type ExactApproval,
+  type WorkerBoundaryInterruption,
+  type WorkerExecutionAuthorization,
+  type WorkerViolationCode,
 } from "@guardian/contracts";
 
-const AUTHORITY_SCHEMA_VERSION = 3;
+const AUTHORITY_SCHEMA_VERSION = 4;
+
+const WORKER_BOUNDARY_EVENTS_SQL = `
+  CREATE TABLE worker_boundary_events (
+    event_id TEXT PRIMARY KEY NOT NULL,
+    session_id TEXT NOT NULL REFERENCES sessions(session_id),
+    boundary_id TEXT NOT NULL,
+    boundary_digest TEXT NOT NULL,
+    event_kind TEXT NOT NULL CHECK (event_kind IN ('violation', 'interruption')),
+    code TEXT NOT NULL,
+    severity TEXT NOT NULL CHECK (severity IN ('ordinary', 'critical', 'failure')),
+    disposition TEXT NOT NULL CHECK (disposition IN ('continue', 'revoked', 'interrupted')),
+    occurred_at TEXT NOT NULL,
+    policy_id TEXT NOT NULL,
+    policy_version INTEGER NOT NULL
+  ) STRICT;
+  CREATE INDEX worker_boundary_events_window
+    ON worker_boundary_events(session_id, severity, occurred_at);
+`;
 
 function isWithin(candidate: string, root: string): boolean {
   const pathFromRoot = relative(resolve(root), candidate);
@@ -107,7 +134,13 @@ export class SqliteAuthorityStore {
       }
       return;
     }
-    if (version !== 0 && version !== 1 && version !== 2 && version !== AUTHORITY_SCHEMA_VERSION) {
+    if (
+      version !== 0 &&
+      version !== 1 &&
+      version !== 2 &&
+      version !== 3 &&
+      version !== AUTHORITY_SCHEMA_VERSION
+    ) {
       throw new TypeError("authority store schema version is unsupported");
     }
     this.#database.exec("PRAGMA journal_mode = WAL; PRAGMA synchronous = FULL;");
@@ -167,6 +200,7 @@ export class SqliteAuthorityStore {
             consumed_at TEXT NOT NULL,
             UNIQUE(session_id, execution_digest)
           ) STRICT;
+          ${WORKER_BOUNDARY_EVENTS_SQL}
           CREATE TABLE audit_events (
             event_id TEXT PRIMARY KEY NOT NULL,
             session_id TEXT NOT NULL REFERENCES sessions(session_id),
@@ -212,7 +246,7 @@ export class SqliteAuthorityStore {
             decided_at TEXT NOT NULL,
             decision_json TEXT NOT NULL
           ) STRICT;
-          PRAGMA user_version = 3;
+          PRAGMA user_version = 4;
         `);
       });
     }
@@ -264,7 +298,8 @@ export class SqliteAuthorityStore {
             consumed_at TEXT NOT NULL,
             UNIQUE(session_id, execution_digest)
           ) STRICT;
-          PRAGMA user_version = 3;
+          ${WORKER_BOUNDARY_EVENTS_SQL}
+          PRAGMA user_version = 4;
         `);
       });
     }
@@ -279,8 +314,14 @@ export class SqliteAuthorityStore {
             consumed_at TEXT NOT NULL,
             UNIQUE(session_id, execution_digest)
           ) STRICT;
-          PRAGMA user_version = 3;
+          ${WORKER_BOUNDARY_EVENTS_SQL}
+          PRAGMA user_version = 4;
         `);
+      });
+    }
+    if (version === 3) {
+      this.#immediate(() => {
+        this.#database.exec(`${WORKER_BOUNDARY_EVENTS_SQL} PRAGMA user_version = 4;`);
       });
     }
     if (process.platform !== "win32") chmodSync(this.#databasePath, 0o600);
@@ -523,7 +564,7 @@ export class SqliteAuthorityStore {
     sessionIdValue: unknown,
     executionIdValue: unknown,
     executionDigestValue: unknown,
-  ): DurableSessionBudget | null {
+  ): WorkerExecutionAuthorization {
     return this.#consumeWorkerExecution(
       sessionIdValue,
       executionIdValue,
@@ -537,7 +578,7 @@ export class SqliteAuthorityStore {
     sessionIdValue: unknown,
     executionIdValue: unknown,
     executionDigestValue: unknown,
-  ): DurableSessionBudget | null {
+  ): WorkerExecutionAuthorization {
     return this.#consumeWorkerExecution(
       sessionIdValue,
       executionIdValue,
@@ -553,19 +594,29 @@ export class SqliteAuthorityStore {
     executionDigestValue: unknown,
     tool: "guardian.session_status" | "guardian.local_command",
     consumeLocalCommand: boolean,
-  ): DurableSessionBudget | null {
+  ): WorkerExecutionAuthorization {
     const sessionId = OpaqueIdSchema.parse(sessionIdValue);
     const executionId = OpaqueIdSchema.parse(executionIdValue);
     const executionDigest = Sha256DigestSchema.parse(executionDigestValue);
     const consumedAt = TimestampSchema.parse(this.#now());
     return this.#immediate(() => {
+      const unavailable = this.#workerSessionUnavailable(sessionId, consumedAt);
+      if (unavailable !== null) return unavailable;
       const prior = this.#database
         .prepare(
           `SELECT 1 AS present FROM worker_tool_executions
            WHERE execution_id = ? OR (session_id = ? AND execution_digest = ?) LIMIT 1`,
         )
         .get(executionId, sessionId, executionDigest);
-      if (prior !== undefined) return null;
+      if (prior !== undefined) {
+        return this.#recordWorkerViolationInTransaction(
+          sessionId,
+          executionId,
+          executionDigest,
+          "execution_replay",
+          consumedAt,
+        );
+      }
       const result = this.#database
         .prepare(
           `
@@ -591,7 +642,15 @@ export class SqliteAuthorityStore {
           consumedAt,
           consumedAt,
         );
-      if (changes(result) !== 1) return null;
+      if (changes(result) !== 1) {
+        return this.#recordWorkerViolationInTransaction(
+          sessionId,
+          executionId,
+          executionDigest,
+          "volume_exhausted",
+          consumedAt,
+        );
+      }
       this.#database
         .prepare(
           `INSERT INTO worker_tool_executions(
@@ -601,7 +660,221 @@ export class SqliteAuthorityStore {
         .run(executionId, sessionId, executionDigest, tool, consumedAt);
       const budget = this.getBudget(sessionId);
       if (budget === null) throw new TypeError("worker-tool budget disappeared after consumption");
-      return budget;
+      return WorkerExecutionAuthorizationSchema.parse({
+        schemaVersion: 1,
+        policyId: DEFAULT_WORKER_VIOLATION_POLICY.policyId,
+        policyVersion: DEFAULT_WORKER_VIOLATION_POLICY.version,
+        outcome: "allowed",
+        budget,
+      });
+    });
+  }
+
+  recordWorkerViolation(
+    sessionIdValue: unknown,
+    boundaryIdValue: unknown,
+    boundaryDigestValue: unknown,
+    codeValue: unknown,
+  ): WorkerExecutionAuthorization {
+    const sessionId = OpaqueIdSchema.parse(sessionIdValue);
+    const boundaryId = OpaqueIdSchema.parse(boundaryIdValue);
+    const boundaryDigest = Sha256DigestSchema.parse(boundaryDigestValue);
+    const code = WorkerViolationCodeSchema.parse(codeValue);
+    const occurredAt = TimestampSchema.parse(this.#now());
+    return this.#immediate(() => {
+      this.#assertWorkerBoundaryClock(sessionId, occurredAt);
+      const unavailable = this.#workerSessionUnavailable(sessionId, occurredAt);
+      return (
+        unavailable ??
+        this.#recordWorkerViolationInTransaction(
+          sessionId,
+          boundaryId,
+          boundaryDigest,
+          code,
+          occurredAt,
+        )
+      );
+    });
+  }
+
+  interruptWorkerSession(
+    sessionIdValue: unknown,
+    boundaryIdValue: unknown,
+    boundaryDigestValue: unknown,
+    failureValue: unknown,
+  ): WorkerBoundaryInterruption {
+    const sessionId = OpaqueIdSchema.parse(sessionIdValue);
+    const boundaryId = OpaqueIdSchema.parse(boundaryIdValue);
+    const boundaryDigest = Sha256DigestSchema.parse(boundaryDigestValue);
+    const failure = WorkerBoundaryFailureCodeSchema.parse(failureValue);
+    const occurredAt = TimestampSchema.parse(this.#now());
+    return this.#immediate(() => {
+      this.#assertWorkerBoundaryClock(sessionId, occurredAt);
+      const session = this.getSession(sessionId);
+      if (
+        session === null ||
+        session.status !== "active" ||
+        Date.parse(occurredAt) < Date.parse(session.startsAt) ||
+        Date.parse(occurredAt) >= Date.parse(session.expiresAt)
+      ) {
+        if (
+          session?.status === "active" &&
+          Date.parse(occurredAt) >= Date.parse(session.expiresAt)
+        ) {
+          this.#database
+            .prepare(
+              "UPDATE sessions SET status = 'expired', updated_at = ? WHERE session_id = ? AND status = 'active'",
+            )
+            .run(occurredAt, sessionId);
+        }
+        return WorkerBoundaryInterruptionSchema.parse({
+          schemaVersion: 1,
+          policyId: DEFAULT_WORKER_VIOLATION_POLICY.policyId,
+          policyVersion: DEFAULT_WORKER_VIOLATION_POLICY.version,
+          outcome: "already_inactive",
+        });
+      }
+      this.#database
+        .prepare(
+          `INSERT INTO worker_boundary_events(
+             event_id, session_id, boundary_id, boundary_digest, event_kind,
+             code, severity, disposition, occurred_at, policy_id, policy_version
+           ) VALUES (?, ?, ?, ?, 'interruption', ?, 'failure', 'interrupted', ?, ?, ?)`,
+        )
+        .run(
+          randomUUID(),
+          sessionId,
+          boundaryId,
+          boundaryDigest,
+          failure,
+          occurredAt,
+          DEFAULT_WORKER_VIOLATION_POLICY.policyId,
+          DEFAULT_WORKER_VIOLATION_POLICY.version,
+        );
+      const updated = this.#database
+        .prepare(
+          "UPDATE sessions SET status = 'interrupted', updated_at = ? WHERE session_id = ? AND status = 'active'",
+        )
+        .run(occurredAt, sessionId);
+      if (changes(updated) !== 1) throw new TypeError("worker session interruption was not atomic");
+      return WorkerBoundaryInterruptionSchema.parse({
+        schemaVersion: 1,
+        policyId: DEFAULT_WORKER_VIOLATION_POLICY.policyId,
+        policyVersion: DEFAULT_WORKER_VIOLATION_POLICY.version,
+        outcome: "interrupted",
+      });
+    });
+  }
+
+  #workerSessionUnavailable(
+    sessionId: string,
+    evaluatedAt: string,
+  ): WorkerExecutionAuthorization | null {
+    const session = this.getSession(sessionId);
+    const budget = this.getBudget(sessionId);
+    if (session === null || budget === null) {
+      throw new TypeError("worker session authority state is unavailable");
+    }
+    let reason: "not_active" | "expired" | "revoked" | null = null;
+    if (session.status === "revoked") reason = "revoked";
+    else if (
+      session.status !== "active" ||
+      Date.parse(evaluatedAt) < Date.parse(session.startsAt)
+    ) {
+      reason = "not_active";
+    } else if (Date.parse(evaluatedAt) >= Date.parse(session.expiresAt)) {
+      this.#database
+        .prepare(
+          "UPDATE sessions SET status = 'expired', updated_at = ? WHERE session_id = ? AND status = 'active'",
+        )
+        .run(evaluatedAt, sessionId);
+      reason = "expired";
+    }
+    return reason === null
+      ? null
+      : WorkerExecutionAuthorizationSchema.parse({
+          schemaVersion: 1,
+          policyId: DEFAULT_WORKER_VIOLATION_POLICY.policyId,
+          policyVersion: DEFAULT_WORKER_VIOLATION_POLICY.version,
+          outcome: "unavailable",
+          reason,
+          budget,
+        });
+  }
+
+  #assertWorkerBoundaryClock(sessionId: string, occurredAt: string): void {
+    const latest = this.#database
+      .prepare(
+        "SELECT occurred_at AS occurredAt FROM worker_boundary_events WHERE session_id = ? ORDER BY occurred_at DESC LIMIT 1",
+      )
+      .get(sessionId);
+    if (typeof latest?.occurredAt === "string" && latest.occurredAt > occurredAt) {
+      throw new TypeError("authority store clock precedes the latest worker boundary event");
+    }
+  }
+
+  #recordWorkerViolationInTransaction(
+    sessionId: string,
+    boundaryId: string,
+    boundaryDigest: string,
+    code: WorkerViolationCode,
+    occurredAt: string,
+  ): WorkerExecutionAuthorization {
+    const severity = workerViolationSeverity(code);
+    const eventId = randomUUID();
+    this.#database
+      .prepare(
+        `INSERT INTO worker_boundary_events(
+           event_id, session_id, boundary_id, boundary_digest, event_kind,
+           code, severity, disposition, occurred_at, policy_id, policy_version
+         ) VALUES (?, ?, ?, ?, 'violation', ?, ?, 'continue', ?, ?, ?)`,
+      )
+      .run(
+        eventId,
+        sessionId,
+        boundaryId,
+        boundaryDigest,
+        code,
+        severity,
+        occurredAt,
+        DEFAULT_WORKER_VIOLATION_POLICY.policyId,
+        DEFAULT_WORKER_VIOLATION_POLICY.version,
+      );
+    const windowStart = new Date(
+      Date.parse(occurredAt) - DEFAULT_WORKER_VIOLATION_POLICY.windowSeconds * 1_000,
+    ).toISOString();
+    const ordinaryCount = Number(
+      this.#database
+        .prepare(
+          `SELECT COUNT(*) AS count FROM worker_boundary_events
+           WHERE session_id = ? AND event_kind = 'violation' AND severity = 'ordinary'
+             AND occurred_at >= ? AND occurred_at <= ?`,
+        )
+        .get(sessionId, windowStart, occurredAt)?.count ?? 0,
+    );
+    const revoke =
+      severity === "critical" || ordinaryCount >= DEFAULT_WORKER_VIOLATION_POLICY.repeatThreshold;
+    if (revoke) {
+      const updated = this.#database
+        .prepare(
+          "UPDATE sessions SET status = 'revoked', updated_at = ? WHERE session_id = ? AND status = 'active'",
+        )
+        .run(occurredAt, sessionId);
+      if (changes(updated) !== 1) throw new TypeError("worker revocation was not atomic");
+      this.#database
+        .prepare("UPDATE worker_boundary_events SET disposition = 'revoked' WHERE event_id = ?")
+        .run(eventId);
+    }
+    const budget = this.getBudget(sessionId);
+    if (budget === null) throw new TypeError("worker budget disappeared during denial handling");
+    return WorkerExecutionAuthorizationSchema.parse({
+      schemaVersion: 1,
+      policyId: DEFAULT_WORKER_VIOLATION_POLICY.policyId,
+      policyVersion: DEFAULT_WORKER_VIOLATION_POLICY.version,
+      outcome: "denied",
+      disposition: revoke ? "revoked" : "continue",
+      publicCode: "request_denied",
+      budget,
     });
   }
 

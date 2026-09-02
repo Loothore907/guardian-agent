@@ -119,6 +119,22 @@ describe("BoundSessionRuntime", () => {
     ).toThrow();
   });
 
+  it("distinguishes trusted interruption from policy revocation", () => {
+    const runtime = BoundSessionRuntime.create(boundInput());
+    expect(runtime.interrupt("77777777-7777-4777-8777-777777777777")).toBe(false);
+    expect(runtime.interrupt(IDS.revocation)).toBe(true);
+    expect(runtime.status("2026-08-30T08:01:00.000Z").state).toBe("interrupted");
+    expect(runtime.authorizeToolCall("guardian.research", "2026-08-30T08:01:00.000Z")).toEqual({
+      allowed: false,
+      reason: "revoked",
+    });
+
+    const revoked = BoundSessionRuntime.create(boundInput());
+    expect(revoked.revoke(IDS.revocation)).toBe(true);
+    expect(revoked.interrupt(IDS.revocation)).toBe(true);
+    expect(revoked.status("2026-08-30T08:01:00.000Z").state).toBe("revoked");
+  });
+
   it("enforces local-command path, remaining lifetime, and volume", () => {
     const request = {
       executable: "node",

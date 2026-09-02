@@ -13,32 +13,27 @@ and checkpoint history in `docs/development/roadmap.md`.
   [#13](https://github.com/Loothore907/guardian-agent/issues/13), branch
   `codex/13-c6-durable-authorization-broker`.
 - **Logical transition:** pre-activation mission formation, trusted worker
-  assignment, W1 exact turns, the W2 credential-safe workspace, and the W3 exact
-  one-tool/result round-trip are locally implemented. The next coherent slice is
-  W4 contained denial and deterministic repeated-violation handling. Do not
-  reopen the settled worker, workspace-copy, or one-round-trip W3 decisions.
-- **Immediate objective:** distinguish an ordinary rejected worker action from a
-  failed trusted boundary. Return only a typed sanitized denial for the exact
-  attempt, keep otherwise permitted work alive, and apply deterministic severity,
-  bounded-window repeat thresholds, revocation, and interruption. Model output
-  may not choose severity or suppress revocation.
-- **Critical sequencing decision:** W3 deliberately permits only one request and
-  requires turn 2 to finish. W4 should add denial containment around that exact
-  lifecycle before considering a generalized multi-turn loop.
-- **Commit checkpoint decision:** create a local checkpoint commit for the
-  accumulated C6 authority, pre-activation, W1, W2, and W3 work **before** starting
-  W4. W1-W3 now form a coherent tested trust-boundary slice; extending this same
-  uncommitted change with denial/revocation state would make review and recovery
-  materially harder. No technical local-commit blocker is known at this handoff.
-- **Commit authority and remote boundary:** the user has not yet explicitly
-  authorized the commit itself. Preserve the complete worktree until that
-  direction is given. A local commit does not authorize a push, pull request,
-  merge, publication, release, remote rename, or other remote mutation. Suggested
-  subject: `feat: establish C6 authority and exact worker runtime`.
-- **Worktree scope:** the proposed checkpoint currently includes 59 modified
-  tracked files and 142 untracked source, test, configuration, ADR, and evidence
-  files. Treat it as one integrated checkpoint; do not selectively discard or
-  omit files merely to reduce the apparent diff.
+  assignment, W1 exact turns, the W2 credential-safe workspace, W3 exact
+  one-tool/result execution, and W4 contained denial/revocation are locally
+  implemented. Do not reopen the settled workspace-copy or exact W3 lifecycle
+  while choosing the next slice.
+- **W4 outcome:** an ordinary rejected action returns only an exact sanitized
+  denial and can reach the mandatory final turn. Version-1 trusted policy contains
+  the first two ordinary events in an inclusive five-minute window, revokes on
+  the third, excludes older events, immediately revokes replay/binding near
+  misses, and interrupts trusted boundary failure. Model output cannot supply
+  severity, counts, thresholds, or disposition.
+- **Critical sequencing decision:** W4 deliberately preserves W3's one-request,
+  two-turn lifecycle. The next session should explicitly choose between a
+  generalized bounded loop and the controlled research/GitHub competition
+  journey; do not obtain multi-turn behavior accidentally by weakening the W3
+  result contract.
+- **Checkpoint state:** the user authorized and the repository created local
+  commit `0dd3323` (`feat: establish C6 authority and exact worker runtime`) for
+  the complete pre-activation/W1-W3 snapshot. No push, pull request, merge,
+  publication, release, or other remote mutation followed.
+- **Current worktree:** W4 code, tests, ADR-0019, evidence, and documentation are
+  intentionally uncommitted pending review and explicit commit direction.
 - **Secret caution:** `.env.local` is ignored development input. Never print,
   stage, copy, summarize, or use it as the installation design. Never print or
   export credential-store values.
@@ -69,7 +64,7 @@ remains:
 9. Deterministic policy, optional minimized Nemotron action-risk review,
    exact-request approval, the privileged broker, and typed adapters control every
    consequential boundary crossing.
-10. An individual denial should eventually contain only the rejected action so
+10. An individual denial contains only the rejected action so
     permitted work can continue. Deterministic severity and bounded repeat rules,
     not model preference, decide revocation or interruption.
 
@@ -175,7 +170,7 @@ default production trust model.
   `guardian.local_command`. The command path is the already-bound W2 executor
   closure; neither the worker nor its model can supply a host path.
 - A dedicated `worker_dispatcher` authority role can consume only exact worker
-  status and local-command operations. Schema-v3 SQLite records the unique
+  status and local-command operations. Schema-v4 SQLite preserves the unique
   execution ID/digest in the same immediate transaction that decrements total and
   capability-specific budgets, so replay and mutation cannot repeat the effect.
 - Command stdout/stderr are bounded, control-cleaned, recognizable-credential and
@@ -185,6 +180,28 @@ default production trust model.
   and must return a final response. A second request fails closed.
 - ADR-0018 and `docs/development/evidence/w3-worker-tool-round-trip.md` record the
   decision, near-miss coverage, and protected supervised Windows/WSL pass.
+
+### W4 contained denial and deterministic revocation
+
+- Worker results are a strict exact-digest-bound success/denial union. Denial
+  exposes only `request_denied`, continue/revoked disposition, policy binding,
+  and remaining budget; internal violation code, severity, count, threshold, and
+  rejected data remain trusted-only.
+- Schema-v4 authority state stores exact boundary events. The worker dispatcher
+  can only request fixed record/interruption operations; it cannot submit
+  severity or a lifecycle decision.
+- Version 1 uses an inclusive five-minute window and threshold three for ordinary
+  catalog, filesystem, timeout, and volume violations. Replay,
+  execution/workspace binding mismatch, and malformed worker output revoke
+  immediately. Events outside the window do not count.
+- Ordinary denial reaches turn 2 with the existing empty catalog and must finish.
+  Critical disposition updates durable and local state to revoked and stops
+  before another worker-provider turn.
+- Provider, authority, executor, and result-validation failures interrupt rather
+  than becoming denials. If authority is unavailable, local interruption remains
+  fail-closed and no durable-success claim is made.
+- ADR-0019 and `docs/development/evidence/w4-denial-containment.md` record the
+  policy, public minimization, threshold edges, lifecycle behavior, and limits.
 
 ### Existing security and execution foundation
 
@@ -211,7 +228,6 @@ default production trust model.
 ## What is explicitly not implemented
 
 - A persistent, bounded multi-turn worker state machine.
-- Contained denial plus deterministic repeated-violation revocation.
 - User-verifying WebAuthn approval.
 - Complete Linux runtime, credential-store, and IPC peer-identity parity.
 - Public judge deployment, TLS validation, or hosted-runtime assurance evidence.
@@ -223,20 +239,16 @@ filesystem, credential, network, lifecycle, and authority evidence.
 
 ## Next implementation slices
 
-1. **Local checkpoint first:** after explicit user authorization, inspect the
-   proposed set, stage the complete intended C6 snapshot, create the conventional
-   local commit above, and verify the resulting status. Stop before any remote
-   operation unless separately directed.
-2. **W4 containment (next implementation):** distinguish an ordinary action
-   denial from runtime failure. Keep permitted work alive after a denial; add
-   deterministic severity and bounded-window repeat thresholds for
-   revocation/interruption.
-3. Decide after W4 whether to generalize beyond W3's exact one-round-trip limit
-   or proceed directly to the controlled research/GitHub journey.
-4. Capture protected live worker, pre-activation, and Nemotron-through-broker
+1. Review the W4 diff and, only after explicit user authorization, create a local
+   W4 checkpoint. Stop before any remote operation unless separately directed.
+2. Prefer the controlled research/GitHub competition journey as the next
+   vertical slice: it exercises the already-typed services and demo outcome
+   without first widening the worker lifecycle. Record a contrary decision if a
+   generalized bounded loop becomes necessary.
+3. Capture protected live worker, pre-activation, and Nemotron-through-broker
    evidence without logging provider content or credentials.
-5. Resume the controlled Extract/adversarial journey, WebAuthn ceremony, Linux
-   parity, and C8 experience work after W4 containment is proven.
+4. Resume the controlled Extract/adversarial journey, WebAuthn ceremony, Linux
+   parity, and C8 experience work in dependency order.
 
 ## External state and known blockers
 
@@ -264,9 +276,9 @@ The current ordinary component set passes on this Windows host:
 
 - TypeScript build and typecheck;
 - ESLint and Prettier checks;
-- dependency boundaries: 151 modules and 279 dependencies, no violations;
-- Vitest: 51 files and 265 tests passed; three protected files and five protected
-  tests skipped, for 54 files / 270 tests total;
+- dependency boundaries: 152 modules and 286 dependencies, no violations;
+- Vitest: 51 files and 279 tests passed; three protected files and five protected
+  tests skipped, for 54 files / 284 tests total;
 - SQLite authority spike: seven passed and the expected POSIX permission test
   skipped on Windows;
 - deterministic demo reset planner: two passed;
@@ -274,14 +286,17 @@ The current ordinary component set passes on this Windows host:
 - protected Windows/WSL reference runtime: one passed, including the existing C4
   isolation probe, persistent workspace, no source writeback, hidden host paths,
   credential absence, direct-egress denial, and the supervised exact W3 local-
-  command/result/final-turn path with durable budget consumption.
+  command/result/final-turn path with durable budget consumption under the W4
+  success-result contract.
 
 The last `git diff --check` was clean except for the pre-existing
 `scripts/pnpm.ps1` LF-to-CRLF working-copy warning. The desktop `pnpm` wrapper's
 supply-chain metadata check attempted blocked registry access, so the same frozen
 `check` components were run directly with the pinned bundled Node and repository
-binaries; all passed. No live credentialed provider test ran during W3. No commit,
-push, publish, release, or remote mutation was performed.
+binaries; all passed. The protected runtime initially encountered sandbox-denied
+WSL service access, then passed unchanged with approved WSL access. No live
+credentialed provider test ran during W4. The prior local checkpoint commit is
+`0dd3323`; no W4 commit, push, publish, release, or remote mutation was performed.
 
 A commit-readiness audit at this handoff found no untracked database, archive,
 binary, log, key, certificate, or environment files. `.env.local` remains ignored.
@@ -344,8 +359,10 @@ wrapper when the frozen workspace is already usable.
 - [ADR-0016: Exact-bound native-worker turns](../adr/0016-exact-bound-native-worker-turns.md)
 - [ADR-0017: Credential-safe session workspaces](../adr/0017-credential-safe-session-workspaces.md)
 - [ADR-0018: Exact one-round-trip worker tool execution](../adr/0018-exact-one-round-trip-worker-tool-execution.md)
+- [ADR-0019: Contained worker denial and deterministic revocation](../adr/0019-contained-worker-denial-and-deterministic-revocation.md)
 - [W2 session workspace evidence](evidence/w2-session-workspace.md)
 - [W3 worker tool round-trip evidence](evidence/w3-worker-tool-round-trip.md)
+- [W4 denial containment evidence](evidence/w4-denial-containment.md)
 - [C6 authority service evidence](evidence/c6-authority-service.md)
 - [C6 terminal bootstrap evidence](evidence/c6-terminal-bootstrap.md)
 - [C6 interaction boundary evidence](evidence/c6-interaction-boundary.md)

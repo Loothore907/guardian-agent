@@ -90,7 +90,7 @@ export const SessionBootstrapResultSchema = z.strictObject({
   missionVersion: z.literal(1),
   profileId: OpaqueIdSchema,
   profileVersion: z.literal(1),
-  state: z.literal("active"),
+  state: z.enum(["active", "expired", "revoked", "interrupted"]),
   assurance: AssuranceLevelSchema,
   expiresAt: TimestampSchema,
   tools: z.array(ToolCapabilitySchema).max(16),

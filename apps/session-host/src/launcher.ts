@@ -56,6 +56,8 @@ export interface LaunchedReferenceSession {
   readonly durableAuthority: boolean;
   readonly workspace: PreparedSessionWorkspace["result"];
   readonly localCommand: (request: unknown) => ReturnType<typeof runReferenceLocalCommand>;
+  readonly revoke: () => void;
+  readonly interrupt: () => void;
 }
 
 export async function launchReferenceSession(
@@ -134,6 +136,14 @@ export async function launchReferenceSession(
   };
 
   const runtime = BoundSessionRuntime.create(runtimeInput);
+  const revoke = () => {
+    if (!runtime.revoke(revocationHandle)) throw new TypeError("trusted runtime revocation failed");
+  };
+  const interrupt = () => {
+    if (!runtime.interrupt(revocationHandle)) {
+      throw new TypeError("trusted runtime interruption failed");
+    }
+  };
   if (input.authority !== undefined) {
     const binding = AuthorityCapabilityBindingSchema.parse(input.authority.binding);
     if (
@@ -181,6 +191,8 @@ export async function launchReferenceSession(
       workspace: workspace.result,
       localCommand: (request) =>
         runReferenceLocalCommand(request, { workspaceHostPath: workspace.hostPath }),
+      revoke,
+      interrupt,
     };
   }
 
@@ -226,5 +238,7 @@ export async function launchReferenceSession(
     workspace: workspace.result,
     localCommand: (request) =>
       runReferenceLocalCommand(request, { workspaceHostPath: workspace.hostPath }),
+    revoke,
+    interrupt,
   };
 }

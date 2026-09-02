@@ -173,6 +173,7 @@ describe("one-use worker IPC", () => {
         remainingLocalCommands: 1,
         remainingPrivilegedActions: 0,
       },
+      outcome: "succeeded",
       name: "guardian.session_status",
       output: {
         sessionId: IDS.session,
@@ -189,6 +190,40 @@ describe("one-use worker IPC", () => {
       },
     });
     expect(assertExactWorkerToolResult(toolResult)).toEqual(toolResult);
+    if (toolResult.outcome !== "succeeded") throw new TypeError("expected a successful result");
+    const {
+      resultDigest: _successDigest,
+      outcome: _successOutcome,
+      output: _successOutput,
+      ...resultBinding
+    } = toolResult;
+    void _successDigest;
+    void _successOutcome;
+    void _successOutput;
+    const deniedResult = createWorkerToolResult({
+      ...resultBinding,
+      outcome: "denied",
+      denial: {
+        code: "request_denied",
+        disposition: "continue",
+        policyId: "reference-worker-violations-2026-09-02",
+        policyVersion: 1,
+      },
+    });
+    expect(assertExactWorkerToolResult(deniedResult)).toEqual(deniedResult);
+    expect(deniedResult).not.toHaveProperty("output");
+    expect(() =>
+      createWorkerToolResult({
+        ...resultBinding,
+        outcome: "denied",
+        denial: {
+          code: "filesystem_not_allowed",
+          disposition: "continue",
+          policyId: "reference-worker-violations-2026-09-02",
+          policyVersion: 1,
+        },
+      }),
+    ).toThrow();
     const { turnDigest: _firstTurnDigest, ...firstTurnWithoutDigest } = firstTurn;
     void _firstTurnDigest;
     expect(() =>
@@ -220,6 +255,9 @@ describe("one-use worker IPC", () => {
       },
     });
     expect(assertExactWorkerToolResult(multilineResult)).toEqual(multilineResult);
+    if (multilineResult.outcome !== "succeeded") {
+      throw new TypeError("expected a successful command result");
+    }
     expect(() =>
       assertExactWorkerToolResult({
         ...multilineResult,

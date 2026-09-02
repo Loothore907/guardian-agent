@@ -142,8 +142,11 @@ copy persists across isolated local commands, never writes back automatically,
 and is deleted on session close. W3 now independently binds one pending status or
 local-command request, reauthorizes it, atomically consumes durable authority,
 executes only against the W2 copy, and returns a sanitized exact result to a
-mandatory final second worker turn. General multi-turn state and contained denial
-remain.
+mandatory final second worker turn. W4 now returns an exact sanitized denial through
+that same final-turn path, durably contains ordinary violations, revokes on the
+third violation in a five-minute window, revokes replay/binding near misses
+immediately, and interrupts trusted-boundary failures. A persistent general
+worker loop remains unimplemented.
 
 [ADR-0015](docs/adr/0015-nebius-native-worker-and-judge-runtime.md) selects the
 provider-neutral Nebius-native worker for the competition build while preserving

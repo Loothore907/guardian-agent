@@ -29,5 +29,6 @@ Architecture decision records document consequential choices, rejected alternati
 - [ADR-0016: Exact-bound native-worker turns](0016-exact-bound-native-worker-turns.md)
 - [ADR-0017: Credential-safe session workspaces](0017-credential-safe-session-workspaces.md)
 - [ADR-0018: Exact one-round-trip worker tool execution](0018-exact-one-round-trip-worker-tool-execution.md)
+- [ADR-0019: Contained worker denial and deterministic revocation](0019-contained-worker-denial-and-deterministic-revocation.md)
 
 Use the next sequential four-digit number. Do not silently rewrite an accepted decision; add a superseding ADR.

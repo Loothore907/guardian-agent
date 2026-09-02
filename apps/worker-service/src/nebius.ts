@@ -99,20 +99,31 @@ function providerProjection(turn: WorkerTurnEnvelope) {
   const previousToolResult =
     turn.previousToolResult === undefined
       ? undefined
-      : turn.previousToolResult.name === "guardian.session_status"
+      : turn.previousToolResult.outcome === "denied"
         ? {
             name: turn.previousToolResult.name,
-            output: {
-              state: turn.previousToolResult.output.state,
-              assurance: turn.previousToolResult.output.assurance,
-              expiresAt: turn.previousToolResult.output.expiresAt,
-              tools: turn.previousToolResult.output.tools,
+            outcome: turn.previousToolResult.outcome,
+            denial: {
+              code: turn.previousToolResult.denial.code,
+              disposition: turn.previousToolResult.denial.disposition,
             },
           }
-        : {
-            name: turn.previousToolResult.name,
-            output: turn.previousToolResult.output,
-          };
+        : turn.previousToolResult.name === "guardian.session_status"
+          ? {
+              name: turn.previousToolResult.name,
+              outcome: turn.previousToolResult.outcome,
+              output: {
+                state: turn.previousToolResult.output.state,
+                assurance: turn.previousToolResult.output.assurance,
+                expiresAt: turn.previousToolResult.output.expiresAt,
+                tools: turn.previousToolResult.output.tools,
+              },
+            }
+          : {
+              name: turn.previousToolResult.name,
+              outcome: turn.previousToolResult.outcome,
+              output: turn.previousToolResult.output,
+            };
   return {
     turnNumber: turn.turnNumber,
     objective: turn.objective,

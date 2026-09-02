@@ -162,7 +162,7 @@ export function workerToolResultDigest(resultValue: unknown): string {
 }
 
 function projectToolResultForDigest(result: WorkerToolResult | Record<string, unknown>) {
-  if (result.name !== "guardian.local_command") return result;
+  if (result.outcome !== "succeeded" || result.name !== "guardian.local_command") return result;
   const output = result.output as {
     readonly stdout: string;
     readonly stderr: string;
