@@ -13,6 +13,7 @@
     }
   },
   "dependencies": {
+    "@guardian/canonical": "workspace:*",
     "@guardian/contracts": "workspace:*",
     "@guardian/credential-store": "workspace:*",
     "@guardian/credential-verification": "workspace:*",

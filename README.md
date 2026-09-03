@@ -151,7 +151,34 @@ that loop: bounded research must produce non-empty session-bound provenance, an
 out-of-scope GitHub merge attempt receives no approval and must stop with the exact
 deterministic `scope_mismatch` denial, and only then may a separately exact-approved
 demo-repository merge proceed. The coordinator is locally tested; live service and
-CLI attachment remain.
+CLI attachment remain. W6 adds a one-use supervised attachment for distinct
+research and broker child processes: concurrent/replayed runs stop, either child
+exit interrupts the journey without restart, shutdown attempts both children, and
+only fixed attachment failures are public. Service-specific process startup and
+broker IPC remain. W7 now adds that narrow broker protocol: exact canonical GitHub
+requests cross only a bounded session/caller/capability-bound local endpoint, and
+successful snapshots or merges are revalidated against the exact target and head
+on both sides. W8 adds the separate one-turn Guardian action-risk channel: the
+supervisor binds one credential-free envelope to the exact session, caller, request
+digest, capability, and lifetime; mutation, replay, and lifecycle near misses fail
+closed. W9 adds the credential-holding broker child: one strict stdin bootstrap
+binds W7, broker-role authority, W8, credential-handle, and lifetime configuration;
+raw credentials and arbitrary provider transport are not fields. Supervised
+Guardian/research attachment remains. W10 removes Tavily configuration and its raw
+API key from the research child environment: strict stdin binds the research and
+exact research-role authority lifetimes, while `tavily/default` is resolved only
+inside a child-local credential-store callback. W11 composes the fixed Guardian,
+broker, and research entrypoints into the existing one-use journey attachment;
+Guardian+broker are one monitored stack, cross-service bindings must match, and no
+process IDs or generic launcher surface are returned. W12 derives that strict
+bundle only from a captured active Enforced session, its exact legitimate merge
+request, supervisor-owned authority bindings, and the active durable connection;
+CLI input cannot supply the credential handle, lifetime, or action-risk envelope.
+W13 adds a separate exact CLI authorization ceremony: it renders the legitimate
+merge target, head, squash method, and canonical digest, then forwards only a
+fresh confirmation to a supervisor operation that derives scope, stores the
+one-use approval, runs once, closes, and returns a minimized result. Executable
+dispatch, competition-session activation, and the protected live journey remain.
 
 [ADR-0015](docs/adr/0015-nebius-native-worker-and-judge-runtime.md) selects the
 provider-neutral Nebius-native worker for the competition build while preserving

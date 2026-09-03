@@ -31,5 +31,13 @@ Architecture decision records document consequential choices, rejected alternati
 - [ADR-0018: Exact one-round-trip worker tool execution](0018-exact-one-round-trip-worker-tool-execution.md)
 - [ADR-0019: Contained worker denial and deterministic revocation](0019-contained-worker-denial-and-deterministic-revocation.md)
 - [ADR-0020: Controlled research and GitHub competition journey](0020-controlled-research-and-github-competition-journey.md)
+- [ADR-0021: Supervised competition journey attachment](0021-supervised-competition-journey-attachment.md)
+- [ADR-0022: Session-bound broker IPC](0022-session-bound-broker-ipc.md)
+- [ADR-0023: Session-bound Guardian action-risk IPC](0023-session-bound-guardian-action-risk-ipc.md)
+- [ADR-0024: Credential-holding broker service process](0024-credential-holding-broker-service-process.md)
+- [ADR-0025: Credential-store-backed research process](0025-credential-store-backed-research-process.md)
+- [ADR-0026: Supervised three-service competition composition](0026-supervised-three-service-competition-composition.md)
+- [ADR-0027: Activated-session competition configuration](0027-activated-session-competition-configuration.md)
+- [ADR-0028: Exact competition CLI confirmation](0028-exact-competition-cli-confirmation.md)
 
 Use the next sequential four-digit number. Do not silently rewrite an accepted decision; add a superseding ADR.

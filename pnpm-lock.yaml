@@ -124,6 +124,9 @@ importers:
 
   apps/guardian-cli:
     dependencies:
+      '@guardian/canonical':
+        specifier: workspace:*
+        version: link:../../packages/canonical
       '@guardian/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts

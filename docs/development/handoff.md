@@ -14,9 +14,13 @@ and checkpoint history in `docs/development/roadmap.md`.
   `codex/13-c6-durable-authorization-broker`.
 - **Logical transition:** pre-activation mission formation, trusted worker
   assignment, W1 exact turns, the W2 credential-safe workspace, W3 exact
-  one-tool/result execution, W4 contained denial/revocation, and the W5 controlled
-  competition coordinator are locally implemented. Do not reopen the settled
-  workspace-copy or exact W3 lifecycle while choosing the next slice.
+  one-tool/result execution, W4 contained denial/revocation, the W5 controlled
+  competition coordinator, W6 supervised one-use attachment, W7 strict broker
+  IPC, W8 separate Guardian action-risk IPC, W9 strict credential-holding
+  broker-process startup, W10 credential-store-backed research-process startup,
+  W11 fixed three-child supervision, W12 activated-session configuration, and W13
+  exact CLI confirmation are locally implemented. Do not reopen the
+  settled workspace-copy or exact W3 lifecycle while choosing the next slice.
 - **W4 outcome:** an ordinary rejected action returns only an exact sanitized
   denial and can reach the mandatory final turn. Version-1 trusted policy contains
   the first two ordinary events in an inclusive five-minute window, revokes on
@@ -28,12 +32,15 @@ and checkpoint history in `docs/development/roadmap.md`.
   W5 implements that fixed ordering in trusted orchestration while preserving
   W3/W4's one-request, two-turn lifecycle.
 - **Checkpoint state:** the user authorized and the repository created local
-  commit `2de8d21` (`feat: contain worker denials and revoke deterministically`)
-  for W4 on top of checkpoint `0dd3323`. No push, pull request, merge,
+  commit `4a064a1` (`feat: orchestrate controlled competition journey`) for W5 on
+  top of W4 checkpoint `2de8d21`. No push, pull request, merge,
   publication, release, or other remote mutation followed.
-- **Current worktree:** W5 coordinator code, tests, ADR-0020, evidence, and
-  documentation are intentionally uncommitted pending complete verification,
-  review, and explicit commit direction.
+- **Current worktree:** W6 lifecycle attachment, W7 broker IPC, W8 separate
+  Guardian action-risk IPC, W9 broker-process bootstrap, and W10 research-process
+  bootstrap plus W11 three-child composition, W12 activated-session builder, and
+  W13 exact CLI ceremony code, tests, ADRs, evidence, and documentation are
+  intentionally uncommitted. The complete local gate is green; review and explicit
+  commit direction remain.
 - **Secret caution:** `.env.local` is ignored development input. Never print,
   stage, copy, summarize, or use it as the installation design. Never print or
   export credential-store values.
@@ -220,7 +227,147 @@ default production trust model.
   research begins, and the successful merge result must bind the exact repository,
   pull request, and expected head.
 - ADR-0020 and `docs/development/evidence/w5-controlled-competition-journey.md`
-  record the decision, focused tests, and remaining live attachment work.
+  record the decision and focused coordinator tests. W6-W13 now supply its local
+  supervision, IPC, process composition, trusted configuration, and exact CLI
+  confirmation seams; executable dispatch and protected end-to-end evidence remain.
+
+### W6 supervised one-use journey attachment
+
+- A fixed factory binds the ADR-0020 coordinator to typed research and broker
+  clients plus two distinct already-started supervised child-process handles.
+- Each attachment runs once. Concurrent use and replay stop with only
+  `attachment_consumed`, before a second approval-bearing broker attempt can run.
+- Either child exit before or during execution, a rejected exit signal, or
+  unexpected coordinator failure transitions the attachment to interrupted and
+  returns only `attachment_unavailable`; there is no restart.
+- Explicit close attempts both child shutdowns, preserves a closed terminal state,
+  and returns only a fixed failure if either close rejects.
+- The attachment exposes no process ID and accepts no arbitrary entrypoint,
+  command, environment, destination, provider credential, or URL.
+- ADR-0021 and `docs/development/evidence/w6-supervised-journey-attachment.md`
+  record the lifecycle decision and focused coverage.
+
+### W7 strict session-bound broker IPC
+
+- Strict contracts admit only a canonical GitHub read or squash-merge request, an
+  optional exact merge approval, unique evidence-exposure IDs, fixed denial codes,
+  and allowlisted snapshot/merge results.
+- The local named-pipe or temporary Unix-socket frame is bounded and bound to an
+  opaque capability, session, caller, and service lifetime. The server owns the
+  evaluation clock; future, pre-start, and exact-expiry frames fail closed.
+- The frame cannot express arbitrary authenticated HTTP, URL, header, command,
+  environment, or credential values.
+- Server and client independently revalidate successful results against the exact
+  owner, repository, pull request, and resource/head version. Mutation or malformed
+  handler output becomes only `service_unavailable`.
+- ADR-0022 and `docs/development/evidence/w7-broker-ipc.md` record the protocol and
+  real local IPC tests.
+
+### W8 separate Guardian action-risk IPC
+
+- Shared strict schemas define the credential-free action-risk envelope and
+  evaluation; recognized secret-like excerpts are rejected before provider use.
+- A trusted supervisor pre-binds one envelope to the exact session, caller,
+  canonical request digest, opaque capability, and service lifetime.
+- The broker-side evaluator refuses envelope mutation before IPC. The service
+  consumes its configured envelope once; replay, wrong bindings, future time,
+  pre-start use, and exact expiry fail closed.
+- The local protocol cannot express an arbitrary prompt, model ID, provider
+  endpoint, URL, header, credential, command, or environment value. Provider and
+  malformed-output failures become only fixed sanitized errors.
+- The Guardian-service main now routes strict `mission_setup_risk` and
+  `action_risk` bootstrap modes while keeping provider ownership out of the broker.
+- ADR-0023 and `docs/development/evidence/w8-guardian-action-risk-ipc.md` record the
+  decision and real local IPC tests.
+
+### W9 strict credential-holding broker process
+
+- A strict `github_broker` process contract composes only W7 broker IPC, a
+  broker-role authority client, the W8 evaluator client, one typed credential
+  handle, and one validated public GitHub OAuth client ID.
+- Broker, authority, and Guardian session/caller bindings must match. Broker
+  lifetime must fit inside both authority and Guardian lifetimes.
+- The child reads one bounded stdin frame, constructs the Windows credential
+  store locally, starts only the typed broker server, and emits one fixed readiness
+  line. Bootstrap authority is absent from arguments and environment.
+- Raw credentials, Guardian providers, provider URLs, arbitrary headers, commands,
+  model selection, and generic authenticated transport are not contract fields.
+- An actual child startup test reaches W7 IPC and safely returns the fixed broker
+  denial when its deliberately absent authority boundary is contacted.
+- ADR-0024 and `docs/development/evidence/w9-broker-service-process.md` record the
+  decision and focused evidence.
+
+### W10 credential-store-backed research process
+
+- The production research child now accepts one strict stdin frame combining the
+  existing research service configuration and exact research-role authority
+  client. Serialized environment configuration is no longer used by `main`.
+- Session/caller bindings must match, authority operations must be exactly reserve
+  and settle, and the research lifetime must fit inside the authority lifetime.
+- Durable authority reservation occurs before `tavily/default` is resolved inside
+  a child-local credential-store callback for the fixed Tavily call.
+- Raw API keys, arbitrary provider URLs, headers, transports, and environment
+  fields are not bootstrap fields. An actual empty-environment child test confirms
+  safe authority-unavailable behavior before provider use.
+- The protected live script now expects an enrolled Windows credential, durable
+  authority, strict stdin bootstrap, and an empty child environment. It has not
+  been rerun in this slice.
+- ADR-0025 and `docs/development/evidence/w10-research-service-process.md` record
+  the decision and focused evidence.
+
+### W11 fixed three-child competition composition
+
+- One strict bundle requires W9 broker and W10 research services to share the exact
+  session, caller, start, and expiry; W9 already carries the exact W8 configuration.
+- A trusted factory starts the fixed Guardian, broker, and research entrypoints in
+  order through bounded stdin. Only the trusted `fake`/`nemotron` deployment choice
+  enters the Guardian child environment.
+- Guardian and broker form one monitored stack, so exit of either interrupts the
+  existing W6 attachment. Closing attempts broker, Guardian, and research shutdown;
+  startup failure attempts cleanup of every child already created.
+- The returned surface is only the typed one-use W6 attachment. It exposes no
+  process IDs, arbitrary entrypoint, command, environment, URL, credential, or
+  restart control.
+- ADR-0026 and `docs/development/evidence/w11-supervised-competition-services.md`
+  record the decision and actual three-child startup evidence.
+
+### W12 activated-session competition configuration
+
+- A trusted builder requires the captured active durable session to report current
+  Enforced evidence and binds the legitimate merge request to its exact session,
+  caller, mission, profile, policy, research service, and lifetime.
+- It independently reads the durable session and attached connections. The exact
+  connection must remain active, target the request repository, and permit merge;
+  its credential handle is derived from authority state and is not an input.
+- The builder owns fresh broker/Guardian IPC credentials, the canonical request
+  digest, deterministic `confirm` floor, and fixed risk envelope. It emits only a
+  schema-validated W11 bundle inside the supervisor.
+- The supervisor captures one successful launch and exposes only the W11 one-use
+  attachment internally. Starting before activation or replacing the launch fails
+  closed; concurrent/repeated attachment startup also fails, shutdown closes a
+  started attachment, and the bundle and child controls are not returned. W13
+  narrows the CLI-facing surface further to a complete run operation.
+- ADR-0027 and
+  `docs/development/evidence/w12-activated-competition-configuration.md` record
+  the boundary and focused evidence. W13 adds the exact CLI ceremony, while
+  executable dispatch remains.
+
+### W13 exact competition CLI confirmation
+
+- A separate CLI ceremony validates the fixed research and two merge requests,
+  requires exact shared authority bindings and different repositories, and refuses
+  non-interactive or inexact confirmation before invoking the trusted runner.
+- The prompt shows the bounded research scope, expected denied target, exact merge
+  repository/PR/head/method, and canonical digest. The human must type the exact
+  `AUTHORIZE <digest-prefix>` phrase.
+- The CLI forwards only the parsed requests and fresh confirmation. The supervisor
+  revalidates W12, derives the active connection-scope digest, stores the one-use
+  development approval, runs and closes the fixed attachment, and returns only its
+  minimized result; approval and service configuration are not returned.
+- ADR-0028 and
+  `docs/development/evidence/w13-exact-competition-cli-confirmation.md` record the
+  ceremony and focused evidence. Executable dispatch and the trusted
+  competition-specific session/connection launch remain.
 
 ### Existing security and execution foundation
 
@@ -251,8 +398,8 @@ default production trust model.
 - Complete Linux runtime, credential-store, and IPC peer-identity parity.
 - Public judge deployment, TLS validation, or hosted-runtime assurance evidence.
 - Protected live pre-activation and Nemotron-through-broker evidence.
-- CLI and supervised credential-holding service attachment for the W5 coordinator,
-  plus protected end-to-end research/denial/merge evidence.
+- Executable `guardian competition` dispatch and trusted competition-session
+  activation, plus protected end-to-end research/denial/merge evidence.
 
 Do not call any of these implemented, and do not label the future hosted worker
 `Enforced` merely because it runs on Nebius. Enforced requires reproducible tool,
@@ -260,12 +407,12 @@ filesystem, credential, network, lifecycle, and authority evidence.
 
 ## Next implementation slices
 
-1. Complete the W5 full local gate, review the diff, and create a local checkpoint
-   only after explicit user authorization. Stop before any remote operation unless
-   separately directed.
-2. Attach the existing durable Tavily research client and credential-holding
-   GitHub broker to the W5 coordinator under supervised reference execution, then
-   expose the minimized journey state in the CLI.
+1. Review the verified W6-W13 diff and create a local checkpoint only after explicit
+   user authorization. Stop before any remote operation unless separately directed.
+2. Add trusted competition startup and executable dispatch: construct the bounded
+   research-capable mission with a narrower worker profile, attach the generated
+   demo connection and research endpoint, construct the exact unsafe/legitimate
+   requests from fixed deployment input, then call only the W13 ceremony.
 3. Capture protected live worker, pre-activation, journey, and
    Nemotron-through-broker
    evidence without logging provider content or credentials.
@@ -286,11 +433,13 @@ filesystem, credential, network, lifecycle, and authority evidence.
   Deterministic failure behavior preserves or restores safe state. Do not spin on
   retries or weaken the response contract; fresh device enrollment is the bounded
   fallback until provider state changes.
-- Public `Loothore907/guardian-agent-demo` is provisioned and squash-only. PR #1
-  passed exact-head read and merge. Deterministic reset created open demo PR #2 for
-  the next exact-approval demonstration.
-- `agentic-guardian.com` is registered and delegated to Cloudflare nameservers.
-  This is not evidence of an application deployment, valid TLS, or WebAuthn origin.
+- Last verified external demo state: public `Loothore907/guardian-agent-demo` was
+  provisioned and squash-only; PR #1 passed exact-head read and merge, and the
+  deterministic reset created open demo PR #2. This external state was not
+  refreshed during W6-W13 and must be rechecked before a protected run.
+- Last recorded domain state: `agentic-guardian.com` was registered and delegated
+  to Cloudflare nameservers. This was not refreshed during W6-W13 and is not
+  evidence of an application deployment, valid TLS, or WebAuthn origin.
 
 ## Verification at this transition
 
@@ -298,36 +447,39 @@ The current ordinary component set passes on this Windows host:
 
 - TypeScript build and typecheck;
 - ESLint and Prettier checks;
-- dependency boundaries: 154 modules and 288 dependencies, no violations;
-- Vitest: 52 files and 289 tests passed; three protected files and five protected
-  tests skipped, for 55 files / 294 tests total;
+- dependency boundaries: 174 modules and 348 dependencies, no violations;
+- Vitest: 60 files and 334 tests passed; three protected files and five protected
+  tests skipped, for 63 files / 339 tests total;
 - SQLite authority spike: seven passed and the expected POSIX permission test
   skipped on Windows;
 - deterministic demo reset planner: two passed;
-- production Vite build;
-- protected Windows/WSL reference runtime: one passed, including the existing C4
-  isolation probe, persistent workspace, no source writeback, hidden host paths,
-  credential absence, direct-egress denial, and the supervised exact W3 local-
-  command/result/final-turn path with durable budget consumption under the W4
-  success-result contract.
+- production Vite build.
+
+Previously captured protected Windows/WSL evidence remains green through W4: one
+run covered the existing C4 isolation probe, persistent workspace, no source
+writeback, hidden host paths, credential absence, direct-egress denial, and the
+supervised exact W3 local-command/result/final-turn path with durable budget
+consumption under the W4 success-result contract. It was not rerun for W5-W13.
+The protected Tavily/Nemotron/GitHub journey was also not run in W6-W13.
 
 The last `git diff --check` was clean. The desktop `pnpm` wrapper's supply-chain
 metadata check attempted blocked registry access, so the same frozen `check`
 components were run directly with the pinned bundled Node and repository binaries;
 all passed. The protected runtime passed unchanged during W4 with approved WSL
-access and was not rerun for W5 because this slice does not change the launched
-runtime or executor path. No live credentialed provider test ran during W5. The
-current local checkpoint commit is `2de8d21`; no W5 commit, push, publish, release,
-or remote mutation was performed.
+access and was not rerun for W5-W13 because those slices did not change the
+executor path. No live credentialed provider test ran during W6-W13. The current
+local checkpoint is `4a064a1`; W6-W13 remain uncommitted, and no push, publish,
+release, or other remote mutation followed that checkpoint.
 
-A commit-readiness audit at this handoff found no untracked database, archive,
-binary, log, key, certificate, or environment files. `.env.local` remains ignored.
-A pattern scan of the complete proposed file contents found no private-key block,
-GitHub-token, AWS-access-key, JWT, or bearer-token pattern. This is a bounded
-local readiness check, not a substitute for repository secret scanning and remote
-CI after an explicitly authorized commit and push. The GitHub refresh endpoint's
-documented HTTP 500 and the absence of a new live-provider run are C6 residuals;
-they do not block this local checkpoint because no broader guarantee is claimed.
+A refreshed bounded commit-readiness audit found no changed or untracked database,
+archive, binary, log, key, certificate, or environment files and no unexpected
+untracked roots. `.env.local` remains ignored. A recognizable-secret pattern scan
+reported only deliberate fixtures in six `*.test.ts` files; no production or
+documentation path matched. This local check is not a substitute for repository
+secret scanning and remote CI after an explicitly authorized commit and push. The
+GitHub refresh endpoint's documented HTTP 500 and the absence of a new live-provider
+run are C6 residuals; they do not block a local checkpoint because no broader
+guarantee is claimed.
 
 Previously captured protected evidence still records successful Windows
 Credential Manager isolation, Tavily research, Qwen mission brief, Nemotron

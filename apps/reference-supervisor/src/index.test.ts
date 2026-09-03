@@ -125,6 +125,15 @@ describe("reference authority supervisor", () => {
       },
     );
     try {
+      await expect(
+        supervisor.runCompetitionJourney({
+          researchRequest: {},
+          unsafeRequest: request(),
+          legitimateRequest: request(),
+          githubClientId: "Iv23liP8Sq3ZEAyeIHju",
+          confirmation: { principalId: IDS.principal, confirmedAt: NOW },
+        }),
+      ).rejects.toThrow("requires an activated session");
       const draft = supervisor.bootstrap.createAssistedObjectiveDraft({
         schemaVersion: 1,
         objective: "Review the pull request without external side effects.",

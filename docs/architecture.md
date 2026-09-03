@@ -291,6 +291,59 @@ different denial codes, binding substitution, or result-target mutation stop the
 journey. Retrieved text never constructs either canonical request. See
 [ADR-0020](adr/0020-controlled-research-and-github-competition-journey.md).
 
+The competition coordinator is attached to provider boundaries through a separate
+one-use supervised lifecycle. Research and broker must be distinct already-started
+child processes with typed clients. A child exit before or during execution,
+concurrent use, replay, or unexpected coordinator failure stops with a fixed
+attachment result and no restart. Explicit close attempts both shutdowns and
+prevents later execution. The attachment cannot accept an arbitrary entrypoint,
+environment, destination, or credential; service-specific IPC construction remains
+outside it. See
+[ADR-0021](adr/0021-supervised-competition-journey-attachment.md).
+
+The broker side now has a dedicated local IPC protocol rather than an in-process
+journey shortcut. Frames contain only the exact canonical GitHub request, optional
+merge approval, unique evidence-exposure IDs, and session/caller/capability and
+lifecycle bindings. The server owns lifecycle time and both peers independently
+validate a successful snapshot or merge against the exact owner, repository, pull
+request, and head version. The protocol cannot express arbitrary authenticated
+HTTP, URLs, headers, commands, or credentials. See
+[ADR-0022](adr/0022-session-bound-broker-ipc.md).
+
+Action-risk inference crosses a different local boundary. The trusted supervisor
+pre-binds one strict credential-free envelope to the exact session, caller,
+canonical request digest, capability, and lifetime. The broker-side client cannot
+replace that envelope; the Guardian service consumes it once in its own provider
+process and returns only a strict evaluation or fixed failure. The broker still
+recomputes deterministic precedence. Broker-process startup and supervised child
+attachment remain. See
+[ADR-0023](adr/0023-session-bound-guardian-action-risk-ipc.md).
+
+The GitHub broker now has a strict credential-holding application process. One
+bounded stdin frame binds the W7 service, broker-role authority capability, W8
+client, credential-store handle, public OAuth client ID, and nested lifetimes.
+The child constructs the Windows credential store locally and cannot accept a raw
+credential, Guardian provider, model credential, arbitrary provider URL, header,
+or command. The Guardian and research children still require supervised journey
+attachment. See
+[ADR-0024](adr/0024-credential-holding-broker-service-process.md).
+
+The production Tavily child likewise starts from one strict stdin frame rather
+than serialized environment configuration. Its research and exact research-role
+authority bindings share the same session/caller and nested lifetime. Only after
+a durable reservation does the child resolve `tavily/default` for the fixed
+provider call; no reusable credential crosses the supervisor or bootstrap.
+Library-level environment construction remains test-only compatibility. See
+[ADR-0025](adr/0025-credential-store-backed-research-process.md).
+
+Trusted competition orchestration composes those boundaries through one strict
+service bundle. Guardian starts first, then broker, then research. Guardian and
+broker form one monitored stack so loss of either interrupts the existing W6
+attachment; cleanup attempts all children and never restarts them. The factory
+returns only the typed one-use journey attachment and no process IDs or generic
+entrypoint. See
+[ADR-0026](adr/0026-supervised-three-service-competition-composition.md).
+
 ## Dependency direction
 
 The exact package layout is deferred to ADR-0003. The intended dependency direction is:

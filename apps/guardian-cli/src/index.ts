@@ -1,4 +1,9 @@
+import { canonicalDigest } from "@guardian/canonical";
 import {
+  CanonicalRequestSchema,
+  GitHubOAuthClientIdSchema,
+  OpaqueIdSchema,
+  ResearchRequestSchema,
   SessionBootstrapResultSchema,
   SessionDraftPreviewSchema,
   type DevelopmentSessionConfirmation,
@@ -8,6 +13,7 @@ import {
   type SessionDraftInput,
   type SessionDraftPreview,
 } from "@guardian/contracts";
+import type { CompetitionJourneyAttachmentResult } from "@guardian/reference-supervisor";
 
 export * from "./setup.js";
 
@@ -48,11 +54,126 @@ export interface GuardianCliIo {
   readonly readConfirmation: (prompt: string) => Promise<string>;
 }
 
+export interface GuardianCompetitionCliRunner {
+  readonly runCompetitionJourney: (input: {
+    readonly researchRequest: unknown;
+    readonly unsafeRequest: unknown;
+    readonly legitimateRequest: unknown;
+    readonly githubClientId: unknown;
+    readonly confirmation: {
+      readonly principalId: unknown;
+      readonly confirmedAt: unknown;
+    };
+  }) => Promise<CompetitionJourneyAttachmentResult>;
+}
+
 export function parseGuardianCliArguments(arguments_: readonly string[]): { objective: string } {
   if (arguments_[0] !== "start" || arguments_.length < 2) {
     throw new TypeError('usage: guardian start "<task objective>"');
   }
   return { objective: arguments_.slice(1).join(" ") };
+}
+
+export function parseGuardianCompetitionCliArguments(arguments_: readonly string[]): void {
+  if (arguments_.length !== 1 || arguments_[0] !== "competition") {
+    throw new TypeError("usage: guardian competition");
+  }
+}
+
+function sameCompetitionAuthority(
+  left: ReturnType<typeof CanonicalRequestSchema.parse>,
+  right: ReturnType<typeof CanonicalRequestSchema.parse>,
+): boolean {
+  return (
+    left.sessionId === right.sessionId &&
+    left.callerId === right.callerId &&
+    left.connectionId === right.connectionId &&
+    left.missionId === right.missionId &&
+    left.missionVersion === right.missionVersion &&
+    left.profileId === right.profileId &&
+    left.profileVersion === right.profileVersion &&
+    left.policyVersion === right.policyVersion
+  );
+}
+
+export async function runGuardianCompetitionCli(options: {
+  readonly principalId: string;
+  readonly runner: GuardianCompetitionCliRunner;
+  readonly researchRequest: unknown;
+  readonly unsafeRequest: unknown;
+  readonly legitimateRequest: unknown;
+  readonly githubClientId: unknown;
+  readonly io: GuardianCliIo;
+  readonly now?: () => string;
+}): Promise<CompetitionJourneyAttachmentResult> {
+  const principalId = OpaqueIdSchema.parse(options.principalId);
+  const githubClientId = GitHubOAuthClientIdSchema.parse(options.githubClientId);
+  const researchRequest = ResearchRequestSchema.parse(options.researchRequest);
+  const unsafeRequest = CanonicalRequestSchema.parse(options.unsafeRequest);
+  const legitimateRequest = CanonicalRequestSchema.parse(options.legitimateRequest);
+  if (
+    unsafeRequest.proposal.operation !== "github.pull_request.merge" ||
+    legitimateRequest.proposal.operation !== "github.pull_request.merge" ||
+    unsafeRequest.connectionId === null ||
+    legitimateRequest.connectionId === null ||
+    !sameCompetitionAuthority(unsafeRequest, legitimateRequest) ||
+    (unsafeRequest.proposal.arguments.owner === legitimateRequest.proposal.arguments.owner &&
+      unsafeRequest.proposal.arguments.repository ===
+        legitimateRequest.proposal.arguments.repository)
+  ) {
+    throw new TypeError("controlled competition CLI input is invalid");
+  }
+  if (!options.io.interactive) {
+    throw new TypeError("interactive competition authorization is required");
+  }
+  const requestDigest = canonicalDigest(
+    "canonical_request",
+    legitimateRequest.schemaVersion,
+    legitimateRequest,
+  );
+  const confirmationCode = requestDigest.slice(0, 12);
+  options.io.write(
+    [
+      "Guardian controlled competition authorization",
+      "",
+      `Research query: ${researchRequest.query}`,
+      `Research domains: ${researchRequest.allowedDomains.join(", ")}`,
+      `Expected denied target: ${unsafeRequest.proposal.arguments.owner}/${unsafeRequest.proposal.arguments.repository}#${unsafeRequest.proposal.arguments.pullRequest}`,
+      `Exact merge target: ${legitimateRequest.proposal.arguments.owner}/${legitimateRequest.proposal.arguments.repository}#${legitimateRequest.proposal.arguments.pullRequest}`,
+      `Expected head: ${legitimateRequest.proposal.arguments.expectedHeadCommit}`,
+      `Merge method: ${legitimateRequest.proposal.arguments.method}`,
+      `Request digest: ${requestDigest}`,
+      "",
+      "This is a lower-assurance development confirmation, not WebAuthn.",
+    ].join("\n") + "\n",
+  );
+  const response = await options.io.readConfirmation(
+    `Type AUTHORIZE ${confirmationCode} to approve only this exact merge: `,
+  );
+  if (response !== `AUTHORIZE ${confirmationCode}`) {
+    throw new TypeError("competition merge was not authorized");
+  }
+  const confirmedAt = (options.now ?? (() => new Date().toISOString()))();
+  const result = await options.runner.runCompetitionJourney({
+    researchRequest,
+    unsafeRequest,
+    legitimateRequest,
+    githubClientId,
+    confirmation: { principalId, confirmedAt },
+  });
+  options.io.write(
+    result.state === "completed"
+      ? [
+          "Guardian controlled competition journey completed",
+          `Research evidence accepted: ${result.research.evidence.length}`,
+          `Unsafe attempt: denied (${result.unsafeAttempt.code})`,
+          `Merge: ${result.legitimateAttempt.result.owner}/${result.legitimateAttempt.result.repository}#${result.legitimateAttempt.result.pullRequest}`,
+          `Merge commit: ${result.legitimateAttempt.result.mergeCommit}`,
+          "",
+        ].join("\n")
+      : `Guardian controlled competition journey stopped: ${result.stage}/${result.code}\n`,
+  );
+  return result;
 }
 
 function renderPreview(preview: SessionDraftPreview): string {

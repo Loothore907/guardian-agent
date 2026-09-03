@@ -9,8 +9,10 @@ import {
   type AuthorityWorkerClient,
 } from "@guardian/authority-client";
 import { DevelopmentAuthorizationIssuer } from "@guardian/authorization-service";
+import { canonicalDigest } from "@guardian/canonical";
 import {
   AuthorityCapabilityBindingSchema,
+  CanonicalRequestSchema,
   DEFAULT_NEBIUS_WORKER_SELECTION,
   DEFAULT_REFERENCE_WORKER_SELECTION,
   OpaqueIdSchema,
@@ -41,6 +43,12 @@ import { createWorkerIpcCredentials, LocalWorkerIpcClient } from "@guardian/work
 import { ManagedSessionWorkspace } from "@guardian/workspace";
 
 import { ReferenceSessionBootstrapCoordinator, type InteractionRunnerInput } from "./bootstrap.js";
+import { buildActivatedCompetitionJourneyServices } from "./competition-journey-config.js";
+import { startSupervisedControlledCompetitionJourney } from "./competition-journey-processes.js";
+import type {
+  CompetitionJourneyAttachmentResult,
+  SupervisedCompetitionJourneyAttachment,
+} from "./competition-journey-attachment.js";
 import { startSupervisedServiceProcess } from "./supervised-process.js";
 import { TrustedWorkerToolDispatcher } from "./worker-execution.js";
 
@@ -54,6 +62,14 @@ export {
   type ControlledCompetitionJourneyInput,
   type ControlledCompetitionJourneyResult,
 } from "./competition-journey.js";
+export {
+  SupervisedCompetitionJourneyAttachment,
+  attachControlledCompetitionJourney,
+  type CompetitionJourneyAttachmentResult,
+  type CompetitionJourneyAttachmentState,
+  type CompetitionJourneyRunner,
+} from "./competition-journey-attachment.js";
+export { startSupervisedControlledCompetitionJourney } from "./competition-journey-processes.js";
 export { TrustedWorkerToolDispatcher, WorkerToolExecutionError } from "./worker-execution.js";
 
 const ROLE_OPERATIONS = {
@@ -102,6 +118,16 @@ export interface ReferenceAuthoritySupervisor {
   readonly launchSession: (
     input: Omit<ReferenceSessionLaunchInput, "authority">,
   ) => Promise<LaunchedReferenceSession>;
+  readonly runCompetitionJourney: (input: {
+    readonly researchRequest: unknown;
+    readonly unsafeRequest: unknown;
+    readonly legitimateRequest: unknown;
+    readonly githubClientId: unknown;
+    readonly confirmation: {
+      readonly principalId: unknown;
+      readonly confirmedAt: unknown;
+    };
+  }) => Promise<CompetitionJourneyAttachmentResult>;
   readonly close: () => Promise<void>;
 }
 
@@ -203,12 +229,26 @@ export async function startReferenceAuthoritySupervisor(
     });
     const broker = new LocalAuthorityIpcClient({ endpoint, binding: brokerBinding });
     const workerAuthority = new LocalAuthorityIpcClient({ endpoint, binding: workerBinding });
+    const authorizationIssuer = new DevelopmentAuthorizationIssuer({
+      authority: authorization,
+      binding: authorizationBinding,
+      ...(options.now === undefined ? {} : { now: options.now }),
+    });
     const runningAuthorityProcess = authorityProcess;
-    const launchSession = (input: Omit<ReferenceSessionLaunchInput, "authority">) =>
-      launchReferenceSession({
+    let activatedSession: LaunchedReferenceSession | undefined;
+    let competitionJourneyState: "idle" | "starting" | "started" = "idle";
+    let competitionJourney: SupervisedCompetitionJourneyAttachment | undefined;
+    const launchSession = async (input: Omit<ReferenceSessionLaunchInput, "authority">) => {
+      if (activatedSession !== undefined) {
+        throw new TypeError("reference supervisor already has an activated session");
+      }
+      const launched = await launchReferenceSession({
         ...input,
         authority: { endpoint, binding: launcherBinding },
       });
+      activatedSession = launched;
+      return launched;
+    };
     const interactionProcessMode = options.interactionProcess;
     const runInteraction =
       interactionProcessMode === undefined
@@ -349,11 +389,70 @@ export async function startReferenceAuthoritySupervisor(
       research,
       broker,
       workerAuthority,
-      authorizationIssuer: new DevelopmentAuthorizationIssuer({
-        authority: authorization,
-        binding: authorizationBinding,
-        ...(options.now === undefined ? {} : { now: options.now }),
-      }),
+      authorizationIssuer,
+      runCompetitionJourney: async (input) => {
+        if (activatedSession === undefined) {
+          throw new TypeError("competition journey requires an activated session");
+        }
+        if (competitionJourneyState !== "idle") {
+          throw new TypeError("reference supervisor already started a competition journey");
+        }
+        competitionJourneyState = "starting";
+        try {
+          const legitimateRequest = CanonicalRequestSchema.parse(input.legitimateRequest);
+          if (legitimateRequest.connectionId === null) {
+            throw new TypeError("competition merge request requires a connection");
+          }
+          const services = await buildActivatedCompetitionJourneyServices({
+            launched: activatedSession,
+            legitimateRequest,
+            githubClientId: input.githubClientId,
+            authority: {
+              endpoint,
+              brokerBinding,
+              researchBinding,
+              records: broker,
+            },
+            ...(options.now === undefined ? {} : { now: options.now }),
+          });
+          competitionJourney = await startSupervisedControlledCompetitionJourney({
+            services,
+            riskProvider: options.riskProcess ?? "fake",
+          });
+          competitionJourneyState = "started";
+          const connections = await broker.getSessionConnections(legitimateRequest.sessionId);
+          const connection = connections.find(
+            (candidate) => candidate.connectionId === legitimateRequest.connectionId,
+          );
+          if (connection === undefined) {
+            throw new TypeError("competition connection is unavailable");
+          }
+          const scopeDigest = canonicalDigest("github_connection_scope", connection.schemaVersion, {
+            connectionId: connection.connectionId,
+            provider: connection.provider,
+            owner: connection.owner,
+            repository: connection.repository,
+            permissions: [...connection.permissions].sort(),
+          });
+          const issued = await authorizationIssuer.issueExactApproval({
+            request: legitimateRequest,
+            scopeDigest,
+            confirmation: input.confirmation,
+          });
+          return await competitionJourney.run({
+            requestedAt: options.now?.() ?? new Date().toISOString(),
+            researchRequest: input.researchRequest,
+            unsafeRequest: input.unsafeRequest,
+            legitimateRequest,
+            legitimateApproval: issued.approval,
+          });
+        } catch (error) {
+          if (competitionJourneyState === "starting") competitionJourneyState = "idle";
+          throw error;
+        } finally {
+          if (competitionJourneyState === "started") await competitionJourney?.close();
+        }
+      },
       bootstrap: new ReferenceSessionBootstrapCoordinator({
         sessionId,
         callerId,
@@ -385,6 +484,7 @@ export async function startReferenceAuthoritySupervisor(
       launchSession,
       close: async () => {
         const results = await Promise.allSettled([
+          competitionJourney?.close(),
           managedWorkspace.close(),
           runningAuthorityProcess.close(),
         ]);
