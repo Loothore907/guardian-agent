@@ -38,14 +38,16 @@ and checkpoint history in `docs/development/roadmap.md`.
 - **Checkpoint state:** the repository now records W5 in `4a064a1`, W6-W8 in
   `f341b96`, W9-W11 in `f6087d4`, W12-W13 in `90da76b`, W14-W18 in `aa5e601`,
   the deterministic W19 boundary in `e8e054f`, W20-W23 in `48b082d`, and the
-  generated lockfile correction in `9acab1f`; its handoff head is `b9497a9`.
-  PR #14 is open, mergeable, and green against `main`; issue #13 remains open. No
-  main-repository merge, release, deployment, or publication followed.
+  generated lockfile correction in `9acab1f`. The Phase-1 implementation-review
+  checkpoint is `ddf194c`. PR #14 is open, mergeable, and green against `main`;
+  issue #13 remains open. No main-repository merge, release, deployment, or
+  publication followed.
 - **Phase-1 review checkpoint:** review started from clean, synchronized head
   `b9497a9`. The approved branch update contains a fail-closed broker correction,
   its regression tests, the C6 review matrix, claim/roadmap reconciliation, and
   patch hygiene. Restarting Codex restored the approval bridge needed for the
-  authorized checkpoint workflow. PR #14 remains unmerged.
+  authorized checkpoint workflow. The update was pushed as `ddf194c`, its CI
+  passed in 2m19s, and PR #14 remains unmerged.
   The current follow-up adds the commit-pinned public fixture configuration and a
   protected-live Search/Extract and no-effect denial harness. W20's first assembled
   attempt exposed the missing durable exposure-registration link and failed closed
@@ -67,7 +69,7 @@ and checkpoint history in `docs/development/roadmap.md`.
   checkpointed as `48b082d`, pushed, and open for review in PR #14. The first CI
   run exposed stale workspace importer entries in `pnpm-lock.yaml` before tests.
   The lockfile-only correction passes offline frozen install and the exact
-  `pnpm check` command locally. Final remote CI passed at `b9497a9` in 2m14s.
+  `pnpm check` command locally. Pre-review handoff CI passed at `b9497a9` in 2m14s.
   PR #14 had no reviews or comments at the Phase-1 refresh and remains unmerged.
 - **Secret caution:** `.env.local` is ignored development input. Never print,
   stage, copy, summarize, or use it as the installation design. Never print or
@@ -714,8 +716,8 @@ the nested timeout hierarchy. W22's single-session assembled no-effect journey n
 passes. W23's separately authorized exact disposable effect also passes. The
 complete ordinary gate and bounded secret/artifact review are green with no
 blocking finding. Checkpoint `48b082d` is pushed and PR #14 is open; the next gate
-is branch-update governance after local review; remote CI passed at `b9497a9` in
-2m14s. Track B is locked at the design level in ADR-0034: a public
+is human review; the Phase-1 correction is pushed at `ddf194c` and CI passed in
+2m19s. Track B is locked at the design level in ADR-0034: a public
 fixed/rate-limited demo and a separate authenticated piloted demo over the same
 enforcement core. OpenAI backup qualification and worker-visible research/GitHub
 dispatch remain separate queued slices; neither was started in this session.
@@ -740,8 +742,8 @@ The complete ordinary gate passes locally: Prettier, ESLint, TypeScript, 61
 Vitest files / 364 tests, seven SQLite spike tests with the expected Windows POSIX
 permission skip, two reset-planner tests, 176 modules / 354 dependency edges, and
 the production Vite build. `git diff --check main` is clean. The review slice is
-the approved Phase-1 branch checkpoint; its PR description should point reviewers
-to the matrix and must not present C6 as Passed.
+the approved Phase-1 branch checkpoint. PR #14's expanded description points
+reviewers to the matrix and does not present C6 as Passed.
 
 ### Recommended next-session sequence
 
@@ -804,10 +806,11 @@ to the matrix and must not present C6 as Passed.
   to Cloudflare nameservers. This was not refreshed during W6-W14 and is not
   evidence of an application deployment, valid TLS, or WebAuthn origin.
 - Main-repository PR #14 is open from
-  `codex/13-c6-durable-authorization-broker`. The Phase-1 review started from
-  remote head `b9497a9b7518a71c403dc10b4ee96b205a267502`, which was mergeable
-  against `main` with green CI and no reviews or comments. The approved review
-  checkpoint follows on the same feature branch. Issue #13 remains open.
+  `codex/13-c6-durable-authorization-broker`. The Phase-1 implementation-review
+  checkpoint `ddf194c52ce0651ff7c4110f855091fabb8fc298` is cleanly mergeable
+  against `main`, has green CI, and had no reviews or comments at the final
+  refresh. This handoff-only closeout follows on the same feature branch. Issue
+  #13 remains open.
 
 ## Verification at this transition
 
@@ -850,7 +853,7 @@ no unexpected untracked roots. `.env.local` remains ignored. The changed-line
 secret-pattern scan found only one deliberate fake provider credential in a
 research-service failure test; no production or documentation path matched.
 Repository secret scanning and remote CI remain independent review signals;
-PR #14's final remote CI passed at `b9497a9` in 2m14s. The GitHub refresh
+PR #14's Phase-1 implementation-review CI passed at `ddf194c` in 2m19s. The GitHub refresh
 endpoint's documented HTTP 500 remains an operational limitation. Intended-Linux
 peer identity, database permissions, local credential resolution, and narrow
 GitHub read/merge remain the C6 blocker. WebAuthn and the single-invocation
