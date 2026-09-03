@@ -58,8 +58,10 @@ and checkpoint history in `docs/development/roadmap.md`.
   producing `7df353afe005b74811dfcd081ac98af5695a8170`. Final C6 failure review and the
   bounded secret/artifact audit then passed with no blocking finding. The complete
   ordinary gate remains green at 61 files / 362 tests; this local W19-W23 slice is
-  ready for checkpoint/review, but nothing in the main repository was committed,
-  pushed, or opened for review in this session.
+  checkpointed as `48b082d`, pushed, and open for review in PR #14. The first CI
+  run exposed stale workspace importer entries in `pnpm-lock.yaml` before tests.
+  The lockfile-only correction passes offline frozen install and the exact
+  `pnpm check` command locally; remote CI rerun and review are the current gate.
 - **Secret caution:** `.env.local` is ignored development input. Never print,
   stage, copy, summarize, or use it as the installation design. Never print or
   export credential-store values.
@@ -86,14 +88,14 @@ the appropriate Git transition part of the normal development flow:
    actions and results; do not shift responsibility for normal checkpoint timing
    back to the user through repeated permission prompts.
 
-For the current C6 section, the W19-W23 slice now meets its local review-readiness
+For the current C6 section, the W19-W23 slice meets its local review-readiness
 gate: the assembled no-effect journey, separately authorized exact disposable
 effect, protected failure review, complete ordinary gate, bounded secret/artifact
-audit, and final changed-surface review pass. The main-repository checkpoint,
-push, and review transition have not occurred. Successful automatic GitHub
-refresh, WebAuthn, platform parity/containment, and the full single-invocation
-competition coordinator remain explicit limitations rather than blockers hidden
-behind the current evidence.
+audit, and final changed-surface review pass. Checkpoint `48b082d` is pushed and
+PR #14 is open; the initial frozen-install failure has a narrow generated-lockfile
+correction with local parity checks green. Remote CI rerun and review are current.
+Successful automatic GitHub refresh, WebAuthn, platform parity/containment, and
+the full single-invocation competition coordinator remain explicit limitations.
 
 This standing workflow does not authorize merge, release, publication,
 deployment, remote-setting changes, destructive recovery, credential disclosure,
@@ -701,8 +703,8 @@ rerun now pass. W21's live Nemotron-through-broker path also passes after correc
 the nested timeout hierarchy. W22's single-session assembled no-effect journey now
 passes. W23's separately authorized exact disposable effect also passes. The
 complete ordinary gate and bounded secret/artifact review are green with no
-blocking finding. The next transition is a local checkpoint and main-repository
-review; neither has occurred. Track B is locked at the design level in
+blocking finding. Checkpoint `48b082d` is pushed and PR #14 is open; the next gate
+is the corrected remote CI run and review. Track B is locked at the design level in
 ADR-0034: a public fixed/rate-limited demo and a separate authenticated piloted
 demo over the same enforcement core. OpenAI backup qualification and
 worker-visible research/GitHub dispatch remain separate queued slices; neither
@@ -791,17 +793,18 @@ in `aa5e601`, and deterministic W19 is captured in `e8e054f`. The W19 managed
 baseline stopped before provider use, while the subsequent user-scoped protected
 Search/Extract run passed. The separate public fixture repository was intentionally
 created and pushed under the user's approval; no main-repository push, release, or
-publication followed the local checkpoints.
+publication followed those earlier local checkpoints. W20-W23 were later
+checkpointed as `48b082d`, pushed, and opened as PR #14; no main-repository merge,
+release, deployment, or publication followed.
 
-A refreshed bounded commit-readiness audit found no changed or untracked database,
-archive, binary, log, key, certificate, or environment files and no unexpected
-untracked roots. `.env.local` remains ignored. A recognizable-secret pattern scan
-reported only deliberate fixtures in six `*.test.ts` files; no production or
-documentation path matched. This local check is not a substitute for repository
-secret scanning and remote CI after the documented remote-readiness gate and
-branch push. The GitHub refresh endpoint's documented HTTP 500 and the absence of
-a new live-provider run are C6 residuals; they do not block a local checkpoint
-because no broader guarantee is claimed.
+A refreshed bounded review found no changed or untracked database, archive,
+binary, log, key, certificate, environment, or other sensitive artifact files and
+no unexpected untracked roots. `.env.local` remains ignored. The changed-line
+secret-pattern scan found only one deliberate fake provider credential in a
+research-service failure test; no production or documentation path matched.
+Repository secret scanning and remote CI remain independent review signals. The
+GitHub refresh endpoint's documented HTTP 500, WebAuthn, platform parity, and the
+single-invocation coordinator remain C6 residuals; no broader guarantee is claimed.
 
 Previously captured protected evidence still records successful Windows
 Credential Manager isolation, Tavily research, Qwen mission brief, Nemotron

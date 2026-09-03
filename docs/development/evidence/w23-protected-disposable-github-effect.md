@@ -88,6 +88,17 @@ provider credential in a research-service failure test; no reusable credential o
 credential-equivalent material was added. Final changed-surface review found no
 blocking security issue.
 
+## Review transition
+
+The reviewed W20-W23 stack was checkpointed as `48b082d`, pushed on
+`codex/13-c6-durable-authorization-broker`, and opened as main-repository PR #14.
+The first CI run failed before tests because frozen install found stale workspace
+importer entries in `pnpm-lock.yaml`: a duplicate broker-service dev dependency
+and a missing reference-supervisor dev dependency. Regenerating only the lockfile
+offline produced the canonical importer order and relationships. A subsequent
+offline `pnpm install --frozen-lockfile` and the exact `pnpm check` CI command both
+passed locally. No runtime code or security claim was relaxed for this correction.
+
 ## Claim boundary
 
 W23 proves the protected exact-head read and one-use squash effect mechanics for

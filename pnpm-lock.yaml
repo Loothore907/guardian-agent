@@ -109,9 +109,6 @@ importers:
       '@guardian/authorization-service':
         specifier: workspace:*
         version: link:../authorization-service
-      '@guardian/broker':
-        specifier: workspace:*
-        version: link:../../packages/broker
 
   apps/control-api:
     dependencies:
@@ -179,22 +176,6 @@ importers:
         specifier: 4.1.11
         version: 4.1.11(@types/node@24.13.3)(vite@8.2.2(@types/node@24.13.3))
 
-  apps/worker-service:
-    dependencies:
-      '@guardian/contracts':
-        specifier: workspace:*
-        version: link:../../packages/contracts
-      '@guardian/credential-store':
-        specifier: workspace:*
-        version: link:../../packages/credential-store
-      '@guardian/worker':
-        specifier: workspace:*
-        version: link:../../packages/worker
-    devDependencies:
-      vitest:
-        specifier: 4.1.11
-        version: 4.1.11(@types/node@24.13.3)(vite@8.2.2(@types/node@24.13.3))
-
   apps/reference-supervisor:
     dependencies:
       '@guardian/authority-client':
@@ -206,6 +187,9 @@ importers:
       '@guardian/authorization-service':
         specifier: workspace:*
         version: link:../authorization-service
+      '@guardian/broker':
+        specifier: workspace:*
+        version: link:../../packages/broker
       '@guardian/canonical':
         specifier: workspace:*
         version: link:../../packages/canonical
@@ -301,6 +285,22 @@ importers:
       react-dom:
         specifier: 19.2.8
         version: 19.2.8(react@19.2.8)
+
+  apps/worker-service:
+    dependencies:
+      '@guardian/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@guardian/credential-store':
+        specifier: workspace:*
+        version: link:../../packages/credential-store
+      '@guardian/worker':
+        specifier: workspace:*
+        version: link:../../packages/worker
+    devDependencies:
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.13.3)(vite@8.2.2(@types/node@24.13.3))
 
   packages/adapter-github:
     dependencies:
@@ -446,6 +446,12 @@ importers:
         specifier: workspace:*
         version: link:../contracts
 
+  packages/test-support:
+    dependencies:
+      '@guardian/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+
   packages/worker:
     dependencies:
       '@guardian/canonical':
@@ -471,12 +477,6 @@ importers:
       vitest:
         specifier: 4.1.11
         version: 4.1.11(@types/node@24.13.3)(vite@8.2.2(@types/node@24.13.3))
-
-  packages/test-support:
-    dependencies:
-      '@guardian/contracts':
-        specifier: workspace:*
-        version: link:../contracts
 
 packages:
 
