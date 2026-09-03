@@ -24,7 +24,7 @@
     "start:research-service": "node apps/research-service/dist/main.js",
     "start:session-host": "node apps/session-host/dist/main.js",
     "test": "vitest run",
-    "test:live:tavily": "pnpm build && node --env-file=.env.local --test scripts/tavily-live.test.mjs",
+    "test:live:tavily": "pnpm build && node --test scripts/tavily-live.test.mjs",
     "test:live:credentials": "node --env-file=.env.local node_modules/vitest/vitest.mjs run packages/credential-verification/src/live.integration.test.ts",
     "test:live:nebius-models": "pnpm build && node --test scripts/nebius-models-live.test.mjs",
     "test:demo-reset-plan": "node --test scripts/demo-reset-plan.test.mjs",

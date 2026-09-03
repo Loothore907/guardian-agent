@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { LocalResearchIpcClient, createResearchIpcCredentials } from "@guardian/research";
 import type { AuthorityControlClient } from "@guardian/authority-client";
+import { InMemoryCredentialStore } from "@guardian/credential-store";
 
 import {
+  CredentialStoreTavilyProvider,
   CredentialHoldingResearchService,
   DurableCredentialHoldingResearchService,
   TavilySearchProvider,
@@ -46,6 +48,27 @@ function capturedTransport(response: { readonly status: number; readonly body: s
 }
 
 describe("Tavily Search adapter", () => {
+  it("resolves the Tavily credential only inside the provider callback", async () => {
+    const credential = "tavily-credential-fixture-not-public";
+    const store = new InMemoryCredentialStore();
+    await store.write(
+      { schemaVersion: 1, provider: "tavily", slot: "default" },
+      Buffer.from(credential),
+    );
+    const transport = vi.fn<TavilyTransport>((invocation) => {
+      expect(invocation.authorization).toBe(`Bearer ${credential}`);
+      return Promise.resolve({ status: 200, body: JSON.stringify(rawResponse) });
+    });
+    const provider = new CredentialStoreTavilyProvider({
+      credentialStore: store,
+      transport,
+    });
+
+    const result = await provider.search(request);
+    expect(result.requestId).toBe("tavily_req_1");
+    expect(JSON.stringify(result)).not.toContain(credential);
+  });
+
   it("calls only the fixed Search endpoint with bounded explicit parameters", async () => {
     const transport = capturedTransport({ status: 200, body: JSON.stringify(rawResponse) });
     const provider = new TavilySearchProvider({ apiKey: "test-provider-credential", transport });

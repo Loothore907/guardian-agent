@@ -3,11 +3,15 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "bin": {
+    "guardian-broker-service": "./dist/main.js"
+  },
   "dependencies": {
     "@guardian/authority-client": "workspace:*",
     "@guardian/broker": "workspace:*",
     "@guardian/contracts": "workspace:*",
-    "@guardian/credential-store": "workspace:*"
+    "@guardian/credential-store": "workspace:*",
+    "@guardian/guardian": "workspace:*"
   },
   "devDependencies": {
     "@guardian/authority-service": "workspace:*",

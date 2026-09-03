@@ -96,6 +96,9 @@ importers:
       '@guardian/credential-store':
         specifier: workspace:*
         version: link:../../packages/credential-store
+      '@guardian/guardian':
+        specifier: workspace:*
+        version: link:../../packages/guardian
     devDependencies:
       '@guardian/authority-service':
         specifier: workspace:*
@@ -106,6 +109,9 @@ importers:
       '@guardian/authorization-service':
         specifier: workspace:*
         version: link:../authorization-service
+      '@guardian/broker':
+        specifier: workspace:*
+        version: link:../../packages/broker
 
   apps/control-api:
     dependencies:
@@ -212,6 +218,9 @@ importers:
       '@guardian/interaction-service':
         specifier: workspace:*
         version: link:../interaction-service
+      '@guardian/research':
+        specifier: workspace:*
+        version: link:../../packages/research
       '@guardian/session':
         specifier: workspace:*
         version: link:../../packages/session
@@ -240,6 +249,9 @@ importers:
       '@guardian/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@guardian/credential-store':
+        specifier: workspace:*
+        version: link:../../packages/credential-store
       '@guardian/research':
         specifier: workspace:*
         version: link:../../packages/research

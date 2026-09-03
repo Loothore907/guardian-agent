@@ -1,10 +1,12 @@
 import {
+  CredentialReferenceSchema,
   ResearchProviderResponseSchema,
   ResearchServiceProcessConfigSchema,
   type ResearchProviderResponse,
   type ResearchRequest,
   type ResearchScope,
 } from "@guardian/contracts";
+import type { CredentialStore } from "@guardian/credential-store";
 import {
   ResearchJourneyLedger,
   ResearchRequestDeniedError,
@@ -192,6 +194,41 @@ export class TavilySearchProvider implements ResearchProvider<ResearchProviderRe
   }
 }
 
+export class CredentialStoreTavilyProvider implements ResearchProvider<ResearchProviderResponse> {
+  readonly #store: CredentialStore;
+  readonly #transport: TavilyTransport | undefined;
+  readonly #timeoutMs: number | undefined;
+
+  constructor(options: {
+    readonly credentialStore: CredentialStore;
+    readonly transport?: TavilyTransport;
+    readonly timeoutMs?: number;
+  }) {
+    this.#store = options.credentialStore;
+    this.#transport = options.transport;
+    this.#timeoutMs = options.timeoutMs;
+  }
+
+  search(request: ResearchRequest): Promise<ResearchProviderResponse> {
+    return this.#store.use(
+      CredentialReferenceSchema.parse({ schemaVersion: 1, provider: "tavily", slot: "default" }),
+      async (credential) => {
+        let apiKey: string;
+        try {
+          apiKey = new TextDecoder("utf-8", { fatal: true }).decode(credential);
+        } catch {
+          throw new TavilyProviderError("unavailable");
+        }
+        return await new TavilySearchProvider({
+          apiKey,
+          ...(this.#transport === undefined ? {} : { transport: this.#transport }),
+          ...(this.#timeoutMs === undefined ? {} : { timeoutMs: this.#timeoutMs }),
+        }).search(request);
+      },
+    );
+  }
+}
+
 export class CredentialHoldingResearchService {
   readonly #gateway: SessionResearchGateway;
   readonly #provider: TavilySearchProvider;
@@ -220,21 +257,39 @@ export class DurableCredentialHoldingResearchService {
   readonly #sessionId: string;
   readonly #scope: ResearchScope;
   readonly #authority: AuthorityControlClient;
-  readonly #provider: TavilySearchProvider;
+  readonly #provider: ResearchProvider<ResearchProviderResponse>;
   readonly #ledger: ResearchJourneyLedger;
 
-  constructor(options: {
-    readonly sessionId: string;
-    readonly scope: ResearchScope;
-    readonly authority: AuthorityControlClient;
-    readonly apiKey: string;
-    readonly transport?: TavilyTransport;
-    readonly timeoutMs?: number;
-  }) {
+  constructor(
+    options: {
+      readonly sessionId: string;
+      readonly scope: ResearchScope;
+      readonly authority: AuthorityControlClient;
+    } & (
+      | {
+          readonly apiKey: string;
+          readonly transport?: TavilyTransport;
+          readonly timeoutMs?: number;
+          readonly provider?: never;
+        }
+      | {
+          readonly provider: ResearchProvider<ResearchProviderResponse>;
+          readonly apiKey?: never;
+          readonly transport?: never;
+          readonly timeoutMs?: never;
+        }
+    ),
+  ) {
     this.#sessionId = options.sessionId;
     this.#scope = options.scope;
     this.#authority = options.authority;
-    this.#provider = new TavilySearchProvider(options);
+    this.#provider =
+      options.provider ??
+      new TavilySearchProvider({
+        apiKey: options.apiKey,
+        ...(options.transport === undefined ? {} : { transport: options.transport }),
+        ...(options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs }),
+      });
     this.#ledger = new ResearchJourneyLedger(options.sessionId);
   }
 
@@ -320,6 +375,34 @@ export async function startCredentialHoldingResearchIpcServer(options: {
       budget: service.budget,
     }),
     { ...(options.now === undefined ? {} : { now: options.now }) },
+  );
+  await server.listen();
+  return server;
+}
+
+export async function startCredentialStoreResearchIpcServer(options: {
+  readonly config: unknown;
+  readonly credentialStore: CredentialStore;
+  readonly authority: AuthorityControlClient;
+  readonly transport?: TavilyTransport;
+  readonly timeoutMs?: number;
+  readonly now?: () => string;
+}): Promise<LocalResearchIpcServer> {
+  const config = ResearchServiceProcessConfigSchema.parse(options.config);
+  const service = new DurableCredentialHoldingResearchService({
+    sessionId: config.sessionId,
+    scope: config.scope,
+    authority: options.authority,
+    provider: new CredentialStoreTavilyProvider({
+      credentialStore: options.credentialStore,
+      ...(options.transport === undefined ? {} : { transport: options.transport }),
+      ...(options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs }),
+    }),
+  });
+  const server = new LocalResearchIpcServer(
+    config,
+    (request, requestedAt) => service.search(request, requestedAt),
+    options.now === undefined ? {} : { now: options.now },
   );
   await server.listen();
   return server;

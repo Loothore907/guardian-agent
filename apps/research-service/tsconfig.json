@@ -9,6 +9,7 @@
   "references": [
     { "path": "../../packages/authority-client" },
     { "path": "../../packages/contracts" },
+    { "path": "../../packages/credential-store" },
     { "path": "../../packages/research" }
   ]
 }

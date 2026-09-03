@@ -1,7 +1,17 @@
 import { LocalAuthorityIpcClient } from "@guardian/authority-client";
-import { GitHubBroker, type BrokerExecutionResult, type GuardianEvaluator } from "@guardian/broker";
-import { AuthorityCapabilityBindingSchema, CredentialStoreHandleSchema } from "@guardian/contracts";
+import {
+  GitHubBroker,
+  LocalBrokerIpcServer,
+  type BrokerExecutionResult,
+  type GuardianEvaluator,
+} from "@guardian/broker";
+import {
+  AuthorityCapabilityBindingSchema,
+  BrokerServiceProcessConfigSchema,
+  CredentialStoreHandleSchema,
+} from "@guardian/contracts";
 import type { CredentialStore } from "@guardian/credential-store";
+import { LocalGuardianActionRiskIpcClient } from "@guardian/guardian";
 
 import {
   GitHubStoredCredentialResolver,
@@ -59,4 +69,37 @@ export function createBrokerService(options: {
     authorityTransport: "authenticated-local-ipc",
     execute: (request) => broker.execute(request),
   };
+}
+
+export async function startBrokerServiceIpcServer(options: {
+  readonly config: unknown;
+  readonly credentialStore: CredentialStore;
+  readonly fetch?: typeof fetch;
+  readonly now?: () => string;
+  readonly onCredentialRefreshDiagnostic?: GitHubCredentialRefreshDiagnosticSink;
+}): Promise<LocalBrokerIpcServer> {
+  const config = BrokerServiceProcessConfigSchema.parse(options.config);
+  const guardian = new LocalGuardianActionRiskIpcClient(config.guardian, {
+    ...(options.now === undefined ? {} : { now: options.now }),
+  });
+  const broker = createBrokerService({
+    authorityEndpoint: config.authority.endpoint,
+    authorityBinding: config.authority.binding,
+    credentialStoreHandle: config.credentialStoreHandle,
+    credentialStore: options.credentialStore,
+    githubClientId: config.githubClientId,
+    guardian,
+    ...(options.fetch === undefined ? {} : { fetch: options.fetch }),
+    ...(options.now === undefined ? {} : { now: options.now }),
+    ...(options.onCredentialRefreshDiagnostic === undefined
+      ? {}
+      : { onCredentialRefreshDiagnostic: options.onCredentialRefreshDiagnostic }),
+  });
+  const server = new LocalBrokerIpcServer(
+    config.broker,
+    (execution) => broker.execute(execution),
+    options.now === undefined ? {} : { now: options.now },
+  );
+  await server.listen();
+  return server;
 }

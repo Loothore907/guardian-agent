@@ -13,6 +13,7 @@
     { "path": "../../packages/authorization" },
     { "path": "../../packages/broker" },
     { "path": "../../packages/contracts" },
-    { "path": "../../packages/credential-store" }
+    { "path": "../../packages/credential-store" },
+    { "path": "../../packages/guardian" }
   ]
 }

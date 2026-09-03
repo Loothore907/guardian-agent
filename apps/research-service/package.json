@@ -3,9 +3,13 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "bin": {
+    "guardian-research-service": "./dist/main.js"
+  },
   "dependencies": {
     "@guardian/authority-client": "workspace:*",
     "@guardian/contracts": "workspace:*",
+    "@guardian/credential-store": "workspace:*",
     "@guardian/research": "workspace:*"
   }
 }

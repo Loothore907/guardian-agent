@@ -1,11 +1,18 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { once } from "node:events";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
 
 import { Client } from "@modelcontextprotocol/client";
 import { InMemoryTransport } from "@modelcontextprotocol/server";
 
+import { createAuthorityIpcEndpoint } from "../packages/authority-client/dist/index.js";
+import { startAuthorityService } from "../apps/authority-service/dist/index.js";
+import { WindowsCredentialStore } from "../packages/credential-store/dist/index.js";
 import { launchReferenceSession } from "../apps/session-host/dist/launcher.js";
 import { createGuardianMcpServer } from "../apps/session-host/dist/server.js";
 import { createResearchIpcCredentials } from "../packages/research/dist/index.js";
@@ -23,13 +30,55 @@ async function waitForReady(child) {
 }
 
 test("protected Guardian Session Tavily Search contributes bounded public evidence", async () => {
-  assert.ok(process.env.TAVILY_API_KEY, "TAVILY_API_KEY is required for the protected live test");
+  assert.equal(
+    process.platform,
+    "win32",
+    "protected Tavily test requires Windows Credential Manager",
+  );
+  const credentialStatus = await new WindowsCredentialStore().status({
+    schemaVersion: 1,
+    provider: "tavily",
+    slot: "default",
+  });
+  assert.equal(credentialStatus.state, "available", "tavily/default must be enrolled");
 
   const sessionId = "11111111-1111-4111-8111-111111111111";
   const callerId = "22222222-2222-4222-8222-222222222222";
   const missionId = "33333333-3333-4333-8333-333333333333";
   const profileId = "44444444-4444-4444-8444-444444444444";
   const credentials = createResearchIpcCredentials();
+  const issuedAt = new Date(Date.now() - 5_000).toISOString();
+  const expiresAt = new Date(Date.now() + 65_000).toISOString();
+  const authorityEndpoint = createAuthorityIpcEndpoint();
+  const launcherBinding = {
+    schemaVersion: 1,
+    capability: randomUUID(),
+    callerRole: "launcher",
+    callerId,
+    sessionId,
+    allowedOperations: ["session.create"],
+    issuedAt,
+    expiresAt,
+  };
+  const researchBinding = {
+    schemaVersion: 1,
+    capability: randomUUID(),
+    callerRole: "research_service",
+    callerId,
+    sessionId,
+    allowedOperations: ["research.reserve", "research.settle"],
+    issuedAt,
+    expiresAt,
+  };
+  const temporaryDirectory = await mkdtemp(join(tmpdir(), "guardian-tavily-live-"));
+  const authority = await startAuthorityService({
+    schemaVersion: 1,
+    serviceInstanceId: randomUUID(),
+    endpoint: authorityEndpoint,
+    authorityStorePath: join(temporaryDirectory, "authority.sqlite"),
+    workspaceRoots: [],
+    capabilities: [launcherBinding, researchBinding],
+  });
   const permissions = {
     tools: ["guardian.session_status", "guardian.local_command", "guardian.research"],
     filesystem: { mode: "workspace_write", roots: ["/workspace"] },
@@ -80,17 +129,30 @@ test("protected Guardian Session Tavily Search contributes bounded public eviden
       ...credentials,
       requiredTerms: ["pull request", "branch protection"],
     },
+    authority: {
+      endpoint: authorityEndpoint,
+      binding: launcherBinding,
+    },
   });
   assert.ok(launched.research, "launcher did not bind the research service");
   const child = spawn(process.execPath, ["apps/research-service/dist/main.js"], {
     cwd: process.cwd(),
-    env: {
-      GUARDIAN_RESEARCH_SERVICE_CONFIG: JSON.stringify(launched.research.serviceConfig),
-      TAVILY_API_KEY: process.env.TAVILY_API_KEY,
-    },
-    stdio: ["ignore", "pipe", "pipe"],
+    env: {},
+    stdio: ["pipe", "pipe", "pipe"],
     windowsHide: true,
   });
+  child.stdin.end(
+    `${JSON.stringify({
+      schemaVersion: 1,
+      serviceKind: "tavily_research",
+      research: launched.research.serviceConfig,
+      authority: {
+        schemaVersion: 1,
+        endpoint: authorityEndpoint,
+        binding: researchBinding,
+      },
+    })}\n`,
+  );
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   const server = createGuardianMcpServer({
     runtime: launched.runtime,
@@ -129,5 +191,7 @@ test("protected Guardian Session Tavily Search contributes bounded public eviden
     await Promise.allSettled([client.close(), server.close()]);
     child.kill();
     if (child.exitCode === null) await once(child, "exit");
+    await authority.close();
+    await rm(temporaryDirectory, { recursive: true, force: true });
   }
 });

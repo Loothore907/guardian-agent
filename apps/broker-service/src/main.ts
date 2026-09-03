@@ -1,8 +1,9 @@
-import { LocalAuthorityIpcClient } from "@guardian/authority-client";
-import { CredentialStoreResearchServiceProcessConfigSchema } from "@guardian/contracts";
+#!/usr/bin/env node
+
+import { BrokerServiceProcessConfigSchema } from "@guardian/contracts";
 import { WindowsCredentialStore } from "@guardian/credential-store";
 
-import { startCredentialStoreResearchIpcServer } from "./index.js";
+import { startBrokerServiceIpcServer } from "./index.js";
 
 const MAXIMUM_BOOTSTRAP_BYTES = 64 * 1_024;
 
@@ -15,7 +16,7 @@ async function readBootstrapFrame(): Promise<unknown> {
     if (totalBytes > MAXIMUM_BOOTSTRAP_BYTES) {
       for (const buffered of chunks) buffered.fill(0);
       chunk.fill(0);
-      throw new TypeError("research service bootstrap is oversized");
+      throw new TypeError("broker service bootstrap is oversized");
     }
     chunks.push(chunk);
   }
@@ -23,12 +24,12 @@ async function readBootstrapFrame(): Promise<unknown> {
   try {
     const newline = frame.indexOf(0x0a);
     if (newline < 1 || newline !== frame.byteLength - 1) {
-      throw new TypeError("research service bootstrap requires exactly one frame");
+      throw new TypeError("broker service bootstrap requires exactly one frame");
     }
     const line = frame.subarray(0, frame[newline - 1] === 0x0d ? newline - 1 : newline);
     return JSON.parse(line.toString("utf8")) as unknown;
   } catch {
-    throw new TypeError("research service configuration is invalid");
+    throw new TypeError("broker service configuration is invalid");
   } finally {
     frame.fill(0);
     for (const chunk of chunks) chunk.fill(0);
@@ -36,15 +37,12 @@ async function readBootstrapFrame(): Promise<unknown> {
 }
 
 async function main(): Promise<void> {
-  const config = CredentialStoreResearchServiceProcessConfigSchema.parse(
-    await readBootstrapFrame(),
-  );
-  const server = await startCredentialStoreResearchIpcServer({
-    config: config.research,
+  const config = BrokerServiceProcessConfigSchema.parse(await readBootstrapFrame());
+  const server = await startBrokerServiceIpcServer({
+    config,
     credentialStore: new WindowsCredentialStore(),
-    authority: new LocalAuthorityIpcClient(config.authority),
   });
-  process.stdout.write("guardian research service ready\n");
+  process.stdout.write("guardian broker service ready\n");
 
   const close = () => {
     void server.close().finally(() => process.exit(0));
@@ -54,6 +52,6 @@ async function main(): Promise<void> {
 }
 
 main().catch(() => {
-  process.stderr.write("guardian research service failed to start\n");
+  process.stderr.write("guardian broker service failed to start\n");
   process.exitCode = 1;
 });
