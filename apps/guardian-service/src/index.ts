@@ -417,4 +417,6 @@ export const guardianServiceBoundary = {
   model: DEFAULT_GUARDIAN_MODEL_POLICY.contextualRiskPrimary.modelId,
   qualityEscalationModel: DEFAULT_GUARDIAN_MODEL_POLICY.contextualRiskEscalation.modelId,
   escalationBehavior: "invalid_structured_output",
+  providerTimeoutMs: DEFAULT_PROVIDER_TIMEOUT_MS,
+  maximumProviderAttempts: 2,
 } as const;

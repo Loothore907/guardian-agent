@@ -4,7 +4,11 @@ import { AuthorityClientProcessConfigSchema } from "./authority-ipc.js";
 import { ContractVersionSchema, type DeepReadonly } from "./common.js";
 import { ResearchServiceProcessConfigSchema } from "./research-ipc.js";
 
-const RESEARCH_AUTHORITY_OPERATIONS = new Set(["research.reserve", "research.settle"]);
+const RESEARCH_AUTHORITY_OPERATIONS = new Set([
+  "research.reserve",
+  "research.settle",
+  "context.append_exposures",
+]);
 
 export const CredentialStoreResearchServiceProcessConfigSchema = z
   .strictObject({

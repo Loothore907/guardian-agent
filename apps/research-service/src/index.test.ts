@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { LocalResearchIpcClient, createResearchIpcCredentials } from "@guardian/research";
 import type { AuthorityControlClient } from "@guardian/authority-client";
 import { InMemoryCredentialStore } from "@guardian/credential-store";
+import { EvidenceExposureRecordSchema } from "@guardian/contracts";
 
 import {
   CredentialHoldingControlledContentService,
@@ -333,12 +334,16 @@ describe("credential-holding research service", () => {
         remainingResearchResults: 3,
       }),
     );
+    const appendEvidenceExposures = vi.fn<AuthorityControlClient["appendEvidenceExposures"]>(() =>
+      Promise.resolve(),
+    );
     const authority: AuthorityControlClient = {
       createConnection: () => Promise.resolve(),
       createSession: () => Promise.resolve(),
       storeApproval: () => Promise.resolve(),
       reserveResearch,
       settleResearchResults,
+      appendEvidenceExposures,
     };
     const service = new DurableCredentialHoldingResearchService({
       sessionId,
@@ -357,6 +362,33 @@ describe("credential-holding research service", () => {
       "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
       sessionId,
       1,
+    );
+    const exposure = EvidenceExposureRecordSchema.parse(
+      appendEvidenceExposures.mock.calls[0]?.[0]?.[0],
+    );
+    expect(exposure).toMatchObject({
+      sessionId,
+      sourceDomain: "docs.github.com",
+      contentTrust: "untrusted_public_content",
+      signals: [],
+    });
+    expect(exposure.provenanceEventIds).toEqual([exposure.exposureId]);
+
+    const unavailable = new DurableCredentialHoldingResearchService({
+      sessionId,
+      scope,
+      authority: {
+        ...authority,
+        appendEvidenceExposures: () => Promise.reject(new Error("authority unavailable")),
+      },
+      apiKey: "test-provider-credential",
+      transport: capturedTransport({ status: 200, body: JSON.stringify(rawResponse) }),
+    });
+    await expect(unavailable.search(request, retrievedAt)).rejects.toThrow("authority unavailable");
+    expect(settleResearchResults).toHaveBeenLastCalledWith(
+      "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      sessionId,
+      0,
     );
   });
 
@@ -514,12 +546,16 @@ describe("credential-holding research service", () => {
         remainingResearchResults: 1,
       }),
     );
+    const appendEvidenceExposures = vi.fn<AuthorityControlClient["appendEvidenceExposures"]>(() =>
+      Promise.resolve(),
+    );
     const authority: AuthorityControlClient = {
       createConnection: () => Promise.resolve(),
       createSession: () => Promise.resolve(),
       storeApproval: () => Promise.resolve(),
       reserveResearch,
       settleResearchResults,
+      appendEvidenceExposures,
     };
     const transport = vi.fn<TavilyTransport>((invocation) => {
       expect(invocation.authorization).toBe(`Bearer ${credential}`);
@@ -555,6 +591,16 @@ describe("credential-holding research service", () => {
         sessionId,
         1,
       );
+      expect(appendEvidenceExposures).toHaveBeenCalledTimes(2);
+      expect(appendEvidenceExposures.mock.calls[1]?.[0]).toEqual([
+        expect.objectContaining({
+          exposureId: response.result.provenance.eventId,
+          provenanceEventIds: [response.result.provenance.eventId],
+          sourceDomain: "fixture.example",
+          contentTrust: "untrusted_public_content",
+          signals: [],
+        }),
+      ]);
     } finally {
       await server.close();
     }

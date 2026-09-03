@@ -1,6 +1,6 @@
 # Current development handoff
 
-Last updated: 2026-09-02 (AKDT)
+Last updated: 2026-09-03 (AKDT)
 
 This is the single rotating pickup page for a fresh development session. Treat it
 as context and sequencing guidance, not as the next session's goal by itself.
@@ -36,15 +36,30 @@ and checkpoint history in `docs/development/roadmap.md`.
   correct the design, and establish a stable base for later feature expansion.
   W5 preserves the fixed ordering and W3/W4's one-request, two-turn lifecycle.
 - **Checkpoint state:** the repository now records W5 in `4a064a1`, W6-W8 in
-  `f341b96`, W9-W11 in `f6087d4`, and W12-W13 in `90da76b`. The complete ordinary
-  gate passed again after those checkpoints. No push, pull request, merge,
-  publication, release, or other remote mutation followed.
-- **Current worktree:** W6-W13 are captured through `90da76b`; `aa5e601` captures
-  W14-W18, the executable competition path, model compatibility corrections, and
-  the accepted future demo-mode design. W19 adds exact controlled-content Extract
-  contracts, a fixed Tavily adapter, session-bound IPC, split Search/Extract
-  research budgets, and ADR-0035. The complete ordinary gate passes; user-scoped
-  protected Tavily evidence is still pending.
+  `f341b96`, W9-W11 in `f6087d4`, W12-W13 in `90da76b`, W14-W18 in `aa5e601`,
+  and the deterministic W19 boundary in `e8e054f`. No main-repository push, pull
+  request, merge, publication, release, or other remote mutation followed.
+- **Current worktree:** W19's deterministic boundary is captured in `e8e054f`.
+  The current follow-up adds the commit-pinned public fixture configuration and a
+  protected-live Search/Extract and no-effect denial harness. W20's first assembled
+  attempt exposed the missing durable exposure-registration link and failed closed
+  with `audit_unavailable`. ADR-0036 adds an atomic minimized research-exposure
+  operation. The complete ordinary gate and protected `scope_mismatch` denial with
+  minimized audit inspection now pass. W21 then exposed and corrected the nested
+  live-risk timeout hierarchy in ADR-0037. Protected Nemotron-through-broker now
+  passes with exact pre-effect `approval_mismatch` and minimized audit inspection;
+  the complete ordinary gate passes 61 files / 362 tests. W22 then assembles live
+  Tavily Search/Extract, exact pre-provider `scope_mismatch`, live Nemotron, exact
+  post-model `approval_mismatch`, and durable minimized audit inspection in one
+  enforced no-effect session. The protected run passes in 27,216.1275 ms; the
+  exact read-only disposable-target refresh then passed after fresh device
+  enrollment. W23 used a separately confirmed one-use development approval to
+  squash-merge only demo PR #2 at exact head `36251caf778466a7d08670ad8210375daf8a9bcb`,
+  producing `7df353afe005b74811dfcd081ac98af5695a8170`. Final C6 failure review and the
+  bounded secret/artifact audit then passed with no blocking finding. The complete
+  ordinary gate remains green at 61 files / 362 tests; this local W19-W23 slice is
+  ready for checkpoint/review, but nothing in the main repository was committed,
+  pushed, or opened for review in this session.
 - **Secret caution:** `.env.local` is ignored development input. Never print,
   stage, copy, summarize, or use it as the installation design. Never print or
   export credential-store values.
@@ -71,11 +86,14 @@ the appropriate Git transition part of the normal development flow:
    actions and results; do not shift responsibility for normal checkpoint timing
    back to the user through repeated permission prompts.
 
-For the current C6 section, the remote-readiness gate is not yet met because the
-protected live boundary sequence and complete protected journey remain. The next
-session should continue locally through those steps, correct any architecture the
-live evidence disproves, then push the completed branch and open or update its
-review PR when the gate passes.
+For the current C6 section, the W19-W23 slice now meets its local review-readiness
+gate: the assembled no-effect journey, separately authorized exact disposable
+effect, protected failure review, complete ordinary gate, bounded secret/artifact
+audit, and final changed-surface review pass. The main-repository checkpoint,
+push, and review transition have not occurred. Successful automatic GitHub
+refresh, WebAuthn, platform parity/containment, and the full single-invocation
+competition coordinator remain explicit limitations rather than blockers hidden
+behind the current evidence.
 
 This standing workflow does not authorize merge, release, publication,
 deployment, remote-setting changes, destructive recovery, credential disclosure,
@@ -502,7 +520,7 @@ default production trust model.
 - User-verifying WebAuthn approval.
 - Complete Linux runtime, credential-store, and IPC peer-identity parity.
 - Public judge deployment, TLS validation, or hosted-runtime assurance evidence.
-- Protected live pre-activation and Nemotron-through-broker evidence.
+- Protected live pre-activation evidence.
 - Protected end-to-end Tavily research, scope denial, separately approved GitHub
   merge, mutation/replay, and redaction evidence through the executable path.
 
@@ -606,16 +624,66 @@ not emitted by a live authority-service/dispatcher call. W4 separately proves
 the deterministic denial mechanics locally. Full assembled live containment,
 execution, and repeated reliability remain separate checks.
 
-W19 then refreshed the deterministic research boundary. The existing protected
-Tavily Search command failed closed before provider invocation because the managed
-command identity reported `tavily/default` missing. The implementation now
-supports one exact reviewed HTTPS fixture through fixed Tavily Extract, with a
-separate one-request/one-result budget, local IPC binding, credential callback,
-bounded sanitized evidence, and minimized provenance. Focused verification passed
-8 files / 76 tests. No reviewed live fixture URL is configured, and no live
-Extract occurred. ADR-0035 records that Tavily exposes no redirect-control field:
+W19 then refreshed the deterministic research boundary. The initial managed
+command failed closed before provider invocation because that identity reported
+`tavily/default` missing. A separate public fixture repository was subsequently
+created at `Loothore907/guardian-agent-fixtures`, and the exact input was pinned
+to commit `6feab5bfea4a4ea769972b0313978c9b7171ca1f`. The user-scoped protected run
+then passed through the Windows credential-store child, authority, prepared
+workspace, session-bound local IPC, real Tavily Search, and fixed Extract:
+Search accepted two untrusted results and Extract accepted one untrusted result
+in a 19,702.1099 ms test / 20,010.5296 ms total run. Neither the credential nor
+fixture text was emitted. Focused deterministic verification remains 8 files /
+76 tests. ADR-0035 records that Tavily exposes no redirect-control field:
 Guardian rejects unlisted inputs before provider use and rejects a returned URL
 mismatch, but does not claim pre-provider redirect assurance inside Tavily.
+
+W20's first assembled continuation retained the W19 Search and Extract results and
+started the real broker child, but the broker returned `audit_unavailable`. The
+durable store correctly rejected provenance identifiers that had no prior
+minimized exposure records. ADR-0036 corrects the missing production link with one
+strict, batch-atomic `context.append_exposures` operation available only to the
+research-service role. Focused verification passes 17 files / 101 tests. The
+protected rerun then passed in 20,158.9634 ms test / 20,407.8812 ms total: two
+Search results and one Extract result remained untrusted, the real broker returned
+exact `scope_mismatch`, and the reopened durable store showed three minimized
+exposures plus a decision with Guardian/provider and adapter/credential boundaries
+not crossed and approval/tool consumption not consumed. No GitHub operation or
+remote mutation occurred.
+
+W21 next exercised one exact in-scope merge proposal without approval through the
+real Guardian and broker children. The first assembled attempt returned
+`guardian_unavailable`; the existing isolated protected model diagnostic passed,
+showing the credential and current Nemotron policy were healthy. ADR-0037 records
+the contradicted timing assumption: two bounded 20-second Super/Ultra attempts did
+not fit inside the old 20-second Guardian and 15-second broker IPC windows. The
+corrected 45-second Guardian / 55-second broker hierarchy is mechanically tested.
+The protected rerun passed in 21,819.3798 ms test / 22,069.3476 ms total with
+`approval_mismatch`. Durable evidence records the provider boundary as crossed
+while approval, tool, adapter, and credential boundaries remained uncrossed or
+unconsumed. No GitHub operation or remote mutation occurred.
+
+W22 then assembled both live providers and both policy stages in one enforced
+session and one durable store. Live Tavily Search accepted two untrusted results,
+controlled Extract accepted one untrusted result, and the same three minimized
+exposure IDs were bound first to an out-of-scope proposal and then to an in-scope
+proposal without approval. The first request stopped at exact `scope_mismatch`
+before the Guardian provider boundary; the second crossed the live Nemotron
+boundary and stopped at exact `approval_mismatch`. The protected run passed in
+27,216.1275 ms test / 27,461.6919 ms total. Reopened audit evidence confirmed no
+approval, tool, adapter, credential, or GitHub effect. No remote mutation occurred.
+
+W23 refreshed the exact disposable target before effect. Public metadata and the
+protected broker read agreed that PR #2 was open, non-draft, `main`-based, and at
+head `36251caf778466a7d08670ad8210375daf8a9bcb`. The first protected read failed
+closed with `connection_unavailable`; fresh interactive device enrollment restored
+the documented bounded credential path, and the same exact-head read then passed.
+After separate operator authorization for only that repository, PR, head, and
+squash method, the protected one-use merge run passed in 8.23 seconds test / 8.90
+seconds total. GitHub's read-only final state records merge commit
+`7df353afe005b74811dfcd081ac98af5695a8170` at `2026-09-03T13:48:55Z`. This is
+development-issuer evidence, not WebAuthn. The merge was the only W23 remote
+mutation.
 
 **Phase-2 exit:** each boundary has an assumption/evidence record, the protected
 journey completes or stops at a documented fail-closed boundary, and no credential,
@@ -625,11 +693,16 @@ errors, or public results.
 
 **Current session tracks and handoff:** Track A has live Qwen mission dialogue plus
 Kimi final-response, exact typed-request, and denial-continuation evidence through
-W15-W18. W19 has a green deterministic controlled-content Extract boundary, but
-the user-scoped live Search/Extract and reviewed fixture remain its next protected
-gate. Only after that gate should the exact provenance-bound unsafe request advance
-to the deterministic broker denial and minimized audit inspection, followed by
-live Nemotron-through-broker evaluation. Track B is locked at the design level in
+W15-W18. W19 now has both its deterministic controlled-content boundary and the
+protected user-scoped Search/Extract result against the commit-pinned fixture.
+W20's initial assembled attempt failed closed at the missing exposure record; the
+atomic registration correction and protected `scope_mismatch` plus minimized-audit
+rerun now pass. W21's live Nemotron-through-broker path also passes after correcting
+the nested timeout hierarchy. W22's single-session assembled no-effect journey now
+passes. W23's separately authorized exact disposable effect also passes. The
+complete ordinary gate and bounded secret/artifact review are green with no
+blocking finding. The next transition is a local checkpoint and main-repository
+review; neither has occurred. Track B is locked at the design level in
 ADR-0034: a public fixed/rate-limited demo and a separate authenticated piloted
 demo over the same enforcement core. OpenAI backup qualification and
 worker-visible research/GitHub dispatch remain separate queued slices; neither
@@ -677,10 +750,12 @@ was started in this session.
   Deterministic failure behavior preserves or restores safe state. Do not spin on
   retries or weaken the response contract; fresh device enrollment is the bounded
   fallback until provider state changes.
-- Last verified external demo state: public `Loothore907/guardian-agent-demo` was
-  provisioned and squash-only; PR #1 passed exact-head read and merge, and the
-  deterministic reset created open demo PR #2. This external state was not
-  refreshed during W6-W14 and must be rechecked before a protected run.
+- Last verified external demo state: public `Loothore907/guardian-agent-demo` is
+  provisioned and squash-only. PR #1 passed the initial exact-head read and merge.
+  W23 refreshed deterministic demo PR #2 at head
+  `36251caf778466a7d08670ad8210375daf8a9bcb`, passed the protected read, and after
+  separate exact authorization squash-merged it as
+  `7df353afe005b74811dfcd081ac98af5695a8170` at `2026-09-03T13:48:55Z`.
 - Last recorded domain state: `agentic-guardian.com` was registered and delegated
   to Cloudflare nameservers. This was not refreshed during W6-W14 and is not
   evidence of an application deployment, valid TLS, or WebAuthn origin.
@@ -712,9 +787,11 @@ components were run directly with the pinned bundled Node and repository binarie
 all passed. The protected runtime passed unchanged during W4 with approved WSL
 access and was not rerun for W5-W14 because those slices did not change the
 executor path. The W6-W13 implementation tip is `90da76b`; W14-W18 are captured
-in `aa5e601`. The W19 protected Tavily baseline stopped before provider use because
-the managed identity could not resolve the enrolled credential. No push, publish,
-release, or other remote mutation followed the local checkpoints.
+in `aa5e601`, and deterministic W19 is captured in `e8e054f`. The W19 managed
+baseline stopped before provider use, while the subsequent user-scoped protected
+Search/Extract run passed. The separate public fixture repository was intentionally
+created and pushed under the user's approval; no main-repository push, release, or
+publication followed the local checkpoints.
 
 A refreshed bounded commit-readiness audit found no changed or untracked database,
 archive, binary, log, key, certificate, or environment files and no unexpected

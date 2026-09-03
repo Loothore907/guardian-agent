@@ -98,6 +98,17 @@ the final state. This proves the C6 execution mechanics; the confirmation is
 explicitly lower-assurance development evidence, not the future user-verifying
 WebAuthn ceremony.
 
+On 2026-09-03 AKDT, W23 repeated the protected effect gate against deterministic
+demo PR #2. The first exact-head read failed closed with `connection_unavailable`;
+fresh GitHub device enrollment restored the bounded access lease and the protected
+read passed at head `36251caf778466a7d08670ad8210375daf8a9bcb`. After a separate
+operator authorization bound only to PR #2, that head, and squash method, the
+one-use protected merge passed and produced
+`7df353afe005b74811dfcd081ac98af5695a8170`. Final read-only verification showed
+the authorized head unchanged and the PR merged at `2026-09-03T13:48:55Z`. See
+`w23-protected-disposable-github-effect.md`. This remains lower-assurance
+development-confirmation evidence rather than WebAuthn.
+
 A preceding migration of enrollment created before expiry metadata existed made a
 real refresh request. The returned pair did not pass the complete strict
 response/write transaction, so Guardian deleted access, refresh, and metadata
@@ -108,11 +119,11 @@ all three slots and enabled the protected read above.
 ## Remaining gate
 
 The dedicated public target exists, is configured for squash-only merges, has the
-App installed only on that repository, and its first controlled fixture PR is
-squash-merged. The deterministic reset procedure has seeded live PR #2, and the
-application-visible process/database/log/audit secret corpus passes. Successful
-protected refresh, OS process supervision, and the user-verifying approval
-ceremony remain before the showcased credential-path claim can advance.
+App installed only on that repository, and both controlled fixture PRs are
+squash-merged through protected exact-head operations. The application-visible
+process/database/log/audit secret corpus passes. Successful protected automatic
+refresh, OS process supervision, and the user-verifying approval ceremony remain
+before the showcased credential-path claim can advance.
 
 The deterministic evidence uses injected fake Guardian and GitHub providers plus
 local authority IPC; the protected GitHub probes use the real installed App,

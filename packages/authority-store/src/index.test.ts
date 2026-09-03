@@ -398,6 +398,18 @@ describe("SQLite authority store", () => {
       decidedAt: "2026-08-30T22:32:00.001Z",
     } as const;
     store.appendEvidenceExposure(exposure);
+    expect(() =>
+      store.appendEvidenceExposures([
+        { ...exposure, exposureId: randomUUID() },
+        {
+          ...exposure,
+          exposureId: randomUUID(),
+          retrievedAt: "2026-08-30T22:29:59.999Z",
+        },
+      ]),
+    ).toThrow(/outside the durable session lifetime/u);
+    expect(store.getAuthorityContext(IDS.session).exposures).toEqual([exposure]);
+    expect(() => store.appendEvidenceExposures([])).toThrow(/one to three/u);
     store.appendAuthorityAttempt(attempt);
     store.appendAuthorityDecision(decision);
     expect(store.getAuthorityContext(IDS.session)).toEqual({

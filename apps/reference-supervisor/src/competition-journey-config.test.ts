@@ -188,6 +188,7 @@ function input(
       researchBinding: binding("research_service", IDS.researchCapability, [
         "research.reserve",
         "research.settle",
+        "context.append_exposures",
       ]),
       records: {
         getSession: () => Promise.resolve(options.session ?? session()),

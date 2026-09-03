@@ -86,8 +86,9 @@ Nemotron Super-to-Ultra for contextual risk, while permitting reviewed future
 policy upgrades and mechanically retaining NVIDIA Nemotron for the hackathon.
 The protected compatibility path passes; the CLI now exercises the fake assisted
 formation path by default while the same child boundaries support Qwen and
-Nemotron modes. Protected pre-activation and Nemotron-through-broker evidence
-remain. No broader
+Nemotron modes. W21 adds protected live Nemotron-through-broker evidence with an
+exact pre-effect `approval_mismatch`; protected pre-activation evidence remains.
+No broader
 security guarantee should be treated as
 implemented until it appears in [Security claims](docs/security-claims.md) with
 corresponding evidence.
@@ -184,11 +185,21 @@ request construction, both confirmations, the fixed runner, and guaranteed
 cleanup. ADR-0030 separately binds the broader confirmed mission/session ceiling
 from the narrower native-worker tool catalog. The application-level deterministic
 journey is green. W15-W18 add protected Qwen/Kimi compatibility evidence. W19 adds
-a locally tested exact controlled-content Tavily Extract boundary: one reviewed
-public HTTPS fixture, a separate one-request/one-result budget, fixed adapter,
-credential-store child, local IPC, and minimized untrusted evidence. Its live
-user-scoped Search/Extract run, reviewed fixture, assembled denial, and the later
-protected credential-backed journey remain.
+an exact controlled-content Tavily Extract boundary: one commit-pinned reviewed
+URL, fixed provider request, split Search/Extract budgets, session-bound local
+IPC, and minimized untrusted evidence. A protected user-scoped run passed real
+Tavily Search with two untrusted results and Extract with one untrusted result;
+neither the credential nor fixture text was emitted. W20 then passed an assembled
+`scope_mismatch` denial with minimized durable audit evidence. W21 passed live
+Nemotron-through-broker evaluation and stopped at `approval_mismatch` before
+approval, tool, adapter, credential, or GitHub effect. W22 combines those live
+research, deterministic-policy, model-risk, and audit boundaries in one enforced
+session, still without a GitHub effect. The disposable GitHub gate remains.
+W23 then refreshed the exact disposable target, failed closed on an unavailable
+expired credential lease, completed fresh GitHub device enrollment, passed the
+protected exact-head read, and used a separately confirmed one-use development
+approval to squash-merge only PR #2 at its authorized head. WebAuthn and the full
+single-invocation competition coordinator remain open.
 
 [ADR-0015](docs/adr/0015-nebius-native-worker-and-judge-runtime.md) selects the
 provider-neutral Nebius-native worker for the competition build while preserving
@@ -203,10 +214,11 @@ distinguishes contained action denial from trusted-runtime interruption.
 
 The dedicated public demonstration target is
 [`Loothore907/guardian-agent-demo`](https://github.com/Loothore907/guardian-agent-demo).
-It is configured for squash-only merges. PR #1 supplied the protected read/merge
-evidence, and the deterministic reset procedure created open PR #2 for the next
-demonstration. The final user-verifying approval and complete protected journey
-evidence remain.
+It is configured for squash-only merges. PR #1 supplied the initial protected
+read/merge evidence. W23 refreshed the deterministic PR #2 fixture and, after a
+separate exact authorization, squash-merged it as
+`7df353afe005b74811dfcd081ac98af5695a8170`. The final user-verifying WebAuthn
+approval and complete single-invocation coordinator evidence remain.
 
 ## Security boundaries
 
@@ -267,8 +279,10 @@ pnpm test:reference-runtime
 pnpm test:session-enforcement
 # Protected and credentialed; never runs in ordinary public CI:
 pnpm test:live:tavily
+pnpm test:live:assembled-no-effect
 pnpm test:live:credentials
 pnpm test:live:nebius-models
+pnpm test:live:nemotron-broker
 pnpm test:live:native-worker
 pnpm test:live:qwen
 ```

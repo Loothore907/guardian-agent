@@ -48,7 +48,7 @@ function processConfig() {
         callerRole: "research_service",
         callerId,
         sessionId,
-        allowedOperations: ["research.reserve", "research.settle"],
+        allowedOperations: ["research.reserve", "research.settle", "context.append_exposures"],
         issuedAt: new Date(now - 10_000).toISOString(),
         expiresAt: new Date(now + 65_000).toISOString(),
       },

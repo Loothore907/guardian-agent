@@ -21,7 +21,7 @@ const DEFAULT_IPC_TIMEOUT_MS = 15_000;
 
 const ROLE_OPERATIONS: Readonly<Record<AuthorityCallerRole, ReadonlySet<AuthorityIpcOperation>>> = {
   launcher: new Set(["connection.create", "session.create"]),
-  research_service: new Set(["research.reserve", "research.settle"]),
+  research_service: new Set(["research.reserve", "research.settle", "context.append_exposures"]),
   authorization_service: new Set(["approval.store"]),
   broker_service: new Set([
     "session.get",
@@ -297,6 +297,14 @@ export class LocalAuthorityIpcServer implements AuthorityServiceBoundary {
               request.acceptedResults,
             ),
           });
+          return;
+        case "context.append_exposures":
+          if (request.exposures.some((exposure) => exposure.sessionId !== request.sessionId)) {
+            fail("binding_mismatch");
+            return;
+          }
+          this.#store.appendEvidenceExposures(request.exposures);
+          writeResponse(socket, { ...base, operation: request.operation, result: "recorded" });
           return;
         case "session.get":
           writeResponse(socket, {

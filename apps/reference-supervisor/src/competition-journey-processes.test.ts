@@ -56,7 +56,7 @@ function serviceBundle() {
   );
   const researchAuthority = authorityBinding(
     "research_service",
-    ["research.reserve", "research.settle"],
+    ["research.reserve", "research.settle", "context.append_exposures"],
     issuedAt,
     authorityExpiresAt,
   );

@@ -7,7 +7,9 @@ import { LocalAuthorityIpcClient, createAuthorityIpcEndpoint } from "@guardian/a
 import { startAuthorityService } from "@guardian/authority-service";
 import { DevelopmentAuthorizationIssuer } from "@guardian/authorization-service";
 import { digestGitHubConnectionScope } from "@guardian/authorization";
+import { brokerIpcBoundary } from "@guardian/broker";
 import { InMemoryCredentialStore } from "@guardian/credential-store";
+import { guardianActionRiskIpcBoundary } from "@guardian/guardian";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createBrokerService } from "./index.js";
@@ -48,6 +50,10 @@ function binding(callerRole: "launcher" | "broker_service", allowedOperations: r
 }
 
 describe("broker service boundary", () => {
+  it("keeps the broker IPC window outside the complete Guardian action-risk window", () => {
+    expect(brokerIpcBoundary.timeoutMs).toBeGreaterThan(guardianActionRiskIpcBoundary.timeoutMs);
+  });
+
   it("keeps a callback-scoped credential out of public read/merge and durable surfaces", async () => {
     const directory = await mkdtemp(join(tmpdir(), "guardian-broker-service-"));
     temporaryDirectories.push(directory);

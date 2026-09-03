@@ -1136,26 +1136,37 @@ export class SqliteAuthorityStore {
   }
 
   appendEvidenceExposure(value: unknown): void {
-    const exposure = EvidenceExposureRecordSchema.parse(value);
+    this.appendEvidenceExposures([value]);
+  }
+
+  appendEvidenceExposures(values: readonly unknown[]): void {
+    if (values.length < 1 || values.length > 3) {
+      throw new TypeError("evidence exposure batch must contain one to three records");
+    }
+    const exposures = values.map((value) => EvidenceExposureRecordSchema.parse(value));
+    if (new Set(exposures.map((exposure) => exposure.exposureId)).size !== exposures.length) {
+      throw new TypeError("evidence exposure batch identifiers must be unique");
+    }
     this.#immediate(() => {
-      const session = this.getSession(exposure.sessionId);
-      if (
-        session === null ||
-        Date.parse(exposure.retrievedAt) < Date.parse(session.startsAt) ||
-        Date.parse(exposure.retrievedAt) >= Date.parse(session.expiresAt)
-      ) {
-        throw new TypeError("evidence exposure is outside the durable session lifetime");
-      }
-      this.#database
-        .prepare(
-          "INSERT INTO evidence_exposures(exposure_id, session_id, retrieved_at, exposure_json) VALUES (?, ?, ?, ?)",
-        )
-        .run(
+      const insert = this.#database.prepare(
+        "INSERT INTO evidence_exposures(exposure_id, session_id, retrieved_at, exposure_json) VALUES (?, ?, ?, ?)",
+      );
+      for (const exposure of exposures) {
+        const session = this.getSession(exposure.sessionId);
+        if (
+          session === null ||
+          Date.parse(exposure.retrievedAt) < Date.parse(session.startsAt) ||
+          Date.parse(exposure.retrievedAt) >= Date.parse(session.expiresAt)
+        ) {
+          throw new TypeError("evidence exposure is outside the durable session lifetime");
+        }
+        insert.run(
           exposure.exposureId,
           exposure.sessionId,
           exposure.retrievedAt,
           JSON.stringify(exposure),
         );
+      }
     });
   }
 

@@ -1,6 +1,6 @@
 # ADR-0025: Credential-store-backed research process
 
-- Status: Accepted
+- Status: Accepted; authority operation set expanded by ADR-0036
 - Date: 2026-09-02
 
 ## Context

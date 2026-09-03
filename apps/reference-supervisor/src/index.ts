@@ -79,7 +79,7 @@ export { TrustedWorkerToolDispatcher, WorkerToolExecutionError } from "./worker-
 
 const ROLE_OPERATIONS = {
   launcher: ["connection.create", "session.create"],
-  research_service: ["research.reserve", "research.settle"],
+  research_service: ["research.reserve", "research.settle", "context.append_exposures"],
   authorization_service: ["approval.store"],
   broker_service: [
     "session.get",

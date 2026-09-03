@@ -17,7 +17,10 @@ import {
 } from "@guardian/contracts";
 
 const MAXIMUM_FRAME_BYTES = 32 * 1_024;
-const DEFAULT_TIMEOUT_MS = 20_000;
+export const guardianActionRiskIpcBoundary = {
+  timeoutMs: 45_000,
+} as const;
+const DEFAULT_TIMEOUT_MS = guardianActionRiskIpcBoundary.timeoutMs;
 const ENDPOINT_PATTERN = /^guardian-action-risk-[0-9a-f-]{36}$/u;
 
 function assertLocalEndpoint(value: unknown): string {

@@ -14,6 +14,7 @@ import {
   DurableConnectionRecordSchema,
   DurableSessionBudgetSchema,
   DurableSessionRecordSchema,
+  EvidenceExposureRecordSchema,
   ExactApprovalSchema,
   OpaqueIdSchema,
   Sha256DigestSchema,
@@ -26,6 +27,7 @@ import {
   type DurableConnectionRecord,
   type DurableSessionBudget,
   type DurableSessionRecord,
+  type EvidenceExposureRecord,
   type ExactApproval,
   type WorkerBoundaryFailureCode,
   type WorkerBoundaryInterruption,
@@ -152,6 +154,7 @@ export interface AuthorityControlClient {
     sessionId: unknown,
     acceptedResults: unknown,
   ): Promise<DurableSessionBudget>;
+  appendEvidenceExposures(values: readonly unknown[]): Promise<void>;
 }
 
 export interface AuthorityWorkerClient {
@@ -306,6 +309,16 @@ export class LocalAuthorityIpcClient
       throw new AuthorityIpcError("authority_unavailable");
     }
     return response.result;
+  }
+
+  async appendEvidenceExposures(values: readonly unknown[]): Promise<void> {
+    const exposures: readonly EvidenceExposureRecord[] = values.map((value) =>
+      EvidenceExposureRecordSchema.parse(value),
+    );
+    const response = await this.#call("context.append_exposures", { exposures });
+    if (response.operation !== "context.append_exposures" || response.result !== "recorded") {
+      throw new AuthorityIpcError("authority_unavailable");
+    }
   }
 
   async getSessionConnections(

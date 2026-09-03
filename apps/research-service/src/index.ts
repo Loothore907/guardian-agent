@@ -60,6 +60,49 @@ export interface TavilyTransportResponse {
 
 export type TavilyTransport = (request: TavilyTransportRequest) => Promise<TavilyTransportResponse>;
 
+function searchExposureRecords(result: ResearchJourneyResult) {
+  if (result.evidence.length !== result.provenance.length) {
+    throw new TypeError("research evidence and provenance are not aligned");
+  }
+  return result.evidence.map((evidence, index) => {
+    const provenance = result.provenance[index];
+    if (
+      provenance === undefined ||
+      provenance.sourceContentDigest !== evidence.sourceContentDigest
+    ) {
+      throw new TypeError("research exposure provenance does not match its evidence");
+    }
+    return {
+      schemaVersion: 1 as const,
+      exposureId: provenance.eventId,
+      sessionId: provenance.sessionId,
+      provenanceEventIds: [provenance.eventId],
+      sourceContentDigest: evidence.sourceContentDigest,
+      sourceDomain: new URL(evidence.sourceUrl).hostname,
+      contentTrust: evidence.contentTrust,
+      signals: [],
+      retrievedAt: evidence.retrievedAt,
+    };
+  });
+}
+
+function controlledContentExposureRecord(result: ControlledContentJourneyResult) {
+  if (result.provenance.sourceContentDigest !== result.evidence.sourceContentDigest) {
+    throw new TypeError("controlled-content exposure provenance does not match its evidence");
+  }
+  return {
+    schemaVersion: 1 as const,
+    exposureId: result.provenance.eventId,
+    sessionId: result.provenance.sessionId,
+    provenanceEventIds: [result.provenance.eventId],
+    sourceContentDigest: result.evidence.sourceContentDigest,
+    sourceDomain: new URL(result.evidence.sourceUrl).hostname,
+    contentTrust: result.evidence.contentTrust,
+    signals: [],
+    retrievedAt: result.evidence.retrievedAt,
+  };
+}
+
 function responseByteLength(value: string): number {
   return new TextEncoder().encode(value).byteLength;
 }
@@ -451,6 +494,7 @@ export class DurableCredentialHoldingResearchService {
     try {
       const response = await this.#provider.search(request);
       result = this.#ledger.record(request, response, retrievedAt);
+      await this.#authority.appendEvidenceExposures(searchExposureRecords(result));
     } catch (error) {
       await this.#authority.settleResearchResults(reservation.reservationId, this.#sessionId, 0);
       throw error;
@@ -500,6 +544,7 @@ export class DurableControlledContentService {
     try {
       const response = await this.#provider.extract(request);
       result = this.#ledger.record(request, response, this.#scope, retrievedAt);
+      await this.#authority.appendEvidenceExposures([controlledContentExposureRecord(result)]);
     } catch (error) {
       await this.#authority.settleResearchResults(reservation.reservationId, this.#sessionId, 0);
       throw error;

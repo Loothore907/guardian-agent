@@ -1,6 +1,10 @@
 import { InMemoryCredentialStore } from "@guardian/credential-store";
 import { DEFAULT_GUARDIAN_MODEL_POLICY, GuardianModelPolicySchema } from "@guardian/contracts";
-import type { GuardianRiskEnvelope } from "@guardian/guardian";
+import {
+  guardianActionRiskIpcBoundary,
+  guardianSetupRiskIpcBoundary,
+  type GuardianRiskEnvelope,
+} from "@guardian/guardian";
 import { describe, expect, it, vi } from "vitest";
 
 import { NemotronGuardianProvider, guardianServiceBoundary } from "./index.js";
@@ -48,6 +52,13 @@ function providerResponse(recommendation: unknown, id = "nemotron_request_1"): R
 }
 
 describe("Nemotron guardian provider", () => {
+  it("fits the maximum Super-to-Ultra sequence inside both Guardian IPC windows", () => {
+    const maximumProviderDuration =
+      guardianServiceBoundary.providerTimeoutMs * guardianServiceBoundary.maximumProviderAttempts;
+    expect(guardianActionRiskIpcBoundary.timeoutMs).toBeGreaterThan(maximumProviderDuration);
+    expect(guardianSetupRiskIpcBoundary.timeoutMs).toBeGreaterThan(maximumProviderDuration);
+  });
+
   it("evaluates a minimized setup envelope without lowering its floor", async () => {
     const store = await enrolledStore();
     const setupEnvelope = {

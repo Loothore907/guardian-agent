@@ -19,7 +19,10 @@ import {
 
 const MAX_IPC_REQUEST_BYTES = 64 * 1_024;
 const MAX_IPC_RESPONSE_BYTES = 64 * 1_024;
-const DEFAULT_IPC_TIMEOUT_MS = 15_000;
+export const brokerIpcBoundary = {
+  timeoutMs: 55_000,
+} as const;
+const DEFAULT_IPC_TIMEOUT_MS = brokerIpcBoundary.timeoutMs;
 const PIPE_NAME_PATTERN = /^guardian-broker-[0-9a-f-]{36}$/u;
 
 function assertLocalBrokerEndpoint(value: unknown): string {

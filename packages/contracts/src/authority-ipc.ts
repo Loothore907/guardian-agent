@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   AuthorityAttemptRecordSchema,
   AuthorityDecisionRecordSchema,
+  EvidenceExposureRecordSchema,
 } from "./authority-context.js";
 import {
   ContractVersionSchema,
@@ -30,6 +31,7 @@ export const AuthorityIpcOperationSchema = z.enum([
   "approval.store",
   "research.reserve",
   "research.settle",
+  "context.append_exposures",
   "session.get",
   "connection.list",
   "approval.get",
@@ -93,6 +95,11 @@ export const AuthorityIpcRequestSchema = z.discriminatedUnion("operation", [
     acceptedResults: z.number().int().min(0).max(3),
   }),
   z.strictObject({ ...AuthorityRequestBindingShape, operation: z.literal("session.get") }),
+  z.strictObject({
+    ...AuthorityRequestBindingShape,
+    operation: z.literal("context.append_exposures"),
+    exposures: z.array(EvidenceExposureRecordSchema).min(1).max(3),
+  }),
   z.strictObject({ ...AuthorityRequestBindingShape, operation: z.literal("connection.list") }),
   z.strictObject({
     ...AuthorityRequestBindingShape,
@@ -201,6 +208,12 @@ export const AuthorityIpcSuccessResponseSchema = z.discriminatedUnion("operation
     ok: z.literal(true),
     operation: z.literal("research.settle"),
     result: DurableSessionBudgetSchema,
+  }),
+  z.strictObject({
+    ...AuthorityResponseBindingShape,
+    ok: z.literal(true),
+    operation: z.literal("context.append_exposures"),
+    result: z.literal("recorded"),
   }),
   z.strictObject({
     ...AuthorityResponseBindingShape,

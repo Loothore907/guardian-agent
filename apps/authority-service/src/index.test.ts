@@ -33,7 +33,7 @@ async function location() {
 
 function binding(
   capability: string,
-  callerRole: "launcher" | "broker_service" | "worker_dispatcher",
+  callerRole: "launcher" | "research_service" | "broker_service" | "worker_dispatcher",
   allowedOperations: readonly string[],
   overrides: Record<string, unknown> = {},
 ) {
@@ -99,6 +99,64 @@ function rawRequest(endpoint: string, frame: string): Promise<Record<string, unk
 }
 
 describe("central authority service", () => {
+  it("atomically records minimized research exposures before a broker attempt", async () => {
+    const { databasePath } = await location();
+    const endpoint = createAuthorityIpcEndpoint();
+    const launcherBinding = binding(randomUUID(), "launcher", ["session.create"]);
+    const researchBinding = binding(randomUUID(), "research_service", ["context.append_exposures"]);
+    const brokerBinding = binding(randomUUID(), "broker_service", ["context.append_attempt"]);
+    const service = await startAuthorityService(
+      {
+        schemaVersion: 1,
+        serviceInstanceId: randomUUID(),
+        endpoint,
+        authorityStorePath: databasePath,
+        workspaceRoots: [],
+        capabilities: [launcherBinding, researchBinding, brokerBinding],
+      },
+      { now: () => NOW },
+    );
+    try {
+      const launcher = new LocalAuthorityIpcClient({ endpoint, binding: launcherBinding });
+      await launcher.createSession(session(), budget());
+      const exposureId = randomUUID();
+      const research = new LocalAuthorityIpcClient({ endpoint, binding: researchBinding });
+      await expect(
+        research.appendEvidenceExposures([
+          {
+            schemaVersion: 1,
+            exposureId,
+            sessionId: SESSION,
+            provenanceEventIds: [exposureId],
+            sourceContentDigest: "a".repeat(64),
+            sourceDomain: "docs.github.com",
+            contentTrust: "untrusted_public_content",
+            signals: [],
+            retrievedAt: NOW,
+          },
+        ]),
+      ).resolves.toBeUndefined();
+      const broker = new LocalAuthorityIpcClient({ endpoint, binding: brokerBinding });
+      await expect(
+        broker.appendAuthorityAttempt({
+          schemaVersion: 1,
+          attemptId: randomUUID(),
+          sessionId: SESSION,
+          callerId: CALLER,
+          connectionId: null,
+          operation: "guardian.research",
+          effectClass: "read_public",
+          destinationClass: "public_research",
+          requestDigest: null,
+          evidenceExposureIds: [exposureId],
+          attemptedAt: NOW,
+        }),
+      ).resolves.toBeUndefined();
+    } finally {
+      await service.close();
+    }
+  });
+
   it("gives the worker dispatcher only replay-bound atomic budget operations", async () => {
     const { databasePath } = await location();
     const endpoint = createAuthorityIpcEndpoint();

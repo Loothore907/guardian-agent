@@ -46,5 +46,7 @@ Architecture decision records document consequential choices, rejected alternati
 - [ADR-0033: Explicit model portability and provenance qualification](0033-explicit-model-portability-and-provenance-qualification.md)
 - [ADR-0034: Bounded public and piloted demo modes](0034-bounded-public-and-piloted-demo-modes.md)
 - [ADR-0035: Fixed controlled-content Extract boundary](0035-fixed-controlled-content-extract.md)
+- [ADR-0036: Atomic research exposure registration](0036-atomic-research-exposure-registration.md)
+- [ADR-0037: Nested Guardian risk timeout hierarchy](0037-nested-risk-timeout-hierarchy.md)
 
 Use the next sequential four-digit number. Do not silently rewrite an accepted decision; add a superseding ADR.
