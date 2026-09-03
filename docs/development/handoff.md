@@ -37,9 +37,13 @@ and checkpoint history in `docs/development/roadmap.md`.
   W5 preserves the fixed ordering and W3/W4's one-request, two-turn lifecycle.
 - **Checkpoint state:** the repository now records W5 in `4a064a1`, W6-W8 in
   `f341b96`, W9-W11 in `f6087d4`, W12-W13 in `90da76b`, W14-W18 in `aa5e601`,
-  and the deterministic W19 boundary in `e8e054f`. No main-repository push, pull
-  request, merge, publication, release, or other remote mutation followed.
-- **Current worktree:** W19's deterministic boundary is captured in `e8e054f`.
+  the deterministic W19 boundary in `e8e054f`, W20-W23 in `48b082d`, and the
+  generated lockfile correction in `9acab1f`. PR #14 is open, mergeable, and green
+  against `main`; issue #13 remains open. No main-repository merge, release,
+  deployment, or publication followed.
+- **Current worktree:** the last non-documentation tip is `9acab1f`; before this
+  handoff-only closeout it was clean, tracking
+  `origin/codex/13-c6-durable-authorization-broker`, with no divergence.
   The current follow-up adds the commit-pinned public fixture configuration and a
   protected-live Search/Extract and no-effect denial harness. W20's first assembled
   attempt exposed the missing durable exposure-registration link and failed closed
@@ -61,7 +65,8 @@ and checkpoint history in `docs/development/roadmap.md`.
   checkpointed as `48b082d`, pushed, and open for review in PR #14. The first CI
   run exposed stale workspace importer entries in `pnpm-lock.yaml` before tests.
   The lockfile-only correction passes offline frozen install and the exact
-  `pnpm check` command locally; remote CI rerun and review are the current gate.
+  `pnpm check` command locally. Corrected remote CI passed at `9acab1f` in 1m45s.
+  PR #14 currently has no review or comments and remains unmerged.
 - **Secret caution:** `.env.local` is ignored development input. Never print,
   stage, copy, summarize, or use it as the installation design. Never print or
   export credential-store values.
@@ -92,10 +97,11 @@ For the current C6 section, the W19-W23 slice meets its local review-readiness
 gate: the assembled no-effect journey, separately authorized exact disposable
 effect, protected failure review, complete ordinary gate, bounded secret/artifact
 audit, and final changed-surface review pass. Checkpoint `48b082d` is pushed and
-PR #14 is open; the initial frozen-install failure has a narrow generated-lockfile
-correction with local parity checks green. Remote CI rerun and review are current.
-Successful automatic GitHub refresh, WebAuthn, platform parity/containment, and
-the full single-invocation competition coordinator remain explicit limitations.
+PR #14 is open; its narrow generated-lockfile correction and remote CI are green.
+This is the recommended handoff seam: review and merge governance are cleanly
+separated from the next implementation slice. Successful automatic GitHub
+refresh, WebAuthn, platform parity/containment, and the full single-invocation
+competition coordinator remain explicit limitations.
 
 This standing workflow does not authorize merge, release, publication,
 deployment, remote-setting changes, destructive recovery, credential disclosure,
@@ -704,31 +710,41 @@ the nested timeout hierarchy. W22's single-session assembled no-effect journey n
 passes. W23's separately authorized exact disposable effect also passes. The
 complete ordinary gate and bounded secret/artifact review are green with no
 blocking finding. Checkpoint `48b082d` is pushed and PR #14 is open; the next gate
-is the corrected remote CI run and review. Track B is locked at the design level in
+is review; corrected remote CI passed at `9acab1f`. Track B is locked at the design level in
 ADR-0034: a public fixed/rate-limited demo and a separate authenticated piloted
 demo over the same enforcement core. OpenAI backup qualification and
 worker-visible research/GitHub dispatch remain separate queued slices; neither
 was started in this session.
 
-### Phase 3: findings and transition
+### Recommended next-session sequence
 
-1. Re-run the relevant ordinary and protected checks after every design correction.
-2. Update ADRs, evidence, the claim matrix, architecture, roadmap, and handoff to
-   match observed behavior without broadening claims.
-3. Review the exact diff and bounded secret/artifact audit, then create the normal
-   local checkpoint commit for each coherent green slice.
-4. When the documented remote-readiness gate passes, push the feature branch and
-   open or update its review PR. Do not merge, deploy, release, or publish without
-   separate direction.
-5. Triage follow-up work into validated core, design corrections, and expansion
-   candidates. Resume controlled Extract/adversarial work, WebAuthn, Linux parity,
-   C8 experience, and any admitted feature expansion in dependency and evidence
-   order.
+1. Start from PR #14 at `9acab1f`; confirm its head, green CI, mergeability, and
+   any new review feedback. Do not rerun protected providers merely to reproduce
+   already captured W20-W23 evidence.
+2. Review the PR against the current claim matrix. If the user separately
+   authorizes merge, squash-merge PR #14, verify the resulting `main` commit and
+   post-merge CI, and update the handoff with the immutable result.
+3. Keep issue #13 open unless every C6 exit criterion is satisfied or remaining
+   criteria are explicitly split into named follow-up issues with roadmap/claim
+   updates. A merged broker-core PR is not by itself proof that all of C6 passed.
+4. Perform the C6 residual disposition before starting C7: the strongest next
+   implementation slice is the intended self-hosted Linux peer-identity, database
+   permission, local credential-resolution, and narrow GitHub read/merge proof.
+   Do not silently defer that current C6 exit criterion.
+5. Keep the reproducible GitHub refresh `HTTP 500` as an external blocker with
+   fresh attended enrollment as the bounded fallback. Do not spin on retries or
+   weaken the refresh contract. Keep WebAuthn in the later user-verifying approval
+   slice, and keep worker-visible research/GitHub dispatch and the full
+   single-invocation coordinator as separately scoped evidence.
+6. After the C6 residual decision, reconcile the formal C7 status with the
+   Nemotron work already implemented and evidenced in W8/W21/W22 before creating
+   new model-risk code.
 
 ### Stop/go rules
 
-- Do not perform the live GitHub effect until the deterministic executable path
-  and earlier live no-effect boundaries pass.
+- Do not repeat a live GitHub effect without a newly reset disposable fixture,
+  refreshed exact resource state, and separate authorization bound to the exact
+  repository, PR, head, and method.
 - Do not print, export, copy, or summarize stored credentials or raw protected
   provider content while diagnosing a live failure.
 - Do not call a hosted or live-model path `Enforced` without the documented tool,
@@ -761,6 +777,11 @@ was started in this session.
 - Last recorded domain state: `agentic-guardian.com` was registered and delegated
   to Cloudflare nameservers. This was not refreshed during W6-W14 and is not
   evidence of an application deployment, valid TLS, or WebAuthn origin.
+- Main-repository PR #14 is open from
+  `codex/13-c6-durable-authorization-broker`. Its implementation/evidence tip
+  `9acab1fac2eacd2260c1e1c92d423f87746e48a6` is mergeable against `main` and has
+  green CI; the handoff-only closeout follows on the same PR. At the last refresh
+  it had no reviews or comments. Issue #13 remains open.
 
 ## Verification at this transition
 
@@ -769,8 +790,8 @@ The current ordinary component set passes on this Windows host:
 - TypeScript build and typecheck;
 - ESLint and Prettier checks;
 - dependency boundaries: 176 modules and 354 dependencies, no violations;
-- Vitest: 61 files and 359 tests passed; three protected files and five protected
-  tests skipped, for 64 files / 364 tests total;
+- Vitest: 61 files and 362 tests passed; three protected files and five protected
+  tests skipped, for 64 files / 367 tests total;
 - SQLite authority spike: seven passed and the expected POSIX permission test
   skipped on Windows;
 - deterministic demo reset planner: two passed;
@@ -802,8 +823,9 @@ binary, log, key, certificate, environment, or other sensitive artifact files an
 no unexpected untracked roots. `.env.local` remains ignored. The changed-line
 secret-pattern scan found only one deliberate fake provider credential in a
 research-service failure test; no production or documentation path matched.
-Repository secret scanning and remote CI remain independent review signals. The
-GitHub refresh endpoint's documented HTTP 500, WebAuthn, platform parity, and the
+Repository secret scanning and remote CI remain independent review signals;
+PR #14's corrected remote CI passed at `9acab1f` in 1m45s. The GitHub refresh
+endpoint's documented HTTP 500, WebAuthn, platform parity, and the
 single-invocation coordinator remain C6 residuals; no broader guarantee is claimed.
 
 Previously captured protected evidence still records successful Windows

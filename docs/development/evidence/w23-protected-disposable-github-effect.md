@@ -97,7 +97,10 @@ importer entries in `pnpm-lock.yaml`: a duplicate broker-service dev dependency
 and a missing reference-supervisor dev dependency. Regenerating only the lockfile
 offline produced the canonical importer order and relationships. A subsequent
 offline `pnpm install --frozen-lockfile` and the exact `pnpm check` CI command both
-passed locally. No runtime code or security claim was relaxed for this correction.
+passed locally. The correction was committed as `9acab1f`; replacement CI passed
+in 1m45s, including frozen install, required checks, and the production dependency
+audit. PR #14 is open and mergeable with no reviews or comments. No runtime code
+or security claim was relaxed for this correction.
 
 ## Claim boundary
 
