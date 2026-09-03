@@ -39,15 +39,16 @@ and checkpoint history in `docs/development/roadmap.md`.
   `f341b96`, W9-W11 in `f6087d4`, W12-W13 in `90da76b`, W14-W18 in `aa5e601`,
   the deterministic W19 boundary in `e8e054f`, W20-W23 in `48b082d`, and the
   generated lockfile correction in `9acab1f`. The Phase-1 implementation-review
-  checkpoint is `ddf194c`. PR #14 is open, mergeable, and green against `main`;
-  issue #13 remains open. No main-repository merge, release, deployment, or
-  publication followed.
+  checkpoint is `ddf194c`. PR #14 squash-merged as
+  `b69e9338d5464cac31d52cf8510256a2d9f21c33`; post-merge `main` CI passed in
+  2m25s. Issue #13 remains open. No release, deployment, or publication followed.
 - **Phase-1 review checkpoint:** review started from clean, synchronized head
   `b9497a9`. The approved branch update contains a fail-closed broker correction,
   its regression tests, the C6 review matrix, claim/roadmap reconciliation, and
   patch hygiene. Restarting Codex restored the approval bridge needed for the
   authorized checkpoint workflow. The update was pushed as `ddf194c`, its CI
-  passed in 2m19s, and PR #14 remains unmerged.
+  passed in 2m19s, and the handoff-only closeout followed as `c4df0e9`. PR #14 was
+  then exact-head squash-merged with separate authorization.
   The current follow-up adds the commit-pinned public fixture configuration and a
   protected-live Search/Extract and no-effect denial harness. W20's first assembled
   attempt exposed the missing durable exposure-registration link and failed closed
@@ -70,7 +71,8 @@ and checkpoint history in `docs/development/roadmap.md`.
   run exposed stale workspace importer entries in `pnpm-lock.yaml` before tests.
   The lockfile-only correction passes offline frozen install and the exact
   `pnpm check` command locally. Pre-review handoff CI passed at `b9497a9` in 2m14s.
-  PR #14 had no reviews or comments at the Phase-1 refresh and remains unmerged.
+  PR #14 had no reviews or comments at the Phase-1 refresh and remained unmerged
+  until the later exact-head governance step.
 - **Secret caution:** `.env.local` is ignored development input. Never print,
   stage, copy, summarize, or use it as the installation design. Never print or
   export credential-store values.
@@ -101,7 +103,8 @@ For the current C6 section, the W19-W23 slice meets its local review-readiness
 gate: the assembled no-effect journey, separately authorized exact disposable
 effect, protected failure review, complete ordinary gate, bounded secret/artifact
 audit, and final changed-surface review pass. Checkpoint `48b082d` is pushed and
-PR #14 is open; its narrow generated-lockfile correction and remote CI are green.
+PR #14 later squash-merged; its generated-lockfile correction and remote CI are
+green.
 Phase-1 review then identified one final approval-consumption transport exception
 that escaped the broker's typed fail-closed result. The local correction returns
 `audit_unavailable`, never issues the merge, preserves consumed state after a lost
@@ -715,9 +718,10 @@ rerun now pass. W21's live Nemotron-through-broker path also passes after correc
 the nested timeout hierarchy. W22's single-session assembled no-effect journey now
 passes. W23's separately authorized exact disposable effect also passes. The
 complete ordinary gate and bounded secret/artifact review are green with no
-blocking finding. Checkpoint `48b082d` is pushed and PR #14 is open; the next gate
-is human review; the Phase-1 correction is pushed at `ddf194c` and CI passed in
-2m19s. Track B is locked at the design level in ADR-0034: a public
+blocking finding. Checkpoint `48b082d` was pushed and opened as PR #14; the next
+gate was Phase-1 review and merge governance. The correction was pushed at `ddf194c`,
+its CI passed in 2m19s, and PR #14 later squash-merged as `b69e933`; post-merge
+`main` CI passed in 2m25s. Track B is locked at the design level in ADR-0034: a public
 fixed/rate-limited demo and a separate authenticated piloted demo over the same
 enforcement core. OpenAI backup qualification and worker-visible research/GitHub
 dispatch remain separate queued slices; neither was started in this session.
@@ -745,28 +749,31 @@ the production Vite build. `git diff --check main` is clean. The review slice is
 the approved Phase-1 branch checkpoint. PR #14's expanded description points
 reviewers to the matrix and does not present C6 as Passed.
 
+After explicit authorization, PR #14 exact-head squash-merged at `2026-09-03T16:47:14Z`
+as `b69e9338d5464cac31d52cf8510256a2d9f21c33`. Post-merge `main` CI passed in
+2m25s. Issue #13 remained open. The feature branch was retained.
+
 ### Recommended next-session sequence
 
-1. Obtain human review appropriate to PR #14's 284-file pre-review scope. Do not
-   rerun protected providers merely to reproduce captured evidence. If the user
-   separately authorizes merge, squash-merge PR #14, verify the resulting `main`
-   commit and post-merge CI, and update the handoff with the immutable result.
-2. Keep issue #13 open unless every C6 exit criterion is satisfied or remaining
+1. Keep issue #13 open unless every C6 exit criterion is satisfied or remaining
    criteria are explicitly split into named follow-up issues with roadmap/claim
    updates. A merged broker-core PR is not by itself proof that all of C6 passed.
-3. Perform the C6 residual disposition before starting C7: the strongest next
+2. Perform the C6 residual disposition before starting C7: the strongest next
    implementation slice is the intended self-hosted Linux peer-identity, database
    permission, local credential-resolution, and narrow GitHub read/merge proof.
    Do not silently defer that current C6 exit criterion.
-4. Keep the reproducible GitHub refresh `HTTP 500` as an external blocker with
+3. Keep the reproducible GitHub refresh `HTTP 500` as an external blocker with
    fresh attended enrollment as the bounded fallback. Do not spin on retries or
    weaken the refresh contract. Keep WebAuthn in the later user-verifying approval
    slice, and keep worker-visible research/GitHub dispatch and the full
    single-invocation coordinator as separately scoped evidence.
-5. C7 is now honestly marked **In progress**. After the C6 residual decision,
+4. C7 is now honestly marked **In progress**. After the C6 residual decision,
    implement only its missing evidence: worker-generated polluted-content
    dispatch, the false/missed-escalation report, intended-Linux containment, and
    hosted/repeated evidence. Do not rebuild already evidenced W8/W21/W22 behavior.
+5. Schedule maintenance for the GitHub Actions warning that the pinned
+   `pnpm/action-setup` action targets deprecated Node.js 20 and is currently being
+   forced onto Node.js 24. It did not fail either Phase-1 or post-merge CI.
 
 ### Stop/go rules
 
@@ -805,12 +812,11 @@ reviewers to the matrix and does not present C6 as Passed.
 - Last recorded domain state: `agentic-guardian.com` was registered and delegated
   to Cloudflare nameservers. This was not refreshed during W6-W14 and is not
   evidence of an application deployment, valid TLS, or WebAuthn origin.
-- Main-repository PR #14 is open from
-  `codex/13-c6-durable-authorization-broker`. The Phase-1 implementation-review
-  checkpoint `ddf194c52ce0651ff7c4110f855091fabb8fc298` is cleanly mergeable
-  against `main`, has green CI, and had no reviews or comments at the final
-  refresh. This handoff-only closeout follows on the same feature branch. Issue
-  #13 remains open.
+- Main-repository PR #14 squash-merged from
+  `codex/13-c6-durable-authorization-broker` at exact reviewed head `c4df0e9`.
+  Immutable `main` commit `b69e9338d5464cac31d52cf8510256a2d9f21c33`
+  has green post-merge CI. The feature branch remains available. Issue #13 remains
+  open.
 
 ## Verification at this transition
 
@@ -845,7 +851,8 @@ Search/Extract run passed. The separate public fixture repository was intentiona
 created and pushed under the user's approval; no main-repository push, release, or
 publication followed those earlier local checkpoints. W20-W23 were later
 checkpointed as `48b082d`, pushed, and opened as PR #14; no main-repository merge,
-release, deployment, or publication followed.
+release, deployment, or publication followed at that checkpoint. PR #14 later
+squash-merged under the separate governance step described above.
 
 A refreshed bounded review found no changed or untracked database, archive,
 binary, log, key, certificate, environment, or other sensitive artifact files and
@@ -853,8 +860,11 @@ no unexpected untracked roots. `.env.local` remains ignored. The changed-line
 secret-pattern scan found only one deliberate fake provider credential in a
 research-service failure test; no production or documentation path matched.
 Repository secret scanning and remote CI remain independent review signals;
-PR #14's Phase-1 implementation-review CI passed at `ddf194c` in 2m19s. The GitHub refresh
-endpoint's documented HTTP 500 remains an operational limitation. Intended-Linux
+PR #14's Phase-1 implementation-review CI passed at `ddf194c` in 2m19s; the
+handoff-only branch head passed in 2m23s; and post-merge `main` CI passed at
+`b69e933` in 2m25s. The post-merge run emitted a nonblocking warning that the
+pinned `pnpm/action-setup` action targets deprecated Node.js 20 and is being
+forced onto Node.js 24. The GitHub refresh endpoint's documented HTTP 500 remains an operational limitation. Intended-Linux
 peer identity, database permissions, local credential resolution, and narrow
 GitHub read/merge remain the C6 blocker. WebAuthn and the single-invocation
 coordinator remain later evidence slices; no broader guarantee is claimed.
