@@ -13,6 +13,7 @@ import { canonicalDigest } from "@guardian/canonical";
 import {
   AuthorityCapabilityBindingSchema,
   CanonicalRequestSchema,
+  ControlledContentScopeSchema,
   CredentialStoreHandleSchema,
   DEFAULT_NEBIUS_WORKER_SELECTION,
   DEFAULT_REFERENCE_WORKER_SELECTION,
@@ -114,6 +115,7 @@ export interface ReferenceCompetitionSessionConfig {
   readonly repository: unknown;
   readonly researchDomains: readonly unknown[];
   readonly researchRequiredTerms: readonly unknown[];
+  readonly controlledContentUrl: unknown;
 }
 
 export interface ReferenceAuthoritySupervisor {
@@ -176,10 +178,17 @@ function normalizeCompetitionSessionConfig(value: ReferenceCompetitionSessionCon
     remainingResults: 2,
     requiredTerms: value.researchRequiredTerms,
   });
+  const controlledContentScope = ControlledContentScopeSchema.parse({
+    allowedUrls: [value.controlledContentUrl],
+    allowedDomains: value.researchDomains,
+    maxContentCharacters: 1_000,
+    remainingRequests: 1,
+  });
   return {
     connectionId,
     destination,
     researchScope,
+    controlledContentScope,
     credentialStoreHandle: CredentialStoreHandleSchema.parse(
       `guardian-credential://github/${connectionId}`,
     ),
@@ -307,6 +316,10 @@ export async function startReferenceAuthoritySupervisor(
               research: {
                 ...competitionResearchCredentials,
                 requiredTerms: competition.researchScope.requiredTerms,
+                controlledContent: {
+                  allowedUrls: competition.controlledContentScope.allowedUrls,
+                  maxContentCharacters: competition.controlledContentScope.maxContentCharacters,
+                },
               },
             }),
         authority: {
@@ -578,8 +591,8 @@ export async function startReferenceAuthoritySupervisor(
                   time: { maxDurationSeconds: 300 },
                   volume: {
                     maxToolCalls: 20,
-                    maxResearchRequests: 1,
-                    maxResearchResults: 2,
+                    maxResearchRequests: 2,
+                    maxResearchResults: 3,
                     maxLocalCommands: 10,
                     maxPrivilegedActions: 1,
                   },

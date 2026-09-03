@@ -39,11 +39,12 @@ and checkpoint history in `docs/development/roadmap.md`.
   `f341b96`, W9-W11 in `f6087d4`, and W12-W13 in `90da76b`. The complete ordinary
   gate passed again after those checkpoints. No push, pull request, merge,
   publication, release, or other remote mutation followed.
-- **Current worktree:** the W6-W13 implementation is locally checkpointed. W14
-  adds the uncommitted executable competition path, strict public deployment
-  input, trusted competition session/connection/research configuration, exact
-  activation-bound requests, and ADR-0030 mission/worker-tool separation. The
-  complete ordinary gate passes; staged protected provider evidence is next.
+- **Current worktree:** W6-W13 are captured through `90da76b`; `aa5e601` captures
+  W14-W18, the executable competition path, model compatibility corrections, and
+  the accepted future demo-mode design. W19 adds exact controlled-content Extract
+  contracts, a fixed Tavily adapter, session-bound IPC, split Search/Extract
+  research budgets, and ADR-0035. The complete ordinary gate passes; user-scoped
+  protected Tavily evidence is still pending.
 - **Secret caution:** `.env.local` is ignored development input. Never print,
   stage, copy, summarize, or use it as the installation design. Never print or
   export credential-store values.
@@ -605,16 +606,30 @@ not emitted by a live authority-service/dispatcher call. W4 separately proves
 the deterministic denial mechanics locally. Full assembled live containment,
 execution, and repeated reliability remain separate checks.
 
+W19 then refreshed the deterministic research boundary. The existing protected
+Tavily Search command failed closed before provider invocation because the managed
+command identity reported `tavily/default` missing. The implementation now
+supports one exact reviewed HTTPS fixture through fixed Tavily Extract, with a
+separate one-request/one-result budget, local IPC binding, credential callback,
+bounded sanitized evidence, and minimized provenance. Focused verification passed
+8 files / 76 tests. No reviewed live fixture URL is configured, and no live
+Extract occurred. ADR-0035 records that Tavily exposes no redirect-control field:
+Guardian rejects unlisted inputs before provider use and rejects a returned URL
+mismatch, but does not claim pre-provider redirect assurance inside Tavily.
+
 **Phase-2 exit:** each boundary has an assumption/evidence record, the protected
 journey completes or stops at a documented fail-closed boundary, and no credential,
 private provider content, or credential-equivalent material appears in model
 contexts, process arguments or environments, SQLite, logs, traces, audit records,
 errors, or public results.
 
-**Current session tracks and handoff:** the clean handoff gate is reached. Track A
-now has live Qwen mission dialogue plus Kimi final-response, exact typed-request,
-and denial-continuation evidence through W15-W18. Its next boundary is live Tavily
-research and controlled hostile content. Track B is locked at the design level in
+**Current session tracks and handoff:** Track A has live Qwen mission dialogue plus
+Kimi final-response, exact typed-request, and denial-continuation evidence through
+W15-W18. W19 has a green deterministic controlled-content Extract boundary, but
+the user-scoped live Search/Extract and reviewed fixture remain its next protected
+gate. Only after that gate should the exact provenance-bound unsafe request advance
+to the deterministic broker denial and minimized audit inspection, followed by
+live Nemotron-through-broker evaluation. Track B is locked at the design level in
 ADR-0034: a public fixed/rate-limited demo and a separate authenticated piloted
 demo over the same enforcement core. OpenAI backup qualification and
 worker-visible research/GitHub dispatch remain separate queued slices; neither
@@ -676,9 +691,9 @@ The current ordinary component set passes on this Windows host:
 
 - TypeScript build and typecheck;
 - ESLint and Prettier checks;
-- dependency boundaries: 176 modules and 353 dependencies, no violations;
-- Vitest: 61 files and 343 tests passed; three protected files and five protected
-  tests skipped, for 64 files / 348 tests total;
+- dependency boundaries: 176 modules and 354 dependencies, no violations;
+- Vitest: 61 files and 359 tests passed; three protected files and five protected
+  tests skipped, for 64 files / 364 tests total;
 - SQLite authority spike: seven passed and the expected POSIX permission test
   skipped on Windows;
 - deterministic demo reset planner: two passed;
@@ -696,8 +711,9 @@ metadata check attempted blocked registry access, so the same frozen `check`
 components were run directly with the pinned bundled Node and repository binaries;
 all passed. The protected runtime passed unchanged during W4 with approved WSL
 access and was not rerun for W5-W14 because those slices did not change the
-executor path. No live credentialed provider test ran during W6-W14. The W6-W13
-implementation tip is `90da76b`; W14 is currently uncommitted. No push, publish,
+executor path. The W6-W13 implementation tip is `90da76b`; W14-W18 are captured
+in `aa5e601`. The W19 protected Tavily baseline stopped before provider use because
+the managed identity could not resolve the enrolled credential. No push, publish,
 release, or other remote mutation followed the local checkpoints.
 
 A refreshed bounded commit-readiness audit found no changed or untracked database,
@@ -769,6 +785,7 @@ wrapper when the frozen workspace is already usable.
 - [ADR-0032: JSON-object provider mode and deterministic worker validation](../adr/0032-json-object-provider-mode-and-deterministic-worker-validation.md)
 - [ADR-0033: Explicit model portability and provenance qualification](../adr/0033-explicit-model-portability-and-provenance-qualification.md)
 - [ADR-0034: Bounded public and piloted demo modes](../adr/0034-bounded-public-and-piloted-demo-modes.md)
+- [ADR-0035: Fixed controlled-content Extract boundary](../adr/0035-fixed-controlled-content-extract.md)
 - [W2 session workspace evidence](evidence/w2-session-workspace.md)
 - [W3 worker tool round-trip evidence](evidence/w3-worker-tool-round-trip.md)
 - [W4 denial containment evidence](evidence/w4-denial-containment.md)
@@ -777,6 +794,7 @@ wrapper when the frozen workspace is already usable.
 - [W16 live worker policy-correction evidence](evidence/w16-live-worker-policy-correction.md)
 - [W17 live worker typed-request evidence](evidence/w17-live-worker-typed-request.md)
 - [W18 live worker denial-continuation evidence](evidence/w18-live-worker-denial-continuation.md)
+- [W19 controlled-content Extract evidence](evidence/w19-controlled-content-extract.md)
 - [C6 authority service evidence](evidence/c6-authority-service.md)
 - [C6 terminal bootstrap evidence](evidence/c6-terminal-bootstrap.md)
 - [C6 interaction boundary evidence](evidence/c6-interaction-boundary.md)

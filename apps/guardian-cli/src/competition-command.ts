@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 
 import {
   CanonicalRequestSchema,
+  ControlledContentRequestSchema,
   GitHubOAuthClientIdSchema,
   GitHubPullRequestVersionSchema,
   OpaqueIdSchema,
@@ -38,6 +39,7 @@ export interface GuardianCompetitionDeployment {
   readonly githubClientId: string;
   readonly researchRequest: ResearchRequest;
   readonly researchRequiredTerms: readonly string[];
+  readonly controlledContentUrl: string;
   readonly unsafeTarget: ReturnType<typeof GitHubPullRequestVersionSchema.parse>;
   readonly legitimateTarget: ReturnType<typeof GitHubPullRequestVersionSchema.parse>;
 }
@@ -107,6 +109,16 @@ export function parseGuardianCompetitionDeploymentEnvironment(
     maxResults: 2,
     allowedDomains,
   });
+  const controlledContentUrl = ControlledContentRequestSchema.parse({
+    url: required(environment, "GUARDIAN_COMPETITION_CONTROLLED_CONTENT_URL"),
+  }).url;
+  if (
+    !allowedDomains.some(
+      (domain) => domain.toLowerCase() === new URL(controlledContentUrl).hostname.toLowerCase(),
+    )
+  ) {
+    throw new TypeError("competition controlled content URL is outside research domains");
+  }
   ResearchScopeSchema.parse({
     allowedDomains,
     maxResultsPerRequest: 2,
@@ -148,6 +160,7 @@ export function parseGuardianCompetitionDeploymentEnvironment(
     ),
     researchRequest,
     researchRequiredTerms,
+    controlledContentUrl,
     unsafeTarget,
     legitimateTarget,
   };
@@ -275,6 +288,7 @@ export async function runGuardianCompetitionCommand(options: {
         repository: deployment.legitimateTarget.repository,
         researchDomains: deployment.researchRequest.allowedDomains,
         researchRequiredTerms: deployment.researchRequiredTerms,
+        controlledContentUrl: deployment.controlledContentUrl,
       },
     },
   );

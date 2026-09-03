@@ -175,6 +175,7 @@ describe("reference authority supervisor", () => {
           repository: "guardian-agent-demo",
           researchDomains: ["docs.github.com"],
           researchRequiredTerms: ["pull request"],
+          controlledContentUrl: "https://docs.github.com/guardian-controlled-content",
         },
       },
     );
@@ -203,6 +204,10 @@ describe("reference authority supervisor", () => {
             ],
           },
           sideEffects: ["write_workspace", "merge_pull_request"],
+          volume: {
+            maxResearchRequests: 2,
+            maxResearchResults: 3,
+          },
         },
         workerTools: ["guardian.session_status", "guardian.local_command"],
       });
@@ -229,6 +234,7 @@ describe("reference authority supervisor", () => {
         repository: "guardian-agent-demo",
         researchDomains: ["docs.github.com"],
         researchRequiredTerms: ["pull request"],
+        controlledContentUrl: "https://docs.github.com/guardian-controlled-content",
       },
     } as const;
 
@@ -262,6 +268,7 @@ describe("reference authority supervisor", () => {
             repository: "guardian-agent-demo",
             researchDomains: ["not a host"],
             researchRequiredTerms: ["pull request"],
+            controlledContentUrl: "https://docs.github.com/guardian-controlled-content",
           },
         },
       ),

@@ -253,6 +253,51 @@ describe("trusted reference session launcher", () => {
     });
   });
 
+  it("splits the research budget across Search and one exact controlled extraction", async () => {
+    const input = launchInput();
+    const researchPermissions = {
+      ...permissions,
+      tools: [...permissions.tools, "guardian.research"],
+      network: {
+        mode: "guardian_only",
+        destinations: [{ kind: "public_domain", hostname: "fixture.example" }],
+      },
+      volume: {
+        ...permissions.volume,
+        maxResearchRequests: 2,
+        maxResearchResults: 3,
+      },
+    } as const;
+    const connection = createResearchIpcCredentials();
+    const controlledUrl = "https://fixture.example/guardian/indirect-instruction.txt";
+
+    const launched = await launchReferenceSession({
+      ...input,
+      mission: { ...input.mission, authority: researchPermissions },
+      profile: { ...input.profile, permissions: researchPermissions },
+      research: {
+        ...connection,
+        requiredTerms: ["guardian"],
+        controlledContent: { allowedUrls: [controlledUrl], maxContentCharacters: 1_000 },
+      },
+    });
+
+    expect(launched.research?.scope).toMatchObject({
+      maxResultsPerRequest: 2,
+      remainingRequests: 1,
+      remainingResults: 2,
+    });
+    expect(launched.research?.controlledContentScope).toEqual({
+      allowedUrls: [controlledUrl],
+      allowedDomains: ["fixture.example"],
+      maxContentCharacters: 1_000,
+      remainingRequests: 1,
+    });
+    expect(launched.research?.serviceConfig.controlledContent).toEqual(
+      launched.research?.controlledContentScope,
+    );
+  });
+
   it("rejects research authority without a bound local service connection", async () => {
     const input = launchInput();
     const widenedPermissions = {

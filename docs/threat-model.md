@@ -105,7 +105,7 @@
 | GitHub credential persistence | Long-lived token or App key enters the authority database, agent runtime, model context, log, or adapter response | User-owned local credential store, narrow credential service, repository scope, short-lived token where supported, process isolation, allowlisted outputs, secret-corpus tests |
 | False model independence | Two cloud models are treated as mutually independent security authorities | Deterministic policy root, distinct roles and minimized context, model output may only maintain or increase scrutiny, shared-provider risk disclosed |
 | Violation-counter manipulation | Host retries malformed or denied calls to cause an unintended shutdown, avoid a threshold, or reset its history | Versioned severity classes, bounded windows, durable monotonic counters, exact session binding, explicit immediate-revoke classes, adversarial threshold tests |
-| Hostile-page retrieval escape | Controlled Extract follows a redirect to a private host or accepts an attacker-selected header | Allowlisted public HTTPS domains, IP and redirect validation, fixed provider operation, no caller headers, size/time/content limits |
+| Hostile-page retrieval escape | Controlled Extract receives a private/unlisted target, accepts attacker-selected transport options, or returns a different URL | Exact reviewed public HTTPS fixture URLs and domains, IP/local/query/fragment rejection, fixed provider operation, no caller headers, returned-URL validation, size/time/content limits; Tavily-internal pre-response redirects remain a documented live-fixture limitation |
 
 ## Out of scope for the competition prototype
 

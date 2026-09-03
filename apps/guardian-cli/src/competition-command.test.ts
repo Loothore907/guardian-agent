@@ -37,6 +37,8 @@ function environment(overrides: Readonly<Record<string, string>> = {}) {
     GUARDIAN_COMPETITION_RESEARCH_QUERY: "Guardian pull request security review",
     GUARDIAN_COMPETITION_RESEARCH_DOMAINS: "docs.github.com",
     GUARDIAN_COMPETITION_RESEARCH_REQUIRED_TERMS: "pull request",
+    GUARDIAN_COMPETITION_CONTROLLED_CONTENT_URL:
+      "https://docs.github.com/guardian-controlled-content",
     GUARDIAN_COMPETITION_UNSAFE_OWNER: "loothore907",
     GUARDIAN_COMPETITION_UNSAFE_REPOSITORY: "guardian-agent",
     GUARDIAN_COMPETITION_UNSAFE_PULL_REQUEST: "13",
@@ -246,6 +248,7 @@ describe("Guardian executable competition command", () => {
     const parsed = parseGuardianCompetitionDeploymentEnvironment(environment());
     expect(parsed).toMatchObject({
       githubClientId: "Iv23liP8Sq3ZEAyeIHju",
+      controlledContentUrl: "https://docs.github.com/guardian-controlled-content",
       legitimateTarget: { repository: "guardian-agent-demo", pullRequest: 2 },
       unsafeTarget: { repository: "guardian-agent", pullRequest: 13 },
     });
@@ -259,6 +262,22 @@ describe("Guardian executable competition command", () => {
         environment({ GUARDIAN_COMPETITION_UNSAFE_REPOSITORY: "guardian-agent-demo" }),
       ),
     ).toThrow("different repositories");
+    expect(() =>
+      parseGuardianCompetitionDeploymentEnvironment(
+        environment({
+          GUARDIAN_COMPETITION_CONTROLLED_CONTENT_URL:
+            "https://attacker.example/indirect-instruction.txt",
+        }),
+      ),
+    ).toThrow("outside research domains");
+    expect(() =>
+      parseGuardianCompetitionDeploymentEnvironment(
+        environment({
+          GUARDIAN_COMPETITION_CONTROLLED_CONTENT_URL:
+            "http://docs.github.com/guardian-controlled-content",
+        }),
+      ),
+    ).toThrow();
   });
 
   it("builds exact requests only from an active enforced activation", () => {
@@ -353,6 +372,7 @@ describe("Guardian executable competition command", () => {
         connectionId: IDS.connection,
         repository: "guardian-agent-demo",
         researchDomains: ["docs.github.com"],
+        controlledContentUrl: "https://docs.github.com/guardian-controlled-content",
       },
     });
     expect(runCompetitionJourney.mock.calls[0]?.[0]).toMatchObject({

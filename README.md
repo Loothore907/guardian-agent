@@ -183,8 +183,12 @@ deployment input, trusted competition-session startup, exact activation-bound
 request construction, both confirmations, the fixed runner, and guaranteed
 cleanup. ADR-0030 separately binds the broader confirmed mission/session ceiling
 from the narrower native-worker tool catalog. The application-level deterministic
-journey is green; staged live-model/provider validation and the protected
-credential-backed journey remain.
+journey is green. W15-W18 add protected Qwen/Kimi compatibility evidence. W19 adds
+a locally tested exact controlled-content Tavily Extract boundary: one reviewed
+public HTTPS fixture, a separate one-request/one-result budget, fixed adapter,
+credential-store child, local IPC, and minimized untrusted evidence. Its live
+user-scoped Search/Extract run, reviewed fixture, assembled denial, and the later
+protected credential-backed journey remain.
 
 [ADR-0015](docs/adr/0015-nebius-native-worker-and-judge-runtime.md) selects the
 provider-neutral Nebius-native worker for the competition build while preserving

@@ -1,6 +1,9 @@
 import { z } from "zod";
 
 import {
+  ControlledContentJourneyResultSchema,
+  ControlledContentRequestSchema,
+  ControlledContentScopeSchema,
   ResearchEvidenceSchema,
   ResearchProvenanceEventSchema,
   ResearchRequestSchema,
@@ -85,6 +88,17 @@ export const ResearchIpcRequestSchema = z.strictObject({
 });
 export type ResearchIpcRequest = DeepReadonly<z.infer<typeof ResearchIpcRequestSchema>>;
 
+export const ControlledContentIpcRequestSchema = z.strictObject({
+  ...ResearchBindingShape,
+  capability: OpaqueIdSchema,
+  requestedAt: TimestampSchema,
+  operation: z.literal("controlled_extract"),
+  request: ControlledContentRequestSchema,
+});
+export type ControlledContentIpcRequest = DeepReadonly<
+  z.infer<typeof ControlledContentIpcRequestSchema>
+>;
+
 export const ResearchIpcFailureReasonSchema = z.enum([
   "budget_exhausted",
   "domain_not_allowed",
@@ -95,6 +109,7 @@ export const ResearchIpcFailureReasonSchema = z.enum([
   "service_unavailable",
   "unauthorized",
   "unsafe_outbound_content",
+  "url_not_allowed",
 ]);
 export type ResearchIpcFailureReason = z.infer<typeof ResearchIpcFailureReasonSchema>;
 
@@ -113,6 +128,23 @@ export const ResearchIpcResponseSchema = z.discriminatedUnion("ok", [
 ]);
 export type ResearchIpcResponse = DeepReadonly<z.infer<typeof ResearchIpcResponseSchema>>;
 
+export const ControlledContentIpcResponseSchema = z.discriminatedUnion("ok", [
+  z.strictObject({
+    schemaVersion: ContractVersionSchema,
+    ok: z.literal(true),
+    result: ControlledContentJourneyResultSchema,
+    budget: ResearchBudgetSnapshotSchema,
+  }),
+  z.strictObject({
+    schemaVersion: ContractVersionSchema,
+    ok: z.literal(false),
+    error: ResearchIpcFailureReasonSchema,
+  }),
+]);
+export type ControlledContentIpcResponse = DeepReadonly<
+  z.infer<typeof ControlledContentIpcResponseSchema>
+>;
+
 export const ResearchServiceProcessConfigSchema = z
   .strictObject({
     ...ResearchBindingShape,
@@ -121,6 +153,7 @@ export const ResearchServiceProcessConfigSchema = z
     startsAt: TimestampSchema,
     expiresAt: TimestampSchema,
     scope: ResearchScopeSchema,
+    controlledContent: ControlledContentScopeSchema.optional(),
   })
   .superRefine((config, context) => {
     if (Date.parse(config.expiresAt) <= Date.parse(config.startsAt)) {
@@ -129,6 +162,20 @@ export const ResearchServiceProcessConfigSchema = z
         message: "research service expiry must follow its start",
         path: ["expiresAt"],
       });
+    }
+    if (config.controlledContent !== undefined) {
+      const researchDomains = new Set(
+        config.scope.allowedDomains.map((domain) => domain.toLowerCase()),
+      );
+      for (const [index, domain] of config.controlledContent.allowedDomains.entries()) {
+        if (!researchDomains.has(domain.toLowerCase())) {
+          context.addIssue({
+            code: "custom",
+            message: "controlled content domain must remain inside the research scope",
+            path: ["controlledContent", "allowedDomains", index],
+          });
+        }
+      }
     }
   });
 export type ResearchServiceProcessConfig = DeepReadonly<

@@ -45,5 +45,6 @@ Architecture decision records document consequential choices, rejected alternati
 - [ADR-0032: JSON-object provider mode and deterministic worker validation](0032-json-object-provider-mode-and-deterministic-worker-validation.md)
 - [ADR-0033: Explicit model portability and provenance qualification](0033-explicit-model-portability-and-provenance-qualification.md)
 - [ADR-0034: Bounded public and piloted demo modes](0034-bounded-public-and-piloted-demo-modes.md)
+- [ADR-0035: Fixed controlled-content Extract boundary](0035-fixed-controlled-content-extract.md)
 
 Use the next sequential four-digit number. Do not silently rewrite an accepted decision; add a superseding ADR.

@@ -1,5 +1,6 @@
 import {
   AuthorityCapabilityBindingSchema,
+  ControlledContentScopeSchema,
   MissionSchema,
   OpaqueIdSchema,
   ResearchScopeSchema,
@@ -7,6 +8,7 @@ import {
   SessionProfileSchema,
   VersionNumberSchema,
   type SessionProfile,
+  type ControlledContentScope,
   type ResearchScope,
   type ResearchServiceProcessConfig,
 } from "@guardian/contracts";
@@ -17,13 +19,21 @@ import {
   createReferenceAssuranceEvidence,
   type BoundSessionInput,
 } from "@guardian/session";
-import { LocalResearchIpcClient, type ResearchServiceClient } from "@guardian/research";
+import {
+  LocalResearchIpcClient,
+  type ControlledContentServiceClient,
+  type ResearchServiceClient,
+} from "@guardian/research";
 import { assertPreparedSessionWorkspace, type PreparedSessionWorkspace } from "@guardian/workspace";
 
 export interface ReferenceResearchConnectionInput {
   readonly endpoint: unknown;
   readonly capability: unknown;
   readonly requiredTerms: unknown;
+  readonly controlledContent?: {
+    readonly allowedUrls: unknown;
+    readonly maxContentCharacters: unknown;
+  };
 }
 
 export interface ReferenceSessionLaunchInput {
@@ -44,8 +54,9 @@ export interface ReferenceSessionLaunchInput {
 }
 
 export interface LaunchedResearchBinding {
-  readonly client: ResearchServiceClient;
+  readonly client: ResearchServiceClient & ControlledContentServiceClient;
   readonly scope: ResearchScope;
+  readonly controlledContentScope?: ControlledContentScope;
   readonly serviceConfig: ResearchServiceProcessConfig;
 }
 
@@ -215,11 +226,29 @@ export async function launchReferenceSession(
     };
   }
 
+  const controlledContentScope =
+    input.research.controlledContent === undefined
+      ? undefined
+      : ControlledContentScopeSchema.parse({
+          allowedUrls: input.research.controlledContent.allowedUrls,
+          allowedDomains: publicDestinations.map((destination) => destination.hostname),
+          maxContentCharacters: input.research.controlledContent.maxContentCharacters,
+          remainingRequests: 1,
+        });
+  const controlledRequestAllowance = controlledContentScope === undefined ? 0 : 1;
+  const controlledResultAllowance = controlledContentScope === undefined ? 0 : 1;
+  const searchRequestAllowance =
+    requestedProfile.permissions.volume.maxResearchRequests - controlledRequestAllowance;
+  const searchResultAllowance =
+    requestedProfile.permissions.volume.maxResearchResults - controlledResultAllowance;
+  if (searchRequestAllowance < 1 || searchResultAllowance < 1) {
+    throw new TypeError("research budget cannot fit Search and controlled content retrieval");
+  }
   const scope = ResearchScopeSchema.parse({
     allowedDomains: publicDestinations.map((destination) => destination.hostname),
-    maxResultsPerRequest: Math.min(3, requestedProfile.permissions.volume.maxResearchResults),
-    remainingRequests: requestedProfile.permissions.volume.maxResearchRequests,
-    remainingResults: requestedProfile.permissions.volume.maxResearchResults,
+    maxResultsPerRequest: Math.min(3, searchResultAllowance),
+    remainingRequests: searchRequestAllowance,
+    remainingResults: searchResultAllowance,
     requiredTerms: input.research.requiredTerms,
   });
   const serviceConfig: ResearchServiceProcessConfig = ResearchServiceProcessConfigSchema.parse({
@@ -236,6 +265,7 @@ export async function launchReferenceSession(
     startsAt,
     expiresAt,
     scope,
+    ...(controlledContentScope === undefined ? {} : { controlledContent: controlledContentScope }),
   });
   const client = new LocalResearchIpcClient({
     endpoint: serviceConfig.endpoint,
@@ -252,7 +282,12 @@ export async function launchReferenceSession(
   return {
     profile,
     runtime,
-    research: { client, scope, serviceConfig },
+    research: {
+      client,
+      scope,
+      serviceConfig,
+      ...(controlledContentScope === undefined ? {} : { controlledContentScope }),
+    },
     durableAuthority: input.authority !== undefined,
     workspace: workspace.result,
     localCommand: (request) =>

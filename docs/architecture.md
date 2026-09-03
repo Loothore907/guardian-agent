@@ -290,6 +290,17 @@ process receives the strict service configuration and credential. Both peers
 validate bounded schemas and exact session, caller, mission, profile, policy, and
 lifecycle bindings. See [ADR-0004](adr/0004-session-bound-research-ipc.md).
 
+The W19 controlled-content path is a second typed operation on that same research
+boundary, not a generic fetch. Trusted configuration supplies an exact canonical
+public HTTPS fixture URL; the session reserves one request and result for Extract
+separately from Search. The credential-holding child alone constructs Tavily's
+fixed Extract request, and returns only a bounded sanitized excerpt plus digest and
+minimized untrusted provenance. Unlisted inputs fail before provider use and a
+returned URL mismatch fails closed. Tavily does not expose an internal redirect
+control, so the protected fixture must be reviewed as non-redirecting and Guardian
+does not claim general pre-provider redirect assurance. See
+[ADR-0035](adr/0035-fixed-controlled-content-extract.md).
+
 The controlled competition journey is a trusted orchestration layer above the
 typed research client and GitHub broker, not another provider or a general worker
 loop. It strictly reparses non-empty research evidence, forwards only unique
