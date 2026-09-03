@@ -43,6 +43,37 @@ and checkpoint history in `docs/development/roadmap.md`.
   stage, copy, summarize, or use it as the installation design. Never print or
   export credential-store values.
 
+## Development hygiene working agreement
+
+The user is following the repository workflow recommended by the development
+agent. The user should not have to prompt the agent after each slice to ask
+whether it is time to commit or push. The agent owns that cadence and must make
+the appropriate Git transition part of the normal development flow:
+
+1. At the end of each coherent green slice, review the exact diff, run the
+   proportionate focused checks, and create a small local checkpoint commit.
+2. Do not allow multiple completed slices to accumulate as one large uncommitted
+   worktree. If a slice cannot stand alone, state the dependency and checkpoint
+   the smallest coherent stack as soon as it is green.
+3. Do not push every local checkpoint. Push the feature branch and create or
+   update its expected review pull request when the documented remote-readiness
+   gate is met: the intended section is integrated, the complete ordinary gate
+   passes, required protected evidence is captured, claims and handoff are
+   current, and the bounded secret/artifact audit is clean.
+4. Treat this as the user's standing direction for routine local checkpoint
+   commits and the feature-branch push/review transition at that gate. Report the
+   actions and results; do not shift responsibility for normal checkpoint timing
+   back to the user through repeated permission prompts.
+
+For the current C6 section, the remote-readiness gate is not yet met because
+competition-session startup, executable dispatch, and the protected live journey
+remain. The next session should continue locally through those steps, then push
+the completed branch and open or update its review PR when the gate passes.
+
+This standing workflow does not authorize merge, release, publication,
+deployment, remote-setting changes, destructive recovery, credential disclosure,
+or material scope expansion. Those actions still require specific direction.
+
 ## Settled architecture
 
 ADR-0015 supersedes ADR-0011 only where ADR-0011 assumed a third-party coding
@@ -472,10 +503,10 @@ archive, binary, log, key, certificate, or environment files and no unexpected
 untracked roots. `.env.local` remains ignored. A recognizable-secret pattern scan
 reported only deliberate fixtures in six `*.test.ts` files; no production or
 documentation path matched. This local check is not a substitute for repository
-secret scanning and remote CI after an explicitly authorized commit and push. The
-GitHub refresh endpoint's documented HTTP 500 and the absence of a new live-provider
-run are C6 residuals; they do not block a local checkpoint because no broader
-guarantee is claimed.
+secret scanning and remote CI after the documented remote-readiness gate and
+branch push. The GitHub refresh endpoint's documented HTTP 500 and the absence of
+a new live-provider run are C6 residuals; they do not block a local checkpoint
+because no broader guarantee is claimed.
 
 Previously captured protected evidence still records successful Windows
 Credential Manager isolation, Tavily research, Qwen mission brief, Nemotron
