@@ -38,12 +38,14 @@ and checkpoint history in `docs/development/roadmap.md`.
 - **Checkpoint state:** the repository now records W5 in `4a064a1`, W6-W8 in
   `f341b96`, W9-W11 in `f6087d4`, W12-W13 in `90da76b`, W14-W18 in `aa5e601`,
   the deterministic W19 boundary in `e8e054f`, W20-W23 in `48b082d`, and the
-  generated lockfile correction in `9acab1f`. PR #14 is open, mergeable, and green
-  against `main`; issue #13 remains open. No main-repository merge, release,
-  deployment, or publication followed.
-- **Current worktree:** the last non-documentation tip is `9acab1f`; before this
-  handoff-only closeout it was clean, tracking
-  `origin/codex/13-c6-durable-authorization-broker`, with no divergence.
+  generated lockfile correction in `9acab1f`; its handoff head is `b9497a9`.
+  PR #14 is open, mergeable, and green against `main`; issue #13 remains open. No
+  main-repository merge, release, deployment, or publication followed.
+- **Phase-1 review checkpoint:** review started from clean, synchronized head
+  `b9497a9`. The approved branch update contains a fail-closed broker correction,
+  its regression tests, the C6 review matrix, claim/roadmap reconciliation, and
+  patch hygiene. Restarting Codex restored the approval bridge needed for the
+  authorized checkpoint workflow. PR #14 remains unmerged.
   The current follow-up adds the commit-pinned public fixture configuration and a
   protected-live Search/Extract and no-effect denial harness. W20's first assembled
   attempt exposed the missing durable exposure-registration link and failed closed
@@ -65,8 +67,8 @@ and checkpoint history in `docs/development/roadmap.md`.
   checkpointed as `48b082d`, pushed, and open for review in PR #14. The first CI
   run exposed stale workspace importer entries in `pnpm-lock.yaml` before tests.
   The lockfile-only correction passes offline frozen install and the exact
-  `pnpm check` command locally. Corrected remote CI passed at `9acab1f` in 1m45s.
-  PR #14 currently has no review or comments and remains unmerged.
+  `pnpm check` command locally. Final remote CI passed at `b9497a9` in 2m14s.
+  PR #14 had no reviews or comments at the Phase-1 refresh and remains unmerged.
 - **Secret caution:** `.env.local` is ignored development input. Never print,
   stage, copy, summarize, or use it as the installation design. Never print or
   export credential-store values.
@@ -98,10 +100,12 @@ gate: the assembled no-effect journey, separately authorized exact disposable
 effect, protected failure review, complete ordinary gate, bounded secret/artifact
 audit, and final changed-surface review pass. Checkpoint `48b082d` is pushed and
 PR #14 is open; its narrow generated-lockfile correction and remote CI are green.
-This is the recommended handoff seam: review and merge governance are cleanly
-separated from the next implementation slice. Successful automatic GitHub
-refresh, WebAuthn, platform parity/containment, and the full single-invocation
-competition coordinator remain explicit limitations.
+Phase-1 review then identified one final approval-consumption transport exception
+that escaped the broker's typed fail-closed result. The local correction returns
+`audit_unavailable`, never issues the merge, preserves consumed state after a lost
+response, rejects retry as replay, and sanitizes the injected secret fixture. The
+review matrix now distinguishes the intended-Linux C6 blocker from later WebAuthn,
+worker-dispatch, coordinator, and C7 evidence.
 
 This standing workflow does not authorize merge, release, publication,
 deployment, remote-setting changes, destructive recovery, credential disclosure,
@@ -710,35 +714,57 @@ the nested timeout hierarchy. W22's single-session assembled no-effect journey n
 passes. W23's separately authorized exact disposable effect also passes. The
 complete ordinary gate and bounded secret/artifact review are green with no
 blocking finding. Checkpoint `48b082d` is pushed and PR #14 is open; the next gate
-is review; corrected remote CI passed at `9acab1f`. Track B is locked at the design level in
-ADR-0034: a public fixed/rate-limited demo and a separate authenticated piloted
-demo over the same enforcement core. OpenAI backup qualification and
-worker-visible research/GitHub dispatch remain separate queued slices; neither
-was started in this session.
+is branch-update governance after local review; remote CI passed at `b9497a9` in
+2m14s. Track B is locked at the design level in ADR-0034: a public
+fixed/rate-limited demo and a separate authenticated piloted demo over the same
+enforcement core. OpenAI backup qualification and worker-visible research/GitHub
+dispatch remain separate queued slices; neither was started in this session.
+
+### Phase-1 PR review result
+
+The 2026-09-03 review refreshed PR #14 at `b9497a9`: it was open, mergeable,
+green, and had no reviews or comments. The review did not repeat W20-W23 protected
+providers or any GitHub effect. The exact C6 disposition is recorded in
+[`c6-pr14-review-matrix.md`](evidence/c6-pr14-review-matrix.md): seven criteria
+pass, four are partial because their required evidence scope includes Linux or a
+protected live corpus, and the intended-Linux criterion is open.
+
+The code review found one actionable error path. A rejection from the authority
+client during final atomic approval consumption could escape `GitHubBroker.execute`
+instead of returning a typed denial. The local correction fails closed with
+`audit_unavailable`, performs no merge, and covers both pre-commit failure and a
+committed-consumption/lost-response uncertainty. A retry after the uncertain case
+is rejected as `approval_replayed`.
+
+The complete ordinary gate passes locally: Prettier, ESLint, TypeScript, 61
+Vitest files / 364 tests, seven SQLite spike tests with the expected Windows POSIX
+permission skip, two reset-planner tests, 176 modules / 354 dependency edges, and
+the production Vite build. `git diff --check main` is clean. The review slice is
+the approved Phase-1 branch checkpoint; its PR description should point reviewers
+to the matrix and must not present C6 as Passed.
 
 ### Recommended next-session sequence
 
-1. Start from PR #14 at `9acab1f`; confirm its head, green CI, mergeability, and
-   any new review feedback. Do not rerun protected providers merely to reproduce
-   already captured W20-W23 evidence.
-2. Review the PR against the current claim matrix. If the user separately
-   authorizes merge, squash-merge PR #14, verify the resulting `main` commit and
-   post-merge CI, and update the handoff with the immutable result.
-3. Keep issue #13 open unless every C6 exit criterion is satisfied or remaining
+1. Obtain human review appropriate to PR #14's 284-file pre-review scope. Do not
+   rerun protected providers merely to reproduce captured evidence. If the user
+   separately authorizes merge, squash-merge PR #14, verify the resulting `main`
+   commit and post-merge CI, and update the handoff with the immutable result.
+2. Keep issue #13 open unless every C6 exit criterion is satisfied or remaining
    criteria are explicitly split into named follow-up issues with roadmap/claim
    updates. A merged broker-core PR is not by itself proof that all of C6 passed.
-4. Perform the C6 residual disposition before starting C7: the strongest next
+3. Perform the C6 residual disposition before starting C7: the strongest next
    implementation slice is the intended self-hosted Linux peer-identity, database
    permission, local credential-resolution, and narrow GitHub read/merge proof.
    Do not silently defer that current C6 exit criterion.
-5. Keep the reproducible GitHub refresh `HTTP 500` as an external blocker with
+4. Keep the reproducible GitHub refresh `HTTP 500` as an external blocker with
    fresh attended enrollment as the bounded fallback. Do not spin on retries or
    weaken the refresh contract. Keep WebAuthn in the later user-verifying approval
    slice, and keep worker-visible research/GitHub dispatch and the full
    single-invocation coordinator as separately scoped evidence.
-6. After the C6 residual decision, reconcile the formal C7 status with the
-   Nemotron work already implemented and evidenced in W8/W21/W22 before creating
-   new model-risk code.
+5. C7 is now honestly marked **In progress**. After the C6 residual decision,
+   implement only its missing evidence: worker-generated polluted-content
+   dispatch, the false/missed-escalation report, intended-Linux containment, and
+   hosted/repeated evidence. Do not rebuild already evidenced W8/W21/W22 behavior.
 
 ### Stop/go rules
 
@@ -778,10 +804,10 @@ was started in this session.
   to Cloudflare nameservers. This was not refreshed during W6-W14 and is not
   evidence of an application deployment, valid TLS, or WebAuthn origin.
 - Main-repository PR #14 is open from
-  `codex/13-c6-durable-authorization-broker`. Its implementation/evidence tip
-  `9acab1fac2eacd2260c1e1c92d423f87746e48a6` is mergeable against `main` and has
-  green CI; the handoff-only closeout follows on the same PR. At the last refresh
-  it had no reviews or comments. Issue #13 remains open.
+  `codex/13-c6-durable-authorization-broker`. The Phase-1 review started from
+  remote head `b9497a9b7518a71c403dc10b4ee96b205a267502`, which was mergeable
+  against `main` with green CI and no reviews or comments. The approved review
+  checkpoint follows on the same feature branch. Issue #13 remains open.
 
 ## Verification at this transition
 
@@ -790,8 +816,8 @@ The current ordinary component set passes on this Windows host:
 - TypeScript build and typecheck;
 - ESLint and Prettier checks;
 - dependency boundaries: 176 modules and 354 dependencies, no violations;
-- Vitest: 61 files and 362 tests passed; three protected files and five protected
-  tests skipped, for 64 files / 367 tests total;
+- Vitest: 61 files and 364 tests passed; three protected files and five protected
+  tests skipped, for 64 files / 369 tests total;
 - SQLite authority spike: seven passed and the expected POSIX permission test
   skipped on Windows;
 - deterministic demo reset planner: two passed;
@@ -804,7 +830,7 @@ supervised exact W3 local-command/result/final-turn path with durable budget
 consumption under the W4 success-result contract. It was not rerun for W5-W14.
 The protected Tavily/Nemotron/GitHub journey was also not run in W6-W14.
 
-The last `git diff --check` was clean. The desktop `pnpm` wrapper's supply-chain
+The Phase-1 `git diff --check main` is clean. The desktop `pnpm` wrapper's supply-chain
 metadata check attempted blocked registry access, so the same frozen `check`
 components were run directly with the pinned bundled Node and repository binaries;
 all passed. The protected runtime passed unchanged during W4 with approved WSL
@@ -824,9 +850,11 @@ no unexpected untracked roots. `.env.local` remains ignored. The changed-line
 secret-pattern scan found only one deliberate fake provider credential in a
 research-service failure test; no production or documentation path matched.
 Repository secret scanning and remote CI remain independent review signals;
-PR #14's corrected remote CI passed at `9acab1f` in 1m45s. The GitHub refresh
-endpoint's documented HTTP 500, WebAuthn, platform parity, and the
-single-invocation coordinator remain C6 residuals; no broader guarantee is claimed.
+PR #14's final remote CI passed at `b9497a9` in 2m14s. The GitHub refresh
+endpoint's documented HTTP 500 remains an operational limitation. Intended-Linux
+peer identity, database permissions, local credential resolution, and narrow
+GitHub read/merge remain the C6 blocker. WebAuthn and the single-invocation
+coordinator remain later evidence slices; no broader guarantee is claimed.
 
 Previously captured protected evidence still records successful Windows
 Credential Manager isolation, Tavily research, Qwen mission brief, Nemotron

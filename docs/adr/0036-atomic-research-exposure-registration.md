@@ -56,4 +56,3 @@ The research service receives one additional narrow authority operation:
 - Exposure registration proves temporal availability, not model causation.
 - Worker-visible research, signal classification, hosted audit presentation, and
   arbitrary exposure ingestion remain outside this decision.
-

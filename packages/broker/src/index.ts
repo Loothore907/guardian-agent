@@ -481,15 +481,20 @@ export class GitHubBroker {
     ) {
       return await deny("approval_mismatch");
     }
-    const consumption = await this.#authority.consumeApproval({
-      approvalId: mergeApproval.approvalId,
-      nonce: mergeApproval.nonce,
-      requestDigest: finalDigest,
-      sessionId: finalRequest.sessionId,
-      callerId: finalRequest.callerId,
-      connectionId: finalRequest.connectionId,
-      policyVersion: finalRequest.policyVersion,
-    });
+    let consumption: Awaited<ReturnType<AuthorityClient["consumeApproval"]>>;
+    try {
+      consumption = await this.#authority.consumeApproval({
+        approvalId: mergeApproval.approvalId,
+        nonce: mergeApproval.nonce,
+        requestDigest: finalDigest,
+        sessionId: finalRequest.sessionId,
+        callerId: finalRequest.callerId,
+        connectionId: finalRequest.connectionId,
+        policyVersion: finalRequest.policyVersion,
+      });
+    } catch {
+      return await deny("audit_unavailable");
+    }
     if (consumption !== "consumed") {
       if (consumption === "replayed") return await deny("approval_replayed");
       if (consumption === "expired") return await deny("approval_expired");

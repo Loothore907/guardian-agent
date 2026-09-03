@@ -579,6 +579,61 @@ describe("GitHub broker", () => {
     store.close();
   });
 
+  it("fails closed without merging when final approval consumption is unavailable", async () => {
+    const { store, request, approval } = await fixture();
+    const authority = authorityClient(store);
+    const consumeApproval = vi.fn().mockRejectedValue(new Error(TOKEN));
+    const fetchMock = githubFetch();
+    const broker = new GitHubBroker({ ...authority, consumeApproval }, credentials, {
+      guardian: preservingGuardian,
+      fetch: fetchMock,
+      now: () => NOW,
+    });
+
+    await expect(broker.execute({ request, approval })).resolves.toEqual({
+      ok: false,
+      code: "audit_unavailable",
+    });
+    expect(consumeApproval).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(store.getApprovalState(IDS.approval)).toBe("available");
+    expect(JSON.stringify(store.getAuthorityContext(IDS.session))).not.toContain(TOKEN);
+    store.close();
+  });
+
+  it("does not merge or retry when approval consumption commits but its response is lost", async () => {
+    const { store, request, approval } = await fixture();
+    const authority = authorityClient(store);
+    const consumeApproval = vi.fn(
+      async (input: Parameters<AuthorityClient["consumeApproval"]>[0]) => {
+        expect(await authority.consumeApproval(input)).toBe("consumed");
+        throw new Error(TOKEN);
+      },
+    );
+    const fetchMock = githubFetch();
+    const broker = new GitHubBroker({ ...authority, consumeApproval }, credentials, {
+      guardian: preservingGuardian,
+      fetch: fetchMock,
+      now: () => NOW,
+    });
+
+    await expect(broker.execute({ request, approval })).resolves.toEqual({
+      ok: false,
+      code: "audit_unavailable",
+    });
+    expect(store.getApprovalState(IDS.approval)).toBe("consumed");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await expect(broker.execute({ request, approval })).resolves.toEqual({
+      ok: false,
+      code: "approval_replayed",
+    });
+    expect(consumeApproval).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(store.getAuthorityContext(IDS.session))).not.toContain(TOKEN);
+    store.close();
+  });
+
   it("keeps the nonce consumed when the merge outcome fails after the adapter boundary", async () => {
     const { store, request, approval } = await fixture();
     const fetchMock = githubFetch(HEAD, 500);

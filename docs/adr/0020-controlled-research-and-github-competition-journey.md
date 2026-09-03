@@ -60,4 +60,3 @@ arbitrary returned text is never reflected through the public journey result.
   end-to-end evidence. Those remain separate attachment and assurance gates.
 - A persistent multi-turn worker loop remains unnecessary for this competition
   path and is still unimplemented.
-
