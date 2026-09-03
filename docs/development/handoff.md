@@ -31,16 +31,14 @@ and checkpoint history in `docs/development/roadmap.md`.
   research/GitHub competition journey before a generalized bounded worker loop.
   W5 implements that fixed ordering in trusted orchestration while preserving
   W3/W4's one-request, two-turn lifecycle.
-- **Checkpoint state:** the user authorized and the repository created local
-  commit `4a064a1` (`feat: orchestrate controlled competition journey`) for W5 on
-  top of W4 checkpoint `2de8d21`. No push, pull request, merge,
+- **Checkpoint state:** the repository now records W5 in `4a064a1`, W6-W8 in
+  `f341b96`, W9-W11 in `f6087d4`, and W12-W13 in `90da76b`. The complete ordinary
+  gate passed again after those checkpoints. No push, pull request, merge,
   publication, release, or other remote mutation followed.
-- **Current worktree:** W6 lifecycle attachment, W7 broker IPC, W8 separate
-  Guardian action-risk IPC, W9 broker-process bootstrap, and W10 research-process
-  bootstrap plus W11 three-child composition, W12 activated-session builder, and
-  W13 exact CLI ceremony code, tests, ADRs, evidence, and documentation are
-  intentionally uncommitted. The complete local gate is green; review and explicit
-  commit direction remain.
+- **Current worktree:** the W6-W13 implementation, tests, ADRs, evidence, and
+  integrated documentation are locally checkpointed. Competition-session startup
+  and executable CLI dispatch remain the next implementation slice; protected
+  provider evidence and remote review follow it.
 - **Secret caution:** `.env.local` is ignored development input. Never print,
   stage, copy, summarize, or use it as the installation design. Never print or
   export credential-store values.
@@ -407,16 +405,14 @@ filesystem, credential, network, lifecycle, and authority evidence.
 
 ## Next implementation slices
 
-1. Review the verified W6-W13 diff and create a local checkpoint only after explicit
-   user authorization. Stop before any remote operation unless separately directed.
-2. Add trusted competition startup and executable dispatch: construct the bounded
+1. Add trusted competition startup and executable dispatch: construct the bounded
    research-capable mission with a narrower worker profile, attach the generated
    demo connection and research endpoint, construct the exact unsafe/legitimate
    requests from fixed deployment input, then call only the W13 ceremony.
-3. Capture protected live worker, pre-activation, journey, and
+2. Capture protected live worker, pre-activation, journey, and
    Nemotron-through-broker
    evidence without logging provider content or credentials.
-4. Resume the controlled Extract/adversarial journey, WebAuthn ceremony, Linux
+3. Resume the controlled Extract/adversarial journey, WebAuthn ceremony, Linux
    parity, and C8 experience work in dependency order.
 
 ## External state and known blockers
@@ -467,9 +463,9 @@ metadata check attempted blocked registry access, so the same frozen `check`
 components were run directly with the pinned bundled Node and repository binaries;
 all passed. The protected runtime passed unchanged during W4 with approved WSL
 access and was not rerun for W5-W13 because those slices did not change the
-executor path. No live credentialed provider test ran during W6-W13. The current
-local checkpoint is `4a064a1`; W6-W13 remain uncommitted, and no push, publish,
-release, or other remote mutation followed that checkpoint.
+executor path. No live credentialed provider test ran during W6-W13. The W6-W13
+implementation tip is `90da76b`; the work is locally checkpointed, and no push,
+publish, release, or other remote mutation followed those checkpoints.
 
 A refreshed bounded commit-readiness audit found no changed or untracked database,
 archive, binary, log, key, certificate, or environment files and no unexpected
