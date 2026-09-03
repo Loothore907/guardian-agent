@@ -7,9 +7,12 @@
   },
   "include": ["src/**/*.ts"],
   "references": [
+    { "path": "../authority-service" },
+    { "path": "../../packages/authority-client" },
     { "path": "../../packages/contracts" },
     { "path": "../../packages/executor" },
     { "path": "../../packages/research" },
-    { "path": "../../packages/session" }
+    { "path": "../../packages/session" },
+    { "path": "../../packages/workspace" }
   ]
 }

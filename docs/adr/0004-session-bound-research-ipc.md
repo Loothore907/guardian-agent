@@ -59,7 +59,7 @@ agent.
   results, logs, audit events, process arguments, or committed fixtures.
 - Budget, journey, endpoint, and capability state remain in-memory and single-host
   for C5. Restart recovery and durable audit persistence remain C6 work.
-- Authenticated remote MCP transport and hosted Linux parity remain separate open
+- Authenticated remote MCP transport and self-hosted Linux parity remain separate open
   decisions. This ADR does not claim resistance to a compromised local host.
 
 ## Rejected alternatives

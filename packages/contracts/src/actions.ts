@@ -40,6 +40,64 @@ export const ResearchRequestSchema = z
   });
 export type ResearchRequest = DeepReadonly<z.infer<typeof ResearchRequestSchema>>;
 
+export const ControlledPublicHttpsUrlSchema = PublicHttpUrlSchema.refine((value) => {
+  const parsed = new URL(value);
+  const hostname = parsed.hostname.toLowerCase();
+  return (
+    parsed.protocol === "https:" &&
+    parsed.search === "" &&
+    parsed.hash === "" &&
+    hostname.includes(".") &&
+    hostname !== "localhost" &&
+    !hostname.endsWith(".localhost") &&
+    !hostname.endsWith(".local") &&
+    !hostname.endsWith(".internal") &&
+    !/^\d{1,3}(?:\.\d{1,3}){3}$/u.test(hostname) &&
+    !hostname.includes(":")
+  );
+}, "controlled content URL must be a canonical public HTTPS URL without query or fragment");
+
+export const ControlledContentRequestSchema = z.strictObject({
+  url: ControlledPublicHttpsUrlSchema,
+});
+export type ControlledContentRequest = DeepReadonly<z.infer<typeof ControlledContentRequestSchema>>;
+
+export const ControlledContentScopeSchema = z
+  .strictObject({
+    allowedUrls: z.array(ControlledPublicHttpsUrlSchema).min(1).max(4),
+    allowedDomains: z.array(z.hostname()).min(1).max(4),
+    maxContentCharacters: z.number().int().min(1).max(1_000),
+    remainingRequests: z.number().int().min(0).max(16),
+  })
+  .superRefine((scope, context) => {
+    addDuplicateIssue(scope.allowedUrls, context, ["allowedUrls"]);
+    addDuplicateIssue(
+      scope.allowedDomains.map((domain) => domain.toLowerCase()),
+      context,
+      ["allowedDomains"],
+    );
+    const domains = new Set(scope.allowedDomains.map((domain) => domain.toLowerCase()));
+    for (const [index, url] of scope.allowedUrls.entries()) {
+      if (!domains.has(new URL(url).hostname.toLowerCase())) {
+        context.addIssue({
+          code: "custom",
+          message: "controlled content URL must match an allowed domain",
+          path: ["allowedUrls", index],
+        });
+      }
+    }
+  });
+export type ControlledContentScope = DeepReadonly<z.infer<typeof ControlledContentScopeSchema>>;
+
+export const ControlledContentProviderResponseSchema = z.strictObject({
+  requestId: ProviderRequestIdSchema,
+  url: ControlledPublicHttpsUrlSchema,
+  content: z.string().min(1).max(100_000),
+});
+export type ControlledContentProviderResponse = DeepReadonly<
+  z.infer<typeof ControlledContentProviderResponseSchema>
+>;
+
 export const ResearchProviderResultSchema = z.strictObject({
   url: z.string().min(1).max(2_048),
   title: z.string().min(1).max(1_000),
@@ -223,3 +281,55 @@ export const ResearchProvenanceEventSchema = z
     }
   });
 export type ResearchProvenanceEvent = DeepReadonly<z.infer<typeof ResearchProvenanceEventSchema>>;
+
+export const ControlledContentProvenanceEventSchema = z
+  .strictObject({
+    schemaVersion: ContractVersionSchema,
+    eventId: OpaqueIdSchema,
+    sessionId: OpaqueIdSchema,
+    sequence: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+    operation: z.literal("guardian.research"),
+    retrievalKind: z.literal("controlled_extract"),
+    requestDigest: Sha256DigestSchema,
+    destination: PublicDomainDestinationSchema,
+    sourceUrl: ControlledPublicHttpsUrlSchema,
+    sourceContentDigest: Sha256DigestSchema,
+    contentTrust: z.literal("untrusted_public_content"),
+    retrievedAt: TimestampSchema,
+    providerRequestId: ProviderRequestIdSchema,
+  })
+  .superRefine((event, context) => {
+    if (
+      new URL(event.sourceUrl).hostname.toLowerCase() !== event.destination.hostname.toLowerCase()
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "controlled source URL must match the recorded destination",
+        path: ["sourceUrl"],
+      });
+    }
+  });
+export type ControlledContentProvenanceEvent = DeepReadonly<
+  z.infer<typeof ControlledContentProvenanceEventSchema>
+>;
+
+export const ControlledContentJourneyResultSchema = z
+  .strictObject({
+    evidence: ResearchEvidenceSchema,
+    provenance: ControlledContentProvenanceEventSchema,
+  })
+  .superRefine((journey, context) => {
+    if (
+      journey.evidence.sourceUrl !== journey.provenance.sourceUrl ||
+      journey.evidence.sourceContentDigest !== journey.provenance.sourceContentDigest
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "controlled evidence must match its provenance event",
+        path: ["provenance"],
+      });
+    }
+  });
+export type ControlledContentJourneyResult = DeepReadonly<
+  z.infer<typeof ControlledContentJourneyResultSchema>
+>;

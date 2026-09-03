@@ -4,6 +4,10 @@ import { basename, dirname, join, resolve } from "node:path";
 import { createConnection, createServer, type Server, type Socket } from "node:net";
 
 import {
+  ControlledContentIpcRequestSchema,
+  ControlledContentIpcResponseSchema,
+  ControlledContentJourneyResultSchema,
+  ControlledContentRequestSchema,
   OpaqueIdSchema,
   ResearchBudgetSnapshotSchema,
   ResearchIpcRequestSchema,
@@ -13,6 +17,9 @@ import {
   ResearchRequestSchema,
   ResearchServiceProcessConfigSchema,
   TimestampSchema,
+  type ControlledContentIpcRequest,
+  type ControlledContentJourneyResult,
+  type ControlledContentRequest,
   type ResearchBudgetSnapshot,
   type ResearchIpcFailureReason,
   type ResearchIpcRequest,
@@ -70,7 +77,10 @@ function capabilitiesMatch(actual: string, expected: string): boolean {
 }
 
 function writeResponse(socket: Socket, response: unknown): void {
-  const parsed = ResearchIpcResponseSchema.parse(response);
+  const research = ResearchIpcResponseSchema.safeParse(response);
+  const parsed = research.success
+    ? research.data
+    : ControlledContentIpcResponseSchema.parse(response);
   socket.end(`${JSON.stringify(parsed)}\n`);
 }
 
@@ -118,9 +128,20 @@ export type ResearchIpcHandler = (
   requestedAt: string,
 ) => Promise<ResearchIpcHandlerResult>;
 
+export interface ControlledContentIpcHandlerResult {
+  readonly result: ControlledContentJourneyResult;
+  readonly budget: ResearchBudgetSnapshot;
+}
+
+export type ControlledContentIpcHandler = (
+  request: ControlledContentRequest,
+  requestedAt: string,
+) => Promise<ControlledContentIpcHandlerResult>;
+
 export class LocalResearchIpcServer {
   readonly #config: ResearchServiceProcessConfig;
   readonly #handler: ResearchIpcHandler;
+  readonly #controlledContentHandler: ControlledContentIpcHandler | undefined;
   readonly #now: () => string;
   readonly #server: Server;
   #listening = false;
@@ -128,11 +149,15 @@ export class LocalResearchIpcServer {
   constructor(
     configValue: unknown,
     handler: ResearchIpcHandler,
-    options: { readonly now?: () => string } = {},
+    options: {
+      readonly now?: () => string;
+      readonly controlledContentHandler?: ControlledContentIpcHandler;
+    } = {},
   ) {
     const config = ResearchServiceProcessConfigSchema.parse(configValue);
     this.#config = { ...config, endpoint: assertLocalResearchEndpoint(config.endpoint) };
     this.#handler = handler;
+    this.#controlledContentHandler = options.controlledContentHandler;
     this.#now = options.now ?? (() => new Date().toISOString());
     this.#server = createServer((socket) => void this.#serve(socket));
   }
@@ -163,10 +188,12 @@ export class LocalResearchIpcServer {
 
   async #serve(socket: Socket): Promise<void> {
     socket.setTimeout(DEFAULT_IPC_TIMEOUT_MS, () => socket.destroy());
-    let request: ResearchIpcRequest;
+    let request: ResearchIpcRequest | ControlledContentIpcRequest;
     try {
       const frame = await readJsonLine(socket, MAX_IPC_REQUEST_BYTES);
-      request = ResearchIpcRequestSchema.parse(JSON.parse(frame) as unknown);
+      const value = JSON.parse(frame) as unknown;
+      const search = ResearchIpcRequestSchema.safeParse(value);
+      request = search.success ? search.data : ControlledContentIpcRequestSchema.parse(value);
     } catch {
       writeResponse(socket, { schemaVersion: 1, ok: false, error: "invalid_request" });
       return;
@@ -203,6 +230,25 @@ export class LocalResearchIpcServer {
     }
 
     try {
+      if ("operation" in request) {
+        if (
+          this.#config.controlledContent === undefined ||
+          this.#controlledContentHandler === undefined
+        ) {
+          throw new ResearchIpcError("url_not_allowed");
+        }
+        const handled = await this.#controlledContentHandler(request.request, evaluatedAt);
+        const result = ControlledContentJourneyResultSchema.parse(handled.result);
+        const budget = ResearchBudgetSnapshotSchema.parse(handled.budget);
+        if (
+          budget.sessionId !== this.#config.sessionId ||
+          result.provenance.sessionId !== this.#config.sessionId
+        ) {
+          throw new TypeError("controlled content service returned a mismatched session binding");
+        }
+        writeResponse(socket, { schemaVersion: 1, ok: true, result, budget });
+        return;
+      }
       const handled = await this.#handler(request.request, evaluatedAt);
       const result = ResearchJourneyResultSchema.parse(handled.result);
       const budget = ResearchBudgetSnapshotSchema.parse(handled.budget);
@@ -239,7 +285,16 @@ export interface ResearchServiceClient {
   search(request: ResearchRequest, requestedAt: string): Promise<ResearchIpcHandlerResult>;
 }
 
-export class LocalResearchIpcClient implements ResearchServiceClient {
+export interface ControlledContentServiceClient {
+  extract(
+    request: ControlledContentRequest,
+    requestedAt: string,
+  ): Promise<ControlledContentIpcHandlerResult>;
+}
+
+export class LocalResearchIpcClient
+  implements ResearchServiceClient, ControlledContentServiceClient
+{
   readonly #endpoint: string;
   readonly #binding: Omit<ResearchIpcRequest, "request" | "requestedAt">;
   readonly #timeoutMs: number;
@@ -298,6 +353,42 @@ export class LocalResearchIpcClient implements ResearchServiceClient {
       if (
         response.budget.sessionId !== this.#binding.sessionId ||
         response.result.provenance.some((event) => event.sessionId !== this.#binding.sessionId)
+      ) {
+        throw new ResearchIpcError("service_unavailable");
+      }
+      return response;
+    } catch (error) {
+      if (error instanceof ResearchIpcError) throw error;
+      throw new ResearchIpcError("service_unavailable");
+    } finally {
+      socket.destroy();
+    }
+  }
+
+  async extract(
+    requestValue: ControlledContentRequest,
+    requestedAtValue: string,
+  ): Promise<ControlledContentIpcHandlerResult> {
+    const request = ControlledContentRequestSchema.parse(requestValue);
+    const requestedAt = TimestampSchema.parse(requestedAtValue);
+    const frame = ControlledContentIpcRequestSchema.parse({
+      ...this.#binding,
+      requestedAt,
+      operation: "controlled_extract",
+      request,
+    });
+    const socket = createConnection(this.#endpoint);
+    socket.setTimeout(this.#timeoutMs, () => socket.destroy(new Error("research IPC timeout")));
+    try {
+      const responsePromise = readJsonLine(socket, MAX_IPC_RESPONSE_BYTES);
+      socket.write(`${JSON.stringify(frame)}\n`);
+      const response = ControlledContentIpcResponseSchema.parse(
+        JSON.parse(await responsePromise) as unknown,
+      );
+      if (!response.ok) throw new ResearchIpcError(response.error);
+      if (
+        response.budget.sessionId !== this.#binding.sessionId ||
+        response.result.provenance.sessionId !== this.#binding.sessionId
       ) {
         throw new ResearchIpcError("service_unavailable");
       }

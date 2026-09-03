@@ -15,6 +15,7 @@ This directory separates product intent from verified implementation evidence.
 - [Current development handoff](development/handoff.md)
 - [Development roadmap](development/roadmap.md)
 - [Repository strategy](development/repository-strategy.md)
+- [Launch and commercialization readiness plan](development/launch-commercialization-plan.md)
 - [CI policy](development/ci-policy.md)
 - [Competition plan](competition-plan.md)
 - [Submission checklist](competition/submission-checklist.md)

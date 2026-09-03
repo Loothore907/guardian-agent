@@ -1,7 +1,22 @@
-import type { ToolProposal } from "@guardian/contracts";
+import {
+  GuardianEvaluationSchema,
+  GuardianRiskEnvelopeSchema,
+  type GuardianEvaluation,
+  type GuardianRiskEnvelope,
+} from "@guardian/contracts";
 
-export interface GuardianRiskEnvelope {
-  readonly proposal: ToolProposal;
-  readonly deterministicFloor: "allow" | "confirm" | "step_up" | "deny";
-  readonly containsCredentials: false;
+export * from "./action-ipc.js";
+export * from "./setup-ipc.js";
+export type {
+  GuardianEvaluation,
+  GuardianRiskEnvelope,
+  GuardianRiskSignal,
+} from "@guardian/contracts";
+
+export function parseGuardianRiskEnvelope(value: unknown): GuardianRiskEnvelope {
+  return GuardianRiskEnvelopeSchema.parse(value);
+}
+
+export function parseGuardianEvaluation(value: unknown): GuardianEvaluation {
+  return GuardianEvaluationSchema.parse(value);
 }

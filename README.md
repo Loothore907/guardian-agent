@@ -1,27 +1,224 @@
-# Guardian Agent
+# Agentic Guardian
 
-Guardian Agent is a capability firewall and task-scoped runtime for AI agents. It lets an interaction agent research and propose useful authenticated actions without receiving raw credentials, unrestricted account authority, or unobserved external pathways in the documented reference environment.
+Agentic Guardian is an open-source, local-first capability firewall and task-scoped
+runtime for AI agents. It lets users bring their own providers and credentials
+while preventing agents and model vendors from receiving broader authority than
+the current task requires in the documented reference environment.
+
+**Mission:** keep credentials and privileged actions behind deterministic policy,
+exact-request approval, and auditable execution.
+
+The canonical domain is [`agentic-guardian.com`](https://agentic-guardian.com).
+Registration is complete; a public deployment is not yet claimed. The domain is
+intended for documentation, downloads, release metadata, and the competition
+demo—not routine credential custody.
 
 The project is being developed for the Nebius x NVIDIA Global AI Hackathon in the **Best Apps and Agents** track. The competition prototype will demonstrate one narrow, inspectable authorization flow rather than claim production-grade credential security.
 
 ## Core proposition
 
-The user defines a mission. A constrained interaction agent researches and proposes. Deterministic policy limits authority. A guardian model interprets contextual risk. The user authorizes boundary crossings. A broker executes only the exact approved operation.
+The user delegates work to a Guardian worker. The competition reference uses a
+provider-neutral native worker with a versioned coding model served by Nebius;
+future Codex, Claude Code, Cursor, or local adapters can implement the same narrow
+contract. The user or worker may draft a Guardian mission, bounded Qwen review may identify
+semantic gaps and formulate targeted questions, and deterministic Guardian code
+compiles and clamps the candidate policy. Nemotron may only preserve or increase
+scrutiny. Direct human confirmation activates the exact mission; Guardian then
+constrains the session and mediates public research and privileged proposals. The
+user authorizes later boundary crossings, and a broker executes only the exact
+approved operation.
 
 The model is not the root of trust.
 
+The selected competition experience is terminal-first: the Guardian-owned CLI
+and trusted launcher start the native worker inside the constrained runtime. The
+judge configuration uses Nebius for application hosting and all model inference:
+the coding worker, Qwen mission dialogue, and NVIDIA Nemotron risk review. It
+requires no OpenAI API key. The roles remain separated by contracts, processes,
+context projections, and budgets. A user or worker may draft the task, but only direct human confirmation of Guardian's
+normalized mission can activate or expand authority. Routine setup, session
+control, and audit stay local. A narrow web handoff may be used later for a
+human-authentication ceremony that genuinely needs an HTTPS origin, then the user
+returns to the terminal. The local one-turn post-confirmation Guardian mission-
+brief boundary is implemented. Strict pre-activation mission-draft and review
+contracts, the deterministic compiler/state machine, a credential-scoped mission-
+dialogue review call, interactive bounded clarification, setup-risk review, and
+integration of both assisted and structured reference paths with the compiler are
+implemented and tested locally. The model calls run in separate one-use supervised
+children; missing or stronger-than-confirm setup risk fails closed. Protected live
+pre-activation evidence, a generalized credential-isolated native-worker loop, trusted
+ceremony design, and cross-platform assurance remain goals.
+
+The installation, provider accounts, billing, credentials, policy, and audit data
+belong to the user. The intended setup flow stores Nebius, optional Tavily, and
+operation-specific credentials through a trusted local ceremony into the host
+operating system's credential store. The runner and models receive typed results,
+never reusable keys. The first infrastructure slice now provides provider-scoped
+contracts, deterministic fakes, trusted setup orchestration, and a tested Windows
+Credential Manager adapter. The Windows CLI now supports provider enrollment,
+non-secret status, and exact-confirmation revocation. Enrollment verifies through
+one fixed read-only provider endpoint before storage. The protected Nebius mission-
+brief and Super-to-Ultra Guardian path passes; cross-platform credential-store
+evidence remains pending. `.env.local` remains development-only.
+
 ## Current status
 
-Guardian Agent has completed its product contract, enforcement feasibility, mission
-contracts, and local C4 reference-runtime gate. The supported Windows/WSL launcher
+Agentic Guardian has completed its product contract, enforcement feasibility, mission
+contracts, C4 reference-runtime gate, and C5 bounded Tavily Search gateway. The supported Windows/WSL launcher
 now creates evidence-bound sessions with a profile-derived MCP catalog and a
 credential-free, network-disabled disposable command executor. C5 has a bounded,
 credential-holding Tavily Search service connected through a launcher-bound local
-pipe and the profile-derived MCP tool catalog. Its local implementation gate and
-protected live test pass, while commit, remote review, and merge remain. No broader
+pipe and the profile-derived MCP tool catalog; PR #12 merged it as `6cd1645` after
+local, live-provider, security-review, and remote-CI gates passed. C6 is active in
+issue #13. Its SQLite feasibility spike, production authority store, scoped
+GitHub connection metadata, sole-owner authority service, authenticated typed IPC,
+fixed-endpoint PR adapter, and exact read/merge broker path pass deterministic
+local tests. The broker no longer opens SQLite directly; the reference authority
+supervisor generates in-memory role capabilities, makes durable authority mandatory
+for sessions launched through it, and supplies a lower-assurance development
+approval issuer over the authorization role. The user-verifying WebAuthn issuer,
+Linux peer-identity evidence, successful protected GitHub automatic refresh,
+review, and remote CI remain. A deterministic fake Guardian interaction provider now produces one
+bounded mission brief behind a short-lived authenticated local IPC service. It
+cannot propose tools. Model assignments now come from a trusted, versioned role
+policy: the current competition policy pins Qwen for mission dialogue and
+Nemotron Super-to-Ultra for contextual risk, while permitting reviewed future
+policy upgrades and mechanically retaining NVIDIA Nemotron for the hackathon.
+The protected compatibility path passes; the CLI now exercises the fake assisted
+formation path by default while the same child boundaries support Qwen and
+Nemotron modes. W21 adds protected live Nemotron-through-broker evidence with an
+exact pre-effect `approval_mismatch`; protected pre-activation evidence remains.
+No broader
 security guarantee should be treated as
 implemented until it appears in [Security claims](docs/security-claims.md) with
 corresponding evidence.
+
+The first C6 credential slice adds strict Nebius, Tavily, and GitHub references,
+a deterministic store, verification-before-write setup orchestration, dependency
+rules preventing agent-side imports, fixed-origin read-only verification, an
+executable setup command, and a Windows Credential Manager adapter.
+The protected Windows probe passes with a generated credential target that is
+deleted after the test. The deterministic application-visible credential corpus
+now covers process arguments/environment, model context, SQLite, authority
+records, current log/trace surfaces, and public read/merge results. Live Nebius
+verification and successful automatic GitHub token refresh remain open. The
+authority and one-turn interaction services now run as supervised child processes
+with bounded stdin bootstrap and fixed readiness; platform peer identity and
+containment remain open. Protected GitHub enrollment, read, and merge pass;
+automatic refresh currently reaches GitHub's documented endpoint but receives a
+provider `HTTP 500`, so fresh device enrollment is the bounded fallback.
+
+[ADR-0006](docs/adr/0006-competition-authority-and-adversarial-demo.md) fixes the
+next competition target: sole-owner authority-service persistence, a narrow local
+GitHub credential boundary for a disposable demo repository, passkey-bound exact
+approval, a controlled polluted-page denial flow, and Linux runtime parity.
+The local authority-service boundary is now implemented; the remaining items are
+accepted design goals, not yet implemented guarantees.
+
+[ADR-0007](docs/adr/0007-terminal-first-session-bridge.md) fixes the interaction
+boundary: model-assisted mission drafting is untrusted until direct normalized
+human confirmation; only a Guardian-launched and verified scaffold can be
+Enforced; and the competition build does not ingest user API keys through model,
+mission, or general web-form context.
+
+[ADR-0008](docs/adr/0008-local-first-self-hosting-and-user-owned-credentials.md)
+fixes the deployment and custody model: Guardian is self-hosted, users bring and
+pay for their own provider accounts, secrets remain in local credential-holding
+services, and cloud models are replaceable adapters rather than a Guardian-
+operated service. Two model roles are defense in depth, not independent roots of
+trust; deterministic policy remains authoritative.
+
+The first local bootstrap slice now accepts objective-only draft input, derives a
+fixed no-network/no-privileged-action profile inside the supervisor, requires an
+exact digest-bound lower-assurance development confirmation, and rejects stale,
+mutated, replayed, caller-expanded, and non-interactive attempts. It does not yet
+implement the trusted web ceremony. The CLI now
+attaches a one-turn Guardian mission-brief service using a deterministic fake
+provider. The provider receives only normalized mission context and cannot propose
+or execute tools. A separate W1 native-worker boundary now accepts an exact-bound,
+one-use turn and returns either a bounded final response or a pending typed request
+through deterministic fake and fixed-origin Nebius adapters. W2 binds a
+credential-screened, Git-visible snapshot into a Guardian-owned session copy. The
+copy persists across isolated local commands, never writes back automatically,
+and is deleted on session close. W3 now independently binds one pending status or
+local-command request, reauthorizes it, atomically consumes durable authority,
+executes only against the W2 copy, and returns a sanitized exact result to a
+mandatory final second worker turn. W4 now returns an exact sanitized denial through
+that same final-turn path, durably contains ordinary violations, revokes on the
+third violation in a five-minute window, revokes replay/binding near misses
+immediately, and interrupts trusted-boundary failures. A persistent general
+worker loop remains unimplemented. W5 now fixes the competition ordering outside
+that loop: bounded research must produce non-empty session-bound provenance, an
+out-of-scope GitHub merge attempt receives no approval and must stop with the exact
+deterministic `scope_mismatch` denial, and only then may a separately exact-approved
+demo-repository merge proceed. The coordinator is locally tested; live service and
+CLI attachment remain. W6 adds a one-use supervised attachment for distinct
+research and broker child processes: concurrent/replayed runs stop, either child
+exit interrupts the journey without restart, shutdown attempts both children, and
+only fixed attachment failures are public. Service-specific process startup and
+broker IPC remain. W7 now adds that narrow broker protocol: exact canonical GitHub
+requests cross only a bounded session/caller/capability-bound local endpoint, and
+successful snapshots or merges are revalidated against the exact target and head
+on both sides. W8 adds the separate one-turn Guardian action-risk channel: the
+supervisor binds one credential-free envelope to the exact session, caller, request
+digest, capability, and lifetime; mutation, replay, and lifecycle near misses fail
+closed. W9 adds the credential-holding broker child: one strict stdin bootstrap
+binds W7, broker-role authority, W8, credential-handle, and lifetime configuration;
+raw credentials and arbitrary provider transport are not fields. Supervised
+Guardian/research attachment remains. W10 removes Tavily configuration and its raw
+API key from the research child environment: strict stdin binds the research and
+exact research-role authority lifetimes, while `tavily/default` is resolved only
+inside a child-local credential-store callback. W11 composes the fixed Guardian,
+broker, and research entrypoints into the existing one-use journey attachment;
+Guardian+broker are one monitored stack, cross-service bindings must match, and no
+process IDs or generic launcher surface are returned. W12 derives that strict
+bundle only from a captured active Enforced session, its exact legitimate merge
+request, supervisor-owned authority bindings, and the active durable connection;
+CLI input cannot supply the credential handle, lifetime, or action-risk envelope.
+W13 adds a separate exact CLI authorization ceremony: it renders the legitimate
+merge target, head, squash method, and canonical digest, then forwards only a
+fresh confirmation to a supervisor operation that derives scope, stores the
+one-use approval, runs once, closes, and returns a minimized result. W14 now wires
+the exact `guardian competition` executable path through strict named public
+deployment input, trusted competition-session startup, exact activation-bound
+request construction, both confirmations, the fixed runner, and guaranteed
+cleanup. ADR-0030 separately binds the broader confirmed mission/session ceiling
+from the narrower native-worker tool catalog. The application-level deterministic
+journey is green. W15-W18 add protected Qwen/Kimi compatibility evidence. W19 adds
+an exact controlled-content Tavily Extract boundary: one commit-pinned reviewed
+URL, fixed provider request, split Search/Extract budgets, session-bound local
+IPC, and minimized untrusted evidence. A protected user-scoped run passed real
+Tavily Search with two untrusted results and Extract with one untrusted result;
+neither the credential nor fixture text was emitted. W20 then passed an assembled
+`scope_mismatch` denial with minimized durable audit evidence. W21 passed live
+Nemotron-through-broker evaluation and stopped at `approval_mismatch` before
+approval, tool, adapter, credential, or GitHub effect. W22 combines those live
+research, deterministic-policy, model-risk, and audit boundaries in one enforced
+session, still without a GitHub effect. The disposable GitHub gate remains.
+W23 then refreshed the exact disposable target, failed closed on an unavailable
+expired credential lease, completed fresh GitHub device enrollment, passed the
+protected exact-head read, and used a separately confirmed one-use development
+approval to squash-merge only PR #2 at its authorized head. WebAuthn and the full
+single-invocation competition coordinator remain open.
+
+[ADR-0015](docs/adr/0015-nebius-native-worker-and-judge-runtime.md) selects the
+provider-neutral Nebius-native worker for the competition build while preserving
+ADR-0011's key separation: Qwen is a bounded non-authoritative Guardian dialogue
+assistant, Nemotron evaluates minimized risk, and deterministic code owns authority.
+
+[ADR-0012](docs/adr/0012-pre-activation-mission-formation.md) fixes the ordering:
+untrusted host draft, deterministic intake, bounded Qwen completeness review and
+clarification, deterministic mission compilation, separate Nemotron mission-risk
+review, exact human confirmation, and fresh constrained host launch. It also
+distinguishes contained action denial from trusted-runtime interruption.
+
+The dedicated public demonstration target is
+[`Loothore907/guardian-agent-demo`](https://github.com/Loothore907/guardian-agent-demo).
+It is configured for squash-only merges. PR #1 supplied the initial protected
+read/merge evidence. W23 refreshed the deterministic PR #2 fixture and, after a
+separate exact authorization, squash-merged it as
+`7df353afe005b74811dfcd081ac98af5695a8170`. The final user-verifying WebAuthn
+approval and complete single-invocation coordinator evidence remain.
 
 ## Security boundaries
 
@@ -82,12 +279,63 @@ pnpm test:reference-runtime
 pnpm test:session-enforcement
 # Protected and credentialed; never runs in ordinary public CI:
 pnpm test:live:tavily
+pnpm test:live:assembled-no-effect
+pnpm test:live:credentials
+pnpm test:live:nebius-models
+pnpm test:live:nemotron-broker
+pnpm test:live:native-worker
+pnpm test:live:qwen
 ```
 
 Build before using either `start` command. The reference-runtime and enforcement
 tests are Windows/WSL host checks; ordinary public CI uses deterministic,
-credential-free tests. Live Tavily and Nebius checks are explicit protected local
-operations and are not part of `pnpm check`.
+credential-free tests. Live provider checks are explicit protected local
+operations and are not part of `pnpm check`. The GitHub probe reads only
+`GUARDIAN_DEV_GITHUB_TOKEN`; it does not consume ambient `GITHUB_TOKEN` or
+`GH_TOKEN` values.
+
+Run the Guardian session prototype from the exact Git project root. The preview
+binds a credential-screened snapshot of tracked and non-ignored untracked files,
+excluding reserved `.guardian` state. Guardian works in a separate session copy;
+it does not write changes back to the source checkout and deletes the copy when
+the supervisor closes.
+
+On the supported Windows development host, credential setup is interactive:
+
+```powershell
+guardian setup nebius
+guardian setup status nebius
+guardian setup revoke nebius
+```
+
+Enrollment sends the entered credential only to the provider's fixed read-only
+verification endpoint, then stores it in Windows Credential Manager if the
+response is valid. Tavily replaces `nebius` for its typed slot. GitHub enrollment
+uses an expiring GitHub App device flow instead of pasted or ambient tokens:
+
+```powershell
+$env:GUARDIAN_GITHUB_APP_CLIENT_ID = "Iv23liP8Sq3ZEAyeIHju"
+$env:GUARDIAN_GITHUB_REPOSITORY_ID = "1352093544"
+guardian setup github
+```
+
+The GitHub App must be installed only on the intended repository with Contents
+write and Pull requests read. Guardian shows the fixed verification URL and user
+code, verifies the resulting account, and stores access and refresh tokens in
+separate Windows Credential Manager slots. Status returns only `available` or
+`missing`; revocation requires the exact provider-specific confirmation and
+deletes all three GitHub slots. Automatic refresh is implemented and passes
+deterministic failure/rotation tests, but GitHub currently returns `HTTP 500` to
+the protected device-flow refresh request. Until provider refresh succeeds, an
+operator must repeat `guardian setup github` after the roughly eight-hour access
+token lifetime; this prevents unattended long-running GitHub operation but does
+not block a freshly enrolled demo session. macOS and Linux setup remain
+unimplemented. See [ADR-0009](docs/adr/0009-github-app-device-enrollment.md).
+
+If GitHub requires a private key before enabling the initial installation,
+generate it only as a temporary bootstrap, install the App, then immediately
+delete that key from the App settings and delete the downloaded PEM. Guardian
+does not use or accept the private key.
 
 ## Contributing
 

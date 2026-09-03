@@ -1,0 +1,27 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "dist/.tsbuildinfo"
+  },
+  "include": ["src/**/*.ts"],
+  "references": [
+    { "path": "../../packages/contracts" },
+    { "path": "../../packages/canonical" },
+    { "path": "../../packages/broker" },
+    { "path": "../../packages/guardian" },
+    { "path": "../../packages/authority-client" },
+    { "path": "../../packages/interaction" },
+    { "path": "../../packages/research" },
+    { "path": "../../packages/session" },
+    { "path": "../../packages/worker" },
+    { "path": "../../packages/workspace" },
+    { "path": "../authority-service" },
+    { "path": "../authorization-service" },
+    { "path": "../interaction-service" },
+    { "path": "../worker-service" },
+    { "path": "../session-host" }
+  ]
+}

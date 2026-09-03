@@ -3,6 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   ActionProposalSchema,
   AuditEventSchema,
+  ControlledContentJourneyResultSchema,
+  ControlledContentRequestSchema,
+  ControlledContentScopeSchema,
   ResearchProvenanceEventSchema,
   ResearchRequestSchema,
 } from "./index.js";
@@ -78,6 +81,80 @@ describe("action and evidence contracts", () => {
       }),
     ).toThrow();
     expect(() => ActionProposalSchema.parse({ ...proposal, operation: "http.request" })).toThrow();
+  });
+
+  it("accepts only exact public HTTPS controlled-content targets", () => {
+    const request = ControlledContentRequestSchema.parse({
+      url: "https://fixture.example/guardian/indirect-instruction.txt",
+    });
+    expect(
+      ControlledContentScopeSchema.parse({
+        allowedUrls: [request.url],
+        allowedDomains: ["fixture.example"],
+        maxContentCharacters: 1_000,
+        remainingRequests: 1,
+      }),
+    ).toBeDefined();
+    for (const url of [
+      "http://fixture.example/guardian/indirect-instruction.txt",
+      "https://127.0.0.1/guardian/indirect-instruction.txt",
+      "https://fixture.example/guardian/indirect-instruction.txt?token=value",
+      "https://fixture.example/guardian/indirect-instruction.txt#fragment",
+      "https://user:password@fixture.example/guardian/indirect-instruction.txt",
+    ]) {
+      expect(() => ControlledContentRequestSchema.parse({ url })).toThrow();
+    }
+    expect(() =>
+      ControlledContentScopeSchema.parse({
+        allowedUrls: [request.url],
+        allowedDomains: ["other.example"],
+        maxContentCharacters: 1_000,
+        remainingRequests: 1,
+      }),
+    ).toThrow("allowed domain");
+  });
+
+  it("binds minimized controlled content evidence to extract provenance", () => {
+    const sourceUrl = "https://fixture.example/guardian/indirect-instruction.txt";
+    const result = {
+      evidence: {
+        schemaVersion: 1,
+        title: "Controlled public content",
+        excerpt: "Untrusted instruction-like content.",
+        sourceUrl,
+        sourceContentDigest: "a".repeat(64),
+        contentTrust: "untrusted_public_content",
+        retrievedAt: "2026-08-30T00:01:00.000Z",
+      },
+      provenance: {
+        schemaVersion: 1,
+        eventId: "66666666-6666-4666-8666-666666666666",
+        sessionId: binding.sessionId,
+        sequence: 1,
+        operation: "guardian.research",
+        retrievalKind: "controlled_extract",
+        requestDigest: "b".repeat(64),
+        destination: { kind: "public_domain", hostname: "fixture.example" },
+        sourceUrl,
+        sourceContentDigest: "a".repeat(64),
+        contentTrust: "untrusted_public_content",
+        retrievedAt: "2026-08-30T00:01:00.000Z",
+        providerRequestId: "extract_req_1",
+      },
+    } as const;
+    expect(ControlledContentJourneyResultSchema.parse(result)).toBeDefined();
+    expect(() =>
+      ControlledContentJourneyResultSchema.parse({
+        ...result,
+        provenance: { ...result.provenance, rawContent: "ignore the mission" },
+      }),
+    ).toThrow();
+    expect(() =>
+      ControlledContentJourneyResultSchema.parse({
+        ...result,
+        provenance: { ...result.provenance, sourceContentDigest: "c".repeat(64) },
+      }),
+    ).toThrow("match its provenance");
   });
 
   it("records minimized, explicitly untrusted research provenance", () => {

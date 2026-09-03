@@ -2,7 +2,7 @@
 
 ## Competition-period statement
 
-The Guardian Agent concept and preliminary architecture existed before software implementation. The submitted software project, repository, integrations, tests, interface, evaluation fixtures, and demonstration are being created during the Nebius x NVIDIA Global AI Hackathon submission period.
+The Agentic Guardian concept and preliminary architecture existed before software implementation. The submitted software project, repository, integrations, tests, interface, evaluation fixtures, and demonstration are being created during the Nebius x NVIDIA Global AI Hackathon submission period. The project used the working name Guardian Agent before adopting Agentic Guardian on August 31, 2026.
 
 ## Timeline
 
@@ -10,6 +10,10 @@ The Guardian Agent concept and preliminary architecture existed before software 
 - August 28, 2026 - concept document reviewed; local empty Git repository initialized; entrant registered; Builder Program and platform accounts created.
 - August 28, 2026 - governance, security, architecture, competition, and repository policies established in the initial commit.
 - August 29, 2026 - product scope refined from optional MCP mediation to a reference enforced Guardian Session with mission-scoped runtime controls and Tavily-mediated public-research provenance; implementation remained unstarted.
+- August 31, 2026 - `agentic-guardian.com` was registered; the product was locked
+  as open-source, local-first, and self-hosted with user-owned provider accounts
+  and local credential custody. The domain was limited to documentation,
+  distribution, competition presentation, and narrowly justified ceremonies.
 
 ## AI-assisted development
 
@@ -19,7 +23,7 @@ OpenAI Codex is used for AI-assisted architecture review, implementation, testin
 
 Recommended disclosure:
 
-> Guardian Agent was designed and directed by Earl Ray and developed with AI-assisted architecture review, coding, testing, and documentation using OpenAI Codex.
+> Agentic Guardian was designed and directed by Earl Ray and developed with AI-assisted architecture review, coding, testing, and documentation using OpenAI Codex.
 
 ## Evidence practice
 

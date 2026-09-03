@@ -1,0 +1,25 @@
+{
+  "name": "@guardian/guardian-cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "guardian": "./dist/main.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@guardian/canonical": "workspace:*",
+    "@guardian/contracts": "workspace:*",
+    "@guardian/credential-store": "workspace:*",
+    "@guardian/credential-verification": "workspace:*",
+    "@guardian/reference-supervisor": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "4.1.11"
+  }
+}

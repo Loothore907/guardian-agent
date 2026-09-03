@@ -89,7 +89,7 @@ data; live third-party content does not do so by default.
 
 The Enforced competition runtime remains launcher-bound and local. General remote
 MCP authentication is deferred; caller identity is derived by trusted orchestration,
-not accepted from tool arguments. Hosted Linux enforcement parity is a release
+not accepted from tool arguments. Self-hosted Linux enforcement parity is a release
 gate. A deployment that cannot reproduce the documented tool, filesystem,
 credential, and network evidence must report Observed or Unknown rather than
 Enforced.
@@ -131,3 +131,15 @@ and restart tests, wrong-permission database tests, session-ID reuse rejection,
 atomic nonce races, research-budget reservation races, uncertain-outcome behavior,
 secret-corpus redaction, and an end-to-end polluted-content fixture whose unsafe
 proposal is denied and reconstructable from minimized records.
+
+The first feasibility gate is recorded in the
+[C6 SQLite authority spike evidence](../development/evidence/c6-sqlite-authority-spike.md).
+It admits narrow single-host prototype repositories but does not itself implement
+production persistence or upgrade a security claim.
+
+The initial isolated production repository is recorded in the
+[C6 durable authority store evidence](../development/evidence/c6-authority-store.md).
+The scoped adapter, broker, minimized rejection chain, and broker restart path are
+recorded in the
+[C6 GitHub broker evidence](../development/evidence/c6-github-broker.md). Protected
+live GitHub evidence and launcher/research durable-budget integration remain.

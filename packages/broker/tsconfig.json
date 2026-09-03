@@ -9,6 +9,8 @@
   "references": [
     { "path": "../adapter-github" },
     { "path": "../audit" },
+    { "path": "../authority-client" },
+    { "path": "../authority-store" },
     { "path": "../authorization" },
     { "path": "../contracts" },
     { "path": "../policy" }

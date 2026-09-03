@@ -30,15 +30,20 @@ A direction may move into the active roadmap only through all of these gates:
 5. **Durable decision** - accept an ADR, add a separately estimated checkpoint,
    and update claims only after reproducible evidence exists.
 
-During the competition cycle, required C5-C11 work takes priority. A future
-direction may enter that cycle only when it is necessary to satisfy an existing
-exit criterion or when C9 has passed early and the roadmap explicitly admits it.
+During the competition cycle, required C5-C11 work takes priority. ADR-0029 uses
+the integrated vertical journey to sort follow-up work into validated core,
+design corrections, and expansion candidates. A future direction may enter the
+active cycle only when it is necessary to satisfy an existing exit criterion or
+when the required path is stable, genuine schedule buffer exists, and the roadmap
+explicitly admits the bounded experiment. It may not displace unresolved design
+corrections or weaken a higher-priority outcome.
 
 ## Trajectory map
 
 | Horizon | Hypothesis | Prerequisites | Promotion evidence |
 | --- | --- | --- | --- |
 | Protocol portability | Different interaction models and runtimes can emit the same versioned Guardian capability and risk contracts without receiving authority semantics of their own. | Stable C3/C6 contracts and C9 attack evidence | Compatibility fixtures, identical policy outcomes, and honest assurance mapping across at least two runtimes |
+| Local guardian inference | A small, quantized guardian model can evaluate the minimized risk envelope on ordinary user hardware without a cloud credential. | Stable C7 envelope, local provider adapter, resource budgets, and representative evaluation corpus | Comparable missed/false escalation results, bounded latency and memory, offline failure tests, and no weakening of deterministic policy |
 | Earlier risk recognition | A companion classifier or routed expert can identify suspicious intent before request-time Guardian judgment. | C7 evaluation harness and stable deterministic precedence | Lower missed-escalation or false-escalation rates without any new false allows |
 | Multi-agent delegation | Multiple agents can collaborate while each request remains bound to an explicit caller, mission, profile, scope, and non-transitive authority. | C6 exact binding, replay protection, and C9 cross-session attacks | Delegation and confused-deputy tests showing that no agent can inherit or grant another agent's authority |
 | Broader typed capabilities | Additional service operations can reuse the same broker and approval protocol without becoming a generic authenticated proxy. | Stable GitHub vertical slice and adapter review rules | One narrow adapter at a time, with schema, revalidation, redaction, and near-miss tests |
@@ -46,6 +51,12 @@ exit criterion or when C9 has passed early and the roadmap explicitly admits it.
 The horizons are sequencing guidance, not release promises. Protocol portability
 and evaluation infrastructure should generally precede model-internal or
 multi-agent breadth.
+
+The intended operating modes are cloud, hybrid, and local. The competition proves
+cloud mode first. Hybrid mode may keep interaction inference in the cloud while
+running guardian judgment locally; fully local mode may run both roles on-device.
+Deterministic policy, credential isolation, exact approval, and the privileged
+broker remain external to either model in every mode.
 
 ## Model-native Guardian awareness
 
@@ -56,15 +67,15 @@ reaches Guardian. A model-native component could:
 - identify prompt injection, suspicious intent, or possible data exfiltration;
 - prepare a structured risk envelope for Guardian;
 - recommend increased scrutiny or an explicit user confirmation; and
-- help the interaction model explain why a request requires escalation.
+- help the external host agent explain why a request requires escalation.
 
 These components would be advisory. A mixture-of-experts router and its experts
 remain part of the model being controlled; their activation is not an independent
 security boundary. The enforced path must therefore remain external to the
-interaction model:
+host agent:
 
 ```text
-interaction model or internal expert
+external host model or internal expert
                |
                | typed capability request
                v

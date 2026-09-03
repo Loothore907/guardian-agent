@@ -1,0 +1,36 @@
+{
+  "name": "@guardian/reference-supervisor",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@guardian/authority-client": "workspace:*",
+    "@guardian/authority-service": "workspace:*",
+    "@guardian/authorization-service": "workspace:*",
+    "@guardian/broker": "workspace:*",
+    "@guardian/canonical": "workspace:*",
+    "@guardian/contracts": "workspace:*",
+    "@guardian/guardian": "workspace:*",
+    "@guardian/interaction": "workspace:*",
+    "@guardian/interaction-service": "workspace:*",
+    "@guardian/research": "workspace:*",
+    "@guardian/session": "workspace:*",
+    "@guardian/session-host": "workspace:*",
+    "@guardian/worker": "workspace:*",
+    "@guardian/worker-service": "workspace:*",
+    "@guardian/workspace": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "4.1.11"
+  }
+}

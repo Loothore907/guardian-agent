@@ -1,22 +1,48 @@
-import { ResearchServiceProcessConfigSchema } from "@guardian/contracts";
+import { LocalAuthorityIpcClient } from "@guardian/authority-client";
+import { CredentialStoreResearchServiceProcessConfigSchema } from "@guardian/contracts";
+import { WindowsCredentialStore } from "@guardian/credential-store";
 
-import { startCredentialHoldingResearchIpcServer } from "./index.js";
+import { startCredentialStoreResearchIpcServer } from "./index.js";
 
-async function main(): Promise<void> {
-  const serializedConfig = process.env.GUARDIAN_RESEARCH_SERVICE_CONFIG;
-  if (serializedConfig === undefined) {
-    throw new TypeError("research service configuration is unavailable");
+const MAXIMUM_BOOTSTRAP_BYTES = 64 * 1_024;
+
+async function readBootstrapFrame(): Promise<unknown> {
+  const chunks: Buffer[] = [];
+  let totalBytes = 0;
+  for await (const chunkValue of process.stdin) {
+    const chunk = Buffer.isBuffer(chunkValue) ? chunkValue : Buffer.from(chunkValue as Uint8Array);
+    totalBytes += chunk.byteLength;
+    if (totalBytes > MAXIMUM_BOOTSTRAP_BYTES) {
+      for (const buffered of chunks) buffered.fill(0);
+      chunk.fill(0);
+      throw new TypeError("research service bootstrap is oversized");
+    }
+    chunks.push(chunk);
   }
-  let configValue: unknown;
+  const frame = Buffer.concat(chunks, totalBytes);
   try {
-    configValue = JSON.parse(serializedConfig) as unknown;
+    const newline = frame.indexOf(0x0a);
+    if (newline < 1 || newline !== frame.byteLength - 1) {
+      throw new TypeError("research service bootstrap requires exactly one frame");
+    }
+    const line = frame.subarray(0, frame[newline - 1] === 0x0d ? newline - 1 : newline);
+    return JSON.parse(line.toString("utf8")) as unknown;
   } catch {
     throw new TypeError("research service configuration is invalid");
+  } finally {
+    frame.fill(0);
+    for (const chunk of chunks) chunk.fill(0);
   }
-  const config = ResearchServiceProcessConfigSchema.parse(configValue);
-  const server = await startCredentialHoldingResearchIpcServer({
-    config,
-    environment: process.env,
+}
+
+async function main(): Promise<void> {
+  const config = CredentialStoreResearchServiceProcessConfigSchema.parse(
+    await readBootstrapFrame(),
+  );
+  const server = await startCredentialStoreResearchIpcServer({
+    config: config.research,
+    credentialStore: new WindowsCredentialStore(),
+    authority: new LocalAuthorityIpcClient(config.authority),
   });
   process.stdout.write("guardian research service ready\n");
 

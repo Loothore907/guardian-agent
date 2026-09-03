@@ -1,6 +1,6 @@
 # Security Policy
 
-Guardian Agent is an experimental security-oriented prototype. It is not a production credential manager, authentication provider, or authorization system.
+Agentic Guardian is an experimental security-oriented prototype. It is not a production credential manager, authentication provider, or authorization system.
 
 ## Supported versions
 

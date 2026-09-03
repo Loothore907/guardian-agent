@@ -4,10 +4,18 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$workspaceBin = Join-Path (Get-Location) "node_modules\.bin"
+
+function Add-WorkspaceBinToPath {
+  if (Test-Path -LiteralPath $workspaceBin) {
+    $env:Path = "$workspaceBin;$env:Path"
+  }
+}
 
 $systemNode = Get-Command node -ErrorAction SilentlyContinue
 $systemPnpm = Get-Command pnpm -ErrorAction SilentlyContinue
 if ($null -ne $systemNode -and $null -ne $systemPnpm) {
+  Add-WorkspaceBinToPath
   & $systemPnpm.Source @PnpmArguments
   exit $LASTEXITCODE
 }
@@ -22,6 +30,7 @@ if (-not (Test-Path -LiteralPath $nodeExecutable) -or -not (Test-Path -LiteralPa
 }
 
 $env:Path = "$nodeBin;$env:Path"
+Add-WorkspaceBinToPath
 if ([string]::IsNullOrEmpty($env:CI) -and [Console]::IsInputRedirected) {
   $env:CI = "true"
 }

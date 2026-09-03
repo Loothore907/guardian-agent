@@ -29,6 +29,22 @@ export function boundedVisibleText(maxLength: number) {
     .refine((value) => !containsHiddenOrControlUnicode(value), "hidden Unicode is not allowed");
 }
 
+export function containsSecretLikeMaterial(value: string): boolean {
+  return (
+    /\b(?:api[_-]?key|authorization|bearer|password|secret|token)\b\s*[:=]\s*\S+/iu.test(value) ||
+    /\bgh[pousr]_[A-Za-z0-9]{20,}\b/u.test(value) ||
+    /\bAKIA[A-Z0-9]{16}\b/u.test(value) ||
+    /-----BEGIN [A-Z ]+ PRIVATE KEY-----/u.test(value)
+  );
+}
+
+export function boundedCredentialSafeText(maxLength: number) {
+  return boundedVisibleText(maxLength).refine(
+    (value) => !containsSecretLikeMaterial(value),
+    "text cannot contain secret-like material",
+  );
+}
+
 export const OpaqueIdSchema = z.uuid();
 export const Sha256DigestSchema = z.string().regex(/^[a-f0-9]{64}$/u);
 export const TimestampSchema = z.iso.datetime({ offset: false, precision: 3 });

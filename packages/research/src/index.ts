@@ -2,6 +2,11 @@ import { createHash, randomUUID } from "node:crypto";
 
 import { canonicalDigest } from "@guardian/canonical";
 import {
+  ControlledContentJourneyResultSchema,
+  ControlledContentProviderResponseSchema,
+  ControlledContentProvenanceEventSchema,
+  ControlledContentRequestSchema,
+  ControlledContentScopeSchema,
   OpaqueIdSchema,
   PublicHttpUrlSchema,
   ResearchEvidenceSchema,
@@ -10,6 +15,10 @@ import {
   ResearchRequestSchema,
   ResearchScopeSchema,
   TimestampSchema,
+  type ControlledContentJourneyResult,
+  type ControlledContentProviderResponse,
+  type ControlledContentRequest,
+  type ControlledContentScope,
   type ResearchEvidence,
   type ResearchProvenanceEvent,
   type ResearchProviderResponse,
@@ -26,7 +35,11 @@ export function parseResearchProvenanceEvent(value: unknown): ResearchProvenance
 }
 
 export type ResearchDenialReason =
-  "budget_exhausted" | "domain_not_allowed" | "query_not_relevant" | "unsafe_outbound_content";
+  | "budget_exhausted"
+  | "domain_not_allowed"
+  | "query_not_relevant"
+  | "unsafe_outbound_content"
+  | "url_not_allowed";
 
 export class ResearchRequestDeniedError extends Error {
   readonly reason: ResearchDenialReason;
@@ -115,9 +128,54 @@ export async function invokeBoundedResearch<T>(
   return provider.search(request);
 }
 
+export function guardControlledContentRequest(
+  value: unknown,
+  scopeValue: unknown,
+): ControlledContentRequest {
+  const request = ControlledContentRequestSchema.parse(value);
+  const scope = ControlledContentScopeSchema.parse(scopeValue);
+  if (scope.remainingRequests < 1) {
+    throw new ResearchRequestDeniedError("budget_exhausted");
+  }
+  if (!scope.allowedUrls.includes(request.url)) {
+    throw new ResearchRequestDeniedError("url_not_allowed");
+  }
+  const hostname = new URL(request.url).hostname.toLowerCase();
+  if (!scope.allowedDomains.some((domain) => domain.toLowerCase() === hostname)) {
+    throw new ResearchRequestDeniedError("domain_not_allowed");
+  }
+  return request;
+}
+
+export interface ControlledContentProvider<T> {
+  extract(request: ControlledContentRequest): Promise<T>;
+}
+
+export async function invokeBoundedControlledContent<T>(
+  value: unknown,
+  scope: unknown,
+  provider: ControlledContentProvider<T>,
+): Promise<T> {
+  const request = guardControlledContentRequest(value, scope);
+  return provider.extract(request);
+}
+
 export interface ResearchJourneyResult {
   readonly evidence: readonly ResearchEvidence[];
   readonly provenance: readonly ResearchProvenanceEvent[];
+}
+
+export class ResearchJourneySequencer {
+  #nextSequence = 1;
+
+  reserve(count: number): number {
+    if (!Number.isInteger(count) || count < 0 || count > 3) {
+      throw new TypeError("research journey sequence reservation is invalid");
+    }
+    const first = this.#nextSequence;
+    this.#nextSequence += count;
+    return first;
+  }
 }
 
 export interface ResearchBudgetSnapshot {
@@ -165,6 +223,111 @@ function sanitizeProviderText(value: string, limit: number): string {
   return bounded;
 }
 
+export class ControlledContentJourneyLedger {
+  readonly #sessionId: string;
+  readonly #sequencer: ResearchJourneySequencer;
+
+  constructor(sessionId: unknown, sequencer = new ResearchJourneySequencer()) {
+    this.#sessionId = OpaqueIdSchema.parse(sessionId);
+    this.#sequencer = sequencer;
+  }
+
+  record(
+    requestValue: unknown,
+    responseValue: unknown,
+    scopeValue: unknown,
+    retrievedAtValue: unknown,
+  ): ControlledContentJourneyResult {
+    const request = ControlledContentRequestSchema.parse(requestValue);
+    const response: ControlledContentProviderResponse =
+      ControlledContentProviderResponseSchema.parse(responseValue);
+    const scope: ControlledContentScope = ControlledContentScopeSchema.parse(scopeValue);
+    const retrievedAt = TimestampSchema.parse(retrievedAtValue);
+    if (response.url !== request.url) {
+      throw new TypeError("controlled content provider returned a redirected URL");
+    }
+    const excerpt = sanitizeProviderText(response.content, scope.maxContentCharacters);
+    const sourceContentDigest = createHash("sha256")
+      .update("guardian.controlled_public_content.v1\0", "utf8")
+      .update(request.url, "utf8")
+      .update("\0", "utf8")
+      .update(response.content, "utf8")
+      .digest("hex");
+    const requestDigest = canonicalDigest("controlled_content_request", 1, request);
+    const hostname = new URL(request.url).hostname.toLowerCase();
+    const evidence = ResearchEvidenceSchema.parse({
+      schemaVersion: 1,
+      title: "Controlled public content",
+      excerpt,
+      sourceUrl: request.url,
+      sourceContentDigest,
+      contentTrust: "untrusted_public_content",
+      retrievedAt,
+    });
+    const provenance = ControlledContentProvenanceEventSchema.parse({
+      schemaVersion: 1,
+      eventId: randomUUID(),
+      sessionId: this.#sessionId,
+      sequence: this.#sequencer.reserve(1),
+      operation: "guardian.research",
+      retrievalKind: "controlled_extract",
+      requestDigest,
+      destination: { kind: "public_domain", hostname },
+      sourceUrl: request.url,
+      sourceContentDigest,
+      contentTrust: "untrusted_public_content",
+      retrievedAt,
+      providerRequestId: response.requestId,
+    });
+    return ControlledContentJourneyResultSchema.parse({ evidence, provenance });
+  }
+}
+
+export interface ControlledContentBudgetSnapshot {
+  readonly sessionId: string;
+  readonly remainingRequests: number;
+}
+
+export class SessionControlledContentGateway {
+  readonly #sessionId: string;
+  readonly #scope: Omit<ControlledContentScope, "remainingRequests">;
+  readonly #ledger: ControlledContentJourneyLedger;
+  #remainingRequests: number;
+
+  constructor(
+    sessionIdValue: unknown,
+    scopeValue: unknown,
+    sequencer = new ResearchJourneySequencer(),
+  ) {
+    const sessionId = OpaqueIdSchema.parse(sessionIdValue);
+    const scope = ControlledContentScopeSchema.parse(scopeValue);
+    this.#sessionId = sessionId;
+    this.#scope = {
+      allowedUrls: scope.allowedUrls,
+      allowedDomains: scope.allowedDomains,
+      maxContentCharacters: scope.maxContentCharacters,
+    };
+    this.#remainingRequests = scope.remainingRequests;
+    this.#ledger = new ControlledContentJourneyLedger(sessionId, sequencer);
+  }
+
+  get budget(): ControlledContentBudgetSnapshot {
+    return { sessionId: this.#sessionId, remainingRequests: this.#remainingRequests };
+  }
+
+  async extract(
+    requestValue: unknown,
+    provider: ControlledContentProvider<unknown>,
+    retrievedAtValue: unknown,
+  ): Promise<ControlledContentJourneyResult> {
+    const scope = { ...this.#scope, remainingRequests: this.#remainingRequests };
+    const request = guardControlledContentRequest(requestValue, scope);
+    this.#remainingRequests -= 1;
+    const response = await provider.extract(request);
+    return this.#ledger.record(request, response, scope, retrievedAtValue);
+  }
+}
+
 function canonicalSourceUrl(value: string): string {
   const parsed = new URL(value);
   if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
@@ -178,10 +341,11 @@ function canonicalSourceUrl(value: string): string {
 
 export class ResearchJourneyLedger {
   readonly #sessionId: string;
-  #nextSequence = 1;
+  readonly #sequencer: ResearchJourneySequencer;
 
-  constructor(sessionId: unknown) {
+  constructor(sessionId: unknown, sequencer = new ResearchJourneySequencer()) {
     this.#sessionId = OpaqueIdSchema.parse(sessionId);
+    this.#sequencer = sequencer;
   }
 
   record(
@@ -200,6 +364,7 @@ export class ResearchJourneyLedger {
     const evidence: ResearchEvidence[] = [];
     const provenance: ResearchProvenanceEvent[] = [];
     const sourceUrls = new Set<string>();
+    const firstSequence = this.#sequencer.reserve(response.results.length);
 
     for (const [index, result] of response.results.entries()) {
       const sourceUrl = canonicalSourceUrl(result.url);
@@ -233,7 +398,7 @@ export class ResearchJourneyLedger {
           schemaVersion: 1,
           eventId: randomUUID(),
           sessionId: this.#sessionId,
-          sequence: this.#nextSequence + index,
+          sequence: firstSequence + index,
           operation: "guardian.research",
           queryDigest,
           destination: { kind: "public_domain", hostname },
@@ -245,7 +410,6 @@ export class ResearchJourneyLedger {
         }),
       );
     }
-    this.#nextSequence += provenance.length;
     return { evidence, provenance };
   }
 }
@@ -268,7 +432,11 @@ export class SessionResearchGateway {
   #remainingRequests: number;
   #remainingResults: number;
 
-  constructor(sessionIdValue: unknown, scopeValue: unknown) {
+  constructor(
+    sessionIdValue: unknown,
+    scopeValue: unknown,
+    sequencer = new ResearchJourneySequencer(),
+  ) {
     const sessionId = OpaqueIdSchema.parse(sessionIdValue);
     const scope = ResearchScopeSchema.parse(scopeValue);
     this.#sessionId = sessionId;
@@ -277,7 +445,7 @@ export class SessionResearchGateway {
     this.#requiredTerms = scope.requiredTerms;
     this.#remainingRequests = scope.remainingRequests;
     this.#remainingResults = scope.remainingResults;
-    this.#ledger = new ResearchJourneyLedger(sessionId);
+    this.#ledger = new ResearchJourneyLedger(sessionId, sequencer);
   }
 
   get budget(): ResearchBudgetSnapshot {

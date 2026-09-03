@@ -50,5 +50,6 @@ temp/
 
 # Local Codex output and private source material
 .codex-log/
+.guardian/
 docs/private/
 Guardian_Agent_Hackathon_Edition.docx

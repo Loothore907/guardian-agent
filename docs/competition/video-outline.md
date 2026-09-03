@@ -8,29 +8,25 @@ language supported by `docs/security-claims.md`.
 
 | Time | Story beat |
 | --- | --- |
-| 0:00-0:20 | The problem: useful agents encounter untrusted content and need authenticated capabilities without receiving unrestricted authority. |
-| 0:20-0:45 | The contract: the user creates a mission and Guardian launches the bounded reference session. |
-| 0:45-1:20 | Useful work: the agent analyzes the PR and uses Guardian-mediated Tavily research with visible provenance. |
-| 1:20-1:50 | The boundary: hostile content attempts to expand authority; direct bypass and the unauthorized merge are denied. |
-| 1:50-2:20 | Deliberate authority: the user creates a human-authored mission revision permitting one merge, Guardian binds a new profile, and the user approves the exact PR head and method before broker revalidation. |
-| 2:20-2:43 | Evidence: mutation, expiry, or replay fails and the audit view connects the decision to the outcome. |
-| 2:43-2:55 | Future direction: Guardian as an authorization protocol across model architectures. |
+| 0:00-0:18 | The problem: agents read hostile public content while holding useful service capabilities; untrusted text must not create authority. |
+| 0:18-0:38 | The contract: the user creates a read-only mission for the disposable demo repository and Guardian launches the Enforced reference session. |
+| 0:38-1:05 | Useful work: the agent reads the seeded PR and Guardian retrieves the controlled live public fixture through bounded Tavily research with visible untrusted provenance. |
+| 1:05-1:35 | The injection test: the page asks for an unauthorized merge or authority expansion; the resulting unsafe proposal is denied before approval, GitHub token minting, or mutation. Nemotron cannot lower that floor. |
+| 1:35-1:53 | Evidence: the UI connects content exposure, attempted effect, deterministic decision, and stopping control while explicitly avoiding a causation claim. |
+| 1:53-2:26 | Deliberate authority: the human creates the permitted mission revision, reviews the exact repository, PR head, squash method, expiry, and nonce, then verifies a bound passkey challenge. |
+| 2:26-2:45 | Exact execution: Guardian re-fetches and re-digests the request, atomically consumes the nonce, resolves a narrow local GitHub credential unavailable to the agent, and completes the squash merge. |
+| 2:45-2:55 | Contrast: mutation or replay fails; the audit distinguishes the injected denial from the separately authorized action. |
 | 2:55-3:00 | Product name and concise closing statement. |
 
-The future direction is optional and should be cut before any working behavior or
-evidence. It receives at most twelve seconds.
-
-## Provisional future-looking close
-
-> Today, Guardian proves one enforced agent session. Tomorrow, the same protocol
-> could serve ordinary models, mixtures of experts, and multi-agent systems—even
-> when models learn to recognize risk internally, the authority to execute stays
-> behind a separate Guardian boundary.
-
-Do not imply that model-native Guardian awareness is implemented, that internal
-model routing is an enforcement boundary, or that Guardian secures arbitrary
-third-party runtimes.
+Future direction is omitted from the default cut. If the tested story runs short,
+use any remaining seconds for evidence or setup clarity before adding speculative
+material.
 
 The merge sequence must visibly distinguish the denied read-only session from the
 later human-authored mission revision. An approval cannot override the original
 mission, and the interaction agent cannot revise or expand that mission itself.
+The hostile page and proposal may be deterministic for repeatability, but the
+retrieval and Guardian control outcomes must be real and identified honestly. Do
+not imply that temporal proximity proves the page caused the model behavior, that
+Guardian prevents every injection, or that a passkey is necessarily biometric or
+hardware-backed.

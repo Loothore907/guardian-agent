@@ -3,7 +3,16 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "bin": {
+    "guardian-risk-service": "./dist/main.js"
+  },
   "dependencies": {
-    "@guardian/guardian": "workspace:*"
+    "@guardian/contracts": "workspace:*",
+    "@guardian/credential-store": "workspace:*",
+    "@guardian/guardian": "workspace:*",
+    "@guardian/policy": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "4.1.11"
   }
 }

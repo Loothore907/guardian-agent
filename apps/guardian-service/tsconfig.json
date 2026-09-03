@@ -6,5 +6,10 @@
     "tsBuildInfoFile": "dist/.tsbuildinfo"
   },
   "include": ["src/**/*.ts"],
-  "references": [{ "path": "../../packages/guardian" }]
+  "references": [
+    { "path": "../../packages/contracts" },
+    { "path": "../../packages/credential-store" },
+    { "path": "../../packages/guardian" },
+    { "path": "../../packages/policy" }
+  ]
 }

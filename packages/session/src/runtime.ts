@@ -17,7 +17,7 @@ import {
 
 import { resolveAssuranceLevel } from "./assurance.js";
 
-export type SessionLifecycleState = "pending" | "active" | "expired" | "revoked";
+export type SessionLifecycleState = "pending" | "active" | "expired" | "revoked" | "interrupted";
 export type ToolDenialReason =
   | "not_active"
   | "expired"
@@ -54,7 +54,7 @@ export class BoundSessionRuntime {
   readonly #tools: ReadonlySet<ToolCapability>;
   #toolCalls = 0;
   #localCommands = 0;
-  #revoked = false;
+  #termination: "revoked" | "interrupted" | null = null;
 
   private constructor(input: {
     sessionId: string;
@@ -119,7 +119,7 @@ export class BoundSessionRuntime {
     if (!timestamp.success || Date.parse(timestamp.data) < Date.parse(this.#startsAt)) {
       return { allowed: false, reason: "not_active" };
     }
-    if (this.#revoked) {
+    if (this.#termination !== null) {
       return { allowed: false, reason: "revoked" };
     }
     if (Date.parse(timestamp.data) >= Date.parse(this.#expiresAt)) {
@@ -161,6 +161,16 @@ export class BoundSessionRuntime {
     }
     this.#toolCalls += 1;
     this.#localCommands += 1;
+    return { allowed: true };
+  }
+
+  authorizeSessionStatusCall(evaluatedAt: unknown): ToolAuthorization {
+    const base = this.authorizeToolCall("guardian.session_status", evaluatedAt);
+    if (!base.allowed) return base;
+    if (this.#toolCalls >= this.#profile.permissions.volume.maxToolCalls) {
+      return { allowed: false, reason: "volume_exhausted" };
+    }
+    this.#toolCalls += 1;
     return { allowed: true };
   }
 
@@ -215,15 +225,23 @@ export class BoundSessionRuntime {
     if (typeof handle !== "string" || handle !== this.#revocationHandle) {
       return false;
     }
-    this.#revoked = true;
+    this.#termination = "revoked";
+    return true;
+  }
+
+  interrupt(handle: unknown): boolean {
+    if (typeof handle !== "string" || handle !== this.#revocationHandle) {
+      return false;
+    }
+    if (this.#termination !== "revoked") this.#termination = "interrupted";
     return true;
   }
 
   status(evaluatedAt: string): BoundSessionStatus {
     const timestamp = TimestampSchema.parse(evaluatedAt);
     const evaluationTime = Date.parse(timestamp);
-    const state: SessionLifecycleState = this.#revoked
-      ? "revoked"
+    const state: SessionLifecycleState = this.#termination
+      ? this.#termination
       : evaluationTime < Date.parse(this.#startsAt)
         ? "pending"
         : evaluationTime >= Date.parse(this.#expiresAt)
