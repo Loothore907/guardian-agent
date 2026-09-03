@@ -39,5 +39,11 @@ Architecture decision records document consequential choices, rejected alternati
 - [ADR-0026: Supervised three-service competition composition](0026-supervised-three-service-competition-composition.md)
 - [ADR-0027: Activated-session competition configuration](0027-activated-session-competition-configuration.md)
 - [ADR-0028: Exact competition CLI confirmation](0028-exact-competition-cli-confirmation.md)
+- [ADR-0029: End-to-end architectural validation before feature expansion](0029-end-to-end-architectural-validation.md)
+- [ADR-0030: Confirmed mission and worker-tool separation](0030-confirmed-mission-and-worker-tool-separation.md)
+- [ADR-0031: Live-inventory-bound model policy v2](0031-live-inventory-bound-model-policy-v2.md)
+- [ADR-0032: JSON-object provider mode and deterministic worker validation](0032-json-object-provider-mode-and-deterministic-worker-validation.md)
+- [ADR-0033: Explicit model portability and provenance qualification](0033-explicit-model-portability-and-provenance-qualification.md)
+- [ADR-0034: Bounded public and piloted demo modes](0034-bounded-public-and-piloted-demo-modes.md)
 
 Use the next sequential four-digit number. Do not silently rewrite an accepted decision; add a superseding ADR.

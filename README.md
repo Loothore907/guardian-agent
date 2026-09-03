@@ -177,8 +177,14 @@ CLI input cannot supply the credential handle, lifetime, or action-risk envelope
 W13 adds a separate exact CLI authorization ceremony: it renders the legitimate
 merge target, head, squash method, and canonical digest, then forwards only a
 fresh confirmation to a supervisor operation that derives scope, stores the
-one-use approval, runs once, closes, and returns a minimized result. Executable
-dispatch, competition-session activation, and the protected live journey remain.
+one-use approval, runs once, closes, and returns a minimized result. W14 now wires
+the exact `guardian competition` executable path through strict named public
+deployment input, trusted competition-session startup, exact activation-bound
+request construction, both confirmations, the fixed runner, and guaranteed
+cleanup. ADR-0030 separately binds the broader confirmed mission/session ceiling
+from the narrower native-worker tool catalog. The application-level deterministic
+journey is green; staged live-model/provider validation and the protected
+credential-backed journey remain.
 
 [ADR-0015](docs/adr/0015-nebius-native-worker-and-judge-runtime.md) selects the
 provider-neutral Nebius-native worker for the competition build while preserving
@@ -259,6 +265,8 @@ pnpm test:session-enforcement
 pnpm test:live:tavily
 pnpm test:live:credentials
 pnpm test:live:nebius-models
+pnpm test:live:native-worker
+pnpm test:live:qwen
 ```
 
 Build before using either `start` command. The reference-runtime and enforcement

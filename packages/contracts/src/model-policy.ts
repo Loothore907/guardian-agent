@@ -83,7 +83,7 @@ export const GuardianModelPolicySchema = z
   });
 export type GuardianModelPolicy = DeepReadonly<z.infer<typeof GuardianModelPolicySchema>>;
 
-export const DEFAULT_GUARDIAN_MODEL_POLICY = GuardianModelPolicySchema.parse({
+export const COMPETITION_GUARDIAN_MODEL_POLICY_V1 = GuardianModelPolicySchema.parse({
   schemaVersion: 1,
   policyId: "competition-2026-09-01",
   version: 1,
@@ -115,13 +115,43 @@ export const DEFAULT_GUARDIAN_MODEL_POLICY = GuardianModelPolicySchema.parse({
   },
 });
 
+export const DEFAULT_GUARDIAN_MODEL_POLICY = GuardianModelPolicySchema.parse({
+  ...COMPETITION_GUARDIAN_MODEL_POLICY_V1,
+  version: 2,
+  description:
+    "Nebius-native hackathon policy with Kimi K2.7 Code worker and mandatory Nemotron risk roles.",
+  nativeWorker: {
+    provider: "nebius_token_factory",
+    role: "native_worker",
+    modelId: "moonshotai/Kimi-K2.7-Code",
+  },
+});
+
+function policyKey(policyId: string, version: number): string {
+  return `${policyId}@${version}`;
+}
+
 const BUILT_IN_POLICIES = new Map<string, GuardianModelPolicy>([
-  [DEFAULT_GUARDIAN_MODEL_POLICY.policyId, DEFAULT_GUARDIAN_MODEL_POLICY],
+  [
+    policyKey(
+      COMPETITION_GUARDIAN_MODEL_POLICY_V1.policyId,
+      COMPETITION_GUARDIAN_MODEL_POLICY_V1.version,
+    ),
+    COMPETITION_GUARDIAN_MODEL_POLICY_V1,
+  ],
+  [
+    policyKey(DEFAULT_GUARDIAN_MODEL_POLICY.policyId, DEFAULT_GUARDIAN_MODEL_POLICY.version),
+    DEFAULT_GUARDIAN_MODEL_POLICY,
+  ],
 ]);
 
-export function resolveBuiltInGuardianModelPolicy(value: unknown): GuardianModelPolicy {
+export function resolveBuiltInGuardianModelPolicy(
+  value: unknown,
+  versionValue: unknown,
+): GuardianModelPolicy {
   const policyId = GuardianModelPolicyIdSchema.parse(value);
-  const policy = BUILT_IN_POLICIES.get(policyId);
+  const version = VersionNumberSchema.parse(versionValue);
+  const policy = BUILT_IN_POLICIES.get(policyKey(policyId, version));
   if (policy === undefined) throw new TypeError("guardian model policy is unavailable");
   return policy;
 }

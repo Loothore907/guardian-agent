@@ -1,4 +1,5 @@
 import { InMemoryCredentialStore } from "@guardian/credential-store";
+import { DEFAULT_GUARDIAN_MODEL_POLICY } from "@guardian/contracts";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -98,7 +99,7 @@ describe("Qwen interaction provider", () => {
       revision: 1,
       reviewTurn: 1,
       modelPolicyId: "competition-2026-09-01",
-      modelPolicyVersion: 1,
+      modelPolicyVersion: DEFAULT_GUARDIAN_MODEL_POLICY.version,
       expiresAt: "2026-09-01T00:05:00.000Z",
       objective: "Research public state cannabis laws.",
       constraints: ["Use public sources only."],

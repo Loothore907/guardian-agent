@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  COMPETITION_GUARDIAN_MODEL_POLICY_V1,
   DEFAULT_GUARDIAN_MODEL_POLICY,
   GuardianModelPolicySchema,
   resolveBuiltInGuardianModelPolicy,
@@ -8,8 +9,11 @@ import {
 
 describe("Guardian model policy", () => {
   it("pins reproducible current defaults behind a versioned policy identifier", () => {
-    expect(resolveBuiltInGuardianModelPolicy("competition-2026-09-01")).toEqual(
+    expect(resolveBuiltInGuardianModelPolicy("competition-2026-09-01", 2)).toEqual(
       DEFAULT_GUARDIAN_MODEL_POLICY,
+    );
+    expect(resolveBuiltInGuardianModelPolicy("competition-2026-09-01", 1)).toEqual(
+      COMPETITION_GUARDIAN_MODEL_POLICY_V1,
     );
     expect(DEFAULT_GUARDIAN_MODEL_POLICY.missionDialogue.modelId).toBe(
       "Qwen/Qwen3-235B-A22B-Instruct-2507",
@@ -17,7 +21,7 @@ describe("Guardian model policy", () => {
     expect(DEFAULT_GUARDIAN_MODEL_POLICY.nativeWorker).toEqual({
       provider: "nebius_token_factory",
       role: "native_worker",
-      modelId: "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+      modelId: "moonshotai/Kimi-K2.7-Code",
     });
     expect(DEFAULT_GUARDIAN_MODEL_POLICY.contextualRiskPrimary.modelId).toContain("nemotron");
   });
@@ -50,7 +54,10 @@ describe("Guardian model policy", () => {
   });
 
   it("rejects arbitrary policy identifiers and removal of the Nemotron competition presence", () => {
-    expect(() => resolveBuiltInGuardianModelPolicy("caller-selected-model")).toThrow(
+    expect(() => resolveBuiltInGuardianModelPolicy("caller-selected-model", 1)).toThrow(
+      "policy is unavailable",
+    );
+    expect(() => resolveBuiltInGuardianModelPolicy("competition-2026-09-01", 3)).toThrow(
       "policy is unavailable",
     );
     expect(() =>

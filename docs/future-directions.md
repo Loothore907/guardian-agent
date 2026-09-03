@@ -30,9 +30,13 @@ A direction may move into the active roadmap only through all of these gates:
 5. **Durable decision** - accept an ADR, add a separately estimated checkpoint,
    and update claims only after reproducible evidence exists.
 
-During the competition cycle, required C5-C11 work takes priority. A future
-direction may enter that cycle only when it is necessary to satisfy an existing
-exit criterion or when C9 has passed early and the roadmap explicitly admits it.
+During the competition cycle, required C5-C11 work takes priority. ADR-0029 uses
+the integrated vertical journey to sort follow-up work into validated core,
+design corrections, and expansion candidates. A future direction may enter the
+active cycle only when it is necessary to satisfy an existing exit criterion or
+when the required path is stable, genuine schedule buffer exists, and the roadmap
+explicitly admits the bounded experiment. It may not displace unresolved design
+corrections or weaken a higher-priority outcome.
 
 ## Trajectory map
 

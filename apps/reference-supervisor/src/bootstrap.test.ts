@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  DEFAULT_GUARDIAN_MODEL_POLICY,
   DEFAULT_NEBIUS_WORKER_SELECTION,
   type WorkerTurnEnvelope,
   type WorkerTurnResult,
@@ -81,7 +82,11 @@ function coordinator(
   const launchSession = vi.fn((input: Omit<ReferenceSessionLaunchInput, "authority">) => {
     launchInput = input;
     const mission = input.mission as { missionId: string; version: number };
-    const profile = input.profile as { profileId: string; version: number };
+    const profile = input.profile as {
+      profileId: string;
+      version: number;
+      permissions: { tools: readonly string[] };
+    };
     let runtimeState: "active" | "revoked" | "interrupted" = "active";
     return Promise.resolve({
       runtime: {
@@ -96,7 +101,7 @@ function coordinator(
           state: runtimeState,
           assurance: "enforced",
           expiresAt: "2026-08-31T10:05:00.000Z",
-          tools: ["guardian.local_command", "guardian.session_status"],
+          tools: profile.permissions.tools,
         }),
       },
       profile: input.profile,
@@ -221,7 +226,7 @@ describe("reference terminal session bootstrap", () => {
         revision: 1,
         reviewTurn: 1,
         modelPolicyId: "competition-2026-09-01",
-        modelPolicyVersion: 1,
+        modelPolicyVersion: DEFAULT_GUARDIAN_MODEL_POLICY.version,
       }),
     );
     const preview = await bootstrap.compileAssistedDraft(draft.draftId, 1);
@@ -336,6 +341,7 @@ describe("reference terminal session bootstrap", () => {
         maximumAssurance: "enforced",
       },
       worker: { schemaVersion: 1, kind: "deterministic_reference" },
+      workerTools: ["guardian.session_status", "guardian.local_command"],
     });
 
     const result = await harness.bootstrap.confirmAndLaunch(
@@ -364,6 +370,88 @@ describe("reference terminal session bootstrap", () => {
     expect(result).not.toHaveProperty("capability");
     expect(result).not.toHaveProperty("revocationHandle");
     expect(result).not.toHaveProperty("endpoint");
+  });
+
+  it("binds broad mission authority separately from the narrower worker tool catalog", async () => {
+    const harness = coordinator();
+    const bootstrap = new ReferenceSessionBootstrapCoordinator({
+      sessionId: IDS.session,
+      callerId: IDS.caller,
+      launchSession: harness.launchSession,
+      ...workspaceOptions(),
+      missionTemplate: {
+        constraints: ["Use only Guardian-mediated external operations."],
+        permissions: {
+          tools: [
+            "guardian.session_status",
+            "guardian.local_command",
+            "guardian.research",
+            "github.pull_request.merge",
+          ],
+          filesystem: { mode: "workspace_write", roots: ["/workspace"] },
+          network: {
+            mode: "guardian_only",
+            destinations: [
+              { kind: "public_domain", hostname: "docs.github.com" },
+              {
+                kind: "github_repository",
+                owner: "loothore907",
+                repository: "guardian-agent-demo",
+              },
+            ],
+          },
+          sideEffects: ["write_workspace", "merge_pull_request"],
+          time: { maxDurationSeconds: 300 },
+          volume: {
+            maxToolCalls: 20,
+            maxResearchRequests: 1,
+            maxResearchResults: 2,
+            maxLocalCommands: 10,
+            maxPrivilegedActions: 1,
+          },
+        },
+        workerTools: ["guardian.session_status", "guardian.local_command"],
+      },
+      now: () => CREATED_AT,
+      randomId: (() => {
+        const ids = [IDS.draft, IDS.mission, IDS.profile, IDS.revocation, IDS.turn];
+        return () => ids.shift() ?? IDS.revocation;
+      })(),
+    });
+    const preview = bootstrap.createDraft({
+      schemaVersion: 1,
+      objective: "Validate the controlled authorization journey.",
+    });
+
+    expect(preview.permissions.tools).toContain("github.pull_request.merge");
+    expect(preview.workerTools).toEqual(["guardian.session_status", "guardian.local_command"]);
+    const result = await bootstrap.confirmAndLaunch(
+      confirmation(preview.draftId, preview.previewDigest),
+    );
+    expect(harness.launchInput()?.mission).toMatchObject({ authority: preview.permissions });
+    expect(harness.launchInput()?.profile).toMatchObject({ permissions: preview.permissions });
+    expect(result.workerTools).toEqual(preview.workerTools);
+  });
+
+  it("rejects a worker tool catalog that exceeds the mission authority", () => {
+    const harness = coordinator();
+    expect(
+      () =>
+        new ReferenceSessionBootstrapCoordinator({
+          sessionId: IDS.session,
+          callerId: IDS.caller,
+          launchSession: harness.launchSession,
+          ...workspaceOptions(),
+          missionTemplate: {
+            constraints: ["Keep authority narrow."],
+            permissions: {
+              ...assistedDraft().requestedPermissions,
+              network: { mode: "none", destinations: [] },
+            },
+            workerTools: ["github.pull_request.merge"],
+          },
+        }),
+    ).toThrow("unique subset");
   });
 
   it("binds the selected worker and workspace snapshot into the confirmed digest", () => {
@@ -447,7 +535,7 @@ describe("reference terminal session bootstrap", () => {
       profileVersion: 1,
       policyVersion: 1,
       modelPolicyId: "competition-2026-09-01",
-      modelPolicyVersion: 1,
+      modelPolicyVersion: DEFAULT_GUARDIAN_MODEL_POLICY.version,
       worker: { kind: "deterministic_reference" },
       turnNumber: 1,
       allowedTools: ["guardian.session_status", "guardian.local_command"],

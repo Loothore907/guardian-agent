@@ -112,6 +112,7 @@ describe("terminal session bootstrap contracts", () => {
       objective: "Review the pull request.",
       constraints: ["Do not perform external service operations."],
       permissions: permissions(),
+      workerTools: ["guardian.session_status", "guardian.local_command"],
       integration: {
         mode: "guardian_launched_reference",
         maximumAssurance: "enforced",
@@ -120,6 +121,12 @@ describe("terminal session bootstrap contracts", () => {
       workspace: workspace(),
     } as const;
     expect(SessionDraftPreviewSchema.parse(preview)).toEqual(preview);
+    expect(() =>
+      SessionDraftPreviewSchema.parse({
+        ...preview,
+        workerTools: ["github.pull_request.merge"],
+      }),
+    ).toThrow("within the confirmed mission permissions");
     expect(() =>
       SessionDraftPreviewSchema.parse({ ...preview, authorityCapability: "not-allowed" }),
     ).toThrow();

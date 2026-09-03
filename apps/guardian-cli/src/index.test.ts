@@ -51,6 +51,7 @@ function preview() {
         maxPrivilegedActions: 0,
       },
     },
+    workerTools: ["guardian.session_status", "guardian.local_command"],
     integration: {
       mode: "guardian_launched_reference",
       maximumAssurance: "enforced",
@@ -72,10 +73,12 @@ function bootstrap(): GuardianCliBootstrap {
         missionVersion: 1,
         profileId: IDS.profile,
         profileVersion: 1,
+        policyVersion: 1,
         state: "active",
         assurance: "enforced",
         expiresAt: "2026-08-31T10:05:00.000Z",
         tools: ["guardian.local_command", "guardian.session_status"],
+        workerTools: ["guardian.session_status", "guardian.local_command"],
         confirmationAssurance: "development_confirmation",
         worker: { schemaVersion: 1, kind: "deterministic_reference" },
         workspace: {

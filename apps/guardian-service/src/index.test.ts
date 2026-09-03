@@ -55,7 +55,7 @@ describe("Nemotron guardian provider", () => {
       draftId: "11111111-1111-4111-8111-111111111111",
       revision: 1,
       modelPolicyId: "competition-2026-09-01",
-      modelPolicyVersion: 1,
+      modelPolicyVersion: DEFAULT_GUARDIAN_MODEL_POLICY.version,
       requestDigest: "a".repeat(64),
       expiresAt: "2026-09-01T00:05:00.000Z",
       route: { requested: "qwen_assisted", effective: "qwen_assisted" },
@@ -294,7 +294,7 @@ describe("Nemotron guardian provider", () => {
 
   it("records Ultra as the structurally invalid quality escalation", () => {
     expect(guardianServiceBoundary.modelPolicyId).toBe("competition-2026-09-01");
-    expect(guardianServiceBoundary.modelPolicyVersion).toBe(1);
+    expect(guardianServiceBoundary.modelPolicyVersion).toBe(DEFAULT_GUARDIAN_MODEL_POLICY.version);
     expect(guardianServiceBoundary.qualityEscalationModel).toBe(
       "nvidia/Nemotron-3-Ultra-550b-a55b",
     );

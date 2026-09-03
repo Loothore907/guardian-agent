@@ -7,6 +7,7 @@ import {
   WorkerToolRequestSchema,
   WorkerTurnEnvelopeWithoutDigestSchema,
 } from "./worker.js";
+import { DEFAULT_GUARDIAN_MODEL_POLICY } from "./model-policy.js";
 import { WorkerViolationCodeSchema, workerViolationSeverity } from "./worker-policy.js";
 
 const TURN = {
@@ -20,7 +21,7 @@ const TURN = {
   profileVersion: 1,
   policyVersion: 1,
   modelPolicyId: "competition-2026-09-01",
-  modelPolicyVersion: 1,
+  modelPolicyVersion: DEFAULT_GUARDIAN_MODEL_POLICY.version,
   worker: DEFAULT_NEBIUS_WORKER_SELECTION,
   turnNumber: 1,
   startsAt: "2026-09-01T00:00:00.000Z",
@@ -54,7 +55,7 @@ describe("worker boundary contracts", () => {
     expect(() =>
       WorkerTurnEnvelopeWithoutDigestSchema.parse({
         ...TURN,
-        modelPolicyVersion: 2,
+        modelPolicyVersion: 1,
       }),
     ).toThrow(/assignment/u);
   });

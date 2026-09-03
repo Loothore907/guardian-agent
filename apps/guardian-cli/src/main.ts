@@ -9,6 +9,7 @@ import { createCredentialVerifier, GitHubDeviceFlow } from "@guardian/credential
 import { startReferenceAuthoritySupervisor } from "@guardian/reference-supervisor";
 
 import { parseGuardianCliArguments, runGuardianAssistedCli } from "./index.js";
+import { runGuardianCompetitionCommand } from "./competition-command.js";
 import {
   parseGuardianSetupArguments,
   readHiddenCredentialFromTerminal,
@@ -92,6 +93,25 @@ async function main(): Promise<void> {
     return;
   }
   assertInteractiveTerminal();
+  if (arguments_[0] === "competition") {
+    const readline = createInterface({ input: process.stdin, output: process.stdout });
+    try {
+      await runGuardianCompetitionCommand({
+        arguments: arguments_,
+        environment: process.env,
+        projectRoot: process.cwd(),
+        startSupervisor: startReferenceAuthoritySupervisor,
+        io: {
+          interactive: true,
+          write: (text) => process.stdout.write(text),
+          readConfirmation: (prompt) => readline.question(prompt),
+        },
+      });
+    } finally {
+      readline.close();
+    }
+    return;
+  }
   const { objective } = parseGuardianCliArguments(arguments_);
   const projectRoot = process.cwd();
   const stateDirectory = resolve(projectRoot, ".guardian");

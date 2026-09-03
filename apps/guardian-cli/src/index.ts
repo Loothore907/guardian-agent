@@ -188,7 +188,8 @@ function renderPreview(preview: SessionDraftPreview): string {
     "Guardian development session preview",
     "",
     `Objective: ${preview.objective}`,
-    `Tools: ${preview.permissions.tools.join(", ")}`,
+    `Mission capabilities: ${preview.permissions.tools.join(", ")}`,
+    `Worker tools: ${preview.workerTools.join(", ")}`,
     `Filesystem: ${preview.permissions.filesystem.mode} ${preview.permissions.filesystem.roots.join(", ")}`,
     `Network: ${preview.permissions.network.mode}${destinations.length > 0 ? ` (${destinations})` : ""}`,
     `Side effects: ${preview.permissions.sideEffects.join(", ")}`,
@@ -264,6 +265,7 @@ async function confirmAndLaunchPreview(options: {
           ? `${result.worker.modelId} via Nebius Token Factory`
           : "deterministic reference fixture"
       }`,
+      `Worker tools: ${result.workerTools.join(", ")}`,
       `Expires: ${result.expiresAt}`,
       result.runner.state === "completed"
         ? `Guardian mission brief: ${result.runner.outcome.summary}`

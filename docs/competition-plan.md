@@ -52,6 +52,27 @@ not the product's production architecture:
 13. Mutation, resource-version change, expiry, and replay attempts fail.
 14. The terminal resumes with the sanitized result, while the audit UI contrasts the injected denial with the independently authorized merge and connects mission, runtime assurance, public research, policy, guardian, approval, execution, and outcome.
 
+## Judge experience modes
+
+The hosted experience uses the same enforcement core in two bounded presentation
+modes defined by ADR-0034:
+
+- **Public locked demo:** a queued, fixed-scenario, tightly rate-limited run for
+  general viewers. It uses the controlled hostile-content fixture and may perform
+  live model, research, and typed read operations, but it accepts no arbitrary
+  prompt or destination and exposes no anonymous GitHub mutation.
+- **Piloted live demo:** an authenticated operator enters a natural-language
+  objective and confirms the normalized mission. The operator may select the
+  controlled fixture or curated live-web research. GitHub remains read-only by
+  default; an exact mutation is limited to the disposable demo repository and
+  requires a separate user-verifying approval.
+
+An open objective is not open authority. Tool families, destinations, budgets,
+models, network paths, and effects remain fixed or explicitly confirmed through
+trusted Guardian policy. Live-web content is untrusted and may influence model
+behavior, but the demonstration does not promise an injection or claim that
+exposure caused a later attempt.
+
 ## Tavily integration
 
 Tavily is optional under the general competition rules but required by the selected Guardian competition experience and necessary for Best Use of Tavily bonus eligibility. The build will make functional runtime calls to bounded Search and/or Extract operations as part of the PR-review mission.

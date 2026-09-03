@@ -89,28 +89,47 @@ export async function launchReferenceSession(
   }
   const expectedTools = ["guardian.session_status", "guardian.local_command"];
   if (input.research !== undefined) expectedTools.push("guardian.research");
+  const connectionIds = input.authority?.connectionIds ?? [];
+  const requestedGitHubTools = requestedProfile.permissions.tools.filter((tool) =>
+    tool.startsWith("github."),
+  );
+  if (connectionIds.length > 0) expectedTools.push(...requestedGitHubTools);
   const supportedTools = new Set(expectedTools);
   const publicDestinations = requestedProfile.permissions.network.destinations.filter(
     (destination) => destination.kind === "public_domain",
   );
+  const githubDestinations = requestedProfile.permissions.network.destinations.filter(
+    (destination) => destination.kind === "github_repository",
+  );
   const researchNetworkIsEnforceable =
     input.research === undefined
-      ? requestedProfile.permissions.network.mode === "none" &&
-        requestedProfile.permissions.network.destinations.length === 0 &&
+      ? publicDestinations.length === 0 &&
         requestedProfile.permissions.volume.maxResearchRequests === 0 &&
         requestedProfile.permissions.volume.maxResearchResults === 0
       : requestedProfile.permissions.network.mode === "guardian_only" &&
-        publicDestinations.length === requestedProfile.permissions.network.destinations.length &&
         publicDestinations.length > 0 &&
         requestedProfile.permissions.volume.maxResearchRequests > 0 &&
         requestedProfile.permissions.volume.maxResearchResults > 0;
+  const githubNetworkIsEnforceable =
+    requestedGitHubTools.length === 0
+      ? githubDestinations.length === 0
+      : connectionIds.length > 0 &&
+        requestedProfile.permissions.network.mode === "guardian_only" &&
+        githubDestinations.length > 0;
+  const hasMediatedNetwork = input.research !== undefined || requestedGitHubTools.length > 0;
+  const networkModeIsEnforceable = hasMediatedNetwork
+    ? requestedProfile.permissions.network.mode === "guardian_only"
+    : requestedProfile.permissions.network.mode === "none" &&
+      requestedProfile.permissions.network.destinations.length === 0;
   if (
     requestedProfile.permissions.tools.length !== supportedTools.size ||
     !requestedProfile.permissions.tools.every((tool) => supportedTools.has(tool)) ||
     requestedProfile.permissions.filesystem.mode !== "workspace_write" ||
     requestedProfile.permissions.filesystem.roots.length !== 1 ||
     requestedProfile.permissions.filesystem.roots[0] !== "/workspace" ||
+    !networkModeIsEnforceable ||
     !researchNetworkIsEnforceable ||
+    !githubNetworkIsEnforceable ||
     !requestedProfile.permissions.sideEffects.includes("write_workspace")
   ) {
     throw new TypeError("profile is not enforceable by the C4 reference runtime");

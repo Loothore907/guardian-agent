@@ -156,6 +156,118 @@ describe("reference authority supervisor", () => {
     }
   });
 
+  it("binds a strict competition mission and narrower worker catalog before activation", async () => {
+    const { databasePath, projectRoot, workspace } = await location();
+    const supervisor = await startReferenceAuthoritySupervisor(
+      {
+        sessionId: IDS.session,
+        callerId: IDS.caller,
+        authorityStorePath: databasePath,
+        projectRoot,
+        workspaceRoots: [workspace],
+        issuedAt: START,
+        expiresAt: EXPIRY,
+      },
+      {
+        competition: {
+          connectionId: IDS.connection,
+          owner: "loothore907",
+          repository: "guardian-agent-demo",
+          researchDomains: ["docs.github.com"],
+          researchRequiredTerms: ["pull request"],
+        },
+      },
+    );
+    try {
+      const preview = supervisor.bootstrap.createDraft({
+        schemaVersion: 1,
+        objective: "Validate the controlled research and merge journey.",
+      });
+      expect(preview).toMatchObject({
+        permissions: {
+          tools: [
+            "guardian.session_status",
+            "guardian.local_command",
+            "guardian.research",
+            "github.pull_request.merge",
+          ],
+          network: {
+            mode: "guardian_only",
+            destinations: [
+              { kind: "public_domain", hostname: "docs.github.com" },
+              {
+                kind: "github_repository",
+                owner: "loothore907",
+                repository: "guardian-agent-demo",
+              },
+            ],
+          },
+          sideEffects: ["write_workspace", "merge_pull_request"],
+        },
+        workerTools: ["guardian.session_status", "guardian.local_command"],
+      });
+    } finally {
+      await supervisor.close();
+    }
+  });
+
+  it("does not persist competition connection authority before exact session activation", async () => {
+    const { databasePath, projectRoot, workspace } = await location();
+    const config = {
+      sessionId: IDS.session,
+      callerId: IDS.caller,
+      authorityStorePath: databasePath,
+      projectRoot,
+      workspaceRoots: [workspace],
+      issuedAt: START,
+      expiresAt: EXPIRY,
+    } as const;
+    const options = {
+      competition: {
+        connectionId: IDS.connection,
+        owner: "loothore907",
+        repository: "guardian-agent-demo",
+        researchDomains: ["docs.github.com"],
+        researchRequiredTerms: ["pull request"],
+      },
+    } as const;
+
+    const declined = await startReferenceAuthoritySupervisor(config, options);
+    declined.bootstrap.createDraft({
+      schemaVersion: 1,
+      objective: "Inspect the preview without confirming it.",
+    });
+    await declined.close();
+
+    const restarted = await startReferenceAuthoritySupervisor(config, options);
+    await restarted.close();
+  });
+
+  it("rejects malformed competition configuration before starting authority", async () => {
+    await expect(
+      startReferenceAuthoritySupervisor(
+        {
+          sessionId: IDS.session,
+          callerId: IDS.caller,
+          authorityStorePath: "unused.sqlite",
+          projectRoot: ".",
+          workspaceRoots: ["workspace"],
+          issuedAt: START,
+          expiresAt: EXPIRY,
+        },
+        {
+          competition: {
+            connectionId: IDS.connection,
+            owner: "loothore907",
+            repository: "guardian-agent-demo",
+            researchDomains: ["not a host"],
+            researchRequiredTerms: ["pull request"],
+          },
+        },
+      ),
+    ).rejects.toThrow();
+  });
+
   it("stores an exact lower-assurance approval through the authorization role", async () => {
     const { databasePath, projectRoot, workspace } = await location();
     const supervisor = await startReferenceAuthoritySupervisor(

@@ -6,12 +6,14 @@ import {
   DEFAULT_REFERENCE_WORKER_SELECTION,
   DEFAULT_GUARDIAN_MODEL_POLICY,
   DevelopmentSessionConfirmationSchema,
+  PermissionEnvelopeSchema,
   SessionBootstrapResultSchema,
   SessionDraftInputSchema,
   SessionDraftPreviewSchema,
   SessionWorkerSelectionSchema,
   SessionWorkspaceSelectionSchema,
   TimestampSchema,
+  ToolCapabilitySchema,
   WorkerTurnIpcFailureReasonSchema,
   type CompiledMissionCandidate,
   type DevelopmentSessionConfirmation,
@@ -23,11 +25,13 @@ import {
   type MissionFormationEffectiveRoute,
   type MissionSetupRiskEnvelope,
   type MissionSetupRiskEvaluation,
+  type PermissionEnvelope,
   type SessionBootstrapResult,
   type SessionDraftInput,
   type SessionDraftPreview,
   type SessionWorkerSelection,
   type SessionWorkspaceSelection,
+  type ToolCapability,
   type UntrustedMissionDraftInput,
   type WorkerTurnEnvelope,
   type WorkerTurnIpcFailureReason,
@@ -132,6 +136,11 @@ export interface ReferenceSessionBootstrapOptions {
   readonly executeWorkerTool?: ExecuteWorkerTool;
   readonly workerAuthority?: AuthorityWorkerClient;
   readonly workerSelection?: SessionWorkerSelection;
+  readonly missionTemplate?: {
+    readonly constraints: readonly string[];
+    readonly permissions: PermissionEnvelope;
+    readonly workerTools: readonly ToolCapability[];
+  };
   readonly now?: () => string;
   readonly randomId?: () => string;
 }
@@ -149,6 +158,9 @@ export class ReferenceSessionBootstrapCoordinator {
   readonly #executeWorkerTool: ExecuteWorkerTool | undefined;
   readonly #workerAuthority: AuthorityWorkerClient | undefined;
   readonly #workerSelection: SessionWorkerSelection;
+  readonly #missionConstraints: readonly string[];
+  readonly #missionPermissions: PermissionEnvelope;
+  readonly #workerTools: readonly ToolCapability[];
   readonly #now: () => string;
   readonly #randomId: () => string;
   readonly #formation: PreActivationMissionCoordinator;
@@ -170,10 +182,23 @@ export class ReferenceSessionBootstrapCoordinator {
     this.#workerSelection = SessionWorkerSelectionSchema.parse(
       options.workerSelection ?? DEFAULT_REFERENCE_WORKER_SELECTION,
     );
+    this.#missionConstraints = options.missionTemplate?.constraints ?? REFERENCE_CONSTRAINTS;
+    this.#missionPermissions = PermissionEnvelopeSchema.parse(
+      options.missionTemplate?.permissions ?? REFERENCE_PERMISSIONS,
+    );
+    this.#workerTools = (
+      options.missionTemplate?.workerTools ?? this.#missionPermissions.tools
+    ).map((tool) => ToolCapabilitySchema.parse(tool));
+    if (
+      new Set(this.#workerTools).size !== this.#workerTools.length ||
+      !this.#workerTools.every((tool) => this.#missionPermissions.tools.includes(tool))
+    ) {
+      throw new TypeError("worker tool catalog must be a unique subset of mission permissions");
+    }
     this.#now = options.now ?? (() => new Date().toISOString());
     this.#randomId = options.randomId ?? randomUUID;
     this.#formation = new PreActivationMissionCoordinator({
-      maximumPermissions: REFERENCE_PERMISSIONS,
+      maximumPermissions: this.#missionPermissions,
       policyVersion: POLICY_VERSION,
       now: () => new Date(Date.parse(this.#now())),
       randomId: this.#randomId,
@@ -186,8 +211,8 @@ export class ReferenceSessionBootstrapCoordinator {
     const formationDraft = this.#formation.createDraft({
       schemaVersion: 1,
       objective: draft.objective,
-      constraints: REFERENCE_CONSTRAINTS,
-      requestedPermissions: REFERENCE_PERMISSIONS,
+      constraints: this.#missionConstraints,
+      requestedPermissions: this.#missionPermissions,
       requestedRoute: "structured",
     });
     this.#pendingFormationDraftIds.add(formationDraft.draftId);
@@ -215,8 +240,8 @@ export class ReferenceSessionBootstrapCoordinator {
     return this.createAssistedDraft({
       schemaVersion: 1,
       objective: draft.objective,
-      constraints: REFERENCE_CONSTRAINTS,
-      requestedPermissions: REFERENCE_PERMISSIONS,
+      constraints: this.#missionConstraints,
+      requestedPermissions: this.#missionPermissions,
       requestedRoute: "qwen_assisted",
     });
   }
@@ -375,7 +400,7 @@ export class ReferenceSessionBootstrapCoordinator {
             context: {
               objective: pending.preview.objective,
               constraints: pending.preview.constraints,
-              allowedTools: pending.preview.permissions.tools,
+              allowedTools: pending.preview.workerTools,
             },
           });
     const turnStartsAt = evaluatedAt;
@@ -400,7 +425,7 @@ export class ReferenceSessionBootstrapCoordinator {
       expiresAt: turnExpiresAt,
       objective: pending.preview.objective,
       constraints: pending.preview.constraints,
-      allowedTools: pending.preview.permissions.tools,
+      allowedTools: pending.preview.workerTools,
       remainingBudget: {
         remainingDurationSeconds: Math.max(
           0,
@@ -579,10 +604,12 @@ export class ReferenceSessionBootstrapCoordinator {
       missionVersion: status.missionVersion,
       profileId: status.profileId,
       profileVersion: status.profileVersion,
+      policyVersion: status.policyVersion,
       state: sessionState,
       assurance: status.assurance,
       expiresAt: status.expiresAt,
       tools: status.tools,
+      workerTools: pending.preview.workerTools,
       confirmationAssurance: confirmation.assurance,
       worker: pending.preview.worker,
       workspace: launched.workspace,
@@ -609,6 +636,7 @@ export class ReferenceSessionBootstrapCoordinator {
       formationPreviewDigest: candidate.previewDigest,
       integration,
       worker: this.#workerSelection,
+      workerTools: this.#workerTools,
       workspace: this.#workspaceSelection,
     });
     const preview = SessionDraftPreviewSchema.parse({
@@ -620,6 +648,7 @@ export class ReferenceSessionBootstrapCoordinator {
       objective: candidate.objective,
       constraints: candidate.constraints,
       permissions: candidate.permissions,
+      workerTools: this.#workerTools,
       integration,
       worker: this.#workerSelection,
       workspace: this.#workspaceSelection,

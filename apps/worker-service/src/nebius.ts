@@ -21,6 +21,13 @@ export class NativeWorkerProviderError extends Error {
   }
 }
 
+export type NativeWorkerProviderDiagnostic =
+  | { readonly kind: "transport_failure" }
+  | { readonly kind: "http_error"; readonly status: number }
+  | { readonly kind: "response_envelope_invalid" }
+  | { readonly kind: "worker_output_invalid" }
+  | { readonly kind: "credential_or_internal_failure" };
+
 async function boundedProviderJson(response: Response): Promise<unknown> {
   const contentType = response.headers.get("content-type");
   if (contentType === null || !contentType.toLowerCase().startsWith("application/json")) {
@@ -233,18 +240,49 @@ const TOOL_REQUEST_SCHEMA = {
   ],
 } as const;
 
+function workerOutcomeGuidance(allowedTools: WorkerTurnEnvelope["allowedTools"]): string {
+  const permittedRequests = TOOL_REQUEST_SCHEMA.oneOf.filter((request) =>
+    allowedTools.includes(request.properties.name.const),
+  );
+  const outcomes: unknown[] = [
+    {
+      type: "object",
+      additionalProperties: false,
+      required: ["kind", "response"],
+      properties: {
+        kind: { const: "final_response" },
+        response: { type: "string", minLength: 1, maxLength: 8_000 },
+      },
+    },
+  ];
+  if (permittedRequests.length > 0) {
+    outcomes.push({
+      type: "object",
+      additionalProperties: false,
+      required: ["kind", "request"],
+      properties: {
+        kind: { const: "tool_request" },
+        request: { oneOf: permittedRequests },
+      },
+    });
+  }
+  return JSON.stringify({ oneOf: outcomes });
+}
+
 export class NebiusNativeWorkerProvider {
   readonly selectionKind = "nebius_native" as const;
   readonly #store: CredentialStore;
   readonly #fetch: typeof fetch;
   readonly #timeoutMs: number;
   readonly #modelPolicy: GuardianModelPolicy;
+  readonly #diagnostic: (diagnostic: NativeWorkerProviderDiagnostic) => void;
 
   constructor(options: {
     readonly credentialStore: CredentialStore;
     readonly fetch?: typeof fetch;
     readonly timeoutMs?: number;
     readonly modelPolicy?: GuardianModelPolicy;
+    readonly onDiagnostic?: (diagnostic: NativeWorkerProviderDiagnostic) => void;
   }) {
     this.#store = options.credentialStore;
     this.#fetch = options.fetch ?? globalThis.fetch;
@@ -252,6 +290,7 @@ export class NebiusNativeWorkerProvider {
     this.#modelPolicy = GuardianModelPolicySchema.parse(
       options.modelPolicy ?? DEFAULT_GUARDIAN_MODEL_POLICY,
     );
+    this.#diagnostic = options.onDiagnostic ?? (() => undefined);
     if (!Number.isInteger(this.#timeoutMs) || this.#timeoutMs < 100 || this.#timeoutMs > 60_000) {
       throw new TypeError("native worker provider timeout is invalid");
     }
@@ -259,6 +298,7 @@ export class NebiusNativeWorkerProvider {
 
   async runTurn(turnValue: WorkerTurnEnvelope) {
     const turn = WorkerTurnEnvelopeSchema.parse(turnValue);
+    const outcomeGuidance = workerOutcomeGuidance(turn.allowedTools);
     const selection = turn.worker;
     if (
       selection.kind !== "nebius_native" ||
@@ -272,74 +312,77 @@ export class NebiusNativeWorkerProvider {
     ) {
       throw new NativeWorkerProviderError();
     }
+    let diagnosed = false;
+    const report = (diagnostic: NativeWorkerProviderDiagnostic) => {
+      diagnosed = true;
+      try {
+        this.#diagnostic(diagnostic);
+      } catch {
+        // Sanitized diagnostics must never change provider behavior.
+      }
+    };
     try {
       return await this.#store.use(
         CredentialReferenceSchema.parse({ schemaVersion: 1, provider: "nebius", slot: "default" }),
         async (credential) => {
           const apiKey = new TextDecoder("utf-8", { fatal: true }).decode(credential);
-          const response = await this.#fetch(NEBIUS_CHAT_COMPLETIONS_ENDPOINT, {
-            method: "POST",
-            redirect: "error",
-            signal: AbortSignal.timeout(this.#timeoutMs),
-            headers: {
-              accept: "application/json",
-              authorization: `Bearer ${apiKey}`,
-              "content-type": "application/json",
-            },
-            body: JSON.stringify({
-              model: selection.modelId,
-              temperature: 0,
-              max_tokens: 2_048,
-              messages: [
-                {
-                  role: "system",
-                  content:
-                    turn.previousToolResult === undefined
-                      ? "You are Guardian's bounded native worker. Use only the supplied credential-free mission projection. Return exactly one final response or one typed tool request. A tool request is pending only: you cannot execute it or claim approval. Never emit session bindings, proposal IDs, approval state, assurance, credentials, URLs, headers, or shell text outside the typed schema."
-                      : "You are Guardian's bounded native worker. Guardian has returned the single sanitized tool result permitted for this task. Return exactly one final response and do not request another tool. Never emit session bindings, proposal IDs, approval state, credentials, URLs, headers, or shell text.",
-                },
-                { role: "user", content: JSON.stringify(providerProjection(turn)) },
-              ],
-              response_format: {
-                type: "json_schema",
-                json_schema: {
-                  name: "guardian_worker_outcome",
-                  strict: true,
-                  schema: {
-                    oneOf: [
-                      {
-                        type: "object",
-                        additionalProperties: false,
-                        required: ["kind", "response"],
-                        properties: {
-                          kind: { const: "final_response" },
-                          response: { type: "string", minLength: 1, maxLength: 8_000 },
-                        },
-                      },
-                      {
-                        type: "object",
-                        additionalProperties: false,
-                        required: ["kind", "request"],
-                        properties: {
-                          kind: { const: "tool_request" },
-                          request: TOOL_REQUEST_SCHEMA,
-                        },
-                      },
-                    ],
-                  },
-                },
+          let response: Response;
+          try {
+            response = await this.#fetch(NEBIUS_CHAT_COMPLETIONS_ENDPOINT, {
+              method: "POST",
+              redirect: "error",
+              signal: AbortSignal.timeout(this.#timeoutMs),
+              headers: {
+                accept: "application/json",
+                authorization: `Bearer ${apiKey}`,
+                "content-type": "application/json",
               },
-            }),
-          });
-          if (!response.ok) throw new NativeWorkerProviderError();
-          const result = projectNebiusWorkerResponse(
-            await boundedProviderJson(response),
-            selection.modelId,
-          );
+              body: JSON.stringify({
+                model: selection.modelId,
+                temperature: 0,
+                max_tokens: 2_048,
+                messages: [
+                  {
+                    role: "system",
+                    content:
+                      turn.previousToolResult === undefined
+                        ? `You are Guardian's bounded native worker. Use only the supplied credential-free mission projection. Return exactly one JSON object matching this schema: ${outcomeGuidance}. A tool request is pending only: you cannot execute it or claim approval. Never emit session bindings, proposal IDs, approval state, assurance, credentials, URLs, headers, or shell text outside the typed schema.`
+                        : `You are Guardian's bounded native worker. Guardian has returned the single sanitized tool result permitted for this task. Return exactly one final-response JSON object and do not request another tool. The complete output schema is: ${outcomeGuidance}. Never emit session bindings, proposal IDs, approval state, credentials, URLs, headers, or shell text.`,
+                  },
+                  { role: "user", content: JSON.stringify(providerProjection(turn)) },
+                ],
+                response_format: {
+                  type: "json_object",
+                },
+              }),
+            });
+          } catch {
+            report({ kind: "transport_failure" });
+            throw new NativeWorkerProviderError();
+          }
+          if (!response.ok) {
+            report({ kind: "http_error", status: response.status });
+            throw new NativeWorkerProviderError();
+          }
+          let providerJson: unknown;
+          try {
+            providerJson = await boundedProviderJson(response);
+          } catch {
+            report({ kind: "response_envelope_invalid" });
+            throw new NativeWorkerProviderError();
+          }
+          let result: ReturnType<typeof projectNebiusWorkerResponse>;
+          try {
+            result = projectNebiusWorkerResponse(providerJson, selection.modelId);
+          } catch {
+            report({ kind: "worker_output_invalid" });
+            throw new NativeWorkerProviderError();
+          }
           return { requestId: result.requestId, outcome: result.outcome };
         },
       );
     } catch {
+      if (!diagnosed) report({ kind: "credential_or_internal_failure" });
       throw new NativeWorkerProviderError();
     }
   }

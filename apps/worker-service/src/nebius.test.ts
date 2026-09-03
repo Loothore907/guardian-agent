@@ -101,7 +101,20 @@ describe("Nebius native worker provider", () => {
     expect(body).not.toContain(exactTurn.sessionId);
     expect(body).not.toContain(exactTurn.callerId);
     expect(body).not.toContain(exactTurn.turnDigest);
-    expect(JSON.parse(body)).toMatchObject({ model: nativeWorkerBoundary.model });
+    const request = JSON.parse(body) as {
+      readonly model: string;
+      readonly messages: readonly { readonly content: string }[];
+      readonly response_format: unknown;
+    };
+    expect(request).toMatchObject({
+      model: nativeWorkerBoundary.model,
+      response_format: { type: "json_object" },
+    });
+    expect(request.messages[0]?.content).toContain('"kind":{"const":"final_response"}');
+    expect(request.messages[0]?.content).toContain('"name":{"const":"guardian.local_command"}');
+    expect(request.messages[0]?.content).toContain('"name":{"const":"guardian.session_status"}');
+    expect(request.messages[0]?.content).not.toContain("guardian.research");
+    expect(request.messages[0]?.content).not.toContain("github.pull_request");
   });
 
   it("rejects mismatched policy or model before credential use and provider invocation", async () => {
@@ -209,11 +222,14 @@ describe("Nebius native worker provider", () => {
       nativeWorkerBoundary.credential,
       new TextEncoder().encode("worker-provider-timeout-fixture"),
     );
+    const diagnostics: unknown[] = [];
     const timeoutProvider = new NebiusNativeWorkerProvider({
       credentialStore,
       fetch: vi.fn<typeof fetch>(() => Promise.reject(new DOMException("timeout", "TimeoutError"))),
+      onDiagnostic: (diagnostic) => diagnostics.push(diagnostic),
     });
     await expect(timeoutProvider.runTurn(turn())).rejects.toBeInstanceOf(NativeWorkerProviderError);
+    expect(diagnostics).toEqual([{ kind: "transport_failure" }]);
 
     const oversizedProvider = new NebiusNativeWorkerProvider({
       credentialStore,
@@ -228,10 +244,38 @@ describe("Nebius native worker provider", () => {
           }),
         ),
       ),
+      onDiagnostic: (diagnostic) => diagnostics.push(diagnostic),
     });
     await expect(oversizedProvider.runTurn(turn())).rejects.toBeInstanceOf(
       NativeWorkerProviderError,
     );
+    expect(diagnostics).toEqual([
+      { kind: "transport_failure" },
+      { kind: "response_envelope_invalid" },
+    ]);
+  });
+
+  it("reports only allowlisted HTTP failure metadata", async () => {
+    const credentialStore = new InMemoryCredentialStore();
+    const secret = "worker-provider-http-secret-fixture";
+    await credentialStore.write(nativeWorkerBoundary.credential, new TextEncoder().encode(secret));
+    const diagnostics: unknown[] = [];
+    const provider = new NebiusNativeWorkerProvider({
+      credentialStore,
+      fetch: vi.fn<typeof fetch>(() =>
+        Promise.resolve(
+          new Response(`provider detail containing ${secret}`, {
+            status: 400,
+            headers: { "content-type": "text/plain", "x-secret": secret },
+          }),
+        ),
+      ),
+      onDiagnostic: (diagnostic) => diagnostics.push(diagnostic),
+    });
+
+    await expect(provider.runTurn(turn())).rejects.toBeInstanceOf(NativeWorkerProviderError);
+    expect(diagnostics).toEqual([{ kind: "http_error", status: 400 }]);
+    expect(JSON.stringify(diagnostics)).not.toContain(secret);
   });
 
   it("fails closed on malformed, extra-field, credential-like, or model-mismatched output", () => {

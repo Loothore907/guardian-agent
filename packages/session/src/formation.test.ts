@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { DEFAULT_GUARDIAN_MODEL_POLICY } from "@guardian/contracts";
+
 import { PreActivationMissionCoordinator } from "./formation.js";
 
 const draftId = "11111111-1111-4111-8111-111111111111";
@@ -102,7 +104,7 @@ describe("PreActivationMissionCoordinator", () => {
     });
 
     expect(candidate.modelPolicyId).toBe("competition-2026-09-01");
-    expect(candidate.modelPolicyVersion).toBe(1);
+    expect(candidate.modelPolicyVersion).toBe(DEFAULT_GUARDIAN_MODEL_POLICY.version);
     expect(() => subject.consumeConfirmedCandidate(created.draftId, 1, "0".repeat(64))).toThrow(
       /digest/u,
     );

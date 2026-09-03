@@ -14,6 +14,7 @@ export {
   NativeWorkerProviderError,
   nativeWorkerBoundary,
   projectNebiusWorkerResponse,
+  type NativeWorkerProviderDiagnostic,
 } from "./nebius.js";
 
 export interface NativeWorkerProvider {

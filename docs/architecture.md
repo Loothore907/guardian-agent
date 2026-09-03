@@ -142,6 +142,16 @@ unavailable, denies, or needs an unsupported step-up ceremony. Protected live
 pre-activation compatibility, platform peer identity and containment, richer
 transition explanations and a generalized native-worker loop remain pending.
 
+The executable vertical-slice work makes an important permission distinction
+explicit. The human-confirmed mission and active session permissions contain the
+complete Guardian-mediated ceiling, including bounded research and an exact-
+approval GitHub capability where configured. A separately digest-bound
+`workerTools` catalog is the narrower set exposed to the native worker. It must be
+a unique subset of the session tools. Mission dialogue and worker turns receive
+only that catalog; trusted orchestration and the privileged broker do not become
+worker tools merely because the confirmed session permits their bounded use. See
+[ADR-0030](adr/0030-confirmed-mission-and-worker-tool-separation.md).
+
 ## Native worker-turn boundary
 
 The first provider-neutral worker boundary is implemented after exact mission

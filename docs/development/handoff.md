@@ -18,8 +18,9 @@ and checkpoint history in `docs/development/roadmap.md`.
   competition coordinator, W6 supervised one-use attachment, W7 strict broker
   IPC, W8 separate Guardian action-risk IPC, W9 strict credential-holding
   broker-process startup, W10 credential-store-backed research-process startup,
-  W11 fixed three-child supervision, W12 activated-session configuration, and W13
-  exact CLI confirmation are locally implemented. Do not reopen the
+  W11 fixed three-child supervision, W12 activated-session configuration, W13
+  exact CLI confirmation, and W14 executable deterministic startup are locally
+  implemented. Do not reopen the
   settled workspace-copy or exact W3 lifecycle while choosing the next slice.
 - **W4 outcome:** an ordinary rejected action returns only an exact sanitized
   denial and can reach the mandatory final turn. Version-1 trusted policy contains
@@ -28,17 +29,21 @@ and checkpoint history in `docs/development/roadmap.md`.
   misses, and interrupts trusted boundary failure. Model output cannot supply
   severity, counts, thresholds, or disposition.
 - **Critical sequencing decision:** the user selected the controlled
-  research/GitHub competition journey before a generalized bounded worker loop.
-  W5 implements that fixed ordering in trusted orchestration while preserving
-  W3/W4's one-request, two-turn lifecycle.
+  research/GitHub journey before a generalized bounded worker loop.
+  [ADR-0029](../adr/0029-end-to-end-architectural-validation.md) now makes the
+  assembled end-to-end journey an architectural validation gate rather
+  than a premature competition-readiness sprint. Use it to test assumptions,
+  correct the design, and establish a stable base for later feature expansion.
+  W5 preserves the fixed ordering and W3/W4's one-request, two-turn lifecycle.
 - **Checkpoint state:** the repository now records W5 in `4a064a1`, W6-W8 in
   `f341b96`, W9-W11 in `f6087d4`, and W12-W13 in `90da76b`. The complete ordinary
   gate passed again after those checkpoints. No push, pull request, merge,
   publication, release, or other remote mutation followed.
-- **Current worktree:** the W6-W13 implementation, tests, ADRs, evidence, and
-  integrated documentation are locally checkpointed. Competition-session startup
-  and executable CLI dispatch remain the next implementation slice; protected
-  provider evidence and remote review follow it.
+- **Current worktree:** the W6-W13 implementation is locally checkpointed. W14
+  adds the uncommitted executable competition path, strict public deployment
+  input, trusted competition session/connection/research configuration, exact
+  activation-bound requests, and ADR-0030 mission/worker-tool separation. The
+  complete ordinary gate passes; staged protected provider evidence is next.
 - **Secret caution:** `.env.local` is ignored development input. Never print,
   stage, copy, summarize, or use it as the installation design. Never print or
   export credential-store values.
@@ -65,14 +70,52 @@ the appropriate Git transition part of the normal development flow:
    actions and results; do not shift responsibility for normal checkpoint timing
    back to the user through repeated permission prompts.
 
-For the current C6 section, the remote-readiness gate is not yet met because
-competition-session startup, executable dispatch, and the protected live journey
-remain. The next session should continue locally through those steps, then push
-the completed branch and open or update its review PR when the gate passes.
+For the current C6 section, the remote-readiness gate is not yet met because the
+protected live boundary sequence and complete protected journey remain. The next
+session should continue locally through those steps, correct any architecture the
+live evidence disproves, then push the completed branch and open or update its
+review PR when the gate passes.
 
 This standing workflow does not authorize merge, release, publication,
 deployment, remote-setting changes, destructive recovery, credential disclosure,
 or material scope expansion. Those actions still require specific direction.
+
+## Current architectural validation gate
+
+[ADR-0029](../adr/0029-end-to-end-architectural-validation.md) fixes the next
+phase around one complete vertical journey through the real executable surface.
+The purpose is to make the architecture encounter real
+model behavior, provider latency and failure, hostile public content, durable
+authority, and one controlled external effect. Competition demo hardening remains
+later work.
+
+The validation order is deliberate:
+
+```text
+deterministic executable journey
+  -> live Qwen mission dialogue
+  -> live native worker
+  -> live Tavily research and controlled hostile content
+  -> live Nemotron action-risk path
+  -> assembled live path without a privileged effect
+  -> one exact disposable GitHub merge
+  -> mutation, replay, expiry, failure, and redaction review
+  -> architecture findings and roadmap triage
+```
+
+For every stage, record:
+
+1. the assumption being tested;
+2. the deterministic control that remains authoritative;
+3. the expected fail-closed behavior;
+4. the observed compatibility, latency, and failure evidence; and
+5. whether the result belongs to the validated core, a design correction, or an
+   expansion candidate.
+
+A cooperative live model is compatibility evidence, not enforcement evidence. If
+a live boundary contradicts the design, stop at that boundary, record the finding,
+change the design and tests, and re-run the affected earlier stages. Do not weaken
+the boundary or special-case the scripted journey to keep it moving.
 
 ## Settled architecture
 
@@ -106,17 +149,22 @@ remains:
 
 ### Competition model and hosting policy
 
-The `competition-2026-09-01` version 1 policy currently assigns:
+The current `competition-2026-09-01` version 2 policy assigns:
 
-- native worker: `Qwen/Qwen3-Coder-30B-A3B-Instruct`;
+- native worker: `moonshotai/Kimi-K2.7-Code`;
 - mission dialogue: `Qwen/Qwen3-235B-A22B-Instruct-2507`;
 - primary contextual risk: `nvidia/nemotron-3-super-120b-a12b`;
 - invalid-output escalation: `nvidia/Nemotron-3-Ultra-550b-a55b`.
 
-These are versioned evidence pins, not permanent model choices. A reviewed policy
-version may upgrade them. Session prompts, retrieved content, workers, and model
-output cannot choose arbitrary model IDs. Every competition policy must retain
-the mechanically validated NVIDIA Nemotron presence.
+Version 1 is retained as historical evidence and assigned
+`Qwen/Qwen3-Coder-30B-A3B-Instruct` to the native worker. A protected 404 and
+credential-isolated inventory showed that model absent from the current live
+catalog, so ADR-0031 introduced version 2 rather than a runtime fallback. Built-in
+policies resolve by exact identifier and version. These are versioned evidence
+pins, not permanent model choices. A reviewed policy version may upgrade them.
+Session prompts, retrieved content, workers, inventory responses, and model output
+cannot choose arbitrary model IDs. Every competition policy must retain the
+mechanically validated NVIDIA Nemotron presence.
 
 The planned judge deployment uses Nebius AI Cloud for application hosting and
 Nebius Token Factory for all model inference. It needs no OpenAI API key. Sharing
@@ -256,9 +304,9 @@ default production trust model.
   research begins, and the successful merge result must bind the exact repository,
   pull request, and expected head.
 - ADR-0020 and `docs/development/evidence/w5-controlled-competition-journey.md`
-  record the decision and focused coordinator tests. W6-W13 now supply its local
+  record the decision and focused coordinator tests. W6-W14 now supply its local
   supervision, IPC, process composition, trusted configuration, and exact CLI
-  confirmation seams; executable dispatch and protected end-to-end evidence remain.
+  confirmation/executable seams; protected end-to-end evidence remains.
 
 ### W6 supervised one-use journey attachment
 
@@ -378,8 +426,8 @@ default production trust model.
   narrows the CLI-facing surface further to a complete run operation.
 - ADR-0027 and
   `docs/development/evidence/w12-activated-competition-configuration.md` record
-  the boundary and focused evidence. W13 adds the exact CLI ceremony, while
-  executable dispatch remains.
+  the boundary and focused evidence. W13 adds the exact CLI ceremony and W14
+  supplies executable dispatch and trusted competition-session startup.
 
 ### W13 exact competition CLI confirmation
 
@@ -395,8 +443,35 @@ default production trust model.
   minimized result; approval and service configuration are not returned.
 - ADR-0028 and
   `docs/development/evidence/w13-exact-competition-cli-confirmation.md` record the
-  ceremony and focused evidence. Executable dispatch and the trusted
-  competition-specific session/connection launch remain.
+  ceremony and focused evidence. W14 supplies executable dispatch and the trusted
+  competition-specific session/connection launch.
+
+### W14 executable competition startup
+
+- `main.ts` now routes only the exact `guardian competition` shape into the fixed
+  competition application flow; `setup` and ordinary `start` retain their
+  existing routes.
+- Strict named deployment inputs accept only a public GitHub client ID, bounded
+  research query/domains/required terms, and two exact public pull-request
+  versions. They accept no credential, credential-store handle, arbitrary URL,
+  header, command, environment, model ID, or provider transport.
+- The supervisor derives the credential-store handle from a fresh connection ID,
+  owns research IPC credentials, and creates and attaches the narrow connection
+  only inside exact-confirmed launch; declining the preview leaves no active
+  connection authority behind. Canonical requests are constructed only after an
+  active Enforced bootstrap result and bind its exact mission, profile, and policy
+  versions.
+- ADR-0030 separates the human-confirmed mission/session ceiling from a distinct
+  digest-bound `workerTools` subset. The competition mission may use mediated
+  research and an exact-approved merge, while the current worker sees only status
+  and local command.
+- The application-level deterministic test crosses exact command parsing, strict
+  deployment parsing, session confirmation, request construction, W13 merge
+  confirmation, the fake runner result, output, and cleanup. Existing W9-W11 tests
+  retain the actual fixed-child composition evidence.
+- ADR-0030 and
+  `docs/development/evidence/w14-executable-competition-startup.md` record the
+  decision, focused tests, complete ordinary gate, and protected-live residuals.
 
 ### Existing security and execution foundation
 
@@ -427,24 +502,151 @@ default production trust model.
 - Complete Linux runtime, credential-store, and IPC peer-identity parity.
 - Public judge deployment, TLS validation, or hosted-runtime assurance evidence.
 - Protected live pre-activation and Nemotron-through-broker evidence.
-- Executable `guardian competition` dispatch and trusted competition-session
-  activation, plus protected end-to-end research/denial/merge evidence.
+- Protected end-to-end Tavily research, scope denial, separately approved GitHub
+  merge, mutation/replay, and redaction evidence through the executable path.
 
 Do not call any of these implemented, and do not label the future hosted worker
 `Enforced` merely because it runs on Nebius. Enforced requires reproducible tool,
 filesystem, credential, network, lifecycle, and authority evidence.
 
-## Next implementation slices
+## Current session execution plan
 
-1. Add trusted competition startup and executable dispatch: construct the bounded
-   research-capable mission with a narrower worker profile, attach the generated
-   demo connection and research endpoint, construct the exact unsafe/legitimate
-   requests from fixed deployment input, then call only the W13 ceremony.
-2. Capture protected live worker, pre-activation, journey, and
-   Nemotron-through-broker
-   evidence without logging provider content or credentials.
-3. Resume the controlled Extract/adversarial journey, WebAuthn ceremony, Linux
-   parity, and C8 experience work in dependency order.
+### Objective
+
+Make the fixed controlled journey reachable from the executable CLI, prove the
+complete path deterministically, and then test each live model and provider
+boundary in increasing order of side-effect risk. Use the results to validate or
+correct the architecture; do not optimize only for a polished demo.
+
+### Phase 1: executable deterministic slice
+
+**Status: implemented locally and ordinary gate green.** W14 completes the exact
+dispatch, strict deployment configuration, trusted session/connection/research
+attachment, activation-bound request construction, narrower worker catalog, and
+application-level deterministic journey. The architecture correction is recorded
+in ADR-0030 rather than hidden in the executable wiring.
+
+1. Map the exact startup gap between `main.ts`, the activated session, durable
+   connection attachment, fixed request construction, and the existing W13
+   runner.
+2. Add strict trusted competition deployment input. It may select only reviewed
+   fixed values and must not accept credentials, arbitrary URLs, model IDs,
+   headers, commands, environments, or generic provider transport.
+3. Route only the exact `guardian competition` command to competition startup.
+4. Construct the bounded research-capable mission and narrower worker profile,
+   require exact session confirmation, attach the generated demo connection and
+   research endpoint, and derive the unsafe and legitimate requests from the
+   trusted input.
+5. Run the journey through fake providers from the executable entrypoint. Add
+   allowed-path and near-miss tests for routing, activation, bindings, denial,
+   exact approval, result validation, cleanup, and replay.
+
+**Phase-1 exit passed:** one ordinary executable test reaches the fixed completed result,
+the unsafe request is denied at the expected boundary, no generic authority enters
+the CLI surface, and the complete ordinary gate is green.
+
+### Phase 2: live boundary validation
+
+Introduce one live boundary at a time and preserve a deterministic fixture for
+every observed contract:
+
+1. Qwen mission dialogue: schema reliability, bounded clarification, latency,
+   unavailable and invalid-output behavior.
+2. Native worker: exact turn binding, typed request selection, malformed output,
+   denial continuation, and final response.
+3. Tavily: outbound screening, bounded provenance, controlled hostile content,
+   timeouts, and private or secret-like request rejection.
+4. Nemotron: minimized action-risk envelope, deterministic-floor monotonicity,
+   Super-to-Ultra escalation, invalid output, timeout, and unavailability.
+5. Assembled no-effect journey: cross-service bindings, process lifecycle,
+   sanitized results, durable authority records, and audit minimization.
+6. Disposable GitHub effect: refresh the exact demo state, verify the expected
+   head, deny the out-of-scope attempt before execution, separately confirm the
+   legitimate squash merge, and reject mutation and replay before a second
+   provider effect.
+
+**Current live result:** the first Qwen gate passed from the user-scoped Codex
+integrated terminal. Windows Credential Manager supplied `nebius/default`, Qwen
+returned the strict `mission_brief` contract, the minimized summary length was
+158 characters, and provider latency was 1,823 ms. No summary content or
+credential was printed. The managed agent command sandbox still sees that
+credential reference as missing, exposing an execution-context separation that
+the final trusted provider-child launch must handle deliberately. The ignored
+`.env.local` file was not opened, printed, or imported. W15 records the evidence.
+
+The first native-worker attempt then failed closed in approximately 1,899 ms. A
+sanitized diagnostic rerun identified HTTP 404 in approximately 2,048 ms without
+printing the provider body, headers, credential, or generated content. The fixed
+inventory probe showed that the version 1 Qwen Coder worker was absent and that
+`moonshotai/Kimi-K2.7-Code` was available. ADR-0031 and W16 record the correction:
+version 1 remains historical, version 2 selects Kimi, exact policy-version lookup
+is enforced, and there is no silent fallback. The rebuilt version 2 request
+reached Kimi but failed closed with sanitized HTTP 400 in approximately 2,459 ms.
+The credential-safe capability probe then separated plain text, JSON object, and
+simple strict JSON-schema acceptance without emitting response bodies or generated
+content. It passed all three modes. The failure is therefore the full union-heavy
+Guardian schema, not general Kimi structured-output support. ADR-0032 changes the
+adapter to JSON-object mode, supplies the exact schema as guidance, and retains
+bounded parsing plus strict deterministic `WorkerOutcomeSchema` enforcement. The
+corrected protected final-response rerun then passed: Kimi returned a strict
+`final_response` with a 68-character
+sanitized response in 2,159 ms provider latency, and the generated content was not
+printed. W16 now closes the simple native-worker final-response sub-gate. The next
+protected run also passed: Kimi selected the one exact permitted
+`guardian.session_status` typed request in 2,138 ms provider latency, and neither
+generated arguments nor provider content was printed. W17 records that this is a
+pending request only; the provider neither authorized nor executed it. The next
+protected two-turn run also passed. Kimi selected the exact status request in
+2,106 ms, received a strict exact-bound sanitized `request_denied` / `continue`
+result, and returned a 116-character final response in 1,573 ms without retrying.
+No generated content or credential was printed. W18 records the important limit:
+the denial was constructed by the protected test through production contracts,
+not emitted by a live authority-service/dispatcher call. W4 separately proves
+the deterministic denial mechanics locally. Full assembled live containment,
+execution, and repeated reliability remain separate checks.
+
+**Phase-2 exit:** each boundary has an assumption/evidence record, the protected
+journey completes or stops at a documented fail-closed boundary, and no credential,
+private provider content, or credential-equivalent material appears in model
+contexts, process arguments or environments, SQLite, logs, traces, audit records,
+errors, or public results.
+
+**Current session tracks and handoff:** the clean handoff gate is reached. Track A
+now has live Qwen mission dialogue plus Kimi final-response, exact typed-request,
+and denial-continuation evidence through W15-W18. Its next boundary is live Tavily
+research and controlled hostile content. Track B is locked at the design level in
+ADR-0034: a public fixed/rate-limited demo and a separate authenticated piloted
+demo over the same enforcement core. OpenAI backup qualification and
+worker-visible research/GitHub dispatch remain separate queued slices; neither
+was started in this session.
+
+### Phase 3: findings and transition
+
+1. Re-run the relevant ordinary and protected checks after every design correction.
+2. Update ADRs, evidence, the claim matrix, architecture, roadmap, and handoff to
+   match observed behavior without broadening claims.
+3. Review the exact diff and bounded secret/artifact audit, then create the normal
+   local checkpoint commit for each coherent green slice.
+4. When the documented remote-readiness gate passes, push the feature branch and
+   open or update its review PR. Do not merge, deploy, release, or publish without
+   separate direction.
+5. Triage follow-up work into validated core, design corrections, and expansion
+   candidates. Resume controlled Extract/adversarial work, WebAuthn, Linux parity,
+   C8 experience, and any admitted feature expansion in dependency and evidence
+   order.
+
+### Stop/go rules
+
+- Do not perform the live GitHub effect until the deterministic executable path
+  and earlier live no-effect boundaries pass.
+- Do not print, export, copy, or summarize stored credentials or raw protected
+  provider content while diagnosing a live failure.
+- Do not call a hosted or live-model path `Enforced` without the documented tool,
+  filesystem, credential, network, lifecycle, and authority evidence.
+- Do not retry a provider failure indefinitely or relax a schema to obtain a happy
+  path. Preserve the failure evidence and choose a bounded correction or fallback.
+- Do not pull an expansion candidate into the session while an architectural
+  contradiction or required vertical-slice control remains unresolved.
 
 ## External state and known blockers
 
@@ -463,9 +665,9 @@ filesystem, credential, network, lifecycle, and authority evidence.
 - Last verified external demo state: public `Loothore907/guardian-agent-demo` was
   provisioned and squash-only; PR #1 passed exact-head read and merge, and the
   deterministic reset created open demo PR #2. This external state was not
-  refreshed during W6-W13 and must be rechecked before a protected run.
+  refreshed during W6-W14 and must be rechecked before a protected run.
 - Last recorded domain state: `agentic-guardian.com` was registered and delegated
-  to Cloudflare nameservers. This was not refreshed during W6-W13 and is not
+  to Cloudflare nameservers. This was not refreshed during W6-W14 and is not
   evidence of an application deployment, valid TLS, or WebAuthn origin.
 
 ## Verification at this transition
@@ -474,9 +676,9 @@ The current ordinary component set passes on this Windows host:
 
 - TypeScript build and typecheck;
 - ESLint and Prettier checks;
-- dependency boundaries: 174 modules and 348 dependencies, no violations;
-- Vitest: 60 files and 334 tests passed; three protected files and five protected
-  tests skipped, for 63 files / 339 tests total;
+- dependency boundaries: 176 modules and 353 dependencies, no violations;
+- Vitest: 61 files and 343 tests passed; three protected files and five protected
+  tests skipped, for 64 files / 348 tests total;
 - SQLite authority spike: seven passed and the expected POSIX permission test
   skipped on Windows;
 - deterministic demo reset planner: two passed;
@@ -486,17 +688,17 @@ Previously captured protected Windows/WSL evidence remains green through W4: one
 run covered the existing C4 isolation probe, persistent workspace, no source
 writeback, hidden host paths, credential absence, direct-egress denial, and the
 supervised exact W3 local-command/result/final-turn path with durable budget
-consumption under the W4 success-result contract. It was not rerun for W5-W13.
-The protected Tavily/Nemotron/GitHub journey was also not run in W6-W13.
+consumption under the W4 success-result contract. It was not rerun for W5-W14.
+The protected Tavily/Nemotron/GitHub journey was also not run in W6-W14.
 
 The last `git diff --check` was clean. The desktop `pnpm` wrapper's supply-chain
 metadata check attempted blocked registry access, so the same frozen `check`
 components were run directly with the pinned bundled Node and repository binaries;
 all passed. The protected runtime passed unchanged during W4 with approved WSL
-access and was not rerun for W5-W13 because those slices did not change the
-executor path. No live credentialed provider test ran during W6-W13. The W6-W13
-implementation tip is `90da76b`; the work is locally checkpointed, and no push,
-publish, release, or other remote mutation followed those checkpoints.
+access and was not rerun for W5-W14 because those slices did not change the
+executor path. No live credentialed provider test ran during W6-W14. The W6-W13
+implementation tip is `90da76b`; W14 is currently uncommitted. No push, publish,
+release, or other remote mutation followed the local checkpoints.
 
 A refreshed bounded commit-readiness audit found no changed or untracked database,
 archive, binary, log, key, certificate, or environment files and no unexpected
@@ -561,9 +763,20 @@ wrapper when the frozen workspace is already usable.
 - [ADR-0017: Credential-safe session workspaces](../adr/0017-credential-safe-session-workspaces.md)
 - [ADR-0018: Exact one-round-trip worker tool execution](../adr/0018-exact-one-round-trip-worker-tool-execution.md)
 - [ADR-0019: Contained worker denial and deterministic revocation](../adr/0019-contained-worker-denial-and-deterministic-revocation.md)
+- [ADR-0029: End-to-end architectural validation before feature expansion](../adr/0029-end-to-end-architectural-validation.md)
+- [ADR-0030: Confirmed mission and worker-tool separation](../adr/0030-confirmed-mission-and-worker-tool-separation.md)
+- [ADR-0031: Live-inventory-bound model policy v2](../adr/0031-live-inventory-bound-model-policy-v2.md)
+- [ADR-0032: JSON-object provider mode and deterministic worker validation](../adr/0032-json-object-provider-mode-and-deterministic-worker-validation.md)
+- [ADR-0033: Explicit model portability and provenance qualification](../adr/0033-explicit-model-portability-and-provenance-qualification.md)
+- [ADR-0034: Bounded public and piloted demo modes](../adr/0034-bounded-public-and-piloted-demo-modes.md)
 - [W2 session workspace evidence](evidence/w2-session-workspace.md)
 - [W3 worker tool round-trip evidence](evidence/w3-worker-tool-round-trip.md)
 - [W4 denial containment evidence](evidence/w4-denial-containment.md)
+- [W14 executable competition startup evidence](evidence/w14-executable-competition-startup.md)
+- [W15 live Qwen boundary evidence](evidence/w15-live-qwen-boundary.md)
+- [W16 live worker policy-correction evidence](evidence/w16-live-worker-policy-correction.md)
+- [W17 live worker typed-request evidence](evidence/w17-live-worker-typed-request.md)
+- [W18 live worker denial-continuation evidence](evidence/w18-live-worker-denial-continuation.md)
 - [C6 authority service evidence](evidence/c6-authority-service.md)
 - [C6 terminal bootstrap evidence](evidence/c6-terminal-bootstrap.md)
 - [C6 interaction boundary evidence](evidence/c6-interaction-boundary.md)
