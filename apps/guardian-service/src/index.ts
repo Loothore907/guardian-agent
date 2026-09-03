@@ -12,6 +12,7 @@ import {
 } from "@guardian/contracts";
 import type { CredentialStore } from "@guardian/credential-store";
 import {
+  LocalGuardianActionRiskIpcServer,
   LocalMissionSetupRiskIpcServer,
   parseGuardianEvaluation,
   parseGuardianRiskEnvelope,
@@ -32,26 +33,34 @@ export interface GuardianServiceBoundary {
   readonly evaluate: (envelope: GuardianRiskEnvelope) => Promise<GuardianEvaluation>;
 }
 
+export interface ActionRiskProvider {
+  readonly evaluate: (envelope: GuardianRiskEnvelope) => Promise<GuardianEvaluation>;
+}
+
 export interface MissionSetupRiskProvider {
   readonly evaluateMissionSetup: (
     envelope: MissionSetupRiskEnvelope,
   ) => Promise<GuardianEvaluation>;
 }
 
-export function createFakeMissionSetupRiskProvider(): MissionSetupRiskProvider {
+export function createFakeMissionSetupRiskProvider(): MissionSetupRiskProvider &
+  GuardianServiceBoundary {
+  const evaluation = (authorizationLevel: "allow" | "confirm" | "step_up" | "deny") =>
+    Promise.resolve({
+      status: "evaluated",
+      providerRequestId: "fake_setup_risk_1",
+      recommendation: {
+        schemaVersion: 1,
+        recommendation: authorizationLevel,
+        certainty: "certain",
+        reasonCodes: ["clean_context"],
+      },
+      authorizationLevel,
+    } as const);
   return {
-    evaluateMissionSetup: () =>
-      Promise.resolve({
-        status: "evaluated",
-        providerRequestId: "fake_setup_risk_1",
-        recommendation: {
-          schemaVersion: 1,
-          recommendation: "confirm",
-          certainty: "certain",
-          reasonCodes: ["clean_context"],
-        },
-        authorizationLevel: "confirm",
-      }),
+    credential: "NEBIUS_API_KEY",
+    evaluate: (envelope) => evaluation(envelope.deterministicFloor),
+    evaluateMissionSetup: (envelope) => evaluation(envelope.deterministicFloor),
   };
 }
 
@@ -72,6 +81,17 @@ export async function startMissionSetupRiskService(
           };
     return projected;
   });
+  await server.listen();
+  return server;
+}
+
+export async function startGuardianActionRiskService(
+  config: unknown,
+  provider: ActionRiskProvider,
+): Promise<LocalGuardianActionRiskIpcServer> {
+  const server = new LocalGuardianActionRiskIpcServer(config, async (envelope) =>
+    parseGuardianEvaluation(await provider.evaluate(parseGuardianRiskEnvelope(envelope))),
+  );
   await server.listen();
   return server;
 }

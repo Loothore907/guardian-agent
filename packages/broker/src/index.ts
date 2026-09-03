@@ -13,11 +13,9 @@ import {
 } from "@guardian/authorization";
 import {
   CanonicalRequestSchema,
-  AuthorizationLevelSchema,
   ExactApprovalSchema,
-  GuardianRecommendationSchema,
+  GuardianEvaluationSchema,
   OpaqueIdSchema,
-  ProviderRequestIdSchema,
   type CanonicalRequest,
   type AuthorizationLevel,
   type DurableConnectionRecord,
@@ -25,10 +23,12 @@ import {
   type ExactApproval,
   type GitHubMergeResult,
   type GitHubPullRequestSnapshot,
-  type GuardianRecommendation,
-  type ToolProposal,
+  type GuardianEvaluation,
+  type GuardianRiskEnvelope,
 } from "@guardian/contracts";
 import { applyGuardianRecommendation } from "@guardian/policy";
+
+export type { GuardianEvaluation, GuardianRiskEnvelope } from "@guardian/contracts";
 
 export interface BrokerExecutionRequest {
   readonly request: unknown;
@@ -62,58 +62,12 @@ export interface CredentialResolver {
   use<T>(handle: string, operation: (credential: Uint8Array) => Promise<T>): Promise<T>;
 }
 
-export interface GuardianRiskEnvelope {
-  readonly proposal: ToolProposal;
-  readonly deterministicFloor: AuthorizationLevel;
-  readonly riskSignals: readonly (
-    | "intent_action_mismatch"
-    | "untrusted_imperative_content"
-    | "authority_expansion"
-    | "ambiguous_evidence"
-    | "clean_context"
-  )[];
-  readonly untrustedExcerpts: readonly string[];
-  readonly containsCredentials: false;
-}
-
-export type GuardianEvaluation =
-  | {
-      readonly status: "evaluated";
-      readonly providerRequestId: string;
-      readonly recommendation: GuardianRecommendation;
-      readonly authorizationLevel: AuthorizationLevel;
-    }
-  | { readonly status: "unavailable"; readonly authorizationLevel: "deny" };
-
 export interface GuardianEvaluator {
   evaluate(envelope: GuardianRiskEnvelope): Promise<GuardianEvaluation>;
 }
 
 function strictGuardianEvaluation(value: unknown): GuardianEvaluation {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    throw new TypeError("guardian evaluation is invalid");
-  }
-  const evaluation = value as Record<string, unknown>;
-  if (evaluation.status === "unavailable") {
-    if (Object.keys(evaluation).length !== 2 || evaluation.authorizationLevel !== "deny") {
-      throw new TypeError("guardian evaluation is invalid");
-    }
-    return { status: "unavailable", authorizationLevel: "deny" };
-  }
-  const fields = ["status", "providerRequestId", "recommendation", "authorizationLevel"];
-  if (
-    evaluation.status !== "evaluated" ||
-    Object.keys(evaluation).length !== fields.length ||
-    Object.keys(evaluation).some((field) => !fields.includes(field))
-  ) {
-    throw new TypeError("guardian evaluation is invalid");
-  }
-  return {
-    status: "evaluated",
-    providerRequestId: ProviderRequestIdSchema.parse(evaluation.providerRequestId),
-    recommendation: GuardianRecommendationSchema.parse(evaluation.recommendation),
-    authorizationLevel: AuthorizationLevelSchema.parse(evaluation.authorizationLevel),
-  };
+  return GuardianEvaluationSchema.parse(value);
 }
 
 function brokerRequest(value: unknown): BrokerExecutionRequest | null {
@@ -557,3 +511,5 @@ export class GitHubBroker {
     }
   }
 }
+
+export * from "./ipc.js";

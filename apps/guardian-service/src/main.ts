@@ -1,11 +1,15 @@
 #!/usr/bin/env node
 
-import { MissionSetupRiskServiceProcessConfigSchema } from "@guardian/contracts";
+import {
+  GuardianActionRiskServiceProcessConfigSchema,
+  MissionSetupRiskServiceProcessConfigSchema,
+} from "@guardian/contracts";
 import { WindowsCredentialStore } from "@guardian/credential-store";
 
 import {
   NemotronGuardianProvider,
   createFakeMissionSetupRiskProvider,
+  startGuardianActionRiskService,
   startMissionSetupRiskService,
 } from "./index.js";
 
@@ -48,12 +52,22 @@ async function main(): Promise<void> {
   if (providerMode === "nemotron" && process.platform !== "win32") {
     throw new TypeError("Nemotron guardian currently requires Windows Credential Manager");
   }
-  const config = MissionSetupRiskServiceProcessConfigSchema.parse(await readBootstrapFrame());
+  const configValue = await readBootstrapFrame();
+  const config =
+    typeof configValue === "object" &&
+    configValue !== null &&
+    "serviceKind" in configValue &&
+    configValue.serviceKind === "action_risk"
+      ? GuardianActionRiskServiceProcessConfigSchema.parse(configValue)
+      : MissionSetupRiskServiceProcessConfigSchema.parse(configValue);
   const provider =
     providerMode === "fake"
       ? createFakeMissionSetupRiskProvider()
       : new NemotronGuardianProvider({ credentialStore: new WindowsCredentialStore() });
-  const service = await startMissionSetupRiskService(config, provider);
+  const service =
+    config.serviceKind === "action_risk"
+      ? await startGuardianActionRiskService(config, provider)
+      : await startMissionSetupRiskService(config, provider);
   process.stdout.write("guardian risk service ready\n");
 
   const close = () => {
