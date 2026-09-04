@@ -1,0 +1,88 @@
+# ADR-0042: One-time loopback BYOK enrollment surface
+
+- Status: Proposed; pending user interaction review
+- Date: 2026-09-03
+- Extends: ADR-0007, ADR-0008, ADR-0009, and ADR-0041
+
+## Context
+
+Guardian needs a low-friction local surface for Nebius and Tavily BYOK input. The
+existing raw-terminal reader failed its protected Linux paste journey. A hidden
+terminal prompt also gives too little context about the provider, destination,
+persistence, cancellation, and replacement behavior.
+
+A full native desktop toolkit would add a production dependency and three
+platform-specific packaging paths before the interaction has been proven. A
+public web or MCP form is ineligible because it would place reusable credentials
+in an agent-visible or remotely reachable ingestion path.
+
+GitHub is different: it retains its fixed App device flow and does not use this
+pasted-secret surface.
+
+## Proposed decision
+
+Use a short-lived browser modal served by a user-launched Guardian CLI process on
+an ephemeral `127.0.0.1` port. The CLI displays the provider, OS store,
+persistence, and operation before giving the user the local URL. The URL carries
+a random one-use capability in its fragment, which is not sent in the HTTP
+request or included in the served document. Page JavaScript removes the fragment
+from browser history and presents only the fixed local form.
+
+Submission is accepted only when all of these checks hold:
+
+- exact loopback `Host` and same-origin `Origin`;
+- browser `Sec-Fetch-Site: same-origin` evidence;
+- exact custom one-use capability header;
+- fixed binary submission route and content type;
+- printable non-whitespace ASCII input between 8 and 4,096 bytes;
+- unexpired five-minute lifetime and unused state.
+
+The page uses a nonce-bound Content Security Policy, disables all other resource
+types and framing, sends no CORS permission, stores no cache or referrer, disables
+credential autofill hints, clears the input immediately, and zeroes its encoded
+byte buffer after submission. The local Node boundary zeroes request chunks and
+the callback-scoped secret buffer. Provider diagnostics are replaced with a
+fixed failure message.
+
+The first implementation remains a fake-secret spike. It must not be connected
+to `guardian setup` or accept a real credential until the user reviews the exact
+interaction on the intended Linux host. Acceptance then requires replacement,
+provider-verification, cancellation, terminal-loss, browser-close, expiry,
+concurrency, and secret-corpus evidence.
+
+## Security posture
+
+The loopback surface is a trusted local ceremony, not a public application and
+not an Enforced-session component. It protects against cross-origin browser
+submission, accidental URL/referrer disclosure, replay, oversized input, and
+ordinary application logging. It does not protect against a compromised host,
+malicious browser extension, privileged local malware, or an agent that controls
+the user's browser. The CLI must instruct the user to launch and complete it
+outside any agent-controlled browser automation.
+
+Provider verification remains mandatory before commit. A successful local POST
+means only that input was received; it does not mean the credential was stored.
+
+## Alternatives not selected for the spike
+
+- **Raw or hidden terminal input:** already failed the protected paste journey
+  and does not provide a sufficiently legible ceremony.
+- **Public web or MCP enrollment:** crosses an ineligible remote/agent boundary.
+- **Environment variables, command arguments, or files:** widen persistence and
+  diagnostic exposure and bypass the transactional lifecycle.
+- **Immediate native desktop toolkit:** potentially attractive later, but it adds
+  packaging and dependency scope before the fake-secret interaction is reviewed.
+- **Provider-side hosted BYOK custody:** changes Guardian from local-first
+  software into a multi-tenant secret custodian.
+
+## Acceptance evidence
+
+- deterministic GET, cross-origin, one-use submission, replay, cancellation,
+  invalid provider/store, unsafe-byte, failure-sanitization, and zeroing tests;
+- an intended-Linux fake-secret typing and clipboard-paste walkthrough reviewed
+  by the user;
+- process argument, environment, filesystem, browser history, log, trace, audit,
+  error, and public-result inspection;
+- verification-before-commit and prior-value preservation under every modeled
+  failure;
+- a separate accepted ADR update before real credential entry is enabled.

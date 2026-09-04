@@ -113,7 +113,9 @@ verify-before-commit and prior-value-preservation core of slice 2 is complete;
 slice 4 has deterministic contracts, a fixed CLI resolver, callback zeroing,
 read-only behavior, consumer projection, and strict service-bootstrap wiring.
 Protected IAM/retrieval evidence and the remaining slices are intentionally not
-claimed.
+claimed. Slice 3 now has a proposed one-time loopback browser-modal spike with
+deterministic fake-secret tests; user interaction review is still required before
+acceptance or real setup-command wiring.
 
 ### Slice 0: Reconcile the contract and inventory
 

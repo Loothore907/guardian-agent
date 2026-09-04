@@ -52,5 +52,6 @@ Architecture decision records document consequential choices, rejected alternati
 - [ADR-0039: Persistent plan-bound session authority](0039-persistent-plan-bound-session-authority.md)
 - [ADR-0040: Local-only Linux Secret Service routing](0040-local-only-linux-secret-service-routing.md)
 - [ADR-0041: Managed-demo and BYOK credential custody profiles](0041-managed-demo-and-byok-credential-custody.md)
+- [ADR-0042: One-time loopback BYOK enrollment surface](0042-one-time-loopback-byok-enrollment-surface.md)
 
 Use the next sequential four-digit number. Do not silently rewrite an accepted decision; add a superseding ADR.

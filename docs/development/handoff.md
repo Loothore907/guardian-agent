@@ -17,6 +17,10 @@ Last updated: 2026-09-03 (AKDT)
   bootstrap. Managed-demo configurations are projected per consumer, and each
   instantiated store independently rejects providers outside that service's
   capability.
+- ADR-0042 proposes a five-minute, one-use `127.0.0.1` browser modal for pasted
+  BYOK credentials. Its fake-secret spike covers origin/capability binding,
+  replay, cancellation, bounded input, sanitized failure, CSP/no-store headers,
+  and zeroing. It is not connected to real setup pending user interaction review.
 - No credential, live provider, IAM, deployment, push, pull-request, merge,
   release, or other remote mutation was used for this checkpoint. Protected
   SecretStash retrieval and fake-secret BYOK surface review remain next gates.
