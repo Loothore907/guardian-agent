@@ -6,10 +6,12 @@ import {
   MissionDraftReviewEnvelopeSchema,
   MissionDraftReviewOutcomeSchema,
   ProviderRequestIdSchema,
+  projectManagedDemoNebiusUsageObservation,
   registeredCredentialReference,
   type GuardianModelPolicy,
   type InteractionMissionContext,
   type MissionDraftReviewEnvelope,
+  type ManagedDemoNebiusUsageObservation,
 } from "@guardian/contracts";
 import type { CredentialStore } from "@guardian/credential-store";
 
@@ -133,12 +135,16 @@ export class NebiusMissionDialogueProvider {
   readonly #fetch: typeof fetch;
   readonly #timeoutMs: number;
   readonly #modelPolicy: GuardianModelPolicy;
+  readonly #onUsage: ((usage: ManagedDemoNebiusUsageObservation) => void) | undefined;
+  readonly #now: () => string;
 
   constructor(options: {
     readonly credentialStore: CredentialStore;
     readonly fetch?: typeof fetch;
     readonly timeoutMs?: number;
     readonly modelPolicy?: GuardianModelPolicy;
+    readonly onUsage?: (usage: ManagedDemoNebiusUsageObservation) => void;
+    readonly now?: () => string;
   }) {
     this.#store = options.credentialStore;
     this.#fetch = options.fetch ?? globalThis.fetch;
@@ -146,6 +152,8 @@ export class NebiusMissionDialogueProvider {
     this.#modelPolicy = GuardianModelPolicySchema.parse(
       options.modelPolicy ?? DEFAULT_GUARDIAN_MODEL_POLICY,
     );
+    this.#onUsage = options.onUsage;
+    this.#now = options.now ?? (() => new Date().toISOString());
     if (!Number.isInteger(this.#timeoutMs) || this.#timeoutMs < 100 || this.#timeoutMs > 60_000) {
       throw new TypeError("interaction provider timeout is invalid");
     }
@@ -198,7 +206,17 @@ export class NebiusMissionDialogueProvider {
             }),
           });
           if (!response.ok) throw new MissionDialogueProviderError();
-          return projectQwenResponse(await boundedProviderJson(response));
+          const providerJson = await boundedProviderJson(response);
+          if (this.#onUsage !== undefined) {
+            this.#onUsage(
+              projectManagedDemoNebiusUsageObservation(providerJson, {
+                role: "mission_dialogue",
+                modelId: this.#modelPolicy.missionDialogue.modelId,
+                observedAt: this.#now(),
+              }),
+            );
+          }
+          return projectQwenResponse(providerJson);
         },
       );
     } catch {
@@ -341,7 +359,17 @@ export class NebiusMissionDialogueProvider {
             }),
           });
           if (!response.ok) throw new MissionDialogueProviderError();
-          return projectMissionDraftReviewResponse(await boundedProviderJson(response));
+          const providerJson = await boundedProviderJson(response);
+          if (this.#onUsage !== undefined) {
+            this.#onUsage(
+              projectManagedDemoNebiusUsageObservation(providerJson, {
+                role: "mission_dialogue",
+                modelId: this.#modelPolicy.missionDialogue.modelId,
+                observedAt: this.#now(),
+              }),
+            );
+          }
+          return projectMissionDraftReviewResponse(providerJson);
         },
       );
     } catch {

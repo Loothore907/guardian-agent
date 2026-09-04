@@ -5,9 +5,10 @@
 - Authority: user-directed managed-demo planning and ADR-0041
 - Applies to: project-funded Linux judge and bounded public deployments
 
-Progress: strict contracts and a deployment-bound SQLite ledger are implemented
-locally under ADR-0043. Trusted-service binding, queue enforcement, provider usage
-capture, protected calibration, load testing, and deployment remain pending.
+Progress: strict contracts, a deployment-bound SQLite ledger, sanitized provider-
+usage projection, and per-journey observation binding are implemented locally
+under ADR-0043. Trusted-service admission binding, queue enforcement, protected
+calibration, load testing, and deployment remain pending.
 
 ## Outcome
 

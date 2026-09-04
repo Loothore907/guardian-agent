@@ -10,6 +10,7 @@ import {
   addDuplicateIssue,
   type DeepReadonly,
 } from "./common.js";
+import { ProviderRequestIdSchema } from "./actions.js";
 import {
   GuardianModelIdSchema,
   GuardianModelPolicyIdSchema,
@@ -359,6 +360,100 @@ export const ManagedDemoUsageSchema = z.discriminatedUnion("provider", [
   ManagedDemoTavilyUsageSchema,
 ]);
 export type ManagedDemoUsage = z.infer<typeof ManagedDemoUsageSchema>;
+
+export const ManagedDemoNebiusUsageObservationSchema = z
+  .strictObject({
+    schemaVersion: ContractVersionSchema,
+    provider: z.literal("nebius_token_factory"),
+    providerRequestId: ProviderRequestIdSchema,
+    role: ManagedDemoModelRoleSchema,
+    modelId: GuardianModelIdSchema,
+    promptTokens: TokenCountSchema,
+    completionTokens: TokenCountSchema,
+    totalTokens: TokenCountSchema,
+    observedAt: TimestampSchema,
+  })
+  .superRefine((usage, context) => {
+    if (usage.promptTokens + usage.completionTokens !== usage.totalTokens) {
+      context.addIssue({
+        code: "custom",
+        message: "Nebius total tokens must equal prompt plus completion tokens",
+        path: ["totalTokens"],
+      });
+    }
+  });
+export type ManagedDemoNebiusUsageObservation = z.infer<
+  typeof ManagedDemoNebiusUsageObservationSchema
+>;
+
+export const ManagedDemoTavilyUsageObservationSchema = z.strictObject({
+  schemaVersion: ContractVersionSchema,
+  provider: z.literal("tavily"),
+  providerRequestId: ProviderRequestIdSchema,
+  operation: z.enum(["basic_search", "basic_extract"]),
+  credits: z.literal(1),
+  observedAt: TimestampSchema,
+});
+export type ManagedDemoTavilyUsageObservation = z.infer<
+  typeof ManagedDemoTavilyUsageObservationSchema
+>;
+
+export const ManagedDemoUsageObservationSchema = z.discriminatedUnion("provider", [
+  ManagedDemoNebiusUsageObservationSchema,
+  ManagedDemoTavilyUsageObservationSchema,
+]);
+export type ManagedDemoUsageObservation = z.infer<typeof ManagedDemoUsageObservationSchema>;
+
+function providerRecord(value: unknown): Record<string, unknown> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new TypeError("provider usage envelope is invalid");
+  }
+  return value as Record<string, unknown>;
+}
+
+export function projectManagedDemoNebiusUsageObservation(
+  value: unknown,
+  expected: {
+    readonly role: ManagedDemoModelRole;
+    readonly modelId: string;
+    readonly observedAt: string;
+  },
+): ManagedDemoNebiusUsageObservation {
+  const response = providerRecord(value);
+  const usage = providerRecord(response.usage);
+  if (response.model !== expected.modelId) {
+    throw new TypeError("Nebius usage model does not match the fixed assignment");
+  }
+  return ManagedDemoNebiusUsageObservationSchema.parse({
+    schemaVersion: 1,
+    provider: "nebius_token_factory",
+    providerRequestId: response.id,
+    role: expected.role,
+    modelId: response.model,
+    promptTokens: usage.prompt_tokens,
+    completionTokens: usage.completion_tokens,
+    totalTokens: usage.total_tokens,
+    observedAt: expected.observedAt,
+  });
+}
+
+export function projectManagedDemoTavilyUsageObservation(
+  value: unknown,
+  expected: {
+    readonly operation: "basic_search" | "basic_extract";
+    readonly observedAt: string;
+  },
+): ManagedDemoTavilyUsageObservation {
+  const response = providerRecord(value);
+  return ManagedDemoTavilyUsageObservationSchema.parse({
+    schemaVersion: 1,
+    provider: "tavily",
+    providerRequestId: response.request_id,
+    operation: expected.operation,
+    credits: 1,
+    observedAt: expected.observedAt,
+  });
+}
 
 export const ManagedDemoSettlementRequestSchema = z
   .strictObject({

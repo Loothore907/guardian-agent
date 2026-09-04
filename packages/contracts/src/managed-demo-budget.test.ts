@@ -6,6 +6,9 @@ import {
   ManagedDemoAdmissionRequestSchema,
   ManagedDemoBudgetPolicySchema,
   ManagedDemoPriceSnapshotSchema,
+  ManagedDemoUsageObservationSchema,
+  projectManagedDemoNebiusUsageObservation,
+  projectManagedDemoTavilyUsageObservation,
   ManagedDemoSettlementRequestSchema,
 } from "./managed-demo-budget.js";
 
@@ -208,5 +211,82 @@ describe("managed-demo budget contracts", () => {
       }),
     ).toThrow();
     expect(() => ManagedDemoSettlementRequestSchema.parse({ ...request, usage: [] })).toThrow();
+  });
+
+  it("accepts only internally consistent sanitized provider usage observations", () => {
+    const observation = {
+      schemaVersion: 1,
+      provider: "nebius_token_factory",
+      providerRequestId: "provider_request_1",
+      role: "native_worker",
+      modelId: "moonshotai/Kimi-K2.7-Code",
+      promptTokens: 8_000,
+      completionTokens: 2_048,
+      totalTokens: 10_048,
+      observedAt: "2026-11-01T12:00:30.000Z",
+    } as const;
+    expect(ManagedDemoUsageObservationSchema.parse(observation)).toEqual(observation);
+    expect(() =>
+      ManagedDemoUsageObservationSchema.parse({ ...observation, totalTokens: 10_047 }),
+    ).toThrow();
+    expect(() =>
+      ManagedDemoUsageObservationSchema.parse({ ...observation, authorization: "secret" }),
+    ).toThrow();
+  });
+
+  it("projects only numeric usage and fixed identifiers from provider responses", () => {
+    expect(
+      projectManagedDemoNebiusUsageObservation(
+        {
+          id: "provider_request_1",
+          model: "moonshotai/Kimi-K2.7-Code",
+          choices: [{ message: { content: "untrusted output" } }],
+          usage: { prompt_tokens: 8_000, completion_tokens: 2_048, total_tokens: 10_048 },
+          secret_adjacent_provider_field: "discarded",
+        },
+        {
+          role: "native_worker",
+          modelId: "moonshotai/Kimi-K2.7-Code",
+          observedAt: "2026-11-01T12:00:30.000Z",
+        },
+      ),
+    ).toEqual({
+      schemaVersion: 1,
+      provider: "nebius_token_factory",
+      providerRequestId: "provider_request_1",
+      role: "native_worker",
+      modelId: "moonshotai/Kimi-K2.7-Code",
+      promptTokens: 8_000,
+      completionTokens: 2_048,
+      totalTokens: 10_048,
+      observedAt: "2026-11-01T12:00:30.000Z",
+    });
+    expect(
+      projectManagedDemoTavilyUsageObservation(
+        { request_id: "tavily_request_1", results: [{ raw_content: "discarded" }] },
+        { operation: "basic_extract", observedAt: "2026-11-01T12:00:40.000Z" },
+      ),
+    ).toEqual({
+      schemaVersion: 1,
+      provider: "tavily",
+      providerRequestId: "tavily_request_1",
+      operation: "basic_extract",
+      credits: 1,
+      observedAt: "2026-11-01T12:00:40.000Z",
+    });
+    expect(() =>
+      projectManagedDemoNebiusUsageObservation(
+        {
+          id: "provider_request_1",
+          model: "caller/substitution",
+          usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 },
+        },
+        {
+          role: "native_worker",
+          modelId: "moonshotai/Kimi-K2.7-Code",
+          observedAt: "2026-11-01T12:00:30.000Z",
+        },
+      ),
+    ).toThrow();
   });
 });

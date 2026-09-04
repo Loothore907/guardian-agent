@@ -14,6 +14,8 @@ import {
   ManagedDemoPriceSnapshotSchema,
   ManagedDemoSettlementRequestSchema,
   ManagedDemoSettlementResultSchema,
+  ManagedDemoUsageObservationSchema,
+  OpaqueIdSchema,
   TimestampSchema,
   type ManagedDemoAdmissionRequest,
   type ManagedDemoAdmissionResult,
@@ -28,6 +30,7 @@ import {
   type ManagedDemoSettlementRequest,
   type ManagedDemoSettlementResult,
   type ManagedDemoUsage,
+  type ManagedDemoUsageObservation,
 } from "@guardian/contracts";
 
 const LEDGER_SCHEMA_VERSION = 1;
@@ -189,6 +192,66 @@ function validateUsage(
     tavilyCredits > policy.research.maxTavilyCreditsPerJourney
   ) {
     throw new TypeError("managed-demo usage exceeds its fixed research ceiling");
+  }
+}
+
+export class ManagedDemoJourneyUsageCollector {
+  readonly #reservationId: string;
+  readonly #journeyId: string;
+  readonly #usage: ManagedDemoUsage[] = [];
+  readonly #providerRequestIds = new Set<string>();
+  #settled = false;
+
+  constructor(binding: { readonly reservationId: unknown; readonly journeyId: unknown }) {
+    this.#reservationId = OpaqueIdSchema.parse(binding.reservationId);
+    this.#journeyId = OpaqueIdSchema.parse(binding.journeyId);
+  }
+
+  readonly record = (value: unknown): void => {
+    if (this.#settled) throw new TypeError("managed-demo usage collector is already settled");
+    if (this.#usage.length >= 8) throw new TypeError("managed-demo usage collector is full");
+    const observation: ManagedDemoUsageObservation = ManagedDemoUsageObservationSchema.parse(value);
+    if (this.#providerRequestIds.has(observation.providerRequestId)) {
+      throw new TypeError("managed-demo provider usage observation was replayed");
+    }
+    this.#providerRequestIds.add(observation.providerRequestId);
+    const binding = {
+      schemaVersion: 1 as const,
+      reservationId: this.#reservationId,
+      journeyId: this.#journeyId,
+      recordedAt: observation.observedAt,
+    };
+    this.#usage.push(
+      observation.provider === "tavily"
+        ? {
+            ...binding,
+            provider: observation.provider,
+            operation: observation.operation,
+            credits: observation.credits,
+          }
+        : {
+            ...binding,
+            provider: observation.provider,
+            role: observation.role,
+            modelId: observation.modelId,
+            promptTokens: observation.promptTokens,
+            completionTokens: observation.completionTokens,
+          },
+    );
+  };
+
+  settlement(outcome: unknown, settledAt: unknown): ManagedDemoSettlementRequest {
+    if (this.#settled) throw new TypeError("managed-demo usage collector is already settled");
+    const request = ManagedDemoSettlementRequestSchema.parse({
+      schemaVersion: 1,
+      reservationId: this.#reservationId,
+      journeyId: this.#journeyId,
+      settledAt,
+      outcome,
+      usage: this.#usage,
+    });
+    this.#settled = true;
+    return request;
   }
 }
 

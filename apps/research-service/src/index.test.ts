@@ -95,7 +95,13 @@ describe("Tavily Search adapter", () => {
 
   it("calls only the fixed Search endpoint with bounded explicit parameters", async () => {
     const transport = capturedTransport({ status: 200, body: JSON.stringify(rawResponse) });
-    const provider = new TavilySearchProvider({ apiKey: "test-provider-credential", transport });
+    const onUsage = vi.fn();
+    const provider = new TavilySearchProvider({
+      apiKey: "test-provider-credential",
+      transport,
+      onUsage,
+      now: () => "2026-11-01T12:00:30.000Z",
+    });
 
     await expect(provider.search(request)).resolves.toEqual({
       requestId: "tavily_req_1",
@@ -121,6 +127,14 @@ describe("Tavily Search adapter", () => {
       include_answer: false,
       include_raw_content: false,
       include_images: false,
+    });
+    expect(onUsage).toHaveBeenCalledWith({
+      schemaVersion: 1,
+      provider: "tavily",
+      providerRequestId: "tavily_req_1",
+      operation: "basic_search",
+      credits: 1,
+      observedAt: "2026-11-01T12:00:30.000Z",
     });
   });
 
@@ -186,9 +200,12 @@ describe("Tavily controlled Extract adapter", () => {
       status: 200,
       body: JSON.stringify(rawExtractResponse),
     });
+    const onUsage = vi.fn();
     const provider = new TavilyExtractProvider({
       apiKey: "test-provider-credential",
       transport,
+      onUsage,
+      now: () => "2026-11-01T12:00:40.000Z",
     });
 
     await expect(provider.extract(controlledRequest)).resolves.toEqual({
@@ -207,6 +224,14 @@ describe("Tavily controlled Extract adapter", () => {
       format: "text",
       timeout: 10,
       include_usage: false,
+    });
+    expect(onUsage).toHaveBeenCalledWith({
+      schemaVersion: 1,
+      provider: "tavily",
+      providerRequestId: "tavily_extract_1",
+      operation: "basic_extract",
+      credits: 1,
+      observedAt: "2026-11-01T12:00:40.000Z",
     });
   });
 

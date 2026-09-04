@@ -10,7 +10,7 @@ import {
 } from "@guardian/contracts";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { SqliteManagedDemoBudgetLedger } from "./index.js";
+import { ManagedDemoJourneyUsageCollector, SqliteManagedDemoBudgetLedger } from "./index.js";
 
 const IDS = {
   deploymentPublic: "11111111-1111-4111-8111-111111111111",
@@ -170,6 +170,49 @@ async function openLedger(
 }
 
 describe("managed-demo SQLite budget ledger", () => {
+  it("binds sanitized provider observations to one journey exactly once", () => {
+    const collector = new ManagedDemoJourneyUsageCollector({
+      reservationId: IDS.reservation1,
+      journeyId: IDS.journey1,
+    });
+    const observation = {
+      schemaVersion: 1,
+      provider: "nebius_token_factory",
+      providerRequestId: "worker_request_1",
+      role: "native_worker",
+      modelId: "moonshotai/Kimi-K2.7-Code",
+      promptTokens: 500,
+      completionTokens: 100,
+      totalTokens: 600,
+      observedAt: "2026-11-01T12:00:30.000Z",
+    } as const;
+    collector.record(observation);
+    expect(() => collector.record(observation)).toThrow(/replayed/u);
+    expect(collector.settlement("completed", "2026-11-01T12:01:00.000Z")).toEqual({
+      schemaVersion: 1,
+      reservationId: IDS.reservation1,
+      journeyId: IDS.journey1,
+      settledAt: "2026-11-01T12:01:00.000Z",
+      outcome: "completed",
+      usage: [
+        {
+          schemaVersion: 1,
+          reservationId: IDS.reservation1,
+          journeyId: IDS.journey1,
+          recordedAt: "2026-11-01T12:00:30.000Z",
+          provider: "nebius_token_factory",
+          role: "native_worker",
+          modelId: "moonshotai/Kimi-K2.7-Code",
+          promptTokens: 500,
+          completionTokens: 100,
+        },
+      ],
+    });
+    expect(() =>
+      collector.record({ ...observation, providerRequestId: "worker_request_2" }),
+    ).toThrow(/already settled/u);
+  });
+
   it("atomically reserves, settles actual numeric usage, and survives restart", async () => {
     const { path, ledger, setNow } = await openLedger();
     const admitted = ledger.admit(admission(IDS.journey1, "2026-11-01T12:00:00.000Z"));

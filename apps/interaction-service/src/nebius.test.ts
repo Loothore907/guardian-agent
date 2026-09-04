@@ -55,6 +55,8 @@ describe("Qwen interaction provider", () => {
       return Promise.resolve(
         response({
           id: "qwen_request_1",
+          model: qwenInteractionBoundary.model,
+          usage: { prompt_tokens: 200, completion_tokens: 50, total_tokens: 250 },
           choices: [
             {
               finish_reason: "stop",
@@ -66,9 +68,12 @@ describe("Qwen interaction provider", () => {
         }),
       );
     });
+    const onUsage = vi.fn();
     const provider = new QwenInteractionProvider({
       credentialStore: store,
       fetch: fetchImplementation,
+      onUsage,
+      now: () => "2026-11-01T12:00:30.000Z",
     });
 
     await expect(provider.runFirstTurn(CONTEXT)).resolves.toEqual({
@@ -76,6 +81,17 @@ describe("Qwen interaction provider", () => {
       outcome: { kind: "mission_brief", summary: "Mission reviewed." },
     });
     expect(fetchImplementation).toHaveBeenCalledOnce();
+    expect(onUsage).toHaveBeenCalledWith({
+      schemaVersion: 1,
+      provider: "nebius_token_factory",
+      providerRequestId: "qwen_request_1",
+      role: "mission_dialogue",
+      modelId: qwenInteractionBoundary.model,
+      promptTokens: 200,
+      completionTokens: 50,
+      totalTokens: 250,
+      observedAt: "2026-11-01T12:00:30.000Z",
+    });
   });
 
   it("fails closed without invoking the provider when the scoped credential is missing", async () => {

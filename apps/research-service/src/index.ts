@@ -2,6 +2,7 @@ import {
   ControlledContentProviderResponseSchema,
   ResearchProviderResponseSchema,
   ResearchServiceProcessConfigSchema,
+  projectManagedDemoTavilyUsageObservation,
   registeredCredentialReference,
   type ControlledContentProviderResponse,
   type ControlledContentRequest,
@@ -10,6 +11,7 @@ import {
   type ResearchProviderResponse,
   type ResearchRequest,
   type ResearchScope,
+  type ManagedDemoTavilyUsageObservation,
 } from "@guardian/contracts";
 import type { CredentialStore } from "@guardian/credential-store";
 import {
@@ -189,11 +191,15 @@ export class TavilySearchProvider implements ResearchProvider<ResearchProviderRe
   readonly #authorization: string;
   readonly #transport: TavilyTransport;
   readonly #timeoutMs: number;
+  readonly #onUsage: ((usage: ManagedDemoTavilyUsageObservation) => void) | undefined;
+  readonly #now: () => string;
 
   constructor(options: {
     readonly apiKey: string;
     readonly transport?: TavilyTransport;
     readonly timeoutMs?: number;
+    readonly onUsage?: (usage: ManagedDemoTavilyUsageObservation) => void;
+    readonly now?: () => string;
   }) {
     if (options.apiKey.length < 1 || options.apiKey.length > 512) {
       throw new TavilyProviderError("unavailable");
@@ -205,6 +211,8 @@ export class TavilySearchProvider implements ResearchProvider<ResearchProviderRe
     this.#authorization = `Bearer ${options.apiKey}`;
     this.#transport = options.transport ?? createFetchTavilyTransport();
     this.#timeoutMs = timeoutMs;
+    this.#onUsage = options.onUsage;
+    this.#now = options.now ?? (() => new Date().toISOString());
   }
 
   async search(request: ResearchRequest): Promise<ResearchProviderResponse> {
@@ -237,7 +245,16 @@ export class TavilySearchProvider implements ResearchProvider<ResearchProviderRe
       } catch {
         throw new TavilyProviderError("malformed");
       }
-      return projectTavilySearchResponse(parsed);
+      const result = projectTavilySearchResponse(parsed);
+      if (this.#onUsage !== undefined) {
+        this.#onUsage(
+          projectManagedDemoTavilyUsageObservation(parsed, {
+            operation: "basic_search",
+            observedAt: this.#now(),
+          }),
+        );
+      }
+      return result;
     } catch (error) {
       if (error instanceof TavilyProviderError) throw error;
       if (controller.signal.aborted) throw new TavilyProviderError("timeout");
@@ -276,11 +293,15 @@ export class TavilyExtractProvider implements ControlledContentProvider<Controll
   readonly #authorization: string;
   readonly #transport: TavilyTransport;
   readonly #timeoutMs: number;
+  readonly #onUsage: ((usage: ManagedDemoTavilyUsageObservation) => void) | undefined;
+  readonly #now: () => string;
 
   constructor(options: {
     readonly apiKey: string;
     readonly transport?: TavilyTransport;
     readonly timeoutMs?: number;
+    readonly onUsage?: (usage: ManagedDemoTavilyUsageObservation) => void;
+    readonly now?: () => string;
   }) {
     if (options.apiKey.length < 1 || options.apiKey.length > 512) {
       throw new TavilyProviderError("unavailable");
@@ -292,6 +313,8 @@ export class TavilyExtractProvider implements ControlledContentProvider<Controll
     this.#authorization = `Bearer ${options.apiKey}`;
     this.#transport = options.transport ?? createFetchTavilyTransport();
     this.#timeoutMs = timeoutMs;
+    this.#onUsage = options.onUsage;
+    this.#now = options.now ?? (() => new Date().toISOString());
   }
 
   async extract(request: ControlledContentRequest): Promise<ControlledContentProviderResponse> {
@@ -322,7 +345,16 @@ export class TavilyExtractProvider implements ControlledContentProvider<Controll
       } catch {
         throw new TavilyProviderError("malformed");
       }
-      return projectTavilyExtractResponse(parsed);
+      const result = projectTavilyExtractResponse(parsed);
+      if (this.#onUsage !== undefined) {
+        this.#onUsage(
+          projectManagedDemoTavilyUsageObservation(parsed, {
+            operation: "basic_extract",
+            observedAt: this.#now(),
+          }),
+        );
+      }
+      return result;
     } catch (error) {
       if (error instanceof TavilyProviderError) throw error;
       if (controller.signal.aborted) throw new TavilyProviderError("timeout");
@@ -341,15 +373,21 @@ export class CredentialStoreTavilyProvider
   readonly #store: CredentialStore;
   readonly #transport: TavilyTransport | undefined;
   readonly #timeoutMs: number | undefined;
+  readonly #onUsage: ((usage: ManagedDemoTavilyUsageObservation) => void) | undefined;
+  readonly #now: (() => string) | undefined;
 
   constructor(options: {
     readonly credentialStore: CredentialStore;
     readonly transport?: TavilyTransport;
     readonly timeoutMs?: number;
+    readonly onUsage?: (usage: ManagedDemoTavilyUsageObservation) => void;
+    readonly now?: () => string;
   }) {
     this.#store = options.credentialStore;
     this.#transport = options.transport;
     this.#timeoutMs = options.timeoutMs;
+    this.#onUsage = options.onUsage;
+    this.#now = options.now;
   }
 
   search(request: ResearchRequest): Promise<ResearchProviderResponse> {
@@ -366,6 +404,8 @@ export class CredentialStoreTavilyProvider
           apiKey,
           ...(this.#transport === undefined ? {} : { transport: this.#transport }),
           ...(this.#timeoutMs === undefined ? {} : { timeoutMs: this.#timeoutMs }),
+          ...(this.#onUsage === undefined ? {} : { onUsage: this.#onUsage }),
+          ...(this.#now === undefined ? {} : { now: this.#now }),
         }).search(request);
       },
     );
@@ -385,6 +425,8 @@ export class CredentialStoreTavilyProvider
           apiKey,
           ...(this.#transport === undefined ? {} : { transport: this.#transport }),
           ...(this.#timeoutMs === undefined ? {} : { timeoutMs: this.#timeoutMs }),
+          ...(this.#onUsage === undefined ? {} : { onUsage: this.#onUsage }),
+          ...(this.#now === undefined ? {} : { now: this.#now }),
         }).extract(request);
       },
     );
