@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { chmod, mkdtemp, rm } from "node:fs/promises";
+import { chmod, mkdtemp, rm, stat, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -589,4 +589,41 @@ describe("SQLite authority store", () => {
     expect(() => unsupported.initialize()).toThrow(/schema version is unsupported/u);
     unsupported.close();
   });
+
+  it.skipIf(process.platform === "win32")(
+    "enforces current-user ownership and private POSIX database permissions",
+    async () => {
+      const path = await databasePath();
+      const directory = join(path, "..");
+      const store = new SqliteAuthorityStore(path);
+      store.initialize();
+      const databaseStat = await stat(path);
+      expect(databaseStat.uid).toBe(process.getuid?.());
+      expect(databaseStat.mode & 0o777).toBe(0o600);
+      store.close();
+
+      await chmod(path, 0o640);
+      expect(() => new SqliteAuthorityStore(path)).toThrow(/file permissions are too broad/u);
+      await chmod(path, 0o600);
+
+      await writeFile(`${path}-wal`, "", { mode: 0o640 });
+      expect(() => new SqliteAuthorityStore(path)).toThrow(/file permissions are too broad/u);
+      await rm(`${path}-wal`);
+
+      await chmod(directory, 0o750);
+      expect(() => new SqliteAuthorityStore(path)).toThrow(/parent permissions are too broad/u);
+      await chmod(directory, 0o700);
+    },
+  );
+
+  it.skipIf(process.platform === "win32")(
+    "rejects a symbolic-link database before SQLite can follow it",
+    async () => {
+      const path = await databasePath();
+      const target = `${path}.target`;
+      await writeFile(target, "not a database", { mode: 0o600 });
+      await symlink(target, path);
+      expect(() => new SqliteAuthorityStore(path)).toThrow(/regular SQLite files/u);
+    },
+  );
 });

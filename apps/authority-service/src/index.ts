@@ -1,4 +1,4 @@
-import { chmodSync } from "node:fs";
+import { chmodSync, lstatSync } from "node:fs";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import { createServer, type Server, type Socket } from "node:net";
 
@@ -100,6 +100,18 @@ function assertRoleOperations(config: AuthorityServiceProcessConfig): void {
   }
 }
 
+function securePosixEndpoint(endpoint: string): void {
+  chmodSync(endpoint, 0o600);
+  const endpointStat = lstatSync(endpoint);
+  if (
+    !endpointStat.isSocket() ||
+    endpointStat.uid !== process.getuid?.() ||
+    (endpointStat.mode & 0o777) !== 0o600
+  ) {
+    throw new TypeError("authority IPC endpoint permissions could not be secured");
+  }
+}
+
 export interface AuthorityServiceBoundary {
   readonly serviceInstanceId: string;
   readonly endpoint: string;
@@ -161,8 +173,15 @@ export class LocalAuthorityIpcServer implements AuthorityServiceBoundary {
       this.#server.listen(this.#config.endpoint, () => {
         this.#server.off("error", onError);
         this.#listening = true;
-        if (process.platform !== "win32") chmodSync(this.#config.endpoint, 0o600);
-        resolveListen();
+        try {
+          if (process.platform !== "win32") securePosixEndpoint(this.#config.endpoint);
+          resolveListen();
+        } catch (error) {
+          this.#server.close(() => {
+            this.#listening = false;
+            rejectListen(error instanceof Error ? error : new Error("authority IPC setup failed"));
+          });
+        }
       });
     });
   }
@@ -439,6 +458,11 @@ export async function startAuthorityService(
   options: { readonly now?: () => string; readonly timeoutMs?: number } = {},
 ): Promise<AuthorityServiceBoundary> {
   const server = new LocalAuthorityIpcServer(config, options);
-  await server.listen();
-  return server;
+  try {
+    await server.listen();
+    return server;
+  } catch (error) {
+    await server.close();
+    throw error;
+  }
 }

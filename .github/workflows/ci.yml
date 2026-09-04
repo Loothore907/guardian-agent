@@ -42,5 +42,8 @@ jobs:
       - name: Run required checks
         run: pnpm check
 
+      - name: Run Linux platform boundary checks
+        run: pnpm test:linux-platform
+
       - name: Audit production dependencies
         run: pnpm audit --prod --audit-level high

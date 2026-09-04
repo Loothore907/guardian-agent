@@ -3,7 +3,7 @@
 - Date: 2026-08-30 (AKDT)
 - Issue: [#13](https://github.com/Loothore907/guardian-agent/issues/13)
 - Branch: `codex/13-c6-durable-authorization-broker`
-- Status: Deterministic local boundary implemented; hosted peer evidence remains
+- Status: Deterministic boundary and Linux permission probe implemented; OS peer evidence remains
 
 ## Implemented boundary
 
@@ -30,7 +30,10 @@ exact, connection-bound approval through only `approval.store`; it enforces a
 ADR-0010 now places the authority service in a supervised child with bounded
 stdin bootstrap, exact readiness, explicit shutdown, observable exit, and no
 active-session respawn. The user-verifying WebAuthn verifier/issuer and
-platform-specific peer identity and process containment remain.
+platform-specific peer identity and process containment remain. The later Linux
+permission slice also verifies current-user ownership and mode `0600` for the
+Unix socket and every live SQLite file, including WAL/SHM sidecars; see
+`c6-linux-platform-permissions.md`.
 
 ## Verification
 
@@ -58,9 +61,12 @@ spike suite.
 
 Windows is an Observed development runtime for this boundary. The random named
 pipe plus capability binding is tested, but named-pipe ACL and peer-token evidence
-has not been collected. The final Linux runtime still requires restrictive socket
-directory ownership, peer-credential checks, database permission probes, service
-process containment and restart tests on the selected host. Local process
+has not been collected. The WSL2 Linux permission probe now actively verifies
+the restrictive socket and database modes, current-user ownership, SQLite
+sidecars, broad-permission rejection, and a symbolic-link near miss. The final
+Linux runtime still requires peer-credential checks, local credential resolution,
+service process containment, and protected GitHub read/merge on the selected
+host. Local process
 supervision is implemented, but Windows and Linux peer/service identity evidence
 and development confirmation do not establish complete process isolation or
 human-presence assurance; the WebAuthn issuer remains before the final competition
