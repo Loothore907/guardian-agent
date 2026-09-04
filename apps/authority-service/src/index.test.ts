@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { chmod, mkdtemp, readFile, rm } from "node:fs/promises";
+import { access, chmod, mkdtemp, readFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createConnection } from "node:net";
@@ -99,6 +99,39 @@ function rawRequest(endpoint: string, frame: string): Promise<Record<string, unk
 }
 
 describe("central authority service", () => {
+  it.skipIf(process.platform === "win32")(
+    "creates current-user-only Unix socket and SQLite boundaries",
+    async () => {
+      const { databasePath } = await location();
+      const endpoint = createAuthorityIpcEndpoint();
+      const service = await startAuthorityService(
+        {
+          schemaVersion: 1,
+          serviceInstanceId: randomUUID(),
+          endpoint,
+          authorityStorePath: databasePath,
+          workspaceRoots: [],
+          capabilities: [binding(randomUUID(), "broker_service", ["session.get"])],
+        },
+        { now: () => NOW },
+      );
+      try {
+        const endpointStat = await stat(endpoint);
+        expect(endpointStat.isSocket()).toBe(true);
+        expect(endpointStat.uid).toBe(process.getuid?.());
+        expect(endpointStat.mode & 0o777).toBe(0o600);
+
+        const databaseStat = await stat(databasePath);
+        expect(databaseStat.isFile()).toBe(true);
+        expect(databaseStat.uid).toBe(process.getuid?.());
+        expect(databaseStat.mode & 0o777).toBe(0o600);
+      } finally {
+        await service.close();
+      }
+      await expect(access(endpoint)).rejects.toBeDefined();
+    },
+  );
+
   it("atomically records minimized research exposures before a broker attempt", async () => {
     const { databasePath } = await location();
     const endpoint = createAuthorityIpcEndpoint();

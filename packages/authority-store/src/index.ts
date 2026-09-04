@@ -1,4 +1,4 @@
-import { chmodSync, existsSync, statSync } from "node:fs";
+import { chmodSync, existsSync, lstatSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { dirname, extname, isAbsolute, relative, resolve } from "node:path";
 import { DatabaseSync, type StatementResultingChanges } from "node:sqlite";
@@ -55,10 +55,24 @@ const WORKER_BOUNDARY_EVENTS_SQL = `
   CREATE INDEX worker_boundary_events_window
     ON worker_boundary_events(session_id, severity, occurred_at);
 `;
+const SQLITE_FILE_SUFFIXES = ["", "-wal", "-shm", "-journal"] as const;
 
 function isWithin(candidate: string, root: string): boolean {
   const pathFromRoot = relative(resolve(root), candidate);
   return pathFromRoot === "" || (!pathFromRoot.startsWith("..") && !isAbsolute(pathFromRoot));
+}
+
+function assertPrivatePosixDatabaseFile(path: string, owner: number): void {
+  const databaseStat = lstatSync(path);
+  if (!databaseStat.isFile()) {
+    throw new TypeError("authority store must use regular SQLite files");
+  }
+  if (databaseStat.uid !== owner) {
+    throw new TypeError("authority store files must be owned by the current user");
+  }
+  if ((databaseStat.mode & 0o077) !== 0) {
+    throw new TypeError("authority store file permissions are too broad");
+  }
 }
 
 export function assertAuthorityStorePath(value: unknown, workspaceRoots: readonly string[] = []) {
@@ -69,17 +83,20 @@ export function assertAuthorityStorePath(value: unknown, workspaceRoots: readonl
   if (workspaceRoots.some((root) => isWithin(databasePath, root))) {
     throw new TypeError("authority store must remain outside disposable session workspaces");
   }
-  const parentStat = statSync(dirname(databasePath));
+  const parentStat = lstatSync(dirname(databasePath));
   if (!parentStat.isDirectory()) throw new TypeError("authority store parent must be a directory");
-  if (process.platform !== "win32" && (parentStat.mode & 0o077) !== 0) {
-    throw new TypeError("authority store parent permissions are too broad");
-  }
-  if (
-    process.platform !== "win32" &&
-    existsSync(databasePath) &&
-    (statSync(databasePath).mode & 0o077) !== 0
-  ) {
-    throw new TypeError("authority store permissions are too broad");
+  if (process.platform !== "win32") {
+    const owner = process.getuid?.();
+    if (owner === undefined || parentStat.uid !== owner) {
+      throw new TypeError("authority store parent must be owned by the current user");
+    }
+    if ((parentStat.mode & 0o077) !== 0) {
+      throw new TypeError("authority store parent permissions are too broad");
+    }
+    for (const suffix of SQLITE_FILE_SUFFIXES) {
+      const filePath = `${databasePath}${suffix}`;
+      if (existsSync(filePath)) assertPrivatePosixDatabaseFile(filePath, owner);
+    }
   }
   return databasePath;
 }
@@ -324,7 +341,25 @@ export class SqliteAuthorityStore {
         this.#database.exec(`${WORKER_BOUNDARY_EVENTS_SQL} PRAGMA user_version = 4;`);
       });
     }
-    if (process.platform !== "win32") chmodSync(this.#databasePath, 0o600);
+    if (process.platform !== "win32") {
+      const owner = process.getuid?.();
+      if (owner === undefined) {
+        throw new TypeError("authority store ownership could not be verified");
+      }
+      for (const suffix of SQLITE_FILE_SUFFIXES) {
+        const filePath = `${this.#databasePath}${suffix}`;
+        if (!existsSync(filePath)) continue;
+        chmodSync(filePath, 0o600);
+        const databaseStat = lstatSync(filePath);
+        if (
+          !databaseStat.isFile() ||
+          databaseStat.uid !== owner ||
+          (databaseStat.mode & 0o777) !== 0o600
+        ) {
+          throw new TypeError("authority store permissions could not be secured");
+        }
+      }
+    }
   }
 
   close(): void {

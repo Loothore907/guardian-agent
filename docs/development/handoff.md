@@ -11,7 +11,7 @@ and checkpoint history in `docs/development/roadmap.md`.
 
 - **Active checkpoint:** C6 on issue
   [#13](https://github.com/Loothore907/guardian-agent/issues/13), branch
-  `codex/13-c6-durable-authorization-broker`.
+  `codex/13-c6-linux-reference`.
 - **Logical transition:** pre-activation mission formation, trusted worker
   assignment, W1 exact turns, the W2 credential-safe workspace, W3 exact
   one-tool/result execution, W4 contained denial/revocation, the W5 controlled
@@ -545,7 +545,22 @@ Do not call any of these implemented, and do not label the future hosted worker
 `Enforced` merely because it runs on Nebius. Enforced requires reproducible tool,
 filesystem, credential, network, lifecycle, and authority evidence.
 
-## Current session execution plan
+## Current C6 Linux exit plan
+
+W24 is the first post-merge Linux slice. It fixes a discovered `0644` SQLite
+WAL/SHM sidecar mode, verifies current-user ownership and mode `0600` for the
+authority database files and Unix socket, rejects broad and symbolic-link state
+files, and makes the active Linux probe an explicit Ubuntu CI step. Its WSL2
+Node 24 run passes two of two tests.
+
+Next, record and implement the OS peer-identity choice. Node 24 exposes no public
+Linux `SO_PEERCRED` accessor, so this requires either a narrow native verifier or
+a revised supervised IPC topology. Then select Linux Secret Service integration
+or the ADR-0008 secured fallback, run credential isolation on that host, and only
+afterward request separate authorization for a protected Linux GitHub read/merge.
+C6 remains In progress throughout; W24 does not widen Enforced claims.
+
+## Completed W14-W23 execution history
 
 ### Objective
 
@@ -817,6 +832,10 @@ as `b69e9338d5464cac31d52cf8510256a2d9f21c33`. Post-merge `main` CI passed in
   Immutable `main` commit `b69e9338d5464cac31d52cf8510256a2d9f21c33`
   has green post-merge CI. The feature branch remains available. Issue #13 remains
   open.
+- Handoff PR #15 squash-merged as
+  `ae49ebc2fc8f1cca4c4645abeeb93e76aac02d4f`. Its first post-merge CI run failed
+  only when the npm advisory request timed out; the single bounded failed-job
+  rerun passed in 6m16s without weakening the audit gate.
 
 ## Verification at this transition
 
@@ -864,9 +883,11 @@ PR #14's Phase-1 implementation-review CI passed at `ddf194c` in 2m19s; the
 handoff-only branch head passed in 2m23s; and post-merge `main` CI passed at
 `b69e933` in 2m25s. The post-merge run emitted a nonblocking warning that the
 pinned `pnpm/action-setup` action targets deprecated Node.js 20 and is being
-forced onto Node.js 24. The GitHub refresh endpoint's documented HTTP 500 remains an operational limitation. Intended-Linux
-peer identity, database permissions, local credential resolution, and narrow
-GitHub read/merge remain the C6 blocker. WebAuthn and the single-invocation
+forced onto Node.js 24. The GitHub refresh endpoint's documented HTTP 500 remains
+an operational limitation. W24 now actively passes the intended-Linux
+database/socket permission probe and fixes the SQLite sidecar mode discovered by
+its first run. Intended-Linux peer identity, local credential resolution, service
+containment, and narrow GitHub read/merge remain the C6 blocker. WebAuthn and the single-invocation
 coordinator remain later evidence slices; no broader guarantee is claimed.
 
 Previously captured protected evidence still records successful Windows
@@ -939,6 +960,7 @@ wrapper when the frozen workspace is already usable.
 - [W18 live worker denial-continuation evidence](evidence/w18-live-worker-denial-continuation.md)
 - [W19 controlled-content Extract evidence](evidence/w19-controlled-content-extract.md)
 - [C6 authority service evidence](evidence/c6-authority-service.md)
+- [C6 Linux platform permission evidence](evidence/c6-linux-platform-permissions.md)
 - [C6 terminal bootstrap evidence](evidence/c6-terminal-bootstrap.md)
 - [C6 interaction boundary evidence](evidence/c6-interaction-boundary.md)
 - [C6 process supervision evidence](evidence/c6-process-supervision.md)
