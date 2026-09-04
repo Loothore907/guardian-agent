@@ -1,6 +1,6 @@
 # Competition Submission Checklist
 
-This checklist translates the official requirements into project gates. It was last verified against the Devpost overview and official rules on August 30, 2026. The live rules remain authoritative.
+This checklist translates the official requirements into project gates. It was last verified against the Devpost overview and official rules on September 4, 2026. The live rules remain authoritative.
 
 ## Entrant and eligibility
 
@@ -41,7 +41,8 @@ This checklist translates the official requirements into project gates. It was l
 - [ ] A working self-hosted test build or separately provisioned, tightly rate-
   limited judge demo is available free of charge to the judges.
 - [ ] Required access instructions are complete and contain no credentials committed to the repository.
-- [ ] The project remains available through the end of judging on December 15, 2026.
+- [ ] The project remains available free of charge from submission through the end
+  of judging on December 15, 2026 at noon Pacific time.
 - [ ] Submission materials are in English or include the required English translations.
 
 ## Video and submission form
