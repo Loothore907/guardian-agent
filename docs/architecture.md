@@ -193,6 +193,19 @@ limit; it does not create a persistent general loop. See
 [ADR-0018](adr/0018-exact-one-round-trip-worker-tool-execution.md) and
 [ADR-0019](adr/0019-contained-worker-denial-and-deterministic-revocation.md).
 
+## Persistent plan-bound authority
+
+A directly confirmed normalized plan may authorize an enumerated sequence of
+bounded operations for the session, instead of forcing the operator to repeat an
+approval at every routine step. The authority is represented as a revocable
+grant with typed operation classes, repository and destination selectors,
+side-effect ceilings, expiry, and count or volume limits. Every concrete action
+is still re-normalized at execution and must be a member of the grant. Plan
+expansion, protected-branch writes, force pushes, merges, releases, deployments,
+or destructive actions require the corresponding explicitly confirmed action
+class or a fresh step-up. See
+[ADR-0039](adr/0039-persistent-plan-bound-session-authority.md).
+
 ## Session workspace boundary
 
 The trusted supervisor now plans one credential-screened, Guardian-managed copy
@@ -343,7 +356,7 @@ attachment remain. See
 The GitHub broker now has a strict credential-holding application process. One
 bounded stdin frame binds the W7 service, broker-role authority capability, W8
 client, credential-store handle, public OAuth client ID, and nested lifetimes.
-The child constructs the Windows credential store locally and cannot accept a raw
+The child constructs the platform credential store locally and cannot accept a raw
 credential, Guardian provider, model credential, arbitrary provider URL, header,
 or command. The Guardian and research children still require supervised journey
 attachment. See
@@ -388,18 +401,23 @@ privileged adapter internals; only their credential-holding application services
 may resolve the narrow provider slot. Privileged adapters must not interpret
 prompts, public prose, or model output.
 
-The first credential-store slice supports only Nebius, Tavily, and GitHub
-references. Its Windows adapter uses fixed Credential Manager targets and sends
-secret input to a static native-API helper through stdin, never argv or the helper
-environment. Status is non-secret, and temporary resolved byte copies are scoped
-to credential-holding callbacks and zeroed afterward. The trusted setup
+The credential store supports only Nebius, Tavily, and GitHub references. Its
+Windows adapter uses fixed Credential Manager targets. Its Linux adapter invokes
+only `/usr/bin/secret-tool` with fixed attributes, sends secret input through
+stdin, and forwards only the user-session bus address and runtime directory.
+Neither adapter puts secret material in argv or the helper environment. Status is
+non-secret, and temporary resolved byte copies are scoped to credential-holding
+callbacks and zeroed afterward. Linux has no fallback when Secret Service is
+unavailable. The trusted setup
 orchestrator verifies the exact provider before writing and emits only bounded
-account metadata. The executable Windows CLI supports enroll, non-secret status,
+account metadata. The executable Windows/Linux CLI supports enroll, non-secret status,
 and exact-confirmation revoke. Enrollment calls only the fixed read-only Nebius
 Token Factory models, Tavily usage, or GitHub authenticated-user endpoint, rejects
 redirects and oversized or malformed responses, and sanitizes every failure.
-Protected live verification, process supervision, and Linux/macOS adapters remain incomplete; see the
-[C6 credential-enrollment evidence](development/evidence/c6-credential-enrollment.md).
+Protected Linux credential lifecycle evidence and a macOS adapter remain
+incomplete; see the
+[C6 credential-enrollment evidence](development/evidence/c6-credential-enrollment.md)
+and [ADR-0038](adr/0038-linux-peer-identity-and-secret-service.md).
 
 The C6 single-host authority store is a narrow SQLite infrastructure package that
 depends only on strict contracts. The central authority service is its sole
@@ -416,8 +434,12 @@ sessions launched through it, and exposes a development-confirmation issuer over
 only `approval.store`. ADR-0010 moves the authority owner into one supervised child
 and the fake interaction provider into one short-lived child per turn. Both use a
 bounded stdin bootstrap, minimal environment, exact readiness, bounded shutdown,
-and fail-closed no-respawn behavior. Platform peer identity and containment and
-the user-verifying WebAuthn issuer remain C6-C8 work.
+and fail-closed no-respawn behavior. On Linux, the authority authenticates
+`SO_PEERCRED` PID/UID/GID through a narrow repository-owned helper before reading
+a request, then separately validates the exact session capability. Only the
+authority process, its supervisor, or a direct sibling child under that
+supervisor is accepted. Other service peer checks, broader containment, and the
+user-verifying WebAuthn issuer remain C6-C8 work.
 
 The credential-isolated model slice currently pins the post-confirmation Qwen
 mission-brief assistant and Nemotron guardian

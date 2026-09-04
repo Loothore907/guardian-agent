@@ -5,6 +5,11 @@
 - Branch: `codex/13-c6-linux-reference`
 - Status: Linux filesystem and socket-mode sub-gate implemented and active; peer identity and credential resolution remain
 
+> Follow-up: W25 implements and actively verifies authority peer identity and
+> adds deterministic fail-closed Linux Secret Service resolution. Protected
+> credential lifecycle and GitHub evidence still remain; see
+> [`w25-linux-peer-and-credentials.md`](w25-linux-peer-and-credentials.md).
+
 ## Outcome
 
 The production authority boundary now verifies the current user and restrictive

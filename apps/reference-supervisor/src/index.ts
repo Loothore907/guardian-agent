@@ -50,6 +50,7 @@ import { ManagedSessionWorkspace } from "@guardian/workspace";
 import { ReferenceSessionBootstrapCoordinator, type InteractionRunnerInput } from "./bootstrap.js";
 import { buildActivatedCompetitionJourneyServices } from "./competition-journey-config.js";
 import { startSupervisedControlledCompetitionJourney } from "./competition-journey-processes.js";
+import { credentialServiceEnvironment } from "./credential-service-environment.js";
 import type {
   CompetitionJourneyAttachmentResult,
   SupervisedCompetitionJourneyAttachment,
@@ -347,7 +348,12 @@ export async function startReferenceAuthoritySupervisor(
                 ...credentials,
               },
               readyLine: "guardian interaction service ready",
-              environment: { GUARDIAN_INTERACTION_PROVIDER: interactionProcessMode },
+              environment:
+                interactionProcessMode === "qwen"
+                  ? credentialServiceEnvironment({
+                      GUARDIAN_INTERACTION_PROVIDER: interactionProcessMode,
+                    })
+                  : { GUARDIAN_INTERACTION_PROVIDER: interactionProcessMode },
             });
             try {
               const result = await new LocalInteractionIpcClient({
@@ -387,7 +393,12 @@ export async function startReferenceAuthoritySupervisor(
                 envelope,
               },
               readyLine: "guardian interaction service ready",
-              environment: { GUARDIAN_INTERACTION_PROVIDER: interactionProcessMode },
+              environment:
+                interactionProcessMode === "qwen"
+                  ? credentialServiceEnvironment({
+                      GUARDIAN_INTERACTION_PROVIDER: interactionProcessMode,
+                    })
+                  : { GUARDIAN_INTERACTION_PROVIDER: interactionProcessMode },
             });
             try {
               return await new LocalMissionDraftReviewIpcClient({
@@ -423,7 +434,10 @@ export async function startReferenceAuthoritySupervisor(
                 envelope,
               },
               readyLine: "guardian risk service ready",
-              environment: { GUARDIAN_RISK_PROVIDER: riskProcessMode },
+              environment:
+                riskProcessMode === "nemotron"
+                  ? credentialServiceEnvironment({ GUARDIAN_RISK_PROVIDER: riskProcessMode })
+                  : { GUARDIAN_RISK_PROVIDER: riskProcessMode },
             });
             try {
               return await new LocalMissionSetupRiskIpcClient({
@@ -449,7 +463,10 @@ export async function startReferenceAuthoritySupervisor(
           turn,
         },
         readyLine: "guardian worker service ready",
-        environment: { GUARDIAN_WORKER_PROVIDER: workerProcessMode },
+        environment:
+          workerProcessMode === "nebius"
+            ? credentialServiceEnvironment({ GUARDIAN_WORKER_PROVIDER: workerProcessMode })
+            : { GUARDIAN_WORKER_PROVIDER: workerProcessMode },
       });
       try {
         return await new LocalWorkerIpcClient({

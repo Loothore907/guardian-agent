@@ -15,6 +15,7 @@ import {
   type AuthorityIpcRequest,
   type AuthorityServiceProcessConfig,
 } from "@guardian/contracts";
+import { assertLinuxPeerHelperAvailable, LinuxPeerVerifier } from "@guardian/linux-peer-identity";
 
 const MAX_IPC_REQUEST_BYTES = 16 * 1_024;
 const DEFAULT_IPC_TIMEOUT_MS = 15_000;
@@ -125,6 +126,7 @@ export class LocalAuthorityIpcServer implements AuthorityServiceBoundary {
   readonly #store: SqliteAuthorityStore;
   readonly #now: () => string;
   readonly #server: Server;
+  readonly #peerVerifier: LinuxPeerVerifier | null;
   readonly interruptedSessions: number;
   #listening = false;
 
@@ -145,15 +147,24 @@ export class LocalAuthorityIpcServer implements AuthorityServiceBoundary {
         "authority IPC timeout must be an integer from 100 to 60000 milliseconds",
       );
     }
+    if (process.platform === "linux") {
+      assertLinuxPeerHelperAvailable();
+    }
     this.#store = new SqliteAuthorityStore(this.#config.authorityStorePath, {
       workspaceRoots: this.#config.workspaceRoots,
       now: this.#now,
     });
     this.#store.initialize();
     this.interruptedSessions = this.#store.interruptActiveSessions();
+    if (process.platform === "linux") {
+      this.#peerVerifier = new LinuxPeerVerifier({ supervisorPid: process.ppid });
+    } else {
+      this.#peerVerifier = null;
+    }
     this.#server = createServer((socket) => {
       socket.setTimeout(timeoutMs, () => socket.destroy());
-      void this.#serve(socket);
+      socket.pause();
+      void this.#accept(socket);
     });
   }
 
@@ -202,6 +213,17 @@ export class LocalAuthorityIpcServer implements AuthorityServiceBoundary {
         capabilitiesMatch(request.capability, binding.capability),
       ) ?? null
     );
+  }
+
+  async #accept(socket: Socket): Promise<void> {
+    try {
+      if (this.#peerVerifier !== null) await this.#peerVerifier.verify(socket);
+      const serving = this.#serve(socket);
+      socket.resume();
+      await serving;
+    } catch {
+      socket.destroy();
+    }
   }
 
   async #serve(socket: Socket): Promise<void> {

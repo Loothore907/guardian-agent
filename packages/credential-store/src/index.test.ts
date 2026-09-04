@@ -3,8 +3,12 @@ import { describe, expect, it, vi } from "vitest";
 import {
   CredentialStoreError,
   InMemoryCredentialStore,
+  LinuxSecretServiceCredentialStore,
+  runLinuxSecretTool,
   WindowsCredentialStore,
   type CredentialHelperInvocation,
+  type LinuxSecretToolInvocation,
+  type LinuxSecretToolResult,
 } from "./index.js";
 
 const NEBIUS = { schemaVersion: 1, provider: "nebius", slot: "default" } as const;
@@ -122,5 +126,134 @@ describe("Windows Credential Manager adapter", () => {
     const store = new WindowsCredentialStore(() => Promise.resolve('{"ok":true}'));
     await expect(store.status(NEBIUS)).rejects.toBeInstanceOf(CredentialStoreError);
     await expect(store.delete(NEBIUS)).rejects.toBeInstanceOf(CredentialStoreError);
+  });
+});
+
+describe("Linux Secret Service adapter", () => {
+  it("bounds helper time and output", async () => {
+    await expect(
+      runLinuxSecretTool({
+        file: process.execPath,
+        arguments: ["--eval", "setInterval(() => {}, 1000)"],
+        stdin: new Uint8Array(),
+        environment: {},
+        timeoutMs: 100,
+      }),
+    ).rejects.toBeInstanceOf(CredentialStoreError);
+
+    await expect(
+      runLinuxSecretTool({
+        file: process.execPath,
+        arguments: ["--eval", 'process.stdout.write("x".repeat(4097))'],
+        stdin: new Uint8Array(),
+        environment: {},
+        timeoutMs: 1_000,
+      }),
+    ).rejects.toBeInstanceOf(CredentialStoreError);
+  });
+
+  it("uses a fixed helper and attributes while passing the secret only through stdin", async () => {
+    const invocations: LinuxSecretToolInvocation[] = [];
+    const results: LinuxSecretToolResult[] = [];
+    const secretText = "linux-secret-fixture";
+    const runner = vi.fn((invocation: LinuxSecretToolInvocation) => {
+      invocations.push(invocation);
+      const operation = invocation.arguments[0];
+      const result =
+        operation === "lookup"
+          ? {
+              code: 0,
+              stdout: Uint8Array.from(Buffer.from(secretText)),
+              stderr: new Uint8Array(),
+            }
+          : { code: 0, stdout: new Uint8Array(), stderr: new Uint8Array() };
+      results.push(result);
+      if (operation === "store") {
+        expect(Buffer.from(invocation.stdin).toString("utf8")).toBe(secretText);
+      }
+      return Promise.resolve(result);
+    });
+    const store = new LinuxSecretServiceCredentialStore(runner);
+
+    await store.write(NEBIUS, Buffer.from(secretText));
+    let exposed: Uint8Array | undefined;
+    await store.use(NEBIUS, (secret) => {
+      exposed = secret;
+      expect(Buffer.from(secret).toString("utf8")).toBe(secretText);
+      return Promise.resolve();
+    });
+
+    expect(invocations).toHaveLength(2);
+    for (const invocation of invocations) {
+      expect(invocation.file).toBe("/usr/bin/secret-tool");
+      expect(invocation.arguments).toContain("AgenticGuardian");
+      expect(invocation.arguments).toContain("nebius");
+      expect(invocation.arguments.join(" ")).not.toContain(secretText);
+      expect(JSON.stringify(invocation.environment)).not.toContain(secretText);
+    }
+    expect(invocations[0]?.stdin.every((byte) => byte === 0)).toBe(true);
+    expect(results.every((result) => result.stdout.every((byte) => byte === 0))).toBe(true);
+    expect(exposed?.every((byte) => byte === 0)).toBe(true);
+  });
+
+  it("distinguishes a missing item from a Secret Service diagnostic", async () => {
+    const missing = new LinuxSecretServiceCredentialStore(() =>
+      Promise.resolve({
+        code: 1,
+        stdout: new Uint8Array(),
+        stderr: new Uint8Array(),
+      }),
+    );
+    await expect(missing.status(TAVILY)).resolves.toMatchObject({ state: "missing" });
+    await expect(missing.use(TAVILY, () => Promise.resolve(undefined))).rejects.toBeInstanceOf(
+      CredentialStoreError,
+    );
+    await expect(missing.delete(TAVILY)).resolves.toBe("missing");
+
+    const failed = new LinuxSecretServiceCredentialStore(() =>
+      Promise.resolve({
+        code: 1,
+        stdout: new Uint8Array(),
+        stderr: Uint8Array.from(Buffer.from("private provider diagnostic")),
+      }),
+    );
+    await expect(failed.status(TAVILY)).rejects.toMatchObject({
+      name: "CredentialStoreError",
+      message: "credential store operation failed",
+    });
+    await expect(failed.delete(TAVILY)).rejects.toBeInstanceOf(CredentialStoreError);
+  });
+
+  it("rejects invalid textual secrets before calling Secret Service", async () => {
+    const runner = vi.fn(() =>
+      Promise.resolve({ code: 0, stdout: new Uint8Array(), stderr: new Uint8Array() }),
+    );
+    const store = new LinuxSecretServiceCredentialStore(runner);
+
+    await expect(
+      store.write(NEBIUS, Uint8Array.from([0xff, 0xfe, 0xfd, 0xfc, 0xfb, 0xfa, 0xf9, 0xf8])),
+    ).rejects.toBeInstanceOf(CredentialStoreError);
+    await expect(store.write(NEBIUS, Buffer.from("nul-byte\0fixture"))).rejects.toBeInstanceOf(
+      CredentialStoreError,
+    );
+    expect(runner).not.toHaveBeenCalled();
+  });
+
+  it("rejects empty, oversized, or operation-inappropriate helper output", async () => {
+    const emptyLookup = new LinuxSecretServiceCredentialStore(() =>
+      Promise.resolve({ code: 0, stdout: new Uint8Array(), stderr: new Uint8Array() }),
+    );
+    await expect(emptyLookup.status(GITHUB)).rejects.toBeInstanceOf(CredentialStoreError);
+
+    const noisyStore = new LinuxSecretServiceCredentialStore(() =>
+      Promise.resolve({
+        code: 0,
+        stdout: Uint8Array.from(Buffer.from("unexpected")),
+        stderr: new Uint8Array(),
+      }),
+    );
+    await expect(noisyStore.write(GITHUB, Buffer.from("github-fixture"))).rejects.toBeInstanceOf(
+      CredentialStoreError,
+    );
   });
 });
