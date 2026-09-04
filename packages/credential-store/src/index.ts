@@ -343,13 +343,41 @@ function linuxAttributes(reference: CredentialReference): readonly string[] {
   ];
 }
 
-function linuxSecretServiceEnvironment(): Readonly<Record<string, string>> {
-  const environment: Record<string, string> = {};
-  const busAddress = process.env.DBUS_SESSION_BUS_ADDRESS;
-  const runtimeDirectory = process.env.XDG_RUNTIME_DIR;
-  if (busAddress !== undefined) environment.DBUS_SESSION_BUS_ADDRESS = busAddress;
-  if (runtimeDirectory !== undefined) environment.XDG_RUNTIME_DIR = runtimeDirectory;
-  return environment;
+export function linuxSecretServiceEnvironment(
+  hostEnvironment: NodeJS.ProcessEnv = process.env,
+  userId: number | undefined = process.getuid?.(),
+): Readonly<Record<string, string>> {
+  if (userId === undefined || !Number.isSafeInteger(userId) || userId < 0) {
+    throw new CredentialStoreError();
+  }
+  const runtimeDirectory = hostEnvironment.XDG_RUNTIME_DIR?.replace(/\/$/u, "");
+  if (runtimeDirectory !== `/run/user/${userId}`) throw new CredentialStoreError();
+  const busAddress = hostEnvironment.DBUS_SESSION_BUS_ADDRESS;
+  if (
+    busAddress === undefined ||
+    busAddress.length < 1 ||
+    busAddress.length > 4_096 ||
+    busAddress.includes(";") ||
+    [...busAddress].some((character) => {
+      const codePoint = character.codePointAt(0);
+      return codePoint === undefined || codePoint < 32 || codePoint === 127;
+    })
+  ) {
+    throw new CredentialStoreError();
+  }
+  const optionalGuid = "(?:,guid=[0-9a-f]{32})?";
+  if (
+    !new RegExp(`^unix:path=/run/user/${userId}/bus${optionalGuid}$`, "u").test(busAddress) &&
+    !new RegExp(`^unix:abstract=/tmp/dbus-[A-Za-z0-9_-]{6,64}${optionalGuid}$`, "u").test(
+      busAddress,
+    )
+  ) {
+    throw new CredentialStoreError();
+  }
+  return {
+    DBUS_SESSION_BUS_ADDRESS: busAddress,
+    XDG_RUNTIME_DIR: runtimeDirectory,
+  };
 }
 
 export async function runLinuxSecretTool(
@@ -461,7 +489,7 @@ export class LinuxSecretServiceCredentialStore implements CredentialStore {
         file: LINUX_SECRET_TOOL_PATH,
         arguments: [...operationArguments, ...linuxAttributes(reference)],
         stdin,
-        environment: linuxSecretServiceEnvironment(),
+        environment: this.#runner === runLinuxSecretTool ? linuxSecretServiceEnvironment() : {},
         timeoutMs: LINUX_HELPER_TIMEOUT_MS,
       });
     } catch {

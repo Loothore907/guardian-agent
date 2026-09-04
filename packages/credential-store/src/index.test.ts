@@ -4,6 +4,7 @@ import {
   CredentialStoreError,
   InMemoryCredentialStore,
   LinuxSecretServiceCredentialStore,
+  linuxSecretServiceEnvironment,
   runLinuxSecretTool,
   WindowsCredentialStore,
   type CredentialHelperInvocation,
@@ -130,6 +131,58 @@ describe("Windows Credential Manager adapter", () => {
 });
 
 describe("Linux Secret Service adapter", () => {
+  it("accepts only one local current-user D-Bus route", () => {
+    expect(
+      linuxSecretServiceEnvironment(
+        {
+          DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/1000/bus",
+          XDG_RUNTIME_DIR: "/run/user/1000/",
+          PROVIDER_SECRET: "must-not-cross",
+        },
+        1000,
+      ),
+    ).toEqual({
+      DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/1000/bus",
+      XDG_RUNTIME_DIR: "/run/user/1000",
+    });
+    expect(
+      linuxSecretServiceEnvironment(
+        {
+          DBUS_SESSION_BUS_ADDRESS:
+            "unix:abstract=/tmp/dbus-AbCdEf0123,guid=0123456789abcdef0123456789abcdef",
+          XDG_RUNTIME_DIR: "/run/user/1000",
+        },
+        1000,
+      ),
+    ).toEqual({
+      DBUS_SESSION_BUS_ADDRESS:
+        "unix:abstract=/tmp/dbus-AbCdEf0123,guid=0123456789abcdef0123456789abcdef",
+      XDG_RUNTIME_DIR: "/run/user/1000",
+    });
+  });
+
+  it.each([
+    {},
+    {
+      DBUS_SESSION_BUS_ADDRESS: "tcp:host=127.0.0.1,port=1234",
+      XDG_RUNTIME_DIR: "/run/user/1000",
+    },
+    {
+      DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/1000/bus;unix:abstract=/tmp/dbus-AbCdEf0123",
+      XDG_RUNTIME_DIR: "/run/user/1000",
+    },
+    {
+      DBUS_SESSION_BUS_ADDRESS: "unix:path=/tmp/attacker-bus",
+      XDG_RUNTIME_DIR: "/run/user/1000",
+    },
+    {
+      DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/1000/bus",
+      XDG_RUNTIME_DIR: "/run/user/1001",
+    },
+  ])("rejects incomplete, remote, fallback, misplaced, or mismatched routing", (environment) => {
+    expect(() => linuxSecretServiceEnvironment(environment, 1000)).toThrow(CredentialStoreError);
+  });
+
   it("bounds helper time and output", async () => {
     await expect(
       runLinuxSecretTool({
