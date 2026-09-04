@@ -21,7 +21,7 @@ import {
 } from "./setup.js";
 
 const LOCAL_BROWSER_ENROLLMENT_ACCEPTED_RUNTIMES: ReadonlySet<NodeJS.Platform> =
-  new Set<NodeJS.Platform>();
+  new Set<NodeJS.Platform>(["win32"]);
 
 function assertInteractiveTerminal(): void {
   if (process.stdin.isTTY !== true || process.stdout.isTTY !== true) {

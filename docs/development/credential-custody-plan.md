@@ -48,9 +48,8 @@ and refresh material.
 - `guardian credentials [enroll|review|status|revoke] <provider>` is the stable
   management surface; `guardian setup` remains a compatibility alias.
 - Nebius and Tavily no longer use the failed raw-terminal reader. The one-use
-  browser composition is compiled. The first Windows review exposed an unwanted
-  password-generation hint; real enrollment is disabled pending a corrected-field
-  recheck. Linux remains pending its platform review.
+  browser composition is compiled and enabled on Windows after the corrected
+  interaction review passed. Linux remains pending its platform review.
 - Review mode preflights the actual platform store, then accepts and discards an
   obvious fake value without provider access or a store write.
 - GitHub uses a browser device flow and stores an access token, refresh token,
@@ -120,10 +119,10 @@ read-only behavior, consumer projection, and strict service-bootstrap wiring.
 Protected IAM/retrieval evidence and the remaining slices are intentionally not
 claimed. Slice 3 now has a hardened one-time loopback browser modal, stable CLI
 alias, actual-store preflight, a provider-free/store-read-only review mode, and a
-deterministically tested real enrollment composition. Windows submission and
-cancellation are accepted, but activation awaits a short recheck after removing
-the generated-password hint. Linux/WSL interaction review is still required
-before Linux enrollment is enabled or claimed usable.
+deterministically tested real enrollment composition. Windows submission,
+cancellation, and the corrected no-autofill interaction are accepted, so real
+enrollment is enabled there. Linux/WSL interaction review is still required before
+Linux enrollment is enabled or claimed usable.
 
 ### Slice 0: Reconcile the contract and inventory
 

@@ -1,6 +1,6 @@
 # ADR-0042: One-time loopback BYOK enrollment surface
 
-- Status: Windows interaction accepted; activation pending corrected-autofill recheck
+- Status: Accepted for Windows BYOK; Linux activation pending interaction review
 - Date: 2026-09-03
 - Windows interaction accepted: 2026-09-04
 - Extends: ADR-0007, ADR-0008, ADR-0009, and ADR-0041
@@ -50,9 +50,10 @@ The CLI exposes the fake ceremony as
 platform store, labels the page as fake-only, and has no provider or store-write
 callback. The real enrollment composition is compiled and deterministically
 tested. The first Windows review exposed an autofill hint that could encourage
-browser persistence, so all real enrollment remains disabled until the corrected
-field is rechecked. Linux also requires the same interaction on its intended
-host. `guardian setup` remains a compatibility alias. Each claimed host still requires replacement,
+browser persistence; a corrected-field review then passed without a browser
+generation or autofill attempt. Real enrollment is enabled on Windows and remains
+disabled on Linux until the same interaction passes there. `guardian setup`
+remains a compatibility alias. Each claimed host still requires replacement,
 provider-verification, cancellation, terminal-loss, browser-close, expiry,
 concurrency, and secret-corpus evidence.
 
@@ -103,6 +104,7 @@ submission. The user's browser also offered a generated password, revealing that
 field now requests autocomplete suppression, includes common password-manager
 ignore hints, omits a credential-like form name, and warns the user not to save
 the value in the browser. No submitted value or one-time URL was copied into the
-repository or agent conversation. The interaction is otherwise accepted, but
-real activation waits for a short corrected-field recheck. This does not
-establish a real credential write, provider verification, or Linux/WSL usability.
+repository or agent conversation. The user then confirmed that the corrected page
+displayed the no-save warning and made no generation or autofill attempt. This
+accepts and enables the interaction for Windows only; it does not establish a real
+credential write, provider verification, or Linux/WSL usability.

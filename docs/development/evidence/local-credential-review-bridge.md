@@ -3,8 +3,8 @@
 - Date: 2026-09-04
 - Scope: deterministic BYOK browser ceremony, CLI composition, and fake-review
   gate
-- Assurance: Windows interaction accepted except corrected-autofill recheck; real
-  enrollment and provider consumption pending
+- Assurance: Windows interaction accepted; real enrollment and provider
+  consumption pending
 
 ## Outcome
 
@@ -17,10 +17,10 @@ The executable `review` operation preflights the actual platform credential stor
 before opening an ephemeral `127.0.0.1` surface. Its callback does not construct a
 provider verifier and cannot write, read, or delete credential material. The page
 labels itself as fake-only. Real browser enrollment is compiled and tested through
-fixed provider verification and transactional store replacement. The first
-Windows review exposed an unwanted generated-password prompt, so activation is
-again disabled pending a corrected-field recheck. Linux remains disabled pending
-the same platform review.
+fixed provider verification and transactional store replacement. The corrected
+Windows review displayed the no-save warning without a browser generation or
+autofill attempt, so activation is enabled on Windows. Linux remains disabled
+pending the same platform review.
 
 ## Deterministic controls
 
@@ -84,6 +84,9 @@ states and checks its 8-4,096 printable ASCII, no-space constraint before sendin
 The generated-password offer also exposed that the former `new-password` hint
 could encourage browser persistence. It has been replaced with autocomplete-off,
 common password-manager ignore hints, no form name, and explicit warning copy.
+The user reran the fake review and confirmed that the warning appeared, the
+browser made no generation or autofill attempt, and the fake submission completed
+successfully.
 No submitted value or one-time URL was copied into chat or repository state.
 
 ## Non-claims and next step
@@ -93,7 +96,6 @@ No submitted value or one-time URL was copied into chat or repository state.
 - Windows Credential Manager enrollment, WSL/Linux loopback forwarding,
   persistent Linux Secret Service setup, and protected provider consumption are
   not established by this fake review.
-- ADR-0042 records the otherwise accepted Windows interaction. The next action is
-  a short fake review of the corrected field. Only after that passes may Windows
-  enrollment be enabled, followed by sanitized status and bounded live inference.
-  Linux remains separately review-gated.
+- ADR-0042 accepts the Windows interaction and Windows enrollment is enabled. The
+  next action is user-operated enrollment of one provider, followed by sanitized
+  status and bounded live inference. Linux remains separately review-gated.

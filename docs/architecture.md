@@ -447,9 +447,9 @@ Secret Service is unavailable. The setup orchestrator verifies the exact provide
 before writing and emits only bounded account metadata. The failed raw-terminal
 reader has been removed from the production route. A preflighted one-use loopback
 browser surface is compiled with a provider-free, store-read-only fake review
-mode. The first Windows review exposed a password-generation hint, so real
-Nebius/Tavily enrollment remains disabled until the corrected autocomplete-off
-field is rechecked. Linux also requires the same review. The supported local
+mode. The corrected Windows review displayed the no-save warning without a
+browser generation or autofill attempt, so Windows Nebius/Tavily enrollment is
+enabled. Linux still requires the same review. The supported local
 setup surface, verified replacement lifecycle, and preflight behavior are tracked in the
 [credential custody plan](development/credential-custody-plan.md).
 The deterministic bridge evidence is recorded in
