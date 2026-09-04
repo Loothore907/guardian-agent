@@ -193,6 +193,19 @@ limit; it does not create a persistent general loop. See
 [ADR-0018](adr/0018-exact-one-round-trip-worker-tool-execution.md) and
 [ADR-0019](adr/0019-contained-worker-denial-and-deterministic-revocation.md).
 
+## Persistent plan-bound authority
+
+A directly confirmed normalized plan may authorize an enumerated sequence of
+bounded operations for the session, instead of forcing the operator to repeat an
+approval at every routine step. The authority is represented as a revocable
+grant with typed operation classes, repository and destination selectors,
+side-effect ceilings, expiry, and count or volume limits. Every concrete action
+is still re-normalized at execution and must be a member of the grant. Plan
+expansion, protected-branch writes, force pushes, merges, releases, deployments,
+or destructive actions require the corresponding explicitly confirmed action
+class or a fresh step-up. See
+[ADR-0039](adr/0039-persistent-plan-bound-session-authority.md).
+
 ## Session workspace boundary
 
 The trusted supervisor now plans one credential-screened, Guardian-managed copy

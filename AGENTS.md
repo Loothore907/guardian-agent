@@ -4,7 +4,8 @@
 
 - Treat this repository as a security-sensitive public project.
 - Keep changes small, reviewable, and tied to a documented user or security outcome.
-- Do not commit, push, publish, create a release, or change remote settings unless the user explicitly requests it.
+- A user-approved session plan is explicit authority for the non-destructive actions it enumerates, including commits, feature-branch pushes, and pull-request creation or updates when the repository, destination, and ref constraints are bounded. Do not ask again for each in-scope action.
+- If an action is not covered by an approved plan, obtain an explicit request before committing, pushing, publishing, creating a release, or changing remote settings. Protected-branch writes, force pushes, merges, releases, deployments, destructive actions, and scope expansion require plan authority that names that action class or a fresh exact confirmation.
 - Preserve user-authored changes and unrelated worktree state.
 - Ask before adding a production dependency or materially widening project scope.
 

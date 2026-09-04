@@ -914,6 +914,17 @@ adds a fail-closed Secret Service adapter. Protected Linux credential resolution
 service containment, and narrow GitHub read/merge remain the C6 blocker. WebAuthn and the single-invocation
 coordinator remain later evidence slices; no broader guarantee is claimed.
 
+This session also exposed approval fatigue as a concrete product risk: a reviewed
+plan explicitly required a feature-branch push and pull-request creation, but a
+lossy repository rule and downstream approval reviewer repeatedly treated those
+steps as new authority requests. ADR-0039 now defines the intended correction:
+direct confirmation creates a persistent, revocable, typed plan grant; each
+concrete action is still re-normalized and checked for membership, while only
+scope or effect expansion triggers a new step-up. The repository working
+agreement now follows that rule for bounded non-destructive workflow actions.
+Runtime enforcement of plan grants remains a documented Goal, not an implemented
+claim.
+
 Previously captured protected evidence still records successful Windows
 Credential Manager isolation, Tavily research, Qwen mission brief, Nemotron
 Super-to-Ultra compatibility, production WSL isolation, GitHub read, and exact
@@ -975,6 +986,7 @@ wrapper when the frozen workspace is already usable.
 - [ADR-0034: Bounded public and piloted demo modes](../adr/0034-bounded-public-and-piloted-demo-modes.md)
 - [ADR-0035: Fixed controlled-content Extract boundary](../adr/0035-fixed-controlled-content-extract.md)
 - [ADR-0038: Linux peer identity and Secret Service credential resolution](../adr/0038-linux-peer-identity-and-secret-service.md)
+- [ADR-0039: Persistent plan-bound session authority](../adr/0039-persistent-plan-bound-session-authority.md)
 - [W2 session workspace evidence](evidence/w2-session-workspace.md)
 - [W3 worker tool round-trip evidence](evidence/w3-worker-tool-round-trip.md)
 - [W4 denial containment evidence](evidence/w4-denial-containment.md)
