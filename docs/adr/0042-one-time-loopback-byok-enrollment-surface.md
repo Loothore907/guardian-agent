@@ -1,6 +1,6 @@
 # ADR-0042: One-time loopback BYOK enrollment surface
 
-- Status: Accepted for Windows BYOK; Linux activation pending interaction review
+- Status: Accepted for Windows and Linux BYOK
 - Date: 2026-09-03
 - Windows interaction accepted: 2026-09-04
 - Extends: ADR-0007, ADR-0008, ADR-0009, and ADR-0041
@@ -51,11 +51,11 @@ platform store, labels the page as fake-only, and has no provider or store-write
 callback. The real enrollment composition is compiled and deterministically
 tested. The first Windows review exposed an autofill hint that could encourage
 browser persistence; a corrected-field review then passed without a browser
-generation or autofill attempt. Real enrollment is enabled on Windows and remains
-disabled on Linux until the same interaction passes there. `guardian setup`
-remains a compatibility alias. Each claimed host still requires replacement,
-provider-verification, cancellation, terminal-loss, browser-close, expiry,
-concurrency, and secret-corpus evidence.
+generation or autofill attempt. The subsequent Linux review passed against the
+real intended-host Secret Service preflight. Real enrollment is enabled on both
+platforms. `guardian setup` remains a compatibility alias. Each claimed host still
+requires replacement, provider-verification, cancellation, terminal-loss,
+browser-close, expiry, concurrency, and secret-corpus evidence.
 
 ## Security posture
 
@@ -116,3 +116,10 @@ agent context returned only `nebius: missing`. After correcting a stale protecte
 harness to supply the explicit non-secret BYOK store configuration, the bounded
 supervised Qwen/Nemotron live-inference test passed. No credential value, raw
 provider response, or one-time URL was printed or added to repository state.
+
+The Linux user then ran the same fake-only ceremony from the clean ext4 WSL2
+stage with the exact current-user `/run/user/1000/bus` route. The real Secret
+Service preflight returned `nebius: missing`, the page named Linux Secret Service,
+and the fake submission completed successfully without storage or provider use.
+This accepts Linux enrollment interaction; it does not establish real Linux
+credential storage or protected Linux provider consumption.

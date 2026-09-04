@@ -448,8 +448,9 @@ before writing and emits only bounded account metadata. The failed raw-terminal
 reader has been removed from the production route. A preflighted one-use loopback
 browser surface is compiled with a provider-free, store-read-only fake review
 mode. The corrected Windows review displayed the no-save warning without a
-browser generation or autofill attempt, so Windows Nebius/Tavily enrollment is
-enabled. Linux still requires the same review. The supported local
+browser generation or autofill attempt. The Linux review passed against the real
+intended-host Secret Service preflight. Nebius/Tavily enrollment is enabled on
+both platforms. The supported local
 setup surface, verified replacement lifecycle, and preflight behavior are tracked in the
 [credential custody plan](development/credential-custody-plan.md).
 The deterministic bridge evidence is recorded in

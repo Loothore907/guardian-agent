@@ -48,8 +48,8 @@ and refresh material.
 - `guardian credentials [enroll|review|status|revoke] <provider>` is the stable
   management surface; `guardian setup` remains a compatibility alias.
 - Nebius and Tavily no longer use the failed raw-terminal reader. The one-use
-  browser composition is compiled and enabled on Windows after the corrected
-  interaction review passed. Linux remains pending its platform review.
+  browser composition is compiled and enabled on Windows and Linux after both
+  platform interaction reviews passed.
 - Review mode preflights the actual platform store, then accepts and discards an
   obvious fake value without provider access or a store write.
 - GitHub uses a browser device flow and stores an access token, refresh token,
@@ -120,16 +120,18 @@ Protected IAM/retrieval evidence and the remaining slices are intentionally not
 claimed. Slice 3 now has a hardened one-time loopback browser modal, stable CLI
 alias, actual-store preflight, a provider-free/store-read-only review mode, and a
 deterministically tested real enrollment composition. Windows submission,
-cancellation, and the corrected no-autofill interaction are accepted, so real
-enrollment is enabled there. Linux/WSL interaction review is still required before
-Linux enrollment is enabled or claimed usable.
+cancellation, and the corrected no-autofill interaction are accepted. The Linux
+fake review then passed through the real intended-host Secret Service preflight,
+so real enrollment is enabled on both platforms. Real Linux storage and provider
+consumption remain unproven.
 
 The user subsequently completed Windows Nebius enrollment. A sanitized status
 check returned `available` in the user context and `missing` in the sandboxed
 agent context. After adding the explicit non-secret BYOK store descriptor to a
 stale protected harness, the supervised Qwen/Nemotron live sequence passed. This
-completes the Windows bridge; it does not advance Linux or hosted SecretStash
-assurance.
+completes the Windows bridge. The subsequent Linux review completed the platform
+interaction gate but did not advance real Linux storage, provider consumption, or
+hosted SecretStash assurance.
 
 ### Slice 0: Reconcile the contract and inventory
 

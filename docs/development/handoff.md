@@ -2,7 +2,7 @@
 
 Last updated: 2026-09-04 (AKDT)
 
-## Current priority: resume the protected Linux credential path
+## Current priority: enroll Nebius into Linux Secret Service and run the protected path
 
 The user explicitly superseded the September 3 emergency stop after confirming
 that the exposed Nebius key was revoked and replaced. They approved the bounded
@@ -21,10 +21,11 @@ platform store and serves the five-minute one-use loopback ceremony, but its
 review callback can neither contact a provider nor write the store. The failed
 raw-terminal reader is no longer a production route. The real browser-to-fixed-
 verifier-to-transactional-store composition is compiled, tested, and enabled on
-Windows. The Windows review passed paste and cancellation, then a corrected-field
-recheck displayed the no-save warning without a browser generation or autofill
-attempt. Linux remains disabled pending the same platform review. Real credentials
-must only be entered through the accepted user-operated Windows flow.
+Windows and Linux. The Windows review passed paste and cancellation, then a
+corrected-field recheck displayed the no-save warning without a browser generation
+or autofill attempt. The Linux fake review then passed through the real intended-
+host Secret Service preflight. Real credentials must only be entered through an
+accepted user-operated platform flow.
 
 The user completed Windows Nebius enrollment through that accepted flow. A
 sanitized check returned `nebius: available` in the approved Windows user context
@@ -34,10 +35,10 @@ omitted the newly required non-secret custody descriptor. After the harness was
 corrected, the bounded supervised Qwen/Nemotron live-inference test passed in
 approximately 9.2 seconds without printing a credential or raw provider response.
 
-The return-to-roadmap bridge is complete. The next C6 gate is the Linux interaction
-review and intended-host Secret Service enrollment, followed by the narrow
-protected Linux Nebius path. Broader Linux worker or assembled flows come only
-after that credential boundary passes.
+The return-to-roadmap bridge and Linux interaction review are complete. The next
+C6 gate is intended-host Secret Service enrollment followed by the narrow protected
+Linux Nebius path. Broader Linux worker or assembled flows come only after that
+credential boundary passes.
 
 The current branch is `codex/13-c6-linux-provider-containment`. Local commits
 from `4fa4f42` through the current branch head implement:
@@ -153,9 +154,10 @@ approved local plan unless separately authorized.
   Fake review covers origin/capability binding, replay, cancellation, bounded
   input, sanitized failure, CSP/no-store headers, and zeroing. The accepted real
   Windows route verified and stored Nebius, and bounded supervised inference
-  consumed it successfully. Linux remains separately review-gated.
+  consumed it successfully. The Linux fake review and real store preflight also
+  pass; real Linux enrollment and provider consumption remain next.
 - No IAM, deployment, push, pull-request, merge, release, or other remote mutation
-  was used for this checkpoint. Protected Linux Secret Service enrollment and
+  was used for this checkpoint. Real Linux Secret Service enrollment and protected
   provider consumption are next.
 
 This is the single rotating pickup page for a fresh development session. Treat it

@@ -69,10 +69,12 @@ deterministic fakes, setup orchestration, a tested Windows Credential Manager
 adapter, a deterministic Linux Secret Service adapter, and a passing disposable
 Secret Service lifecycle in an isolated Linux user session. The stable
 `guardian credentials` CLI now exercises fake browser review, status, and
-revocation. Its real loopback enrollment is accepted on Windows: a user-operated
-Nebius enrollment, sanitized status check, and protected credential-isolated
-Qwen/Nemotron inference pass. Protected Linux provider-credential evidence and
-macOS support remain pending. `.env.local` remains development-only.
+revocation. Its real loopback enrollment is accepted on Windows and Linux. A
+user-operated Windows Nebius enrollment, sanitized status check, and protected
+credential-isolated Qwen/Nemotron inference pass; the Linux fake interaction and
+real Secret Service preflight pass, while real Linux enrollment and provider
+consumption remain next. macOS support remains pending. `.env.local` remains
+development-only.
 
 ## Current status
 
@@ -335,10 +337,11 @@ the failed raw-terminal reader. The review command preflights the platform store
 opens a five-minute one-use loopback ceremony, accepts only fake interaction
 testing, and neither contacts a provider nor writes the store. The Windows review
 passed submission, cancellation, and a corrected-field recheck after an unwanted
-generated-password prompt was removed. `guardian credentials enroll <provider>`
-is therefore enabled on Windows: it verifies against a fixed read-only provider
-endpoint before transactionally writing Windows Credential Manager. Linux
-requires its own hands-on review. Tavily uses the same registered `default` slot.
+generated-password prompt was removed. The Linux review then passed against the
+real intended-host Secret Service preflight. `guardian credentials enroll
+<provider>` is therefore enabled on Windows and Linux: it verifies against a fixed
+read-only provider endpoint before transactionally writing the selected OS store.
+Tavily uses the same registered `default` slot.
 GitHub retains its expiring App device flow instead of pasted or ambient tokens:
 
 ```powershell

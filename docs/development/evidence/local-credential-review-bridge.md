@@ -4,7 +4,7 @@
 - Scope: deterministic BYOK browser ceremony, CLI composition, and fake-review
   gate
 - Assurance: Windows interaction, real Nebius enrollment, and bounded supervised
-  provider consumption passed
+  provider consumption passed; Linux interaction and real-store preflight passed
 
 ## Outcome
 
@@ -19,8 +19,8 @@ provider verifier and cannot write, read, or delete credential material. The pag
 labels itself as fake-only. Real browser enrollment is compiled and tested through
 fixed provider verification and transactional store replacement. The corrected
 Windows review displayed the no-save warning without a browser generation or
-autofill attempt, so activation is enabled on Windows. Linux remains disabled
-pending the same platform review.
+autofill attempt. The Linux fake review passed against the real intended-host
+Secret Service preflight. Activation is enabled on both platforms.
 
 ## Deterministic controls
 
@@ -107,5 +107,10 @@ No submitted value or one-time URL was copied into chat or repository state.
 - SecretStash, GitHub, deployment, and other remote mutation did not run.
   WSL/Linux loopback forwarding, persistent Linux Secret Service enrollment, the
   complete secret corpus, and macOS remain unestablished.
-- The Windows bridge is complete. The next credential-custody gate is the intended
-  Linux review and protected Linux provider path.
+- From a clean tracked-source-only WSL2 ext4 stage, sanitized Linux status returned
+  `nebius: missing` through the exact current-user `/run/user/1000/bus` route. The
+  user then completed the fake-only Linux browser review successfully. No store
+  write or provider call was available to that review callback.
+- The Windows bridge and Linux interaction gate are complete. The next credential-
+  custody gate is real Linux Nebius enrollment followed by the protected Linux
+  provider path.

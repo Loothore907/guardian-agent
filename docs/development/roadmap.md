@@ -42,10 +42,10 @@ cancellation, and the corrected no-autofill interaction passed. The user then
 enrolled Nebius from the accepted Windows flow; sanitized status returned
 `available`, and the bounded supervised Qwen/Nemotron live-inference path passed.
 
-The bridge is complete. Resume the narrow protected Linux Nebius path, beginning
-with the Linux interaction review and intended-host Secret Service enrollment.
-Managed-demo SecretStash, Caddy, calibration, and deployment work do not block
-this C6-to-C7 return.
+The bridge and Linux fake interaction review are complete. Resume the narrow
+protected Linux Nebius path with intended-host Secret Service enrollment, then
+credential-isolated provider consumption. Managed-demo SecretStash, Caddy,
+calibration, and deployment work do not block this C6-to-C7 return.
 
 The competition deadline is October 30, 2026 at 10:00 a.m. Pacific time. The internal submission target is October 28, leaving two calendar days for recovery and submission issues. Recheck the [official rules](https://nebiusglobalaihackathon.devpost.com/rules) at every release checkpoint.
 
