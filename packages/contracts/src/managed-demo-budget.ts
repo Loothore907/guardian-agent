@@ -164,12 +164,13 @@ const ManagedDemoBudgetLimitsSchema = z
     totalMicroUsd: MicroUsdSchema.min(1),
     dailyMicroUsd: MicroUsdSchema.min(1),
     perJourneyPreauthorizationMicroUsd: MicroUsdSchema.min(1),
-    totalCompletedJourneys: PositiveCountSchema,
-    dailyCompletedJourneys: PositiveCountSchema,
-    perSourceDailyCompletedJourneys: PositiveCountSchema,
+    totalJourneyAdmissions: PositiveCountSchema,
+    dailyJourneyAdmissions: PositiveCountSchema,
+    perSourceDailyJourneyAdmissions: PositiveCountSchema,
     maxConcurrentJourneys: PositiveCountSchema.max(1_000),
     queueCapacity: z.number().int().nonnegative().max(10_000),
     queueTimeoutSeconds: PositiveCountSchema.max(3_600),
+    reservationTtlSeconds: PositiveCountSchema.max(3_600),
     cooldownSeconds: z.number().int().nonnegative().max(86_400),
   })
   .superRefine((limits, context) => {
@@ -187,18 +188,18 @@ const ManagedDemoBudgetLimitsSchema = z
         path: ["perJourneyPreauthorizationMicroUsd"],
       });
     }
-    if (limits.dailyCompletedJourneys > limits.totalCompletedJourneys) {
+    if (limits.dailyJourneyAdmissions > limits.totalJourneyAdmissions) {
       context.addIssue({
         code: "custom",
-        message: "daily journey count cannot exceed total journey count",
-        path: ["dailyCompletedJourneys"],
+        message: "daily admission count cannot exceed total admission count",
+        path: ["dailyJourneyAdmissions"],
       });
     }
-    if (limits.perSourceDailyCompletedJourneys > limits.dailyCompletedJourneys) {
+    if (limits.perSourceDailyJourneyAdmissions > limits.dailyJourneyAdmissions) {
       context.addIssue({
         code: "custom",
-        message: "per-source journey count cannot exceed daily journey count",
-        path: ["perSourceDailyCompletedJourneys"],
+        message: "per-source admission count cannot exceed daily admission count",
+        path: ["perSourceDailyJourneyAdmissions"],
       });
     }
   });
@@ -291,12 +292,13 @@ export const INITIAL_JUDGE_DEMO_BUDGET_POLICY = ManagedDemoBudgetPolicySchema.pa
     totalMicroUsd: 25_000_000,
     dailyMicroUsd: 5_000_000,
     perJourneyPreauthorizationMicroUsd: 100_000,
-    totalCompletedJourneys: 250,
-    dailyCompletedJourneys: 50,
-    perSourceDailyCompletedJourneys: 20,
+    totalJourneyAdmissions: 250,
+    dailyJourneyAdmissions: 50,
+    perSourceDailyJourneyAdmissions: 20,
     maxConcurrentJourneys: 4,
     queueCapacity: 20,
     queueTimeoutSeconds: 120,
+    reservationTtlSeconds: 600,
     cooldownSeconds: 10,
   },
 });
@@ -308,12 +310,13 @@ export const INITIAL_PUBLIC_DEMO_BUDGET_POLICY = ManagedDemoBudgetPolicySchema.p
     totalMicroUsd: 25_000_000,
     dailyMicroUsd: 5_000_000,
     perJourneyPreauthorizationMicroUsd: 100_000,
-    totalCompletedJourneys: 250,
-    dailyCompletedJourneys: 50,
-    perSourceDailyCompletedJourneys: 2,
+    totalJourneyAdmissions: 250,
+    dailyJourneyAdmissions: 50,
+    perSourceDailyJourneyAdmissions: 2,
     maxConcurrentJourneys: 2,
     queueCapacity: 10,
     queueTimeoutSeconds: 120,
+    reservationTtlSeconds: 600,
     cooldownSeconds: 30,
   },
 });
@@ -413,6 +416,8 @@ export const ManagedDemoBudgetSnapshotSchema = z.strictObject({
   totalSettledMicroUsd: MicroUsdSchema,
   dailyReservedMicroUsd: MicroUsdSchema,
   dailySettledMicroUsd: MicroUsdSchema,
+  totalJourneyAdmissions: z.number().int().nonnegative().max(1_000_000),
+  dailyJourneyAdmissions: z.number().int().nonnegative().max(1_000_000),
   totalCompletedJourneys: z.number().int().nonnegative().max(1_000_000),
   dailyCompletedJourneys: z.number().int().nonnegative().max(1_000_000),
   activeJourneys: z.number().int().nonnegative().max(1_000),
@@ -443,6 +448,8 @@ export const ManagedDemoAdmissionResultSchema = z.discriminatedUnion("state", [
       "source_limit_exhausted",
       "concurrency_exhausted",
       "cooldown_active",
+      "stale_price_evidence",
+      "journey_replayed",
     ]),
     budget: ManagedDemoBudgetSnapshotSchema,
   }),
@@ -495,3 +502,31 @@ export const ManagedDemoOperatorPolicyUpdateSchema = z
     }
   });
 export type ManagedDemoOperatorPolicyUpdate = z.infer<typeof ManagedDemoOperatorPolicyUpdateSchema>;
+
+export const ManagedDemoOperatorPriceUpdateSchema = z
+  .strictObject({
+    schemaVersion: ContractVersionSchema,
+    deploymentId: OpaqueIdSchema,
+    expectedSnapshotId: OpaqueIdSchema,
+    expectedSnapshotVersion: VersionNumberSchema,
+    replacement: ManagedDemoPriceSnapshotSchema,
+    reason: boundedVisibleText(240),
+    updatedAt: TimestampSchema,
+  })
+  .superRefine((update, context) => {
+    if (update.replacement.snapshotId !== update.expectedSnapshotId) {
+      context.addIssue({
+        code: "custom",
+        message: "replacement price snapshot identifier does not match expectation",
+        path: ["replacement", "snapshotId"],
+      });
+    }
+    if (update.replacement.version !== update.expectedSnapshotVersion + 1) {
+      context.addIssue({
+        code: "custom",
+        message: "replacement price snapshot version must advance exactly once",
+        path: ["replacement", "version"],
+      });
+    }
+  });
+export type ManagedDemoOperatorPriceUpdate = z.infer<typeof ManagedDemoOperatorPriceUpdateSchema>;

@@ -5,6 +5,10 @@
 - Authority: user-directed managed-demo planning and ADR-0041
 - Applies to: project-funded Linux judge and bounded public deployments
 
+Progress: strict contracts and a deployment-bound SQLite ledger are implemented
+locally under ADR-0043. Trusted-service binding, queue enforcement, provider usage
+capture, protected calibration, load testing, and deployment remain pending.
+
 ## Outcome
 
 Keep the judge path available from submission through the end of judging without
@@ -93,7 +97,7 @@ Recommended initial public pilot:
 | --- | ---: |
 | Total variable-cost ceiling | $25 |
 | Daily variable-cost ceiling | $5 |
-| Completed journeys per source per day | 2 |
+| Journey admissions per source per day | 2 |
 | Concurrent journeys | 2 |
 | Queue capacity | 10 |
 | Admission envelope per journey | $0.10 |
@@ -113,7 +117,7 @@ model, or adapter cannot modify these values.
 | --- | --- |
 | Availability | `opens_at`, `closes_at`, maintenance state, kill switch |
 | Cash | total micro-USD, daily micro-USD, per-journey preauthorization, contingency floor |
-| Volume | total and daily completed journeys, per-source daily journeys |
+| Volume | total, daily, and per-source journey admissions; completed-journey telemetry |
 | Load | active concurrency, queue capacity, queue timeout, cooldown |
 | Model use | fixed model IDs, calls per role, prompt-token ceiling, completion-token ceiling, Ultra escalation count |
 | Research | Search count, Extract count, Tavily-credit ceiling |

@@ -48,7 +48,7 @@ describe("managed-demo budget contracts", () => {
       pool: "judge",
       limits: {
         totalMicroUsd: 25_000_000,
-        totalCompletedJourneys: 250,
+        totalJourneyAdmissions: 250,
         perJourneyPreauthorizationMicroUsd: 100_000,
       },
     });
@@ -56,8 +56,8 @@ describe("managed-demo budget contracts", () => {
       pool: "public",
       limits: {
         totalMicroUsd: 25_000_000,
-        totalCompletedJourneys: 250,
-        perSourceDailyCompletedJourneys: 2,
+        totalJourneyAdmissions: 250,
+        perSourceDailyJourneyAdmissions: 2,
       },
     });
     expect(INITIAL_PUBLIC_DEMO_BUDGET_POLICY).not.toBe(INITIAL_JUDGE_DEMO_BUDGET_POLICY);

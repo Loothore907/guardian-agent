@@ -84,6 +84,12 @@ module.exports = {
       to: { path: "^packages/(?!authority-store/|contracts/)" },
     },
     {
+      name: "managed-demo-budget-only-depends-on-contracts",
+      severity: "error",
+      from: { path: "^packages/managed-demo-budget/" },
+      to: { path: "^packages/(?!managed-demo-budget/|contracts/)" },
+    },
+    {
       name: "linux-peer-identity-is-trusted-boundary-only",
       severity: "error",
       from: {

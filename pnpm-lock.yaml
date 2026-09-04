@@ -421,6 +421,12 @@ importers:
 
   packages/linux-peer-identity: {}
 
+  packages/managed-demo-budget:
+    dependencies:
+      '@guardian/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+
   packages/policy:
     dependencies:
       '@guardian/canonical':
