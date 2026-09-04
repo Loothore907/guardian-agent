@@ -55,5 +55,6 @@ Architecture decision records document consequential choices, rejected alternati
 - [ADR-0042: One-time loopback BYOK enrollment surface](0042-one-time-loopback-byok-enrollment-surface.md)
 - [ADR-0043: Deployment-bound managed-demo budget ledgers](0043-deployment-bound-managed-demo-budget-ledgers.md)
 - [ADR-0044: Managed-demo budget service boundary](0044-managed-demo-budget-service-boundary.md)
+- [ADR-0045: Nebius judge hosting and domain ingress](0045-nebius-judge-hosting-and-domain-ingress.md)
 
 Use the next sequential four-digit number. Do not silently rewrite an accepted decision; add a superseding ADR.
