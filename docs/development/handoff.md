@@ -46,6 +46,57 @@ test passed in approximately 3.9 seconds without printing a credential or raw
 provider response. Broader Linux service containment and the narrow GitHub path
 remain separate C6 gates.
 
+## Next-session pickup
+
+Start from these verified facts; do not repeat credential setup merely to regain
+context:
+
+- Branch: `codex/13-c6-linux-provider-containment`.
+- Previous credential-evidence checkpoint: `61d5926`.
+- Windows `nebius/default` reports `available` in the user's Windows context and
+  intentionally reports `missing` from the sandboxed agent context.
+- Linux `nebius/default` reports `available` through the normal WSL user Secret
+  Service at `/run/user/1000/bus`. The earlier stale local value was explicitly
+  deleted before the successful enrollment.
+- Windows and Linux use separate active provider keys and separate OS stores. Do
+  not export, copy between stores, revoke, rotate, or recreate either key unless
+  a verified failure or explicit user direction requires it.
+- The normal-user Linux fixture lifecycle passed one test in 126 ms. The protected
+  Linux Qwen/Nemotron service gate then passed one test in approximately 3.9
+  seconds. Neither path printed credential material or raw provider output.
+- For any future one-time-display provider key, first start and inspect the exact
+  Guardian destination form. Create the key only after the form is waiting, and
+  retain the provider modal until storage, sanitized status, and the narrow
+  authentication gate pass.
+
+Resume work in this order:
+
+1. Read this pickup section, ADR-0042, the credential-custody plan, W26 evidence,
+   the C6 review matrix, and the current security claims. Confirm the branch and
+   worktree before changing anything.
+2. Review the existing W27/intended-host service-containment implementation and
+   identify the smallest missing C6 evidence for the credential-holding Linux
+   Qwen/Nemotron processes: process ancestry and peer checks, minimal bootstrap,
+   environment and argv exclusion, fixed local Secret Service routing, shutdown,
+   and sanitized failure behavior.
+3. Run the narrow deterministic Linux checks first. Add code and near-miss tests
+   only for an evidenced gap, then run the protected intended-host containment
+   gate without re-enrolling Nebius.
+4. After that gate passes, design the separate narrow Linux GitHub read/merge
+   evidence ceremony against an exact disposable target. Define all operator,
+   enrollment, approval, mutation, rollback, and cleanup steps before execution;
+   do not infer provider or GitHub mutation authority from this handoff.
+5. Reconcile issue #13, the C6 review matrix, roadmap, claims, and evidence. Run
+   the complete required suite before requesting review. Only then decide whether
+   the remaining C6 work can close or must be split into named follow-up issues.
+6. Return to only the missing C7 evidence after the C6 residual is resolved. Do
+   not rebuild already proven Qwen/Nemotron adapter behavior.
+
+The managed-demo/hosting branch remains paused at its documented local seam.
+SecretStash provisioning, Caddy, pricing, calibration, load testing, IAM, funding,
+and deployment are not prerequisites for the next C6 step and are not authorized
+by this pickup section.
+
 The current branch is `codex/13-c6-linux-provider-containment`. Local commits
 from `4fa4f42` through the current branch head implement:
 
@@ -85,8 +136,10 @@ tests, 201 modules / 427 dependency edges, TypeScript, lint, formatting, Linux
 peer-helper build, and the production web build.
 
 This is locally implemented containment, not a deployed or calibrated budget
-guarantee. No credential, provider call, IAM change, deployment, push, pull
-request, merge, release, or other remote mutation occurred. Remaining gates are:
+guarantee. No managed-demo credential provisioning, IAM change, deployment,
+push, pull request, merge, release, or other remote mutation occurred. The
+separate protected BYOK Nebius calls are recorded above. Remaining hosted gates
+are:
 
 1. add the protected judge startup that resolves the access digest and source key
    from fixed SecretStash payloads, constructs the budget controller and concrete
