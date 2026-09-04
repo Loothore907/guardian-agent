@@ -3,8 +3,8 @@
 - Date: 2026-09-04
 - Scope: deterministic BYOK browser ceremony, CLI composition, and fake-review
   gate
-- Assurance: Windows interaction accepted; real enrollment and provider
-  consumption pending
+- Assurance: Windows interaction, real Nebius enrollment, and bounded supervised
+  provider consumption passed
 
 ## Outcome
 
@@ -91,11 +91,21 @@ No submitted value or one-time URL was copied into chat or repository state.
 
 ## Non-claims and next step
 
-- No real credential was requested, entered, read, written, or exposed.
-- No provider, SecretStash, GitHub, deployment, or other remote operation ran.
-- Windows Credential Manager enrollment, WSL/Linux loopback forwarding,
-  persistent Linux Secret Service setup, and protected provider consumption are
-  not established by this fake review.
-- ADR-0042 accepts the Windows interaction and Windows enrollment is enabled. The
-  next action is user-operated enrollment of one provider, followed by sanitized
-  status and bounded live inference. Linux remains separately review-gated.
+- The user subsequently completed real Nebius enrollment through the accepted
+  Windows flow. Guardian verified it against the fixed provider endpoint and the
+  user reported the stored result.
+- A sanitized status check returned `nebius: missing` inside the sandboxed agent
+  context and `nebius: available` in the approved Windows user context. No secret
+  bytes or store payload were returned by either check.
+- The first protected live attempt failed before service readiness because the
+  standalone harness omitted the now-required non-secret custody descriptor. No
+  model result was produced. The harness was corrected to pass explicit personal
+  BYOK Windows/Linux store configuration to both supervised services.
+- The corrected bounded live test passed one supervised Qwen/Nemotron sequence in
+  approximately 9.2 seconds. It printed no credential or raw provider response and
+  performed no privileged external effect beyond paid inference usage.
+- SecretStash, GitHub, deployment, and other remote mutation did not run.
+  WSL/Linux loopback forwarding, persistent Linux Secret Service enrollment, the
+  complete secret corpus, and macOS remain unestablished.
+- The Windows bridge is complete. The next credential-custody gate is the intended
+  Linux review and protected Linux provider path.

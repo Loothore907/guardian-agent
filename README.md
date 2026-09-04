@@ -69,10 +69,10 @@ deterministic fakes, setup orchestration, a tested Windows Credential Manager
 adapter, a deterministic Linux Secret Service adapter, and a passing disposable
 Secret Service lifecycle in an isolated Linux user session. The stable
 `guardian credentials` CLI now exercises fake browser review, status, and
-revocation; its real loopback enrollment composition is locally tested but
-disabled until hands-on review. Protected Linux provider-credential evidence,
-accepted setup-surface usability, and macOS support remain pending. `.env.local`
-remains development-only.
+revocation. Its real loopback enrollment is accepted on Windows: a user-operated
+Nebius enrollment, sanitized status check, and protected credential-isolated
+Qwen/Nemotron inference pass. Protected Linux provider-credential evidence and
+macOS support remain pending. `.env.local` remains development-only.
 
 ## Current status
 

@@ -124,6 +124,13 @@ cancellation, and the corrected no-autofill interaction are accepted, so real
 enrollment is enabled there. Linux/WSL interaction review is still required before
 Linux enrollment is enabled or claimed usable.
 
+The user subsequently completed Windows Nebius enrollment. A sanitized status
+check returned `available` in the user context and `missing` in the sandboxed
+agent context. After adding the explicit non-secret BYOK store descriptor to a
+stale protected harness, the supervised Qwen/Nemotron live sequence passed. This
+completes the Windows bridge; it does not advance Linux or hosted SecretStash
+assurance.
+
 ### Slice 0: Reconcile the contract and inventory
 
 Deliverables:

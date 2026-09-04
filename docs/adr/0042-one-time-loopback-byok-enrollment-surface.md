@@ -107,4 +107,12 @@ the value in the browser. No submitted value or one-time URL was copied into the
 repository or agent conversation. The user then confirmed that the corrected page
 displayed the no-save warning and made no generation or autofill attempt. This
 accepts and enables the interaction for Windows only; it does not establish a real
-credential write, provider verification, or Linux/WSL usability.
+credential write, provider verification, or Linux/WSL usability by itself.
+
+The subsequent user-operated Windows enrollment verified one Nebius credential
+against the fixed provider endpoint and stored it in Windows Credential Manager.
+A sanitized host-context status check returned `nebius: available`; the sandboxed
+agent context returned only `nebius: missing`. After correcting a stale protected
+harness to supply the explicit non-secret BYOK store configuration, the bounded
+supervised Qwen/Nemotron live-inference test passed. No credential value, raw
+provider response, or one-time URL was printed or added to repository state.

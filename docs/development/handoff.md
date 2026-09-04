@@ -2,7 +2,7 @@
 
 Last updated: 2026-09-04 (AKDT)
 
-## Current priority: enroll through the accepted Windows flow and resume live inference
+## Current priority: resume the protected Linux credential path
 
 The user explicitly superseded the September 3 emergency stop after confirming
 that the exposed Nebius key was revoked and replaced. They approved the bounded
@@ -26,10 +26,18 @@ recheck displayed the no-save warning without a browser generation or autofill
 attempt. Linux remains disabled pending the same platform review. Real credentials
 must only be entered through the accepted user-operated Windows flow.
 
-The next gate is user-operated Windows enrollment from the same trusted terminal
-and normal browser, followed by sanitized status and bounded live inference. The
-Linux review and protected Linux Nebius path remain the following C6 platform
-gate before broader Linux worker or assembled flows.
+The user completed Windows Nebius enrollment through that accepted flow. A
+sanitized check returned `nebius: available` in the approved Windows user context
+and only `nebius: missing` in the sandboxed agent context. The first protected
+live attempt then failed before service readiness because its standalone harness
+omitted the newly required non-secret custody descriptor. After the harness was
+corrected, the bounded supervised Qwen/Nemotron live-inference test passed in
+approximately 9.2 seconds without printing a credential or raw provider response.
+
+The return-to-roadmap bridge is complete. The next C6 gate is the Linux interaction
+review and intended-host Secret Service enrollment, followed by the narrow
+protected Linux Nebius path. Broader Linux worker or assembled flows come only
+after that credential boundary passes.
 
 The current branch is `codex/13-c6-linux-provider-containment`. Local commits
 from `4fa4f42` through the current branch head implement:
@@ -141,14 +149,14 @@ approved local plan unless separately authorized.
   bootstrap. Managed-demo configurations are projected per consumer, and each
   instantiated store independently rejects providers outside that service's
   capability.
-- ADR-0042 proposes a five-minute, one-use `127.0.0.1` browser modal for pasted
-  BYOK credentials. Its fake-secret spike covers origin/capability binding,
-  replay, cancellation, bounded input, sanitized failure, CSP/no-store headers,
-  and zeroing. Fake review is executable; the compiled real enrollment route is
-  disabled pending user interaction review.
-- No credential, live provider, IAM, deployment, push, pull-request, merge,
-  release, or other remote mutation was used for this checkpoint. Protected
-  SecretStash retrieval and fake-secret BYOK surface review remain next gates.
+- ADR-0042 accepts the five-minute, one-use `127.0.0.1` browser modal on Windows.
+  Fake review covers origin/capability binding, replay, cancellation, bounded
+  input, sanitized failure, CSP/no-store headers, and zeroing. The accepted real
+  Windows route verified and stored Nebius, and bounded supervised inference
+  consumed it successfully. Linux remains separately review-gated.
+- No IAM, deployment, push, pull-request, merge, release, or other remote mutation
+  was used for this checkpoint. Protected Linux Secret Service enrollment and
+  provider consumption are next.
 
 This is the single rotating pickup page for a fresh development session. Treat it
 as context and sequencing guidance, not as the next session's goal by itself.

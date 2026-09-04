@@ -1,6 +1,6 @@
 # C6 Credential-Isolated Nebius Model Adapter Evidence
 
-- Date: 2026-09-01
+- Date: 2026-09-01; Windows BYOK rerun 2026-09-04
 - Scope: the implemented mission-dialogue mission-brief/draft-review adapter,
   deterministic formation contracts, and Nemotron guardian provider adapter
 - Status: deterministic, model-inventory, and protected live-inference evidence pass
@@ -90,6 +90,14 @@ effective authorization did not fall below the deterministic `confirm` floor. Th
 successful end-to-end provider test completed in approximately 6.1 seconds. Only
 allowlisted diagnostic categories were exposed during diagnosis; provider prose,
 headers, credentials, and raw responses were not printed.
+
+After the Windows browser-enrollment flow replaced the former setup input path,
+the first 2026-09-04 rerun failed before readiness because this standalone live
+harness omitted the newly explicit non-secret credential-store configuration.
+The harness now supplies the personal BYOK Windows/Linux store descriptor to both
+supervised bootstraps. The corrected rerun passed in approximately 9.2 seconds
+using the newly enrolled `nebius/default` credential. No key or raw provider
+response was printed.
 
 ## Claim boundary
 
