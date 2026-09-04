@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  CredentialStoreConfigSchema,
   CredentialCapabilityBindingSchema,
   CredentialLocationSchema,
+  ManagedDemoSecretResourceSchema,
   RegisteredCredentialReferenceSchema,
   credentialMaterialKind,
   registeredCredentialReference,
@@ -160,6 +162,111 @@ describe("credential registry contracts", () => {
         },
         reference: registeredCredentialReference("github", "default"),
         consumer: "worker_service",
+      }),
+    ).toThrow();
+  });
+
+  it("binds managed-demo SecretStash resources to a fixed pool, slot, and payload key", () => {
+    expect(
+      ManagedDemoSecretResourceSchema.parse({
+        schemaVersion: 1,
+        location: {
+          schemaVersion: 1,
+          custodyProfile: "managed_demo",
+          pool: "judge",
+          runtime: "linux",
+          storeTarget: "nebius_secretstash",
+        },
+        reference: registeredCredentialReference("github", "refresh"),
+        secretId: "mbsec-abc123",
+        payloadKey: "github_refresh_token",
+      }),
+    ).toMatchObject({
+      location: { pool: "judge" },
+      reference: { provider: "github", slot: "refresh" },
+      payloadKey: "github_refresh_token",
+    });
+  });
+
+  it.each([
+    {
+      location: {
+        schemaVersion: 1,
+        custodyProfile: "byok",
+        pool: "personal",
+        runtime: "linux",
+        storeTarget: "linux_secret_service",
+      },
+      reference: registeredCredentialReference("nebius", "default"),
+      secretId: "mbsec-abc123",
+      payloadKey: "nebius_api_key",
+    },
+    {
+      location: {
+        schemaVersion: 1,
+        custodyProfile: "managed_demo",
+        pool: "public",
+        runtime: "linux",
+        storeTarget: "nebius_secretstash",
+      },
+      reference: registeredCredentialReference("tavily", "default"),
+      secretId: "mbsec-abc123",
+      payloadKey: "nebius_api_key",
+    },
+    {
+      location: {
+        schemaVersion: 1,
+        custodyProfile: "managed_demo",
+        pool: "judge",
+        runtime: "linux",
+        storeTarget: "nebius_secretstash",
+      },
+      reference: registeredCredentialReference("github", "metadata"),
+      secretId: "arbitrary-secret-name",
+      payloadKey: "github_metadata",
+    },
+  ])("rejects a mismatched managed-demo SecretStash resource", (resource) => {
+    expect(() =>
+      ManagedDemoSecretResourceSchema.parse({ schemaVersion: 1, ...resource }),
+    ).toThrow();
+  });
+
+  it("accepts only internally consistent credential-store bootstrap configuration", () => {
+    const resource = {
+      schemaVersion: 1,
+      location: {
+        schemaVersion: 1,
+        custodyProfile: "managed_demo",
+        pool: "public",
+        runtime: "linux",
+        storeTarget: "nebius_secretstash",
+      },
+      reference: registeredCredentialReference("tavily", "default"),
+      secretId: "mbsec-publictavily123",
+      payloadKey: "tavily_api_key",
+    } as const;
+
+    expect(
+      CredentialStoreConfigSchema.parse({
+        schemaVersion: 1,
+        custodyProfile: "managed_demo",
+        pool: "public",
+        resources: [resource],
+      }),
+    ).toMatchObject({ custodyProfile: "managed_demo", pool: "public" });
+    expect(() =>
+      CredentialStoreConfigSchema.parse({
+        schemaVersion: 1,
+        custodyProfile: "managed_demo",
+        pool: "judge",
+        resources: [resource],
+      }),
+    ).toThrow();
+    expect(() =>
+      CredentialStoreConfigSchema.parse({
+        schemaVersion: 1,
+        custodyProfile: "byok",
+        location: resource.location,
       }),
     ).toThrow();
   });

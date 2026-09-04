@@ -162,6 +162,106 @@ export const CredentialCapabilityBindingSchema = z
   });
 export type CredentialCapabilityBinding = z.infer<typeof CredentialCapabilityBindingSchema>;
 
+export const SecretStashSecretIdSchema = z.string().regex(/^mbsec-[a-z0-9]{3,96}$/u);
+export type SecretStashSecretId = z.infer<typeof SecretStashSecretIdSchema>;
+
+export const SecretStashPayloadKeySchema = z.enum([
+  "nebius_api_key",
+  "tavily_api_key",
+  "github_access_token",
+  "github_refresh_token",
+  "github_metadata",
+]);
+export type SecretStashPayloadKey = z.infer<typeof SecretStashPayloadKeySchema>;
+
+const expectedSecretStashPayloadKey: Readonly<
+  Record<CredentialProvider, Readonly<Record<string, SecretStashPayloadKey>>>
+> = {
+  nebius: { default: "nebius_api_key" },
+  tavily: { default: "tavily_api_key" },
+  github: {
+    default: "github_access_token",
+    refresh: "github_refresh_token",
+    metadata: "github_metadata",
+  },
+};
+
+export const ManagedDemoSecretResourceSchema = z
+  .strictObject({
+    schemaVersion: z.literal(1),
+    location: CredentialLocationSchema,
+    reference: RegisteredCredentialReferenceSchema,
+    secretId: SecretStashSecretIdSchema,
+    payloadKey: SecretStashPayloadKeySchema,
+  })
+  .superRefine((resource, context) => {
+    if (resource.location.custodyProfile !== "managed_demo") {
+      context.addIssue({
+        code: "custom",
+        path: ["location", "custodyProfile"],
+        message: "SecretStash resources require managed-demo custody",
+      });
+    }
+    const expected =
+      expectedSecretStashPayloadKey[resource.reference.provider][resource.reference.slot];
+    if (resource.payloadKey !== expected) {
+      context.addIssue({
+        code: "custom",
+        path: ["payloadKey"],
+        message: "SecretStash payload key does not match the registered credential slot",
+      });
+    }
+  });
+export type ManagedDemoSecretResource = z.infer<typeof ManagedDemoSecretResourceSchema>;
+
+export const ByokCredentialStoreConfigSchema = z
+  .strictObject({
+    schemaVersion: z.literal(1),
+    custodyProfile: z.literal("byok"),
+    location: CredentialLocationSchema,
+  })
+  .superRefine((config, context) => {
+    if (config.location.custodyProfile !== config.custodyProfile) {
+      context.addIssue({
+        code: "custom",
+        path: ["location", "custodyProfile"],
+        message: "BYOK store configuration requires BYOK custody",
+      });
+    }
+  });
+export type ByokCredentialStoreConfig = z.infer<typeof ByokCredentialStoreConfigSchema>;
+
+export const ManagedDemoCredentialStoreConfigSchema = z
+  .strictObject({
+    schemaVersion: z.literal(1),
+    custodyProfile: z.literal("managed_demo"),
+    pool: z.enum(["public", "judge"]),
+    resources: z.array(ManagedDemoSecretResourceSchema).min(1).max(5),
+  })
+  .superRefine((config, context) => {
+    config.resources.forEach((resource, index) => {
+      if (
+        resource.location.custodyProfile !== config.custodyProfile ||
+        resource.location.pool !== config.pool
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["resources", index, "location"],
+          message: "managed-demo resource does not match its configured custody pool",
+        });
+      }
+    });
+  });
+export type ManagedDemoCredentialStoreConfig = z.infer<
+  typeof ManagedDemoCredentialStoreConfigSchema
+>;
+
+export const CredentialStoreConfigSchema = z.union([
+  ByokCredentialStoreConfigSchema,
+  ManagedDemoCredentialStoreConfigSchema,
+]);
+export type CredentialStoreConfig = z.infer<typeof CredentialStoreConfigSchema>;
+
 export const CredentialStatusSchema = z.strictObject({
   schemaVersion: z.literal(1),
   reference: CredentialReferenceSchema,

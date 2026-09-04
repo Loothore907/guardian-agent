@@ -3,9 +3,14 @@ import { tmpdir } from "node:os";
 
 import {
   CredentialReferenceSchema,
+  CredentialStoreConfigSchema,
   CredentialStatusSchema,
+  ManagedDemoSecretResourceSchema,
+  RegisteredCredentialReferenceSchema,
+  type CredentialPool,
   type CredentialReference,
   type CredentialStatus,
+  type ManagedDemoSecretResource,
 } from "@guardian/contracts";
 
 const MAX_SECRET_BYTES = 4_096;
@@ -14,6 +19,8 @@ const WINDOWS_TARGET_PREFIX = "AgenticGuardian";
 const LINUX_HELPER_TIMEOUT_MS = 15_000;
 const LINUX_SECRET_TOOL_PATH = "/usr/bin/secret-tool";
 const MAXIMUM_LINUX_DIAGNOSTIC_BYTES = 8_192;
+const SECRETSTASH_HELPER_TIMEOUT_MS = 15_000;
+const SECRETSTASH_CLI_PATH = "/usr/local/bin/nebius";
 
 export class CredentialStoreError extends Error {
   constructor() {
@@ -566,8 +573,156 @@ export class LinuxSecretServiceCredentialStore implements CredentialStore {
   }
 }
 
+export type SecretStashRunner = LinuxSecretToolRunner;
+
+export const runSecretStashCli: SecretStashRunner = runLinuxSecretTool;
+
+function managedResourceKey(reference: CredentialReference): string {
+  return `${reference.provider}/${reference.slot}`;
+}
+
+function secretFromSecretStashOutput(output: Uint8Array): Uint8Array {
+  let end = output.byteLength;
+  if (end > 0 && output[end - 1] === 0x0a) end -= 1;
+  if (end > 0 && output[end - 1] === 0x0d) end -= 1;
+  const secret = Uint8Array.from(output.subarray(0, end));
+  try {
+    if (output.subarray(0, end).some((byte) => byte === 0x0a || byte === 0x0d)) {
+      throw new CredentialStoreError();
+    }
+    assertTextSecret(secret);
+    return copySecret(secret);
+  } finally {
+    secret.fill(0);
+  }
+}
+
+export class SecretStashCredentialStore implements CredentialStore {
+  readonly #resources = new Map<string, ManagedDemoSecretResource>();
+  readonly #runner: SecretStashRunner;
+
+  constructor(options: {
+    readonly pool: Exclude<CredentialPool, "personal">;
+    readonly resources: readonly unknown[];
+    readonly runner?: SecretStashRunner;
+  }) {
+    if (options.pool !== "public" && options.pool !== "judge") {
+      throw new CredentialStoreError();
+    }
+    if (options.resources.length < 1 || options.resources.length > 5) {
+      throw new CredentialStoreError();
+    }
+    for (const resourceValue of options.resources) {
+      const resource = ManagedDemoSecretResourceSchema.parse(resourceValue);
+      if (resource.location.pool !== options.pool) throw new CredentialStoreError();
+      const key = managedResourceKey(resource.reference);
+      if (this.#resources.has(key)) throw new CredentialStoreError();
+      this.#resources.set(key, resource);
+    }
+    this.#runner = options.runner ?? runSecretStashCli;
+    if (process.platform !== "linux" && this.#runner === runSecretStashCli) {
+      throw new CredentialStoreError();
+    }
+  }
+
+  async #lookup(referenceValue: unknown): Promise<Uint8Array | undefined> {
+    const reference = RegisteredCredentialReferenceSchema.parse(referenceValue);
+    const resource = this.#resources.get(managedResourceKey(reference));
+    if (resource === undefined) return undefined;
+    let result: LinuxSecretToolResult | undefined;
+    try {
+      result = await this.#runner({
+        file: SECRETSTASH_CLI_PATH,
+        arguments: [
+          "mysterybox",
+          "payload",
+          "get-by-key",
+          "--key",
+          resource.payloadKey,
+          "--secret-id",
+          resource.secretId,
+          "--format",
+          "text",
+          "--no-browser",
+          "--no-check-update",
+          "--no-progress",
+          "--retries",
+          "1",
+          "--timeout",
+          "15s",
+          "--per-retry-timeout",
+          "15s",
+          "--auth-timeout",
+          "15s",
+        ],
+        stdin: new Uint8Array(),
+        environment: {},
+        timeoutMs: SECRETSTASH_HELPER_TIMEOUT_MS,
+      });
+      if (result.code !== 0 || !isEmpty(result.stderr)) throw new CredentialStoreError();
+      return secretFromSecretStashOutput(result.stdout);
+    } catch {
+      throw new CredentialStoreError();
+    } finally {
+      result?.stdout.fill(0);
+      result?.stderr.fill(0);
+    }
+  }
+
+  async status(referenceValue: unknown): Promise<CredentialStatus> {
+    const reference = RegisteredCredentialReferenceSchema.parse(referenceValue);
+    const secret = await this.#lookup(reference);
+    secret?.fill(0);
+    return CredentialStatusSchema.parse({
+      schemaVersion: 1,
+      reference,
+      state: secret === undefined ? "missing" : "available",
+    });
+  }
+
+  write(referenceValue: unknown, secret: Uint8Array): Promise<void> {
+    void referenceValue;
+    void secret;
+    return Promise.reject(new CredentialStoreError());
+  }
+
+  delete(referenceValue: unknown): Promise<"deleted" | "missing"> {
+    void referenceValue;
+    return Promise.reject(new CredentialStoreError());
+  }
+
+  async use<T>(referenceValue: unknown, operation: (secret: Uint8Array) => Promise<T>): Promise<T> {
+    const secret = await this.#lookup(referenceValue);
+    if (secret === undefined) throw new CredentialStoreError();
+    try {
+      return await operation(secret);
+    } finally {
+      secret.fill(0);
+    }
+  }
+}
+
 export function createPlatformCredentialStore(): CredentialStore {
   if (process.platform === "win32") return new WindowsCredentialStore();
   if (process.platform === "linux") return new LinuxSecretServiceCredentialStore();
   throw new CredentialStoreError();
+}
+
+export function createCredentialStore(
+  configValue: unknown,
+  options: { readonly secretStashRunner?: SecretStashRunner } = {},
+): CredentialStore {
+  const config = CredentialStoreConfigSchema.parse(configValue);
+  if (config.custodyProfile === "managed_demo") {
+    return new SecretStashCredentialStore({
+      pool: config.pool,
+      resources: config.resources,
+      ...(options.secretStashRunner === undefined ? {} : { runner: options.secretStashRunner }),
+    });
+  }
+
+  const expectedRuntime =
+    process.platform === "win32" ? "windows" : process.platform === "linux" ? "linux" : undefined;
+  if (config.location.runtime !== expectedRuntime) throw new CredentialStoreError();
+  return createPlatformCredentialStore();
 }

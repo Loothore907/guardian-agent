@@ -1,15 +1,20 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { registeredCredentialReference } from "@guardian/contracts";
+
 import {
   CredentialStoreError,
+  createCredentialStore,
   InMemoryCredentialStore,
   LinuxSecretServiceCredentialStore,
   linuxSecretServiceEnvironment,
   runLinuxSecretTool,
+  SecretStashCredentialStore,
   WindowsCredentialStore,
   type CredentialHelperInvocation,
   type LinuxSecretToolInvocation,
   type LinuxSecretToolResult,
+  type SecretStashRunner,
 } from "./index.js";
 
 const NEBIUS = { schemaVersion: 1, provider: "nebius", slot: "default" } as const;
@@ -318,5 +323,178 @@ describe("Linux Secret Service adapter", () => {
     await expect(noisyStore.write(GITHUB, Buffer.from("github-fixture"))).rejects.toBeInstanceOf(
       CredentialStoreError,
     );
+  });
+});
+
+describe("Nebius SecretStash managed-demo adapter", () => {
+  function resource(
+    provider: "nebius" | "tavily" | "github",
+    slot: string,
+    pool: "public" | "judge" = "public",
+  ) {
+    const payloadKeys = {
+      "nebius/default": "nebius_api_key",
+      "tavily/default": "tavily_api_key",
+      "github/default": "github_access_token",
+      "github/refresh": "github_refresh_token",
+      "github/metadata": "github_metadata",
+    } as const;
+    return {
+      schemaVersion: 1,
+      location: {
+        schemaVersion: 1,
+        custodyProfile: "managed_demo",
+        pool,
+        runtime: "linux",
+        storeTarget: "nebius_secretstash",
+      },
+      reference: registeredCredentialReference(provider, slot),
+      secretId: `mbsec-${provider}${pool}123`,
+      payloadKey: payloadKeys[`${provider}/${slot}` as keyof typeof payloadKeys],
+    } as const;
+  }
+
+  it("retrieves only one fixed payload key inside a zeroed callback", async () => {
+    const stdout = Uint8Array.from(Buffer.from("managed-demo-secret-fixture\n"));
+    const stderr = new Uint8Array();
+    const runner = vi.fn<SecretStashRunner>(() => Promise.resolve({ code: 0, stdout, stderr }));
+    const store = new SecretStashCredentialStore({
+      pool: "public",
+      resources: [resource("nebius", "default")],
+      runner,
+    });
+    let callbackSecret: Uint8Array | undefined;
+
+    await expect(
+      store.use(NEBIUS, (secret) => {
+        callbackSecret = secret;
+        return Promise.resolve(Buffer.from(secret).toString());
+      }),
+    ).resolves.toBe("managed-demo-secret-fixture");
+
+    expect(runner).toHaveBeenCalledWith({
+      file: "/usr/local/bin/nebius",
+      arguments: [
+        "mysterybox",
+        "payload",
+        "get-by-key",
+        "--key",
+        "nebius_api_key",
+        "--secret-id",
+        "mbsec-nebiuspublic123",
+        "--format",
+        "text",
+        "--no-browser",
+        "--no-check-update",
+        "--no-progress",
+        "--retries",
+        "1",
+        "--timeout",
+        "15s",
+        "--per-retry-timeout",
+        "15s",
+        "--auth-timeout",
+        "15s",
+      ],
+      stdin: new Uint8Array(),
+      environment: {},
+      timeoutMs: 15_000,
+    });
+    expect(callbackSecret?.every((byte) => byte === 0)).toBe(true);
+    expect(stdout.every((byte) => byte === 0)).toBe(true);
+    expect(stderr.every((byte) => byte === 0)).toBe(true);
+  });
+
+  it("returns missing without invoking SecretStash for an unconfigured registered slot", async () => {
+    const runner = vi.fn<SecretStashRunner>();
+    const store = new SecretStashCredentialStore({
+      pool: "judge",
+      resources: [resource("nebius", "default", "judge")],
+      runner,
+    });
+
+    await expect(store.status(TAVILY)).resolves.toMatchObject({ state: "missing" });
+    await expect(store.use(TAVILY, () => Promise.resolve())).rejects.toBeInstanceOf(
+      CredentialStoreError,
+    );
+    expect(runner).not.toHaveBeenCalled();
+  });
+
+  it("is read-only and rejects cross-pool, duplicate, and malformed resource configuration", async () => {
+    const runner = vi.fn<SecretStashRunner>();
+    const publicResource = resource("nebius", "default");
+    const store = new SecretStashCredentialStore({
+      pool: "public",
+      resources: [publicResource],
+      runner,
+    });
+
+    await expect(store.write(NEBIUS, Buffer.from("replacement-fixture"))).rejects.toBeInstanceOf(
+      CredentialStoreError,
+    );
+    await expect(store.delete(NEBIUS)).rejects.toBeInstanceOf(CredentialStoreError);
+    expect(
+      () =>
+        new SecretStashCredentialStore({
+          pool: "judge",
+          resources: [publicResource],
+          runner,
+        }),
+    ).toThrow(CredentialStoreError);
+    expect(
+      () =>
+        new SecretStashCredentialStore({
+          pool: "public",
+          resources: [publicResource, publicResource],
+          runner,
+        }),
+    ).toThrow(CredentialStoreError);
+  });
+
+  it.each([
+    { code: 1, value: "provider failure" },
+    { code: 0, value: "secret\nwith-extra-line\n" },
+    { code: 0, value: "short\n" },
+  ])("sanitizes invalid SecretStash helper output", async ({ code, value }) => {
+    const stdout = Uint8Array.from(Buffer.from(value));
+    const stderr = Uint8Array.from(Buffer.from(code === 0 ? "" : "untrusted diagnostic"));
+    const store = new SecretStashCredentialStore({
+      pool: "public",
+      resources: [resource("nebius", "default")],
+      runner: () => Promise.resolve({ code, stdout, stderr }),
+    });
+
+    await expect(store.use(NEBIUS, () => Promise.resolve())).rejects.toMatchObject({
+      name: "CredentialStoreError",
+      message: "credential store operation failed",
+    });
+    expect(stdout.every((byte) => byte === 0)).toBe(true);
+    expect(stderr.every((byte) => byte === 0)).toBe(true);
+  });
+
+  it("selects managed-demo custody only from strict non-secret configuration", async () => {
+    const stdout = Uint8Array.from(Buffer.from("managed-demo-secret-fixture\n"));
+    const store = createCredentialStore(
+      {
+        schemaVersion: 1,
+        custodyProfile: "managed_demo",
+        pool: "judge",
+        resources: [resource("tavily", "default", "judge")],
+      },
+      {
+        secretStashRunner: () => Promise.resolve({ code: 0, stdout, stderr: new Uint8Array() }),
+      },
+    );
+
+    await expect(store.status(TAVILY)).resolves.toMatchObject({ state: "available" });
+    expect(stdout.every((byte) => byte === 0)).toBe(true);
+    expect(() =>
+      createCredentialStore({
+        schemaVersion: 1,
+        custodyProfile: "managed_demo",
+        pool: "public",
+        resources: [resource("tavily", "default", "judge")],
+      }),
+    ).toThrow();
   });
 });
