@@ -255,6 +255,158 @@ export class ManagedDemoJourneyUsageCollector {
   }
 }
 
+type ManagedDemoAdmissionDenialReason = Extract<
+  ManagedDemoAdmissionResult,
+  { readonly state: "denied" }
+>["reason"];
+
+interface PendingManagedDemoAdmission {
+  readonly request: ManagedDemoAdmissionRequest;
+  readonly deadline: number;
+  readonly resolve: (result: ManagedDemoAdmissionResult) => void;
+  readonly reject: (error: Error) => void;
+  timer: unknown;
+}
+
+export class ManagedDemoAdmissionQueue {
+  readonly #ledger: SqliteManagedDemoBudgetLedger;
+  #policy: ManagedDemoBudgetPolicy;
+  readonly #now: () => string;
+  readonly #schedule: (callback: () => void, milliseconds: number) => unknown;
+  readonly #cancel: (timer: unknown) => void;
+  readonly #pending: PendingManagedDemoAdmission[] = [];
+  #closed = false;
+
+  constructor(options: {
+    readonly ledger: SqliteManagedDemoBudgetLedger;
+    readonly policy: unknown;
+    readonly now?: () => string;
+    readonly schedule?: (callback: () => void, milliseconds: number) => unknown;
+    readonly cancel?: (timer: unknown) => void;
+  }) {
+    this.#ledger = options.ledger;
+    this.#policy = ManagedDemoBudgetPolicySchema.parse(options.policy);
+    this.#now = options.now ?? (() => new Date().toISOString());
+    this.#schedule =
+      options.schedule ??
+      ((callback, milliseconds) => {
+        const timer = setTimeout(callback, milliseconds);
+        timer.unref();
+        return timer;
+      });
+    this.#cancel = options.cancel ?? ((timer) => clearTimeout(timer as NodeJS.Timeout));
+  }
+
+  get queuedAdmissions(): number {
+    return this.#pending.length;
+  }
+
+  async admit(value: unknown): Promise<ManagedDemoAdmissionResult> {
+    if (this.#closed) throw new TypeError("managed-demo admission queue is closed");
+    const request = ManagedDemoAdmissionRequestSchema.parse(value);
+    const result = this.#ledger.admit(request);
+    if (result.state !== "denied" || result.reason !== "concurrency_exhausted") return result;
+    if (this.#pending.length >= this.#policy.limits.queueCapacity) {
+      return this.#denied("queue_full");
+    }
+    const deadline =
+      Date.parse(request.requestedAt) + this.#policy.limits.queueTimeoutSeconds * 1_000;
+    return await new Promise<ManagedDemoAdmissionResult>((resolveAdmission, rejectAdmission) => {
+      const pending: PendingManagedDemoAdmission = {
+        request,
+        deadline,
+        resolve: resolveAdmission,
+        reject: rejectAdmission,
+        timer: undefined,
+      };
+      pending.timer = this.#schedule(
+        () => this.#timeout(pending),
+        this.#policy.limits.queueTimeoutSeconds * 1_000,
+      );
+      this.#pending.push(pending);
+    });
+  }
+
+  settle(value: unknown): ManagedDemoSettlementResult {
+    if (this.#closed) throw new TypeError("managed-demo admission queue is closed");
+    const result = this.#ledger.settle(value);
+    this.#drain();
+    return result;
+  }
+
+  expireReservations(): number {
+    if (this.#closed) throw new TypeError("managed-demo admission queue is closed");
+    const expired = this.#ledger.expireReservations();
+    this.#drain();
+    return expired;
+  }
+
+  snapshot(): ManagedDemoBudgetSnapshot {
+    if (this.#closed) throw new TypeError("managed-demo admission queue is closed");
+    return this.#ledger.snapshot();
+  }
+
+  updatePolicy(value: unknown): ManagedDemoBudgetSnapshot {
+    if (this.#closed) throw new TypeError("managed-demo admission queue is closed");
+    const update = ManagedDemoOperatorPolicyUpdateSchema.parse(value);
+    const snapshot = this.#ledger.updatePolicy(update);
+    this.#policy = update.replacement;
+    this.#drain();
+    return snapshot;
+  }
+
+  updatePrices(value: unknown): ManagedDemoBudgetSnapshot {
+    if (this.#closed) throw new TypeError("managed-demo admission queue is closed");
+    return this.#ledger.updatePrices(value);
+  }
+
+  close(): void {
+    if (this.#closed) return;
+    this.#closed = true;
+    for (const pending of this.#pending.splice(0)) {
+      this.#cancel(pending.timer);
+      pending.reject(new TypeError("managed-demo admission queue closed before admission"));
+    }
+    this.#ledger.close();
+  }
+
+  #denied(reason: ManagedDemoAdmissionDenialReason): ManagedDemoAdmissionResult {
+    return ManagedDemoAdmissionResultSchema.parse({
+      schemaVersion: 1,
+      state: "denied",
+      reason,
+      budget: this.#ledger.snapshot(),
+    });
+  }
+
+  #timeout(pending: PendingManagedDemoAdmission): void {
+    const index = this.#pending.indexOf(pending);
+    if (index < 0) return;
+    this.#pending.splice(index, 1);
+    pending.resolve(this.#denied("queue_timeout"));
+    this.#drain();
+  }
+
+  #drain(): void {
+    while (!this.#closed && this.#pending.length > 0) {
+      const pending = this.#pending[0];
+      if (pending === undefined) return;
+      const now = TimestampSchema.parse(this.#now());
+      if (Date.parse(now) >= pending.deadline) {
+        this.#pending.shift();
+        this.#cancel(pending.timer);
+        pending.resolve(this.#denied("queue_timeout"));
+        continue;
+      }
+      const result = this.#ledger.admit({ ...pending.request, requestedAt: now });
+      if (result.state === "denied" && result.reason === "concurrency_exhausted") return;
+      this.#pending.shift();
+      this.#cancel(pending.timer);
+      pending.resolve(result);
+    }
+  }
+}
+
 export class SqliteManagedDemoBudgetLedger {
   readonly #database: DatabaseSync;
   readonly #databasePath: string;

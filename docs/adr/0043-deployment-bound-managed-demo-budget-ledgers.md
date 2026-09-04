@@ -52,9 +52,11 @@ judge window is active, an enabled judge policy cannot reduce availability or
 capacity; the operator may disable the pool as an incident kill switch. Model-
 policy substitution is not a budget update.
 
-Queueing remains outside the ledger. A trusted admission service may hold a
-bounded queue, but it must acquire a ledger reservation immediately before
-starting provider work and must not infer capacity from a stale snapshot.
+Queueing remains outside the ledger. The admission controller holds a bounded
+FIFO queue, reports explicit full and timeout outcomes, and acquires a ledger
+reservation immediately before releasing queued work. It rechecks durable
+capacity rather than inferring it from a stale snapshot. A process and Linux
+peer-identity boundary around that controller remains required before deployment.
 
 ## Consequences
 
@@ -66,8 +68,8 @@ starting provider work and must not infer capacity from a stale snapshot.
 - Price changes are explicit evidence updates and do not rewrite historical cost.
 - A provider billing cap remains an outer containment layer; the local ledger is
   not evidence that the provider accepted or enforced an account limit.
-- Source fingerprint construction, trusted-service IPC, queue enforcement,
-  provider usage capture, and protected deployment evidence remain separate work.
+- Source fingerprint construction, trusted-service IPC, provider usage capture,
+  and protected deployment evidence remain separate work.
 
 ## Rejected alternatives
 

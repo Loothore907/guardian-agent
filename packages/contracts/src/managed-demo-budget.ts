@@ -542,6 +542,8 @@ export const ManagedDemoAdmissionResultSchema = z.discriminatedUnion("state", [
       "daily_journeys_exhausted",
       "source_limit_exhausted",
       "concurrency_exhausted",
+      "queue_full",
+      "queue_timeout",
       "cooldown_active",
       "stale_price_evidence",
       "journey_replayed",

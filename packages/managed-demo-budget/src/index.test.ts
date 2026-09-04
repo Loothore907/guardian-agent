@@ -10,7 +10,11 @@ import {
 } from "@guardian/contracts";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { ManagedDemoJourneyUsageCollector, SqliteManagedDemoBudgetLedger } from "./index.js";
+import {
+  ManagedDemoAdmissionQueue,
+  ManagedDemoJourneyUsageCollector,
+  SqliteManagedDemoBudgetLedger,
+} from "./index.js";
 
 const IDS = {
   deploymentPublic: "11111111-1111-4111-8111-111111111111",
@@ -19,13 +23,16 @@ const IDS = {
   reservation1: "44444444-4444-4444-8444-444444444444",
   reservation2: "55555555-5555-4555-8555-555555555555",
   reservation3: "66666666-6666-4666-8666-666666666666",
+  reservation4: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
   journey1: "77777777-7777-4777-8777-777777777777",
   journey2: "88888888-8888-4888-8888-888888888888",
   journey3: "99999999-9999-4999-8999-999999999999",
+  journey4: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
 } as const;
 
 const SOURCE_A = "a".repeat(64);
 const SOURCE_B = "b".repeat(64);
+const SOURCE_C = "c".repeat(64);
 const temporaryDirectories: string[] = [];
 
 afterEach(async () => {
@@ -166,10 +173,88 @@ async function openLedger(
     },
   });
   ledger.initialize();
-  return { path, ledger, setNow: (value: string) => (now = value) };
+  return { path, ledger, now: () => now, setNow: (value: string) => (now = value) };
 }
 
 describe("managed-demo SQLite budget ledger", () => {
+  it("queues at the concurrency boundary and admits the oldest request after settlement", async () => {
+    const policy = {
+      ...INITIAL_PUBLIC_DEMO_BUDGET_POLICY,
+      limits: {
+        ...INITIAL_PUBLIC_DEMO_BUDGET_POLICY.limits,
+        maxConcurrentJourneys: 1,
+        queueCapacity: 1,
+      },
+    } as const;
+    const opened = await openLedger({
+      policy,
+      ids: [IDS.reservation1, IDS.reservation2, IDS.reservation3],
+    });
+    const queue = new ManagedDemoAdmissionQueue({
+      ledger: opened.ledger,
+      policy,
+      now: opened.now,
+    });
+    expect(await queue.admit(admission(IDS.journey1, "2026-11-01T12:00:00.000Z"))).toMatchObject({
+      state: "admitted",
+      reservationId: IDS.reservation1,
+    });
+    const waiting = queue.admit(admission(IDS.journey2, "2026-11-01T12:00:00.000Z", SOURCE_B));
+    expect(queue.queuedAdmissions).toBe(1);
+    expect(
+      await queue.admit(admission(IDS.journey3, "2026-11-01T12:00:00.000Z", SOURCE_C)),
+    ).toMatchObject({ state: "denied", reason: "queue_full" });
+
+    opened.setNow("2026-11-01T12:01:00.000Z");
+    queue.settle(
+      settlement({
+        reservationId: IDS.reservation1,
+        journeyId: IDS.journey1,
+        now: "2026-11-01T12:01:00.000Z",
+      }),
+    );
+    await expect(waiting).resolves.toMatchObject({
+      state: "admitted",
+      reservationId: IDS.reservation2,
+      journeyId: IDS.journey2,
+    });
+    expect(queue.queuedAdmissions).toBe(0);
+    queue.close();
+  });
+
+  it("times out queued work without reserving provider budget", async () => {
+    const policy = {
+      ...INITIAL_PUBLIC_DEMO_BUDGET_POLICY,
+      limits: {
+        ...INITIAL_PUBLIC_DEMO_BUDGET_POLICY.limits,
+        maxConcurrentJourneys: 1,
+        queueCapacity: 1,
+      },
+    } as const;
+    const opened = await openLedger({ policy, ids: [IDS.reservation1, IDS.reservation2] });
+    let timeout: (() => void) | undefined;
+    const queue = new ManagedDemoAdmissionQueue({
+      ledger: opened.ledger,
+      policy,
+      now: opened.now,
+      schedule: (callback) => {
+        timeout = callback;
+        return callback;
+      },
+      cancel: () => undefined,
+    });
+    await queue.admit(admission(IDS.journey1, "2026-11-01T12:00:00.000Z"));
+    const waiting = queue.admit(admission(IDS.journey2, "2026-11-01T12:00:00.000Z", SOURCE_B));
+    opened.setNow("2026-11-01T12:02:00.000Z");
+    timeout?.();
+    await expect(waiting).resolves.toMatchObject({
+      state: "denied",
+      reason: "queue_timeout",
+      budget: { totalJourneyAdmissions: 1, totalReservedMicroUsd: 100_000 },
+    });
+    queue.close();
+  });
+
   it("binds sanitized provider observations to one journey exactly once", () => {
     const collector = new ManagedDemoJourneyUsageCollector({
       reservationId: IDS.reservation1,

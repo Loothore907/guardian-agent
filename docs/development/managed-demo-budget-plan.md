@@ -6,9 +6,10 @@
 - Applies to: project-funded Linux judge and bounded public deployments
 
 Progress: strict contracts, a deployment-bound SQLite ledger, sanitized provider-
-usage projection, and per-journey observation binding are implemented locally
-under ADR-0043. Trusted-service admission binding, queue enforcement, protected
-calibration, load testing, and deployment remain pending.
+usage projection, per-journey observation binding, and bounded FIFO admission
+queue enforcement are implemented locally under ADR-0043. Trusted-service
+process and peer-identity binding, protected calibration, load testing, and
+deployment remain pending.
 
 ## Outcome
 
