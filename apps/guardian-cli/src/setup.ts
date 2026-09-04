@@ -10,84 +10,58 @@ import type { CredentialStore } from "@guardian/credential-store";
 import type { GitHubDeviceAuthorizer } from "@guardian/credential-verification";
 
 export type GuardianSetupCommand = {
-  readonly operation: "enroll" | "status" | "revoke";
+  readonly operation: "enroll" | "review" | "status" | "revoke";
   readonly provider: CredentialProvider;
 };
 
+type LocalCredentialProvider = Exclude<CredentialProvider, "github">;
+type LocalCredentialDestination = "windows_credential_manager" | "linux_secret_service";
+
+export interface GuardianLocalCredentialSurface {
+  readonly url: string;
+  readonly completed: Promise<"submitted" | "cancelled" | "failed" | "expired">;
+  readonly close: () => Promise<void>;
+}
+
+export interface GuardianLocalCredentialSurfaceFactory {
+  (options: {
+    readonly mode: "enroll" | "review";
+    readonly provider: LocalCredentialProvider;
+    readonly destination: LocalCredentialDestination;
+    readonly onSubmit: (secret: Uint8Array) => Promise<void>;
+  }): Promise<GuardianLocalCredentialSurface>;
+}
+
 function provider(value: string | undefined): CredentialProvider {
   if (value !== "nebius" && value !== "tavily" && value !== "github") {
-    throw new TypeError("usage: guardian setup <nebius|tavily|github>");
+    throw new TypeError(
+      "usage: guardian credentials [enroll|review|status|revoke] <nebius|tavily|github>",
+    );
   }
   return value;
 }
 
 export function parseGuardianSetupArguments(arguments_: readonly string[]): GuardianSetupCommand {
-  if (arguments_[0] !== "setup") {
-    throw new TypeError("usage: guardian setup <nebius|tavily|github>");
+  if (arguments_[0] !== "setup" && arguments_[0] !== "credentials") {
+    throw new TypeError(
+      "usage: guardian credentials [enroll|review|status|revoke] <nebius|tavily|github>",
+    );
   }
   if (arguments_.length === 2) {
     return { operation: "enroll", provider: provider(arguments_[1]) };
   }
   if (
     arguments_.length === 3 &&
-    (arguments_[1] === "enroll" || arguments_[1] === "status" || arguments_[1] === "revoke")
+    (arguments_[1] === "enroll" ||
+      arguments_[1] === "review" ||
+      arguments_[1] === "status" ||
+      arguments_[1] === "revoke")
   ) {
     return { operation: arguments_[1], provider: provider(arguments_[2]) };
   }
-  throw new TypeError("usage: guardian setup [enroll|status|revoke] <nebius|tavily|github>");
-}
-
-export async function readHiddenCredentialFromTerminal(prompt: string): Promise<Uint8Array> {
-  if (process.stdin.isTTY !== true || process.stdout.isTTY !== true) {
-    throw new TypeError("interactive credential enrollment is required");
-  }
-  process.stdout.write(prompt);
-  const input = process.stdin;
-  const wasRaw = input.isRaw === true;
-  input.setRawMode(true);
-  input.resume();
-  return await new Promise((resolve, reject) => {
-    const bytes: number[] = [];
-    const finish = (error?: Error) => {
-      input.off("data", onData);
-      input.off("error", onError);
-      input.setRawMode(wasRaw);
-      input.pause();
-      process.stdout.write("\n");
-      if (error === undefined) {
-        const secret = Uint8Array.from(bytes);
-        bytes.fill(0);
-        resolve(secret);
-      } else {
-        bytes.fill(0);
-        reject(error);
-      }
-    };
-    const onError = () => finish(new TypeError("credential input failed"));
-    const onData = (chunk: Buffer) => {
-      for (const byte of chunk) {
-        if (byte === 0x03) {
-          finish(new TypeError("credential enrollment cancelled"));
-          return;
-        }
-        if (byte === 0x0d || byte === 0x0a) {
-          finish();
-          return;
-        }
-        if (byte === 0x08 || byte === 0x7f) {
-          bytes.pop();
-        } else if (byte >= 0x20) {
-          bytes.push(byte);
-          if (bytes.length > 4_096) {
-            finish(new TypeError("credential input is invalid"));
-            return;
-          }
-        }
-      }
-    };
-    input.on("data", onData);
-    input.on("error", onError);
-  });
+  throw new TypeError(
+    "usage: guardian credentials [enroll|review|status|revoke] <nebius|tavily|github>",
+  );
 }
 
 export interface GuardianSetupVerifier {
@@ -192,16 +166,15 @@ function clearCredentialSnapshots(snapshots: readonly CredentialSnapshot[]): voi
   for (const snapshot of snapshots) snapshot.previous?.fill(0);
 }
 
-export async function runGuardianSetup(options: {
-  readonly provider: CredentialProvider;
+async function verifyAndStoreCredential(options: {
+  readonly provider: LocalCredentialProvider;
   readonly store: CredentialStore;
   readonly verifier: GuardianSetupVerifier;
-  readonly io: GuardianSetupIo;
+  readonly write: (text: string) => void;
+  readonly secret: Uint8Array;
 }): Promise<CredentialVerificationResult> {
-  if (!options.io.interactive) throw new TypeError("interactive credential enrollment is required");
   const reference = referenceFor(options.provider);
-  await preflightCredentialStore(options.store, [reference]);
-  const secret = await options.io.readSecret(`Enter ${options.provider} credential: `);
+  const secret = options.secret;
   try {
     if (secret.byteLength < 8 || secret.byteLength > 4_096) {
       throw new TypeError("credential input is invalid");
@@ -231,12 +204,113 @@ export async function runGuardianSetup(options: {
     } finally {
       clearCredentialSnapshots([snapshot]);
     }
-    options.io.write(
+    options.write(
       `Stored ${reference.provider} credential for verified account ${verification.accountLabel}.\n`,
     );
     return verification;
   } finally {
     secret.fill(0);
+  }
+}
+
+export async function runGuardianSetup(options: {
+  readonly provider: LocalCredentialProvider;
+  readonly store: CredentialStore;
+  readonly verifier: GuardianSetupVerifier;
+  readonly io: GuardianSetupIo;
+}): Promise<CredentialVerificationResult> {
+  if (!options.io.interactive) throw new TypeError("interactive credential enrollment is required");
+  const reference = referenceFor(options.provider);
+  await preflightCredentialStore(options.store, [reference]);
+  const secret = await options.io.readSecret(`Enter ${options.provider} credential: `);
+  return await verifyAndStoreCredential({
+    provider: options.provider,
+    store: options.store,
+    verifier: options.verifier,
+    write: options.io.write,
+    secret,
+  });
+}
+
+async function closeLocalCredentialSurface(surface: GuardianLocalCredentialSurface): Promise<void> {
+  try {
+    await surface.close();
+  } catch {
+    throw new TypeError("credential surface cleanup failed");
+  }
+}
+
+export async function runGuardianLocalCredentialEnrollment(options: {
+  readonly provider: LocalCredentialProvider;
+  readonly destination: LocalCredentialDestination;
+  readonly store: CredentialStore;
+  readonly verifier: GuardianSetupVerifier;
+  readonly startSurface: GuardianLocalCredentialSurfaceFactory;
+  readonly io: Pick<GuardianSetupIo, "interactive" | "write">;
+}): Promise<CredentialVerificationResult> {
+  if (!options.io.interactive) throw new TypeError("interactive credential enrollment is required");
+  await preflightCredentialStore(options.store, [referenceFor(options.provider)]);
+  let verification: CredentialVerificationResult | undefined;
+  const surface = await options.startSurface({
+    mode: "enroll",
+    provider: options.provider,
+    destination: options.destination,
+    onSubmit: async (secret) => {
+      verification = await verifyAndStoreCredential({
+        provider: options.provider,
+        store: options.store,
+        verifier: options.verifier,
+        write: options.io.write,
+        secret,
+      });
+    },
+  });
+  try {
+    options.io.write(
+      `Open this one-time Guardian URL in your normal browser. Do not paste it into chat or an agent-controlled browser.\n${surface.url}\n`,
+    );
+    const outcome = await surface.completed;
+    if (outcome === "submitted" && verification !== undefined) return verification;
+    if (outcome === "cancelled") throw new TypeError("credential enrollment cancelled");
+    if (outcome === "expired") throw new TypeError("credential enrollment expired");
+    throw new TypeError("credential enrollment failed");
+  } finally {
+    await closeLocalCredentialSurface(surface);
+  }
+}
+
+export async function runGuardianLocalCredentialReview(options: {
+  readonly provider: LocalCredentialProvider;
+  readonly destination: LocalCredentialDestination;
+  readonly store: CredentialStore;
+  readonly startSurface: GuardianLocalCredentialSurfaceFactory;
+  readonly io: Pick<GuardianSetupIo, "interactive" | "write">;
+}): Promise<"submitted" | "cancelled"> {
+  if (!options.io.interactive) throw new TypeError("interactive credential review is required");
+  await preflightCredentialStore(options.store, [referenceFor(options.provider)]);
+  const surface = await options.startSurface({
+    mode: "review",
+    provider: options.provider,
+    destination: options.destination,
+    onSubmit: () => Promise.resolve(),
+  });
+  try {
+    options.io.write(
+      `Review mode cannot contact a provider or write the credential store. Use only an obvious fake value.\nOpen this one-time Guardian URL in your normal browser. Do not paste it into chat or an agent-controlled browser.\n${surface.url}\n`,
+    );
+    const outcome = await surface.completed;
+    if (outcome === "submitted" || outcome === "cancelled") {
+      options.io.write(
+        outcome === "submitted"
+          ? "Fake review value received and discarded. Nothing was stored or sent.\n"
+          : "Credential surface review cancelled. Nothing was stored or sent.\n",
+      );
+      return outcome;
+    }
+    if (outcome === "expired") throw new TypeError("credential review expired");
+    throw new TypeError("credential review failed");
+  } finally {
+    await closeLocalCredentialSurface(surface);
   }
 }
 

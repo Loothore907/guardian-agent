@@ -10,19 +10,28 @@ import { startReferenceAuthoritySupervisor } from "@guardian/reference-superviso
 
 import { parseGuardianCliArguments, runGuardianAssistedCli } from "./index.js";
 import { runGuardianCompetitionCommand } from "./competition-command.js";
+import { startLocalCredentialSurface } from "./local-credential-surface.js";
 import {
   parseGuardianSetupArguments,
-  readHiddenCredentialFromTerminal,
-  runGuardianSetup,
   runGitHubDeviceSetup,
+  runGuardianLocalCredentialEnrollment,
+  runGuardianLocalCredentialReview,
   runGuardianSetupRevoke,
   runGuardianSetupStatus,
 } from "./setup.js";
+
+const LOCAL_BROWSER_ENROLLMENT_ACCEPTED = false;
 
 function assertInteractiveTerminal(): void {
   if (process.stdin.isTTY !== true || process.stdout.isTTY !== true) {
     throw new TypeError("Guardian requires an interactive terminal");
   }
+}
+
+function localCredentialDestination(): "windows_credential_manager" | "linux_secret_service" {
+  if (process.platform === "win32") return "windows_credential_manager";
+  if (process.platform === "linux") return "linux_secret_service";
+  throw new TypeError("guardian credentials does not support this platform");
 }
 
 async function runSetup(arguments_: readonly string[]): Promise<void> {
@@ -32,6 +41,20 @@ async function runSetup(arguments_: readonly string[]): Promise<void> {
   }
   const command = parseGuardianSetupArguments(arguments_);
   const store = createPlatformCredentialStore();
+  const destination = localCredentialDestination();
+  if (command.operation === "review") {
+    if (command.provider === "github") {
+      throw new TypeError("GitHub uses its fixed device authorization flow");
+    }
+    await runGuardianLocalCredentialReview({
+      provider: command.provider,
+      destination,
+      store,
+      startSurface: startLocalCredentialSurface,
+      io: { interactive: true, write: (text) => process.stdout.write(text) },
+    });
+    return;
+  }
   if (command.operation === "enroll") {
     if (command.provider === "github") {
       const clientId = process.env.GUARDIAN_GITHUB_APP_CLIENT_ID;
@@ -50,14 +73,20 @@ async function runSetup(arguments_: readonly string[]): Promise<void> {
       });
       return;
     }
-    await runGuardianSetup({
+    if (!LOCAL_BROWSER_ENROLLMENT_ACCEPTED) {
+      throw new TypeError(
+        "local browser credential enrollment is pending hands-on review; run guardian credentials review nebius",
+      );
+    }
+    await runGuardianLocalCredentialEnrollment({
       provider: command.provider,
+      destination,
       store,
       verifier: createCredentialVerifier(command.provider),
+      startSurface: startLocalCredentialSurface,
       io: {
         interactive: true,
         write: (text) => process.stdout.write(text),
-        readSecret: readHiddenCredentialFromTerminal,
       },
     });
     return;
@@ -88,7 +117,7 @@ async function runSetup(arguments_: readonly string[]): Promise<void> {
 
 async function main(): Promise<void> {
   const arguments_ = process.argv.slice(2);
-  if (arguments_[0] === "setup") {
+  if (arguments_[0] === "setup" || arguments_[0] === "credentials") {
     await runSetup(arguments_);
     return;
   }

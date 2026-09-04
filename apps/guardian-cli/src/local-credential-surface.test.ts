@@ -30,6 +30,7 @@ function headers(origin: string, capability: string) {
 describe("local credential enrollment surface", () => {
   it("serves a no-store one-time modal without putting its capability in the document", async () => {
     const surface = await startLocalCredentialSurface({
+      mode: "enroll",
       provider: "nebius",
       destination: "linux_secret_service",
       onSubmit: () => Promise.resolve(),
@@ -48,9 +49,30 @@ describe("local credential enrollment surface", () => {
     expect(body).not.toContain(capability);
   });
 
+  it("labels review mode as fake-only and does not promise storage", async () => {
+    const surface = await startLocalCredentialSurface({
+      mode: "review",
+      provider: "tavily",
+      destination: "windows_credential_manager",
+      onSubmit: () => Promise.resolve(),
+    });
+    active.push(surface);
+    const { origin } = endpoints(surface);
+
+    const response = await fetch(`${origin}/`);
+    const body = await response.text();
+
+    expect(body).toContain("Review Tavily credential setup");
+    expect(body).toContain("Use only an obvious fake value");
+    expect(body).toContain("Nothing is stored or sent to Tavily");
+    expect(body).toContain("Submit fake value");
+    expect(body).not.toContain("Verify and save");
+  });
+
   it("rejects cross-origin submission and accepts exactly one bound secret with zeroing", async () => {
     let callbackSecret: Uint8Array | undefined;
     const surface = await startLocalCredentialSurface({
+      mode: "enroll",
       provider: "tavily",
       destination: "windows_credential_manager",
       onSubmit: (secret) => {
@@ -88,6 +110,7 @@ describe("local credential enrollment surface", () => {
   it("supports bounded one-use cancellation without invoking credential handling", async () => {
     let invoked = false;
     const surface = await startLocalCredentialSurface({
+      mode: "enroll",
       provider: "nebius",
       destination: "linux_secret_service",
       onSubmit: () => {
@@ -112,6 +135,7 @@ describe("local credential enrollment surface", () => {
   it("returns a sanitized failure and zeroes input when verification fails", async () => {
     let callbackSecret: Uint8Array | undefined;
     const surface = await startLocalCredentialSurface({
+      mode: "enroll",
       provider: "tavily",
       destination: "linux_secret_service",
       onSubmit: (secret) => {
@@ -133,9 +157,10 @@ describe("local credential enrollment surface", () => {
     expect(callbackSecret?.every((byte) => byte === 0)).toBe(true);
   });
 
-  it("rejects unknown providers, non-store destinations, and unsafe secret bytes", async () => {
+  it("rejects unknown providers, non-local destinations, modes, and unsafe secret bytes", async () => {
     await expect(
       startLocalCredentialSurface({
+        mode: "enroll",
         provider: "github",
         destination: "linux_secret_service",
         onSubmit: () => Promise.resolve(),
@@ -143,6 +168,23 @@ describe("local credential enrollment surface", () => {
     ).rejects.toThrow();
     await expect(
       startLocalCredentialSurface({
+        mode: "enroll",
+        provider: "nebius",
+        destination: "nebius_secretstash",
+        onSubmit: () => Promise.resolve(),
+      }),
+    ).rejects.toThrow("unsupported");
+    await expect(
+      startLocalCredentialSurface({
+        mode: "invalid" as never,
+        provider: "nebius",
+        destination: "linux_secret_service",
+        onSubmit: () => Promise.resolve(),
+      }),
+    ).rejects.toThrow("mode");
+    await expect(
+      startLocalCredentialSurface({
+        mode: "enroll",
         provider: "nebius",
         destination: "arbitrary-file",
         onSubmit: () => Promise.resolve(),
@@ -150,6 +192,7 @@ describe("local credential enrollment surface", () => {
     ).rejects.toThrow();
 
     const surface = await startLocalCredentialSurface({
+      mode: "enroll",
       provider: "nebius",
       destination: "linux_secret_service",
       onSubmit: () => Promise.resolve(),
@@ -162,11 +205,13 @@ describe("local credential enrollment surface", () => {
       body: "fake credential with spaces",
     });
     expect(response.status).toBe(400);
+    await expect(surface.completed).resolves.toBe("failed");
   });
 
   it("rejects an oversized body before credential handling", async () => {
     let invoked = false;
     const surface = await startLocalCredentialSurface({
+      mode: "enroll",
       provider: "nebius",
       destination: "linux_secret_service",
       onSubmit: () => {
@@ -184,5 +229,20 @@ describe("local credential enrollment surface", () => {
 
     expect(response.status).toBe(400);
     expect(invoked).toBe(false);
+    await expect(surface.completed).resolves.toBe("failed");
+  });
+
+  it("expires and closes an unused surface after its bounded lifetime", async () => {
+    const surface = await startLocalCredentialSurface({
+      mode: "review",
+      provider: "nebius",
+      destination: "windows_credential_manager",
+      lifetimeMs: 1_000,
+      onSubmit: () => Promise.resolve(),
+    });
+    active.push(surface);
+
+    await expect(surface.completed).resolves.toBe("expired");
+    await surface.close();
   });
 });

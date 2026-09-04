@@ -6,6 +6,10 @@ import { CredentialProviderSchema, CredentialStoreTargetSchema } from "@guardian
 const MAXIMUM_SECRET_BYTES = 4_096;
 const MAXIMUM_SURFACE_LIFETIME_MS = 5 * 60_000;
 
+export type LocalCredentialSurfaceMode = "enroll" | "review";
+export type LocalCredentialSurfaceDestination =
+  "windows_credential_manager" | "linux_secret_service";
+
 export interface LocalCredentialSurface {
   readonly url: string;
   readonly completed: Promise<"submitted" | "cancelled" | "failed" | "expired">;
@@ -29,8 +33,19 @@ function reject(response: ServerResponse): void {
   response.end("Not found\n");
 }
 
-function page(provider: "nebius" | "tavily", destination: string, nonce: string): string {
+function page(
+  mode: LocalCredentialSurfaceMode,
+  provider: "nebius" | "tavily",
+  destination: string,
+  nonce: string,
+): string {
   const label = provider === "nebius" ? "Nebius" : "Tavily";
+  const review = mode === "review";
+  const title = review ? `Review ${label} credential setup` : `Add ${label} credential`;
+  const explanation = review
+    ? `Review mode. Use only an obvious fake value. Nothing is stored or sent to ${label}. Destination under review: <strong>${destination}</strong>.`
+    : `This local one-time window sends the credential only to Guardian on <code>127.0.0.1</code>. Destination: <strong>${destination}</strong>.`;
+  const submitLabel = review ? "Submit fake value" : "Verify and save";
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -53,13 +68,13 @@ function page(provider: "nebius" | "tavily", destination: string, nonce: string)
 </head>
 <body>
   <dialog open aria-labelledby="title">
-    <h1 id="title">Add ${label} credential</h1>
-    <p>This local one-time window sends the credential only to Guardian on <code>127.0.0.1</code>. Destination: <strong>${destination}</strong>.</p>
+    <h1 id="title">${title}</h1>
+    <p>${explanation}</p>
     <form id="credential-form">
       <label for="credential">Credential</label>
       <input id="credential" name="credential" type="password" minlength="8" maxlength="4096" required autocomplete="new-password" autocapitalize="off" spellcheck="false">
       <p id="status" role="status" aria-live="polite"></p>
-      <menu><button id="cancel" type="button">Cancel</button><button type="submit">Verify and save</button></menu>
+      <menu><button id="cancel" type="button">Cancel</button><button type="submit">${submitLabel}</button></menu>
     </form>
   </dialog>
   <script nonce="${nonce}">
@@ -84,7 +99,7 @@ function page(provider: "nebius" | "tavily", destination: string, nonce: string)
       input.value = "";
       try {
         const response = await send("/submit", bytes);
-        status.textContent = response.ok ? "Submitted for verification. You may close this window." : "Submission failed. Close this window and start again.";
+        status.textContent = response.ok ? "Submitted. You may close this window." : "Submission failed. Close this window and start again.";
         if (response.ok) form.querySelectorAll("input,button").forEach((element) => { element.disabled = true; });
       } finally { bytes.fill(0); }
     });
@@ -142,13 +157,24 @@ function readSecret(request: IncomingMessage): Promise<Buffer> {
 }
 
 export async function startLocalCredentialSurface(options: {
+  readonly mode: LocalCredentialSurfaceMode;
   readonly provider: unknown;
   readonly destination: unknown;
   readonly onSubmit: (secret: Uint8Array) => Promise<void>;
   readonly lifetimeMs?: number;
 }): Promise<LocalCredentialSurface> {
+  if (options.mode !== "enroll" && options.mode !== "review") {
+    throw new TypeError("credential surface mode is invalid");
+  }
   const provider = CredentialProviderSchema.exclude(["github"]).parse(options.provider);
-  const destination = CredentialStoreTargetSchema.parse(options.destination).replaceAll("_", " ");
+  const destinationTarget = CredentialStoreTargetSchema.parse(options.destination);
+  if (
+    destinationTarget !== "windows_credential_manager" &&
+    destinationTarget !== "linux_secret_service"
+  ) {
+    throw new TypeError("local credential destination is unsupported");
+  }
+  const destination = destinationTarget.replaceAll("_", " ");
   const lifetimeMs = options.lifetimeMs ?? MAXIMUM_SURFACE_LIFETIME_MS;
   if (
     !Number.isSafeInteger(lifetimeMs) ||
@@ -183,7 +209,7 @@ export async function startLocalCredentialSurface(options: {
           `default-src 'none'; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'`,
         );
         writeHeaders(response, 200, "text/html; charset=utf-8");
-        response.end(page(provider, destination, nonce));
+        response.end(page(options.mode, provider, destination, nonce));
         return;
       }
       const supplied = request.headers["x-guardian-capability"];
@@ -191,26 +217,27 @@ export async function startLocalCredentialSurface(options: {
         typeof supplied === "string" ? Buffer.from(supplied, "ascii") : Buffer.alloc(0);
       const authorized =
         request.method === "POST" &&
+        request.socket.remoteAddress === "127.0.0.1" &&
         request.headers.origin === origin &&
         request.headers["sec-fetch-site"] === "same-origin" &&
+        request.headers["content-type"] === "application/octet-stream" &&
         suppliedBytes.byteLength === capabilityBytes.byteLength &&
         timingSafeEqual(suppliedBytes, capabilityBytes);
       suppliedBytes.fill(0);
       if (!authorized || consumed) return reject(response);
       if (request.url === "/cancel") {
         consumed = true;
+        clearTimeout(timer);
         writeHeaders(response, 204, "text/plain; charset=utf-8");
         response.end();
         finish("cancelled");
         return;
       }
-      if (
-        request.url !== "/submit" ||
-        request.headers["content-type"] !== "application/octet-stream"
-      ) {
+      if (request.url !== "/submit") {
         return reject(response);
       }
       consumed = true;
+      clearTimeout(timer);
       const secret = await readSecret(request);
       try {
         await options.onSubmit(secret);
@@ -227,6 +254,7 @@ export async function startLocalCredentialSurface(options: {
     })().catch(() => {
       if (!response.headersSent) writeHeaders(response, 400, "text/plain; charset=utf-8");
       response.end("Credential submission failed\n");
+      if (consumed) finish("failed");
     });
   });
   server.requestTimeout = 10_000;
@@ -239,6 +267,7 @@ export async function startLocalCredentialSurface(options: {
   if (typeof address !== "object" || address === null)
     throw new TypeError("credential surface failed");
   const timer = setTimeout(() => {
+    if (consumed) return;
     consumed = true;
     finish("expired");
     void close();
