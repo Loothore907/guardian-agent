@@ -89,9 +89,12 @@ and checkpoint history in `docs/development/roadmap.md`.
 
 ### Current state
 
-- PR #17 branch `codex/13-c6-linux-peer-credentials` is synchronized with its
-  remote at `bca4313`. The W26 lifecycle work is isolated on stacked branch
-  `codex/13-c6-linux-secret-service`.
+- PR #17's remote branch `codex/13-c6-linux-peer-credentials` remains at
+  `bca4313`. Its local branch has the W25 status reconciliation at `ed84e27` and
+  the Secret Service transient-buffer fix at `d58d761`; both remain intentionally
+  unpushed while the advisory canary is unavailable. The W26 lifecycle work is
+  isolated and pushed on stacked branch `codex/13-c6-linux-secret-service` at
+  `306a52f`.
 - PR [#17](https://github.com/Loothore907/guardian-agent/pull/17) is open,
   non-draft, and mergeable, with no external reviews. It remains intentionally
   unmerged because its required CI check has no successful dependency-audit
@@ -133,12 +136,20 @@ and checkpoint history in `docs/development/roadmap.md`.
    user D-Bus session passed the complete real Secret Service lifecycle. The W26
    complete Linux gate passes 63 files / 379 tests, eight SQLite tests, two reset
    tests, 181 modules / 364 dependencies, build, and the 2/2 platform probe.
+8. A final PR review found that the oversized current helper chunk and the
+   successful concatenation buffers were not explicitly zeroed. `d58d761` fixes
+   both paths and adds oversized-diagnostic rejection coverage. The parent branch
+   complete Windows gate passed 63 files / 376 tests plus all build and boundary
+   probes; the combined W26 head then repeated the real 2-file / 13-test Secret
+   Service lifecycle successfully as `306a52f`.
 
 ### Pending debt and next actions
 
-1. **Required before PR #17 can be treated as green:** rerun the required CI
-   audit once npm's advisory endpoint is responsive. Do not bypass, downgrade,
-   or misreport an unavailable audit as a passing vulnerability check.
+1. **Required before PR #17 can be treated as green:** once a minimal advisory
+   canary returns a real response, push local commits `ed84e27` and `d58d761`, then
+   require the new exact head's complete CI including the production audit. Do not
+   bypass, downgrade, or misreport an unavailable audit as a passing vulnerability
+   check.
 2. **Remaining issue #13 / C6 exit evidence:** W26 now passes a real disposable
    Linux Secret Service lifecycle in an isolated user session. Verify intended-host
    credential-service containment and a protected provider credential, then capture

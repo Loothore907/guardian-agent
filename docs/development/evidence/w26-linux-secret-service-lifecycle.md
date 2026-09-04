@@ -52,6 +52,12 @@ new integration test. `.env.local` and ignored files were not copied. Results:
 - production build: passed; and
 - native Linux authority platform probe: two passed.
 
+The subsequent PR review found two transient helper-output copies that were not
+explicitly zeroed on oversized and successful collection paths. The narrow fix
+adds oversized-diagnostic rejection coverage. The parent branch complete Windows
+gate passed, and the combined W26 head repeated the real 2-file / 13-test Secret
+Service lifecycle successfully as `306a52f`.
+
 No enrolled credential was read or written, no provider was contacted, and no
 GitHub operation occurred. The temporary keyring directory and test daemon were
 absent after the run.
