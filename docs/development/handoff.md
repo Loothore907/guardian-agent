@@ -31,7 +31,7 @@ Linux review and protected Linux Nebius path remain the following C6 platform
 gate before broader Linux worker or assembled flows.
 
 The current branch is `codex/13-c6-linux-provider-containment`. Local commits
-`4fa4f42` through `37be246` implement:
+from `4fa4f42` through the current branch head implement:
 
 - strict public/judge policies, integer micro-USD price evidence, admission,
   sanitized usage, settlement, and operator-update contracts;
