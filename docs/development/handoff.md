@@ -45,9 +45,9 @@ and checkpoint history in `docs/development/roadmap.md`.
   2m25s. W24 then squash-merged through PR #16 as `1893aef`; W25 is committed as
   `bb30574`, with the persistent-plan-authority documentation at `6dae2f9`.
   PR #17 is open and mergeable. Its required and native Linux checks passed on
-  both CI attempts, but the npm advisory endpoint timed out three times per
-  attempt, so the required audit remains red. Issue #13 remains open. No release,
-  deployment, or publication followed.
+  all three executions, but the npm advisory endpoint timed out three times per
+  execution, so the required audit remains red. Issue #13 remains open. No
+  merge, release, deployment, or publication followed.
 - **Phase-1 review checkpoint:** review started from clean, synchronized head
   `b9497a9`. The approved branch update contains a fail-closed broker correction,
   its regression tests, the C6 review matrix, claim/roadmap reconciliation, and
@@ -82,6 +82,66 @@ and checkpoint history in `docs/development/roadmap.md`.
 - **Secret caution:** `.env.local` is ignored development input. Never print,
   stage, copy, summarize, or use it as the installation design. Never print or
   export credential-store values.
+
+## Session closeout: W25 and plan-bound authority
+
+### Current state
+
+- Branch `codex/13-c6-linux-peer-credentials` is clean and synchronized with its
+  remote. The final implementation is `bb30574`, plan-authority design is
+  `6dae2f9`, and the first PR-evidence update is `a2f704c`.
+- PR [#17](https://github.com/Loothore907/guardian-agent/pull/17) is open,
+  non-draft, and mergeable, with no external reviews. It remains intentionally
+  unmerged because its required CI check has no successful dependency-audit
+  result.
+- Issue [#13](https://github.com/Loothore907/guardian-agent/issues/13) remains
+  open and C6 remains **In progress**.
+
+### Session summary
+
+1. Reviewed issue #13 against the code, roadmap, claims, and remaining intended-
+   Linux exit criteria instead of treating the earlier Windows evidence as C6
+   completion.
+2. Added Linux authority peer authentication using kernel `SO_PEERCRED`
+   PID/UID/GID plus trusted supervised ancestry before request parsing. Added a
+   fixed, fail-closed Secret Service credential adapter and minimal Linux
+   credential-child environment forwarding in `bb30574`.
+3. Passed the complete local gate (63 Vitest files / 376 tests), the active WSL2
+   Node 24 peer/process probe (2/2), and the absent-`secret-tool` fail-closed
+   credential probe. The GitHub Ubuntu workflow's complete required-check and
+   native Linux boundary steps also passed on every execution.
+4. The approved workflow exposed repeated-approval friction caused by a lossy
+   repository rule and downstream approval interpretation. ADR-0039 and the
+   repository working agreement now define confirmed plans as persistent,
+   revocable, typed authority for enumerated bounded actions, while retaining
+   step-up for scope/effect expansion. Runtime enforcement remains a Goal.
+5. Pushed the feature branch and opened PR #17. CI run `33827057982` and its one
+   bounded retry, followed by final-head run `33828103000`, all reached only the
+   production dependency audit failure. Each audit made three attempts against
+   npm's advisory bulk endpoint and received timeout error 23. A local read-only
+   query reproduced the same endpoint timeout; no vulnerability assessment was
+   returned.
+
+### Pending debt and next actions
+
+1. **Required before PR #17 can be treated as green:** rerun the required CI
+   audit once npm's advisory endpoint is responsive. Do not bypass, downgrade,
+   or misreport an unavailable audit as a passing vulnerability check.
+2. **Remaining issue #13 / C6 exit evidence:** exercise a real Linux Secret
+   Service write/lookup/delete lifecycle, verify broader credential-holding
+   service containment, and capture narrow protected Linux GitHub read/merge
+   evidence with exact request and resource-version binding.
+3. **Documented operational limitations:** GitHub automatic credential refresh
+   still receives provider HTTP 500, with attended re-enrollment as the bounded
+   fallback; the pinned `pnpm/action-setup` version emits a Node.js 20 deprecation
+   warning while GitHub forces it onto Node.js 24.
+4. **Later separately tracked evidence:** WebAuthn user verification,
+   worker-generated research/GitHub dispatch, the complete single-invocation
+   coordinator, and formal C7 reconciliation remain outside this W25 merge.
+5. **New cross-cutting implementation debt:** implement and adversarially test
+   ADR-0039 plan grants, including membership, expiry, exhaustion, revocation,
+   policy change, context compaction, near-miss refs/destinations, and protected
+   or destructive step-up behavior. Until then, the claim remains `Goal`.
 
 ## Development hygiene working agreement
 
@@ -917,8 +977,16 @@ an operational limitation. W24 now actively passes the intended-Linux
 database/socket permission probe and fixes the SQLite sidecar mode discovered by
 its first run. W25 authenticates Linux authority peers before request parsing and
 adds a fail-closed Secret Service adapter. Protected Linux credential resolution,
-service containment, and narrow GitHub read/merge remain the C6 blocker. WebAuthn and the single-invocation
-coordinator remain later evidence slices; no broader guarantee is claimed.
+service containment, and narrow GitHub read/merge remain the C6 blocker. WebAuthn
+and the single-invocation coordinator remain later evidence slices; no broader
+guarantee is claimed.
+
+PR #17's last completed CI evidence is at `a2f704c`. Across the original CI run,
+one bounded retry, and that head's run, the required project checks and native
+Linux boundary checks passed. The only failing step was `pnpm audit --prod
+--audit-level high`: npm's advisory bulk endpoint timed out on all three internal
+attempts in each execution, and a local query reproduced the same timeout. No
+advisory result exists, so CI correctly remains red and no merge was attempted.
 
 This session also exposed approval fatigue as a concrete product risk: a reviewed
 plan explicitly required a feature-branch push and pull-request creation, but a
