@@ -10,8 +10,9 @@
   },
   "scripts": {
     "boundaries": "depcruise apps packages --config .dependency-cruiser.cjs",
-    "build": "tsc -b --pretty false && vite build --config apps/web/vite.config.ts",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm test:sqlite-spike && pnpm test:demo-reset-plan && pnpm boundaries && pnpm build",
+    "build": "pnpm build:linux-peer-helper && tsc -b --pretty false && vite build --config apps/web/vite.config.ts",
+    "build:linux-peer-helper": "node scripts/build-linux-peer-helper.mjs",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm build:linux-peer-helper && pnpm test && pnpm test:sqlite-spike && pnpm test:demo-reset-plan && pnpm boundaries && pnpm build",
     "dev:web": "vite --config apps/web/vite.config.ts",
     "format": "prettier --write \"apps/**/*.{ts,tsx,css,html,json}\" \"packages/**/*.{ts,json}\" \".github/**/*.{json,yaml,yml}\" \"*.{ts,js,cjs,json,yaml,yml}\"",
     "format:check": "prettier --check \"apps/**/*.{ts,tsx,css,html,json}\" \"packages/**/*.{ts,json}\" \".github/**/*.{json,yaml,yml}\" \"*.{ts,js,cjs,json,yaml,yml}\"",

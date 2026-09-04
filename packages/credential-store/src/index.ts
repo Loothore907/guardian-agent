@@ -11,6 +11,9 @@ import {
 const MAX_SECRET_BYTES = 4_096;
 const WINDOWS_HELPER_TIMEOUT_MS = 15_000;
 const WINDOWS_TARGET_PREFIX = "AgenticGuardian";
+const LINUX_HELPER_TIMEOUT_MS = 15_000;
+const LINUX_SECRET_TOOL_PATH = "/usr/bin/secret-tool";
+const MAXIMUM_LINUX_DIAGNOSTIC_BYTES = 8_192;
 
 export class CredentialStoreError extends Error {
   constructor() {
@@ -92,6 +95,24 @@ export interface CredentialHelperInvocation {
 }
 
 export type CredentialHelperRunner = (invocation: CredentialHelperInvocation) => Promise<string>;
+
+export interface LinuxSecretToolInvocation {
+  readonly file: string;
+  readonly arguments: readonly string[];
+  readonly stdin: Uint8Array;
+  readonly environment: Readonly<Record<string, string>>;
+  readonly timeoutMs: number;
+}
+
+export interface LinuxSecretToolResult {
+  readonly code: number;
+  readonly stdout: Uint8Array;
+  readonly stderr: Uint8Array;
+}
+
+export type LinuxSecretToolRunner = (
+  invocation: LinuxSecretToolInvocation,
+) => Promise<LinuxSecretToolResult>;
 
 const WINDOWS_HELPER_SOURCE = String.raw`
 $ErrorActionPreference = 'Stop'
@@ -296,4 +317,211 @@ export class WindowsCredentialStore implements CredentialStore {
       secret.fill(0);
     }
   }
+}
+
+function linuxAttributes(reference: CredentialReference): readonly string[] {
+  return [
+    "application",
+    "AgenticGuardian",
+    "schema",
+    "1",
+    "provider",
+    reference.provider,
+    "slot",
+    reference.slot,
+  ];
+}
+
+function linuxSecretServiceEnvironment(): Readonly<Record<string, string>> {
+  const environment: Record<string, string> = {};
+  const busAddress = process.env.DBUS_SESSION_BUS_ADDRESS;
+  const runtimeDirectory = process.env.XDG_RUNTIME_DIR;
+  if (busAddress !== undefined) environment.DBUS_SESSION_BUS_ADDRESS = busAddress;
+  if (runtimeDirectory !== undefined) environment.XDG_RUNTIME_DIR = runtimeDirectory;
+  return environment;
+}
+
+export async function runLinuxSecretTool(
+  invocation: LinuxSecretToolInvocation,
+): Promise<LinuxSecretToolResult> {
+  return await new Promise((resolve, reject) => {
+    const child = spawn(invocation.file, invocation.arguments, {
+      env: invocation.environment,
+      stdio: ["pipe", "pipe", "pipe"],
+      windowsHide: true,
+    });
+    const stdoutChunks: Buffer[] = [];
+    const stderrChunks: Buffer[] = [];
+    let stdoutBytes = 0;
+    let stderrBytes = 0;
+    let oversized = false;
+    let settled = false;
+    function fail() {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (!child.killed) child.kill("SIGKILL");
+      for (const chunk of [...stdoutChunks, ...stderrChunks]) chunk.fill(0);
+      reject(new CredentialStoreError());
+    }
+    const timer = setTimeout(() => {
+      oversized = true;
+      fail();
+    }, invocation.timeoutMs);
+    timer.unref();
+    child.stdout.on("data", (chunk: Buffer) => {
+      stdoutBytes += chunk.byteLength;
+      if (stdoutBytes > MAX_SECRET_BYTES) {
+        oversized = true;
+        fail();
+      } else {
+        stdoutChunks.push(chunk);
+      }
+    });
+    child.stderr.on("data", (chunk: Buffer) => {
+      stderrBytes += chunk.byteLength;
+      if (stderrBytes > MAXIMUM_LINUX_DIAGNOSTIC_BYTES) {
+        oversized = true;
+        fail();
+      } else {
+        stderrChunks.push(chunk);
+      }
+    });
+    child.once("error", () => {
+      fail();
+    });
+    child.once("close", (code) => {
+      clearTimeout(timer);
+      if (settled) return;
+      if (code === null || oversized) {
+        fail();
+        return;
+      }
+      settled = true;
+      const stdout = Uint8Array.from(Buffer.concat(stdoutChunks, stdoutBytes));
+      const stderr = Uint8Array.from(Buffer.concat(stderrChunks, stderrBytes));
+      for (const chunk of [...stdoutChunks, ...stderrChunks]) chunk.fill(0);
+      resolve({ code, stdout, stderr });
+    });
+    child.stdin.once("error", fail);
+    child.stdin.end(invocation.stdin);
+  });
+}
+
+function isEmpty(bytes: Uint8Array): boolean {
+  return bytes.byteLength === 0;
+}
+
+function assertTextSecret(secret: Uint8Array): void {
+  try {
+    const decoded = new TextDecoder("utf-8", { fatal: true }).decode(secret);
+    if (decoded.includes("\0")) throw new CredentialStoreError();
+  } catch {
+    throw new CredentialStoreError();
+  }
+}
+
+export class LinuxSecretServiceCredentialStore implements CredentialStore {
+  readonly #runner: LinuxSecretToolRunner;
+
+  constructor(runner: LinuxSecretToolRunner = runLinuxSecretTool) {
+    this.#runner = runner;
+  }
+
+  async #invoke(
+    operation: "store" | "lookup" | "clear",
+    reference: CredentialReference,
+    stdin: Uint8Array = new Uint8Array(),
+  ): Promise<LinuxSecretToolResult> {
+    if (process.platform !== "linux" && this.#runner === runLinuxSecretTool) {
+      throw new CredentialStoreError();
+    }
+    const operationArguments =
+      operation === "store" ? ["store", "--label=Agentic Guardian"] : [operation];
+    try {
+      return await this.#runner({
+        file: LINUX_SECRET_TOOL_PATH,
+        arguments: [...operationArguments, ...linuxAttributes(reference)],
+        stdin,
+        environment: linuxSecretServiceEnvironment(),
+        timeoutMs: LINUX_HELPER_TIMEOUT_MS,
+      });
+    } catch {
+      throw new CredentialStoreError();
+    }
+  }
+
+  async #lookup(reference: CredentialReference): Promise<Uint8Array | null> {
+    const result = await this.#invoke("lookup", reference);
+    try {
+      if (result.code === 1 && isEmpty(result.stdout) && isEmpty(result.stderr)) return null;
+      if (result.code !== 0 || !isEmpty(result.stderr)) throw new CredentialStoreError();
+      assertTextSecret(result.stdout);
+      return copySecret(result.stdout);
+    } finally {
+      result.stdout.fill(0);
+      result.stderr.fill(0);
+    }
+  }
+
+  async status(referenceValue: unknown): Promise<CredentialStatus> {
+    const reference = CredentialReferenceSchema.parse(referenceValue);
+    const secret = await this.#lookup(reference);
+    secret?.fill(0);
+    return CredentialStatusSchema.parse({
+      schemaVersion: 1,
+      reference,
+      state: secret === null ? "missing" : "available",
+    });
+  }
+
+  async write(referenceValue: unknown, input: Uint8Array): Promise<void> {
+    const reference = CredentialReferenceSchema.parse(referenceValue);
+    const secret = copySecret(input);
+    try {
+      assertTextSecret(secret);
+      const result = await this.#invoke("store", reference, secret);
+      try {
+        if (result.code !== 0 || !isEmpty(result.stdout) || !isEmpty(result.stderr)) {
+          throw new CredentialStoreError();
+        }
+      } finally {
+        result.stdout.fill(0);
+        result.stderr.fill(0);
+      }
+    } finally {
+      secret.fill(0);
+    }
+  }
+
+  async delete(referenceValue: unknown): Promise<"deleted" | "missing"> {
+    const reference = CredentialReferenceSchema.parse(referenceValue);
+    const result = await this.#invoke("clear", reference);
+    try {
+      if (!isEmpty(result.stdout) || !isEmpty(result.stderr)) throw new CredentialStoreError();
+      if (result.code === 0) return "deleted";
+      if (result.code === 1) return "missing";
+      throw new CredentialStoreError();
+    } finally {
+      result.stdout.fill(0);
+      result.stderr.fill(0);
+    }
+  }
+
+  async use<T>(referenceValue: unknown, operation: (secret: Uint8Array) => Promise<T>): Promise<T> {
+    const reference = CredentialReferenceSchema.parse(referenceValue);
+    const secret = await this.#lookup(reference);
+    if (secret === null) throw new CredentialStoreError();
+    try {
+      return await operation(secret);
+    } finally {
+      secret.fill(0);
+    }
+  }
+}
+
+export function createPlatformCredentialStore(): CredentialStore {
+  if (process.platform === "win32") return new WindowsCredentialStore();
+  if (process.platform === "linux") return new LinuxSecretServiceCredentialStore();
+  throw new CredentialStoreError();
 }

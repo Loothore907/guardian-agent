@@ -8,6 +8,7 @@ import {
   attachControlledCompetitionJourney,
   type SupervisedCompetitionJourneyAttachment,
 } from "./competition-journey-attachment.js";
+import { credentialServiceEnvironment } from "./credential-service-environment.js";
 import {
   startSupervisedServiceProcess,
   type SupervisedServiceProcess,
@@ -46,17 +47,22 @@ export async function startSupervisedControlledCompetitionJourney(options: {
       entrypoint: fileURLToPath(new URL("../../guardian-service/dist/main.js", import.meta.url)),
       bootstrap: services.broker.guardian,
       readyLine: "guardian risk service ready",
-      environment: { GUARDIAN_RISK_PROVIDER: options.riskProvider },
+      environment:
+        options.riskProvider === "nemotron"
+          ? credentialServiceEnvironment({ GUARDIAN_RISK_PROVIDER: options.riskProvider })
+          : { GUARDIAN_RISK_PROVIDER: options.riskProvider },
     });
     brokerProcess = await startSupervisedServiceProcess({
       entrypoint: fileURLToPath(new URL("../../broker-service/dist/main.js", import.meta.url)),
       bootstrap: services.broker,
       readyLine: "guardian broker service ready",
+      environment: credentialServiceEnvironment(),
     });
     researchProcess = await startSupervisedServiceProcess({
       entrypoint: fileURLToPath(new URL("../../research-service/dist/main.js", import.meta.url)),
       bootstrap: services.research,
       readyLine: "guardian research service ready",
+      environment: credentialServiceEnvironment(),
     });
 
     return attachControlledCompetitionJourney({

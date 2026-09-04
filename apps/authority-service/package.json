@@ -12,6 +12,7 @@
   "dependencies": {
     "@guardian/authority-client": "workspace:*",
     "@guardian/authority-store": "workspace:*",
-    "@guardian/contracts": "workspace:*"
+    "@guardian/contracts": "workspace:*",
+    "@guardian/linux-peer-identity": "workspace:*"
   }
 }

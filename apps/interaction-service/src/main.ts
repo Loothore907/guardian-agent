@@ -2,7 +2,7 @@ import {
   InteractionServiceProcessConfigSchema,
   MissionDraftReviewServiceProcessConfigSchema,
 } from "@guardian/contracts";
-import { WindowsCredentialStore } from "@guardian/credential-store";
+import { createPlatformCredentialStore } from "@guardian/credential-store";
 
 import {
   QwenInteractionProvider,
@@ -47,14 +47,11 @@ async function main(): Promise<void> {
   if (providerMode !== "fake" && providerMode !== "qwen") {
     throw new TypeError("interaction provider selection is invalid");
   }
-  if (providerMode === "qwen" && process.platform !== "win32") {
-    throw new TypeError("Qwen interaction currently requires Windows Credential Manager");
-  }
   const bootstrap = await readBootstrapFrame();
   const provider =
     providerMode === "fake"
       ? createFakeInteractionProvider()
-      : new QwenInteractionProvider({ credentialStore: new WindowsCredentialStore() });
+      : new QwenInteractionProvider({ credentialStore: createPlatformCredentialStore() });
   const service =
     typeof bootstrap === "object" &&
     bootstrap !== null &&

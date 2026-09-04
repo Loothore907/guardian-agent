@@ -10,6 +10,7 @@
   "references": [
     { "path": "../../packages/authority-client" },
     { "path": "../../packages/authority-store" },
-    { "path": "../../packages/contracts" }
+    { "path": "../../packages/contracts" },
+    { "path": "../../packages/linux-peer-identity" }
   ]
 }

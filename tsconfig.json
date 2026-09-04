@@ -7,6 +7,7 @@
     { "path": "packages/canonical" },
     { "path": "packages/authority-client" },
     { "path": "packages/authority-store" },
+    { "path": "packages/linux-peer-identity" },
     { "path": "packages/audit" },
     { "path": "packages/policy" },
     { "path": "packages/session" },

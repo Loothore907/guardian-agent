@@ -4,7 +4,7 @@ import {
   GuardianActionRiskServiceProcessConfigSchema,
   MissionSetupRiskServiceProcessConfigSchema,
 } from "@guardian/contracts";
-import { WindowsCredentialStore } from "@guardian/credential-store";
+import { createPlatformCredentialStore } from "@guardian/credential-store";
 
 import {
   NemotronGuardianProvider,
@@ -49,9 +49,6 @@ async function main(): Promise<void> {
   if (providerMode !== "fake" && providerMode !== "nemotron") {
     throw new TypeError("guardian risk provider selection is invalid");
   }
-  if (providerMode === "nemotron" && process.platform !== "win32") {
-    throw new TypeError("Nemotron guardian currently requires Windows Credential Manager");
-  }
   const configValue = await readBootstrapFrame();
   const config =
     typeof configValue === "object" &&
@@ -63,7 +60,7 @@ async function main(): Promise<void> {
   const provider =
     providerMode === "fake"
       ? createFakeMissionSetupRiskProvider()
-      : new NemotronGuardianProvider({ credentialStore: new WindowsCredentialStore() });
+      : new NemotronGuardianProvider({ credentialStore: createPlatformCredentialStore() });
   const service =
     config.serviceKind === "action_risk"
       ? await startGuardianActionRiskService(config, provider)
