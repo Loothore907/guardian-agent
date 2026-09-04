@@ -241,7 +241,8 @@ export class NemotronGuardianProvider {
   readonly #timeoutMs: number;
   readonly #diagnostic: (diagnostic: NemotronGuardianDiagnostic) => void;
   readonly #modelPolicy: GuardianModelPolicy;
-  readonly #onUsage: ((usage: ManagedDemoNebiusUsageObservation) => void) | undefined;
+  readonly #onUsage:
+    ((usage: ManagedDemoNebiusUsageObservation) => void | Promise<void>) | undefined;
   readonly #now: () => string;
 
   constructor(options: {
@@ -250,7 +251,7 @@ export class NemotronGuardianProvider {
     readonly timeoutMs?: number;
     readonly onDiagnostic?: (diagnostic: NemotronGuardianDiagnostic) => void;
     readonly modelPolicy?: GuardianModelPolicy;
-    readonly onUsage?: (usage: ManagedDemoNebiusUsageObservation) => void;
+    readonly onUsage?: (usage: ManagedDemoNebiusUsageObservation) => void | Promise<void>;
     readonly now?: () => string;
   }) {
     this.#store = options.credentialStore;
@@ -356,7 +357,7 @@ export class NemotronGuardianProvider {
                   ? "contextual_risk_primary"
                   : "contextual_risk_escalation";
               try {
-                this.#onUsage(
+                await this.#onUsage(
                   projectManagedDemoNebiusUsageObservation(providerJson, {
                     role,
                     modelId: model,

@@ -179,6 +179,21 @@ importers:
         specifier: 4.1.11
         version: 4.1.11(@types/node@24.13.3)(vite@8.2.2(@types/node@24.13.3))
 
+  apps/managed-demo-budget-service:
+    dependencies:
+      '@guardian/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@guardian/linux-peer-identity':
+        specifier: workspace:*
+        version: link:../../packages/linux-peer-identity
+      '@guardian/managed-demo-budget':
+        specifier: workspace:*
+        version: link:../../packages/managed-demo-budget
+      '@guardian/managed-demo-budget-client':
+        specifier: workspace:*
+        version: link:../../packages/managed-demo-budget-client
+
   apps/reference-supervisor:
     dependencies:
       '@guardian/authority-client':
@@ -422,6 +437,12 @@ importers:
   packages/linux-peer-identity: {}
 
   packages/managed-demo-budget:
+    dependencies:
+      '@guardian/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+
+  packages/managed-demo-budget-client:
     dependencies:
       '@guardian/contracts':
         specifier: workspace:*

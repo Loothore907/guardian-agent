@@ -94,6 +94,33 @@ describe("Qwen interaction provider", () => {
     });
   });
 
+  it("fails the provider call when durable usage recording fails", async () => {
+    const provider = new QwenInteractionProvider({
+      credentialStore: await enrolledStore(),
+      fetch: () =>
+        Promise.resolve(
+          response({
+            id: "qwen_request_metering_failure",
+            model: qwenInteractionBoundary.model,
+            usage: { prompt_tokens: 2, completion_tokens: 1, total_tokens: 3 },
+            choices: [
+              {
+                finish_reason: "stop",
+                message: {
+                  content: JSON.stringify({ kind: "mission_brief", summary: "Reviewed." }),
+                },
+              },
+            ],
+          }),
+        ),
+      onUsage: async () => await Promise.reject(new Error("budget service unavailable")),
+    });
+
+    await expect(provider.runFirstTurn(CONTEXT)).rejects.toBeInstanceOf(
+      QwenInteractionProviderError,
+    );
+  });
+
   it("fails closed without invoking the provider when the scoped credential is missing", async () => {
     const fetchImplementation = vi.fn<typeof fetch>();
     const provider = new QwenInteractionProvider({

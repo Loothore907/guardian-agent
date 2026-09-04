@@ -135,7 +135,8 @@ export class NebiusMissionDialogueProvider {
   readonly #fetch: typeof fetch;
   readonly #timeoutMs: number;
   readonly #modelPolicy: GuardianModelPolicy;
-  readonly #onUsage: ((usage: ManagedDemoNebiusUsageObservation) => void) | undefined;
+  readonly #onUsage:
+    ((usage: ManagedDemoNebiusUsageObservation) => void | Promise<void>) | undefined;
   readonly #now: () => string;
 
   constructor(options: {
@@ -143,7 +144,7 @@ export class NebiusMissionDialogueProvider {
     readonly fetch?: typeof fetch;
     readonly timeoutMs?: number;
     readonly modelPolicy?: GuardianModelPolicy;
-    readonly onUsage?: (usage: ManagedDemoNebiusUsageObservation) => void;
+    readonly onUsage?: (usage: ManagedDemoNebiusUsageObservation) => void | Promise<void>;
     readonly now?: () => string;
   }) {
     this.#store = options.credentialStore;
@@ -208,7 +209,7 @@ export class NebiusMissionDialogueProvider {
           if (!response.ok) throw new MissionDialogueProviderError();
           const providerJson = await boundedProviderJson(response);
           if (this.#onUsage !== undefined) {
-            this.#onUsage(
+            await this.#onUsage(
               projectManagedDemoNebiusUsageObservation(providerJson, {
                 role: "mission_dialogue",
                 modelId: this.#modelPolicy.missionDialogue.modelId,
@@ -361,7 +362,7 @@ export class NebiusMissionDialogueProvider {
           if (!response.ok) throw new MissionDialogueProviderError();
           const providerJson = await boundedProviderJson(response);
           if (this.#onUsage !== undefined) {
-            this.#onUsage(
+            await this.#onUsage(
               projectManagedDemoNebiusUsageObservation(providerJson, {
                 role: "mission_dialogue",
                 modelId: this.#modelPolicy.missionDialogue.modelId,

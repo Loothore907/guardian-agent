@@ -136,6 +136,32 @@ describe("Nemotron guardian provider", () => {
     });
   });
 
+  it("denies without escalation when durable usage recording fails", async () => {
+    const fetchImplementation = vi.fn<typeof fetch>(() =>
+      Promise.resolve(
+        providerResponse({
+          recommendation: "allow",
+          certainty: "certain",
+          reasonCodes: ["clean_context"],
+        }),
+      ),
+    );
+    const diagnostics = vi.fn();
+    const provider = new NemotronGuardianProvider({
+      credentialStore: await enrolledStore(),
+      fetch: fetchImplementation,
+      onUsage: async () => await Promise.reject(new Error("budget service unavailable")),
+      onDiagnostic: diagnostics,
+    });
+
+    await expect(provider.evaluate(envelope())).resolves.toEqual({
+      status: "unavailable",
+      authorizationLevel: "deny",
+    });
+    expect(fetchImplementation).toHaveBeenCalledOnce();
+    expect(diagnostics).toHaveBeenLastCalledWith({ outcome: "failed", reason: "usage" });
+  });
+
   it.each([
     {
       name: "intent-action mismatch",

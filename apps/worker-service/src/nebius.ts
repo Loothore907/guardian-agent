@@ -278,7 +278,8 @@ export class NebiusNativeWorkerProvider {
   readonly #timeoutMs: number;
   readonly #modelPolicy: GuardianModelPolicy;
   readonly #diagnostic: (diagnostic: NativeWorkerProviderDiagnostic) => void;
-  readonly #onUsage: ((usage: ManagedDemoNebiusUsageObservation) => void) | undefined;
+  readonly #onUsage:
+    ((usage: ManagedDemoNebiusUsageObservation) => void | Promise<void>) | undefined;
   readonly #now: () => string;
 
   constructor(options: {
@@ -287,7 +288,7 @@ export class NebiusNativeWorkerProvider {
     readonly timeoutMs?: number;
     readonly modelPolicy?: GuardianModelPolicy;
     readonly onDiagnostic?: (diagnostic: NativeWorkerProviderDiagnostic) => void;
-    readonly onUsage?: (usage: ManagedDemoNebiusUsageObservation) => void;
+    readonly onUsage?: (usage: ManagedDemoNebiusUsageObservation) => void | Promise<void>;
     readonly now?: () => string;
   }) {
     this.#store = options.credentialStore;
@@ -376,7 +377,7 @@ export class NebiusNativeWorkerProvider {
           try {
             providerJson = await boundedProviderJson(response);
             if (this.#onUsage !== undefined) {
-              this.#onUsage(
+              await this.#onUsage(
                 projectManagedDemoNebiusUsageObservation(providerJson, {
                   role: "native_worker",
                   modelId: selection.modelId,

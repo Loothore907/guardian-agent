@@ -191,14 +191,15 @@ export class TavilySearchProvider implements ResearchProvider<ResearchProviderRe
   readonly #authorization: string;
   readonly #transport: TavilyTransport;
   readonly #timeoutMs: number;
-  readonly #onUsage: ((usage: ManagedDemoTavilyUsageObservation) => void) | undefined;
+  readonly #onUsage:
+    ((usage: ManagedDemoTavilyUsageObservation) => void | Promise<void>) | undefined;
   readonly #now: () => string;
 
   constructor(options: {
     readonly apiKey: string;
     readonly transport?: TavilyTransport;
     readonly timeoutMs?: number;
-    readonly onUsage?: (usage: ManagedDemoTavilyUsageObservation) => void;
+    readonly onUsage?: (usage: ManagedDemoTavilyUsageObservation) => void | Promise<void>;
     readonly now?: () => string;
   }) {
     if (options.apiKey.length < 1 || options.apiKey.length > 512) {
@@ -247,7 +248,7 @@ export class TavilySearchProvider implements ResearchProvider<ResearchProviderRe
       }
       const result = projectTavilySearchResponse(parsed);
       if (this.#onUsage !== undefined) {
-        this.#onUsage(
+        await this.#onUsage(
           projectManagedDemoTavilyUsageObservation(parsed, {
             operation: "basic_search",
             observedAt: this.#now(),
@@ -293,14 +294,15 @@ export class TavilyExtractProvider implements ControlledContentProvider<Controll
   readonly #authorization: string;
   readonly #transport: TavilyTransport;
   readonly #timeoutMs: number;
-  readonly #onUsage: ((usage: ManagedDemoTavilyUsageObservation) => void) | undefined;
+  readonly #onUsage:
+    ((usage: ManagedDemoTavilyUsageObservation) => void | Promise<void>) | undefined;
   readonly #now: () => string;
 
   constructor(options: {
     readonly apiKey: string;
     readonly transport?: TavilyTransport;
     readonly timeoutMs?: number;
-    readonly onUsage?: (usage: ManagedDemoTavilyUsageObservation) => void;
+    readonly onUsage?: (usage: ManagedDemoTavilyUsageObservation) => void | Promise<void>;
     readonly now?: () => string;
   }) {
     if (options.apiKey.length < 1 || options.apiKey.length > 512) {
@@ -347,7 +349,7 @@ export class TavilyExtractProvider implements ControlledContentProvider<Controll
       }
       const result = projectTavilyExtractResponse(parsed);
       if (this.#onUsage !== undefined) {
-        this.#onUsage(
+        await this.#onUsage(
           projectManagedDemoTavilyUsageObservation(parsed, {
             operation: "basic_extract",
             observedAt: this.#now(),
@@ -373,14 +375,15 @@ export class CredentialStoreTavilyProvider
   readonly #store: CredentialStore;
   readonly #transport: TavilyTransport | undefined;
   readonly #timeoutMs: number | undefined;
-  readonly #onUsage: ((usage: ManagedDemoTavilyUsageObservation) => void) | undefined;
+  readonly #onUsage:
+    ((usage: ManagedDemoTavilyUsageObservation) => void | Promise<void>) | undefined;
   readonly #now: (() => string) | undefined;
 
   constructor(options: {
     readonly credentialStore: CredentialStore;
     readonly transport?: TavilyTransport;
     readonly timeoutMs?: number;
-    readonly onUsage?: (usage: ManagedDemoTavilyUsageObservation) => void;
+    readonly onUsage?: (usage: ManagedDemoTavilyUsageObservation) => void | Promise<void>;
     readonly now?: () => string;
   }) {
     this.#store = options.credentialStore;

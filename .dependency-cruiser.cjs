@@ -90,10 +90,19 @@ module.exports = {
       to: { path: "^packages/(?!managed-demo-budget/|contracts/)" },
     },
     {
+      name: "managed-demo-budget-is-only-opened-by-budget-service",
+      severity: "error",
+      from: {
+        path: "^(?!apps/managed-demo-budget-service/|packages/managed-demo-budget/)",
+        pathNot: "\\.test\\.ts$",
+      },
+      to: { path: "^packages/managed-demo-budget/" },
+    },
+    {
       name: "linux-peer-identity-is-trusted-boundary-only",
       severity: "error",
       from: {
-        path: "^(?!packages/linux-peer-identity/|apps/authority-service/)",
+        path: "^(?!packages/linux-peer-identity/|apps/(authority-service|managed-demo-budget-service)/)",
       },
       to: { path: "^packages/linux-peer-identity/" },
     },

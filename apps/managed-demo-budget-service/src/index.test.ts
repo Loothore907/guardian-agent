@@ -1,0 +1,332 @@
+import { randomUUID } from "node:crypto";
+import { chmod, mkdtemp, rm, stat } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+import {
+  INITIAL_PUBLIC_DEMO_BUDGET_POLICY,
+  type ManagedDemoBudgetCallerRole,
+  type ManagedDemoBudgetIpcOperation,
+} from "@guardian/contracts";
+import {
+  LocalManagedDemoBudgetIpcClient,
+  createManagedDemoBudgetIpcEndpoint,
+} from "@guardian/managed-demo-budget-client";
+import type { ManagedDemoBudgetIpcError } from "@guardian/managed-demo-budget-client";
+import { afterEach, describe, expect, it } from "vitest";
+
+import { startManagedDemoBudgetService } from "./index.js";
+
+const temporaryDirectories: string[] = [];
+const DEPLOYMENT = "11111111-1111-4111-8111-111111111111";
+const JOURNEY = "22222222-2222-4222-8222-222222222222";
+const RESERVATION = "33333333-3333-4333-8333-333333333333";
+const SNAPSHOT = "44444444-4444-4444-8444-444444444444";
+const START = "2026-10-30T17:00:00.000Z";
+const EXPIRY = "2026-12-15T20:00:00.000Z";
+
+afterEach(async () => {
+  await Promise.all(
+    temporaryDirectories.splice(0).map((path) => rm(path, { recursive: true, force: true })),
+  );
+});
+
+async function location() {
+  const directory = await mkdtemp(join(tmpdir(), "guardian-managed-demo-budget-service-"));
+  temporaryDirectories.push(directory);
+  if (process.platform !== "win32") await chmod(directory, 0o700);
+  return { databasePath: join(directory, "budget.sqlite") };
+}
+
+function binding(
+  callerRole: ManagedDemoBudgetCallerRole,
+  allowedOperations: readonly ManagedDemoBudgetIpcOperation[],
+) {
+  return {
+    schemaVersion: 1,
+    capability: randomUUID(),
+    callerRole,
+    callerId: randomUUID(),
+    deploymentId: DEPLOYMENT,
+    allowedOperations,
+    issuedAt: START,
+    expiresAt: EXPIRY,
+  } as const;
+}
+
+function prices() {
+  return {
+    schemaVersion: 1,
+    snapshotId: SNAPSHOT,
+    version: 1,
+    modelPolicyId: "competition-2026-09-01",
+    modelPolicyVersion: 2,
+    models: INITIAL_PUBLIC_DEMO_BUDGET_POLICY.models.map((model) => ({
+      role: model.role,
+      modelId: model.modelId,
+      inputMicroUsdPerMillionTokens: 1,
+      outputMicroUsdPerMillionTokens: 1,
+    })),
+    tavilyMicroUsdPerCredit: 8_000,
+    evidence: { capturedAt: START, expiresAt: EXPIRY },
+  } as const;
+}
+
+describe("managed-demo budget service", () => {
+  it.skipIf(process.platform === "win32")(
+    "creates current-user-only Unix socket and SQLite boundaries",
+    async () => {
+      const { databasePath } = await location();
+      const endpoint = createManagedDemoBudgetIpcEndpoint();
+      const controllerBinding = binding("journey_controller", ["admission.request"]);
+      const service = await startManagedDemoBudgetService(
+        {
+          schemaVersion: 1,
+          serviceInstanceId: randomUUID(),
+          endpoint,
+          ledgerPath: databasePath,
+          deployment: {
+            schemaVersion: 1,
+            deploymentId: DEPLOYMENT,
+            pool: "public",
+            policyId: INITIAL_PUBLIC_DEMO_BUDGET_POLICY.policyId,
+            policyVersion: INITIAL_PUBLIC_DEMO_BUDGET_POLICY.version,
+          },
+          policy: INITIAL_PUBLIC_DEMO_BUDGET_POLICY,
+          prices: prices(),
+          capabilities: [controllerBinding],
+        },
+        { peerVerifier: { verify: () => Promise.resolve(undefined) } },
+      );
+      try {
+        const endpointStat = await stat(endpoint);
+        expect(endpointStat.isSocket()).toBe(true);
+        expect(endpointStat.uid).toBe(process.getuid?.());
+        expect(endpointStat.mode & 0o777).toBe(0o600);
+        const databaseStat = await stat(databasePath);
+        expect(databaseStat.isFile()).toBe(true);
+        expect(databaseStat.uid).toBe(process.getuid?.());
+        expect(databaseStat.mode & 0o777).toBe(0o600);
+      } finally {
+        await service.close();
+      }
+    },
+  );
+
+  it("binds admission, role-scoped usage, settlement, and snapshots to one deployment", async () => {
+    const { databasePath } = await location();
+    const endpoint = createManagedDemoBudgetIpcEndpoint();
+    const controllerBinding = binding("journey_controller", [
+      "admission.request",
+      "journey.settle",
+    ]);
+    const interactionBinding = binding("interaction_service", ["usage.record"]);
+    const workerBinding = binding("worker_service", ["usage.record"]);
+    const operatorBinding = binding("operator", ["budget.snapshot"]);
+    let now = "2026-11-01T12:00:00.000Z";
+    const service = await startManagedDemoBudgetService(
+      {
+        schemaVersion: 1,
+        serviceInstanceId: randomUUID(),
+        endpoint,
+        ledgerPath: databasePath,
+        deployment: {
+          schemaVersion: 1,
+          deploymentId: DEPLOYMENT,
+          pool: "public",
+          policyId: INITIAL_PUBLIC_DEMO_BUDGET_POLICY.policyId,
+          policyVersion: INITIAL_PUBLIC_DEMO_BUDGET_POLICY.version,
+        },
+        policy: INITIAL_PUBLIC_DEMO_BUDGET_POLICY,
+        prices: prices(),
+        capabilities: [controllerBinding, interactionBinding, workerBinding, operatorBinding],
+      },
+      {
+        now: () => now,
+        randomId: () => RESERVATION,
+        peerVerifier: { verify: () => Promise.resolve(undefined) },
+      },
+    );
+    try {
+      const controller = new LocalManagedDemoBudgetIpcClient({
+        endpoint,
+        binding: controllerBinding,
+      });
+      await expect(
+        controller.admit({
+          schemaVersion: 1,
+          journeyId: JOURNEY,
+          sourceFingerprint: "a".repeat(64),
+          requestedAt: now,
+        }),
+      ).resolves.toMatchObject({ state: "admitted", reservationId: RESERVATION });
+
+      now = "2026-11-01T12:00:30.000Z";
+      const workerUsage = {
+        schemaVersion: 1,
+        provider: "nebius_token_factory",
+        providerRequestId: "worker_request_1",
+        role: "native_worker",
+        modelId: "moonshotai/Kimi-K2.7-Code",
+        promptTokens: 1,
+        completionTokens: 1,
+        totalTokens: 2,
+        observedAt: now,
+      } as const;
+      const interaction = new LocalManagedDemoBudgetIpcClient({
+        endpoint,
+        binding: interactionBinding,
+      });
+      await expect(
+        interaction.recordUsage(RESERVATION, JOURNEY, workerUsage),
+      ).rejects.toMatchObject({ reason: "operation_not_allowed" });
+      const worker = new LocalManagedDemoBudgetIpcClient({ endpoint, binding: workerBinding });
+      await expect(
+        worker.recordUsage(RESERVATION, "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", workerUsage),
+      ).rejects.toMatchObject({ reason: "binding_mismatch" });
+      await expect(worker.recordUsage(RESERVATION, JOURNEY, workerUsage)).resolves.toBeUndefined();
+
+      now = "2026-11-01T12:01:00.000Z";
+      await expect(
+        controller.settle(RESERVATION, JOURNEY, "completed", now),
+      ).resolves.toMatchObject({
+        status: "settled",
+        chargedMicroUsd: 2,
+        budget: { pool: "public", totalCompletedJourneys: 1 },
+      });
+      const operator = new LocalManagedDemoBudgetIpcClient({ endpoint, binding: operatorBinding });
+      await expect(operator.snapshot()).resolves.toMatchObject({
+        pool: "public",
+        totalSettledMicroUsd: 2,
+        totalReservedMicroUsd: 0,
+      });
+    } finally {
+      await service.close();
+    }
+  });
+
+  it("rejects cross-deployment client bindings even when a capability value is copied", async () => {
+    const { databasePath } = await location();
+    const endpoint = createManagedDemoBudgetIpcEndpoint();
+    const controllerBinding = binding("journey_controller", ["admission.request"]);
+    const service = await startManagedDemoBudgetService(
+      {
+        schemaVersion: 1,
+        serviceInstanceId: randomUUID(),
+        endpoint,
+        ledgerPath: databasePath,
+        deployment: {
+          schemaVersion: 1,
+          deploymentId: DEPLOYMENT,
+          pool: "public",
+          policyId: INITIAL_PUBLIC_DEMO_BUDGET_POLICY.policyId,
+          policyVersion: INITIAL_PUBLIC_DEMO_BUDGET_POLICY.version,
+        },
+        policy: INITIAL_PUBLIC_DEMO_BUDGET_POLICY,
+        prices: prices(),
+        capabilities: [controllerBinding],
+      },
+      {
+        now: () => "2026-11-01T12:00:00.000Z",
+        peerVerifier: { verify: () => Promise.resolve(undefined) },
+      },
+    );
+    try {
+      const copied = new LocalManagedDemoBudgetIpcClient({
+        endpoint,
+        binding: {
+          ...controllerBinding,
+          deploymentId: "99999999-9999-4999-8999-999999999999",
+        },
+      });
+      await expect(
+        copied.admit({
+          schemaVersion: 1,
+          journeyId: JOURNEY,
+          sourceFingerprint: "a".repeat(64),
+          requestedAt: "2026-11-01T12:00:00.000Z",
+        }),
+      ).rejects.toEqual(
+        expect.objectContaining<Partial<ManagedDemoBudgetIpcError>>({
+          reason: "binding_mismatch",
+        }),
+      );
+    } finally {
+      await service.close();
+    }
+  });
+
+  it("rejects role configurations that widen a provider capability", async () => {
+    const { databasePath } = await location();
+    const endpoint = createManagedDemoBudgetIpcEndpoint();
+    const widened = binding("interaction_service", ["usage.record", "admission.request"]);
+    await expect(
+      startManagedDemoBudgetService(
+        {
+          schemaVersion: 1,
+          serviceInstanceId: randomUUID(),
+          endpoint,
+          ledgerPath: databasePath,
+          deployment: {
+            schemaVersion: 1,
+            deploymentId: DEPLOYMENT,
+            pool: "public",
+            policyId: INITIAL_PUBLIC_DEMO_BUDGET_POLICY.policyId,
+            policyVersion: INITIAL_PUBLIC_DEMO_BUDGET_POLICY.version,
+          },
+          policy: INITIAL_PUBLIC_DEMO_BUDGET_POLICY,
+          prices: prices(),
+          capabilities: [widened],
+        },
+        { peerVerifier: { verify: () => Promise.resolve(undefined) } },
+      ),
+    ).rejects.toThrow(/outside its caller role/u);
+  });
+
+  it("rejects an expired exact capability before admission", async () => {
+    const { databasePath } = await location();
+    const endpoint = createManagedDemoBudgetIpcEndpoint();
+    const expiredBinding = {
+      ...binding("journey_controller", ["admission.request"]),
+      expiresAt: "2026-10-31T00:00:00.000Z",
+    } as const;
+    const service = await startManagedDemoBudgetService(
+      {
+        schemaVersion: 1,
+        serviceInstanceId: randomUUID(),
+        endpoint,
+        ledgerPath: databasePath,
+        deployment: {
+          schemaVersion: 1,
+          deploymentId: DEPLOYMENT,
+          pool: "public",
+          policyId: INITIAL_PUBLIC_DEMO_BUDGET_POLICY.policyId,
+          policyVersion: INITIAL_PUBLIC_DEMO_BUDGET_POLICY.version,
+        },
+        policy: INITIAL_PUBLIC_DEMO_BUDGET_POLICY,
+        prices: prices(),
+        capabilities: [expiredBinding],
+      },
+      {
+        now: () => "2026-11-01T12:00:00.000Z",
+        peerVerifier: { verify: () => Promise.resolve(undefined) },
+      },
+    );
+    try {
+      const client = new LocalManagedDemoBudgetIpcClient({
+        endpoint,
+        binding: expiredBinding,
+      });
+      await expect(
+        client.admit({
+          schemaVersion: 1,
+          journeyId: JOURNEY,
+          sourceFingerprint: "a".repeat(64),
+          requestedAt: "2026-11-01T12:00:00.000Z",
+        }),
+      ).rejects.toMatchObject({ reason: "stale_capability" });
+    } finally {
+      await service.close();
+    }
+  });
+});

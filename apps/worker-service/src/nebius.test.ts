@@ -132,6 +132,39 @@ describe("Nebius native worker provider", () => {
     });
   });
 
+  it("fails the turn when durable usage recording fails", async () => {
+    const credentialStore = new InMemoryCredentialStore();
+    await credentialStore.write(
+      nativeWorkerBoundary.credential,
+      new TextEncoder().encode("worker-provider-metering-fixture"),
+    );
+    const provider = new NebiusNativeWorkerProvider({
+      credentialStore,
+      fetch: () =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({
+              id: "nebius_worker_metering_failure",
+              model: nativeWorkerBoundary.model,
+              usage: { prompt_tokens: 2, completion_tokens: 1, total_tokens: 3 },
+              choices: [
+                {
+                  finish_reason: "stop",
+                  message: {
+                    content: JSON.stringify({ kind: "final_response", summary: "Complete." }),
+                  },
+                },
+              ],
+            }),
+            { status: 200, headers: { "content-type": "application/json" } },
+          ),
+        ),
+      onUsage: async () => await Promise.reject(new Error("budget service unavailable")),
+    });
+
+    await expect(provider.runTurn(turn())).rejects.toBeInstanceOf(NativeWorkerProviderError);
+  });
+
   it("rejects mismatched policy or model before credential use and provider invocation", async () => {
     const credentialStore = new InMemoryCredentialStore();
     const useSpy = vi.spyOn(credentialStore, "use");

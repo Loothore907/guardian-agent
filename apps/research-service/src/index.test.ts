@@ -138,6 +138,16 @@ describe("Tavily Search adapter", () => {
     });
   });
 
+  it("does not release a provider result when durable usage recording fails", async () => {
+    const provider = new TavilySearchProvider({
+      apiKey: "test-provider-credential",
+      transport: capturedTransport({ status: 200, body: JSON.stringify(rawResponse) }),
+      onUsage: async () => await Promise.reject(new Error("budget service unavailable")),
+    });
+
+    await expect(provider.search(request)).rejects.toMatchObject({ reason: "unavailable" });
+  });
+
   it.each([
     ["invalid JSON", "not-json"],
     ["missing request id", JSON.stringify({ results: rawResponse.results })],

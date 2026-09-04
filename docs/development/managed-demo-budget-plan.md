@@ -7,9 +7,10 @@
 
 Progress: strict contracts, a deployment-bound SQLite ledger, sanitized provider-
 usage projection, per-journey observation binding, and bounded FIFO admission
-queue enforcement are implemented locally under ADR-0043. Trusted-service
-process and peer-identity binding, protected calibration, load testing, and
-deployment remain pending.
+queue enforcement are implemented locally under ADR-0043. A deployment-bound
+trusted service, role-scoped IPC, and awaited metering callbacks are implemented
+under ADR-0044. Supervisor wiring, source-fingerprint derivation, protected
+calibration, load testing, and deployment remain pending.
 
 ## Outcome
 

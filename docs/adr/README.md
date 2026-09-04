@@ -54,5 +54,6 @@ Architecture decision records document consequential choices, rejected alternati
 - [ADR-0041: Managed-demo and BYOK credential custody profiles](0041-managed-demo-and-byok-credential-custody.md)
 - [ADR-0042: One-time loopback BYOK enrollment surface](0042-one-time-loopback-byok-enrollment-surface.md)
 - [ADR-0043: Deployment-bound managed-demo budget ledgers](0043-deployment-bound-managed-demo-budget-ledgers.md)
+- [ADR-0044: Managed-demo budget service boundary](0044-managed-demo-budget-service-boundary.md)
 
 Use the next sequential four-digit number. Do not silently rewrite an accepted decision; add a superseding ADR.

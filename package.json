@@ -20,6 +20,7 @@
     "start:control-api": "node apps/control-api/dist/main.js",
     "start:guardian": "node apps/guardian-cli/dist/main.js start",
     "start:authority-service": "node apps/authority-service/dist/main.js",
+    "start:managed-demo-budget-service": "node apps/managed-demo-budget-service/dist/main.js",
     "start:interaction-service": "node apps/interaction-service/dist/main.js",
     "start:worker-service": "node apps/worker-service/dist/main.js",
     "start:research-service": "node apps/research-service/dist/main.js",

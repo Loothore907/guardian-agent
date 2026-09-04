@@ -1,0 +1,15 @@
+{
+  "name": "@guardian/managed-demo-budget-service",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "guardian-managed-demo-budget-service": "./dist/main.js"
+  },
+  "dependencies": {
+    "@guardian/contracts": "workspace:*",
+    "@guardian/linux-peer-identity": "workspace:*",
+    "@guardian/managed-demo-budget": "workspace:*",
+    "@guardian/managed-demo-budget-client": "workspace:*"
+  }
+}
