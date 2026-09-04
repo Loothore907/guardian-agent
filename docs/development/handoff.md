@@ -93,8 +93,8 @@ and checkpoint history in `docs/development/roadmap.md`.
   `bca4313`. Its local branch has the W25 status reconciliation at `ed84e27` and
   the Secret Service transient-buffer fix at `d58d761`; both remain intentionally
   unpushed while the advisory canary is unavailable. The W26 lifecycle work is
-  isolated and pushed on stacked branch `codex/13-c6-linux-secret-service` at
-  `306a52f`.
+  isolated and pushed on stacked branch `codex/13-c6-linux-secret-service`; its
+  latest pre-seam head is `afc5d51`, with the combined code head at `306a52f`.
 - PR [#17](https://github.com/Loothore907/guardian-agent/pull/17) is open,
   non-draft, and mergeable, with no external reviews. It remains intentionally
   unmerged because its required CI check has no successful dependency-audit
@@ -142,6 +142,13 @@ and checkpoint history in `docs/development/roadmap.md`.
    complete Windows gate passed 63 files / 376 tests plus all build and boundary
    probes; the combined W26 head then repeated the real 2-file / 13-test Secret
    Service lifecycle successfully as `306a52f`.
+9. The WSL image now retains `libsecret-tools`, `gnome-keyring`, and the
+   checksum-verified Node 24.19.0 runtime at
+   `/home/loothore907/.cache/guardian-node-v24.19.0`. Both private source stages
+   and all disposable keyring directories were removed after verification.
+10. No issue #13 progress comment was published. The attempted external update
+    was rejected by the action guard as insufficiently specific publication
+    authority; do not assume GitHub contains the W26 summary.
 
 ### Pending debt and next actions
 
@@ -894,21 +901,35 @@ user D-Bus session passed the lifecycle and complete Linux gate. See
 1. Keep issue #13 open unless every C6 exit criterion is satisfied or remaining
    criteria are explicitly split into named follow-up issues with roadmap/claim
    updates. A merged broker-core PR is not by itself proof that all of C6 passed.
-2. Restore PR #17's required production audit once npm's advisory endpoint is
-   responsive. W26 now proves a disposable real Secret Service lifecycle; next
-   verify intended-host credential-service containment and a protected provider
-   credential, then obtain separate protected authorization for the narrow Linux
-   GitHub read/merge path. Do not silently defer that current C6 exit criterion.
-3. Keep the reproducible GitHub refresh `HTTP 500` as an external blocker with
+2. Begin with a minimal read-only POST to npm's advisory bulk endpoint. If it
+   still returns zero bytes or times out, do not push, rerun CI, or merge PR #17.
+3. Once that canary returns a real response, switch to
+   `codex/13-c6-linux-peer-credentials`. Confirm the remote still points to
+   `bca4313`, then push the two existing local commits: `ed84e27` followed by
+   `d58d761`. Require the new exact head's complete project, native Ubuntu, and
+   production-audit checks.
+4. Only if every required check completes green, re-review that exact head and
+   use the already approved conditional exact-head squash merge for PR #17 when
+   its originating user confirmation is available to the session. Verify the
+   resulting `main` CI; otherwise leave the PR open.
+5. After PR #17 merges, rebase or restack
+   `codex/13-c6-linux-secret-service` onto the new `main`, taking care that
+   `306a52f` is the W26 copy of parent fix `d58d761`. Open or update later review
+   only with authority that covers that publication.
+6. W26 proves a disposable real Secret Service lifecycle. Next verify intended-
+   host credential-service containment and a protected provider credential, then
+   obtain separate protected authorization for the narrow Linux GitHub read/merge
+   path. Do not silently defer that current C6 exit criterion.
+7. Keep the reproducible GitHub refresh `HTTP 500` as an external blocker with
    fresh attended enrollment as the bounded fallback. Do not spin on retries or
    weaken the refresh contract. Keep WebAuthn in the later user-verifying approval
    slice, and keep worker-visible research/GitHub dispatch and the full
    single-invocation coordinator as separately scoped evidence.
-4. C7 is now honestly marked **In progress**. After the C6 residual decision,
+8. C7 is now honestly marked **In progress**. After the C6 residual decision,
    implement only its missing evidence: worker-generated polluted-content
    dispatch, the false/missed-escalation report, intended-Linux containment, and
    hosted/repeated evidence. Do not rebuild already evidenced W8/W21/W22 behavior.
-5. Schedule maintenance for the GitHub Actions warning that the pinned
+9. Schedule maintenance for the GitHub Actions warning that the pinned
    `pnpm/action-setup` action targets deprecated Node.js 20 and is currently being
    forced onto Node.js 24. It did not fail either Phase-1 or post-merge CI.
 
