@@ -49,19 +49,22 @@ children; missing or stronger-than-confirm setup risk fails closed. Protected li
 pre-activation evidence, a generalized credential-isolated native-worker loop, trusted
 ceremony design, and cross-platform assurance remain goals.
 
-The installation, provider accounts, billing, credentials, policy, and audit data
-belong to the user. The intended setup flow stores Nebius, optional Tavily, and
-operation-specific credentials through a trusted local ceremony into the host
-operating system's credential store. The runner and models receive typed results,
-never reusable keys. The infrastructure now provides provider-scoped contracts,
-deterministic fakes, trusted setup orchestration, a tested Windows Credential
-Manager adapter, a deterministic Linux Secret Service adapter, and a passing real
-disposable Secret Service lifecycle in an isolated Linux user session. The CLI
-now supports provider enrollment, non-secret status, and exact-confirmation
-revocation. Enrollment verifies through one fixed read-only provider endpoint
-before storage. The protected Nebius mission-brief and Super-to-Ultra Guardian
-path passes; protected Linux provider-credential evidence and macOS support
-remain pending. `.env.local` remains development-only.
+The normal installation, provider accounts, billing, credentials, policy, and
+audit data belong to the user. ADR-0041 separately defines a project-funded
+managed-demo profile: its planned Linux deployment uses fixed Nebius SecretStash
+resources and isolated public/judge credential pools. That adapter is not yet
+implemented. BYOK uses the host operating system's credential store. The runner
+and models receive typed results, never reusable keys.
+
+The infrastructure currently provides registered provider/slot contracts,
+deterministic fakes, setup orchestration, a tested Windows Credential Manager
+adapter, a deterministic Linux Secret Service adapter, and a passing disposable
+Secret Service lifecycle in an isolated Linux user session. The existing CLI can
+exercise enrollment, status, and revocation, but its raw-terminal input is not the
+finished enrollment product: the protected Linux paste journey failed before
+provider use. Protected Linux provider-credential evidence, a reviewed local
+setup surface, and macOS support remain pending. `.env.local` remains
+development-only.
 
 ## Current status
 
@@ -311,7 +314,7 @@ excluding reserved `.guardian` state. Guardian works in a separate session copy;
 it does not write changes back to the source checkout and deletes the copy when
 the supervisor closes.
 
-On supported Windows and Linux hosts, credential setup is interactive:
+The current development CLI shape is:
 
 ```powershell
 guardian setup nebius
@@ -319,10 +322,13 @@ guardian setup status nebius
 guardian setup revoke nebius
 ```
 
-Enrollment sends the entered credential only to the provider's fixed read-only
-verification endpoint, then stores it in Windows Credential Manager or the Linux
-Secret Service if the response is valid. Tavily replaces `nebius` for its typed slot. GitHub enrollment
-uses an expiring GitHub App device flow instead of pasted or ambient tokens:
+Do not use this raw-terminal flow for a protected Linux credential yet. It is
+being replaced by the preflighted, user-owned setup surface in the
+[credential custody plan](docs/development/credential-custody-plan.md). Its
+deterministic orchestration verifies against a fixed read-only provider endpoint
+before writing to Windows Credential Manager or Linux Secret Service. Tavily uses
+the same registered `default` slot. GitHub uses an expiring GitHub App device flow
+instead of pasted or ambient tokens:
 
 ```powershell
 $env:GUARDIAN_GITHUB_APP_CLIENT_ID = "Iv23liP8Sq3ZEAyeIHju"

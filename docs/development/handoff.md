@@ -7,6 +7,126 @@ as context and sequencing guidance, not as the next session's goal by itself.
 Durable choices live in ADRs, verified guarantees in `docs/security-claims.md`,
 and checkpoint history in `docs/development/roadmap.md`.
 
+## STOP: secret enrollment is the only active objective
+
+Update after user review: the exposed Nebius credential described below was
+revoked at the provider and replaced. The retired value remains prohibited from
+output or reuse. The user accepted the managed-demo/BYOK split in
+[ADR-0041](../adr/0041-managed-demo-and-byok-credential-custody.md); the active
+local execution sequence is maintained in
+[the credential custody plan](credential-custody-plan.md). Remote repository,
+deployment, and provider mutations remain paused.
+
+The user has explicitly stopped all roadmap, C6, W27, provider-evidence, npm
+support, GitHub, merge, and release work. Do not resume any of it, even if it is
+the next item elsewhere in this handoff or the roadmap. The only active objective
+is to design, implement, and prove a comprehensive, consistent, repeatable method
+for users to enroll credentials for every supported service without routing raw
+secret values through an agent or guessing which terminal or prompt owns input.
+
+This priority follows a real credential-handling failure in this session:
+
+1. A protected Linux provider test waited in a detached execution session. The
+   app request to show that session returned `queued`, but the agent incorrectly
+   told the user that its hidden prompt was available. The user followed that
+   instruction and pasted a Nebius credential into the ordinary Codex PowerShell
+   terminal, where PowerShell treated it as a command and the terminal capture
+   recorded it. That credential must be treated as exposed. Never reproduce it.
+2. The detached Linux enrollment was cancelled before a credential write, and
+   its disposable staging directory was verified absent afterward.
+3. The session then added two attempted visible launchers. A user-launched run
+   reached the literal `Enter nebius credential:` prompt, but paste/input produced
+   `guardian failed: credential input is invalid`. No protected provider evidence
+   was obtained. The uncommitted launchers and their prompt-bearing protected
+   harness were removed after their diagnostic result was recorded here; they are
+   not an accepted enrollment interface or commands to recreate. Their
+   post-failure cleanup was not separately inspected after the user ended the
+   session.
+4. The failure demonstrates that a hidden-input primitive is not a usable
+   enrollment product by itself. Instructions such as "trust this prompt and
+   paste" are not an acceptable boundary, and an agent-created terminal is not a
+   trusted entry point merely because it is visible.
+
+### Required product outcome
+
+Begin the next session with credential enrollment as a product and security
+boundary, not as test-harness plumbing. Before implementation, inventory every
+current credential consumer, provider, slot, operating-system store, runtime
+host, setup command, verification path, and protected test. Then record the
+chosen user journey and trust boundaries in an ADR and reconcile the product
+contract, architecture, threat model, and security claims.
+
+The finished flow must provide all of the following:
+
+- one stable, user-operated local entry point for enroll, replace/rotate, status,
+  and local revoke/delete operations;
+- an explicit provider and destination/store selection derived from typed
+  supported capabilities rather than arbitrary names, paths, URLs, commands, or
+  environment variables;
+- a prompt or local UI that is visibly owned by the enrollment process, masks
+  input, reliably accepts typing and clipboard paste on each supported host, and
+  can be cancelled without a partial write;
+- preflight checks for interactivity, runtime, credential-store availability,
+  session-bus/keyring state, provider configuration, and destination suitability
+  **before** requesting a secret;
+- direct transfer from the trusted local input component to the narrow
+  credential-store adapter: never chat/model context, agent tool arguments,
+  command-line arguments, shell history, environment variables, temporary files,
+  logs, traces, audit records, or public errors;
+- verification before commit, transactional replacement with rollback or
+  preservation of the last valid credential on failure, deterministic buffer
+  zeroing, and explicit cleanup of temporary sessions and stores;
+- sanitized, actionable errors that distinguish unavailable input, invalid or
+  empty input, provider rejection, unsupported target, and store failure without
+  revealing credential material;
+- sanitized status that proves the expected provider/slot is available in the
+  intended runtime without returning or comparing the secret outside the
+  credential-holding process;
+- a provider-extension contract so adding future services does not create a new
+  ad hoc upload path;
+- automated unit, integration, near-miss, redaction, history/argv/environment,
+  cancellation, rollback, and cross-store routing tests, plus protected hands-on
+  usability evidence for every claimed Windows and Linux/WSL path;
+- a recovery procedure for accidental disclosure and a clear distinction between
+  persistent user enrollment and deliberately disposable protected-test
+  credentials.
+
+Do not ask the user for another credential while developing this flow. Use only
+obvious fake fixtures until the complete entry point passes non-secret tests and
+the user has reviewed the exact interaction. Do not use an agent-spawned or
+detached terminal for credential entry. The user must launch the trusted local
+entry point themselves, and the program must make its identity and destination
+unambiguous before accepting input.
+
+### Completion gate
+
+This objective is not complete until a user can launch one documented command or
+local application, select a supported service and intended store, enter or paste
+the credential exactly once, receive sanitized verification/status, and then run
+a real credential-consuming operation from that intended runtime without
+re-entering or relocating the credential. Failure and cancellation must leave no
+new credential or secret-bearing artifact. Evidence must include adversarial
+inspection of process arguments, environment, shell history, files, logs, traces,
+audit output, and public errors. Only after the user reviews this flow and the
+evidence passes may any older roadmap action below be reconsidered.
+
+### Paused worktree state
+
+- Current branch: `codex/13-c6-linux-provider-containment`.
+- The worktree contains uncommitted W27 credential-service containment changes,
+  ADR-0040, and protected-provider service-boundary changes. The failed enrollment
+  launchers and prompt-bearing protected harness were removed after review. Do not
+  represent the remaining work as completed or tested enrollment UX.
+- The broader W27 changes had passed focused and ordinary checks before the
+  protected provider attempt, but no protected Linux provider credential result
+  exists. The final user-launched attempt stopped at `credential input is
+  invalid`.
+- The npm advisory investigation found repeatable bulk-endpoint timeouts while
+  npm status reported operational. The npm support page was blocked by human
+  verification and no report was submitted. This is paused.
+- PR #17, issue #13, all pushes, pull-request updates, GitHub evidence, merges,
+  releases, deployments, and publication are paused.
+
 ## Start here
 
 - **Active checkpoint:** C6 on issue
