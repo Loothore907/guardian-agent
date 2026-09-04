@@ -1,6 +1,6 @@
 # ADR-0042: One-time loopback BYOK enrollment surface
 
-- Status: Accepted for Windows BYOK; Linux activation pending interaction review
+- Status: Windows interaction accepted; activation pending corrected-autofill recheck
 - Date: 2026-09-03
 - Windows interaction accepted: 2026-09-04
 - Extends: ADR-0007, ADR-0008, ADR-0009, and ADR-0041
@@ -39,19 +39,20 @@ Submission is accepted only when all of these checks hold:
 - unexpired five-minute lifetime and unused state.
 
 The page uses a nonce-bound Content Security Policy, disables all other resource
-types and framing, sends no CORS permission, stores no cache or referrer, disables
-credential autofill hints, clears the input immediately, and zeroes its encoded
-byte buffer after submission. The local Node boundary zeroes request chunks and
-the callback-scoped secret buffer. Provider diagnostics are replaced with a
-fixed failure message.
+types and framing, sends no CORS permission, stores no cache or referrer, requests
+autocomplete suppression, warns against browser-password-manager storage, clears
+the input immediately, and zeroes its encoded byte buffer after submission. The
+local Node boundary zeroes request chunks and the callback-scoped secret buffer.
+Provider diagnostics are replaced with a fixed failure message.
 
 The CLI exposes the fake ceremony as
 `guardian credentials review <nebius|tavily>`. Review mode preflights the actual
 platform store, labels the page as fake-only, and has no provider or store-write
 callback. The real enrollment composition is compiled and deterministically
-tested. It is enabled on Windows after the accepted hands-on review and remains
-disabled on Linux until the same interaction passes there. `guardian setup`
-remains a compatibility alias. Each claimed host still requires replacement,
+tested. The first Windows review exposed an autofill hint that could encourage
+browser persistence, so all real enrollment remains disabled until the corrected
+field is rechecked. Linux also requires the same interaction on its intended
+host. `guardian setup` remains a compatibility alias. Each claimed host still requires replacement,
 provider-verification, cancellation, terminal-loss, browser-close, expiry,
 concurrency, and secret-corpus evidence.
 
@@ -97,6 +98,11 @@ reached the generic failed outcome, exposing that the page did not state its
 ASCII/no-space constraint. A later browser-generated fake password submitted and
 was explicitly reported as discarded with nothing stored or sent. A separate run
 cancelled successfully. The page now states and checks the input constraint before
-submission. No submitted value or one-time URL was copied into the repository or
-agent conversation. This accepts the interaction for Windows only; it does not
+submission. The user's browser also offered a generated password, revealing that
+`autocomplete="new-password"` encouraged unintended browser persistence. The
+field now requests autocomplete suppression, includes common password-manager
+ignore hints, omits a credential-like form name, and warns the user not to save
+the value in the browser. No submitted value or one-time URL was copied into the
+repository or agent conversation. The interaction is otherwise accepted, but
+real activation waits for a short corrected-field recheck. This does not
 establish a real credential write, provider verification, or Linux/WSL usability.

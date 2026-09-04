@@ -47,6 +47,9 @@ describe("local credential enrollment surface", () => {
     expect(body).toContain("Add Nebius credential");
     expect(body).toContain("linux secret service");
     expect(body).toContain("8–4,096 ASCII characters with no spaces");
+    expect(body).toContain('autocomplete="off"');
+    expect(body).not.toContain('autocomplete="new-password"');
+    expect(body).toContain("Do not save this value in the browser");
     expect(body).not.toContain(capability);
   });
 

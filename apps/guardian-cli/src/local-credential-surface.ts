@@ -72,8 +72,8 @@ function page(
     <p>${explanation}</p>
     <form id="credential-form">
       <label for="credential">Credential</label>
-      <input id="credential" name="credential" type="password" minlength="8" maxlength="4096" required autocomplete="new-password" autocapitalize="off" spellcheck="false" aria-describedby="credential-help">
-      <p id="credential-help">Use 8–4,096 ASCII characters with no spaces.</p>
+      <input id="credential" type="password" minlength="8" maxlength="4096" required autocomplete="off" autocapitalize="off" spellcheck="false" data-1p-ignore="true" data-lpignore="true" data-bwignore="true" aria-describedby="credential-help">
+      <p id="credential-help">Use 8–4,096 ASCII characters with no spaces. Do not save this value in the browser or a browser password manager.</p>
       <p id="status" role="status" aria-live="polite"></p>
       <menu><button id="cancel" type="button">Cancel</button><button type="submit">${submitLabel}</button></menu>
     </form>

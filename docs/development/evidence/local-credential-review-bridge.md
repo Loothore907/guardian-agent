@@ -3,8 +3,8 @@
 - Date: 2026-09-04
 - Scope: deterministic BYOK browser ceremony, CLI composition, and fake-review
   gate
-- Assurance: Windows interaction accepted; real enrollment and provider
-  consumption pending
+- Assurance: Windows interaction accepted except corrected-autofill recheck; real
+  enrollment and provider consumption pending
 
 ## Outcome
 
@@ -17,9 +17,10 @@ The executable `review` operation preflights the actual platform credential stor
 before opening an ephemeral `127.0.0.1` surface. Its callback does not construct a
 provider verifier and cannot write, read, or delete credential material. The page
 labels itself as fake-only. Real browser enrollment is compiled and tested through
-fixed provider verification and transactional store replacement. Windows
-activation is now enabled after hands-on acceptance. Linux activation remains
-disabled pending the same platform review.
+fixed provider verification and transactional store replacement. The first
+Windows review exposed an unwanted generated-password prompt, so activation is
+again disabled pending a corrected-field recheck. Linux remains disabled pending
+the same platform review.
 
 ## Deterministic controls
 
@@ -33,7 +34,8 @@ disabled pending the same platform review.
   absent from the document, and is zeroed by the server when it closes.
 - The page applies a nonce-bound default-deny content security policy, no-store,
   no-referrer, same-origin resource/opener controls, disabled privileged browser
-  features, and no credential autofill.
+  features, autocomplete-off and common password-manager ignore hints, no
+  credential-like form name, and an explicit warning against browser storage.
 - Submission accepts 8-4,096 printable non-whitespace ASCII bytes. Browser,
   request-chunk, callback, verification, snapshot, and store-use byte copies are
   cleared on their documented paths.
@@ -79,6 +81,9 @@ browser-generated fake password was accepted and the terminal reported that it
 was discarded with nothing stored or sent. A separate invocation cancelled
 successfully. The first result exposed unclear input requirements, so the page now
 states and checks its 8-4,096 printable ASCII, no-space constraint before sending.
+The generated-password offer also exposed that the former `new-password` hint
+could encourage browser persistence. It has been replaced with autocomplete-off,
+common password-manager ignore hints, no form name, and explicit warning copy.
 No submitted value or one-time URL was copied into chat or repository state.
 
 ## Non-claims and next step
@@ -88,7 +93,7 @@ No submitted value or one-time URL was copied into chat or repository state.
 - Windows Credential Manager enrollment, WSL/Linux loopback forwarding,
   persistent Linux Secret Service setup, and protected provider consumption are
   not established by this fake review.
-- ADR-0042 is accepted for Windows. The next action is user-operated Windows
-  enrollment of one provider from the same trusted terminal/browser boundary,
-  followed by sanitized status and bounded live inference. Linux remains
-  separately review-gated.
+- ADR-0042 records the otherwise accepted Windows interaction. The next action is
+  a short fake review of the corrected field. Only after that passes may Windows
+  enrollment be enabled, followed by sanitized status and bounded live inference.
+  Linux remains separately review-gated.

@@ -37,8 +37,9 @@ the primary roadmap is the BYOK enrollment gate that interrupted the protected
 Linux inference work. The failed raw-terminal input route is removed from the
 production command. `guardian credentials review <nebius|tavily>` now exercises
 the preflighted one-use loopback ceremony with no provider or store write, while
-the compiled transactional enrollment path is enabled on Windows after hands-on
-acceptance. Linux remains review-gated.
+the compiled transactional enrollment path remains disabled. The first Windows
+review passed submission/cancellation but exposed an unwanted generated-password
+hint; activation waits for a corrected-field recheck. Linux remains review-gated.
 
 After that review, enable one provider at a time, enroll into the intended OS
 store from a user-launched process, verify only sanitized availability, and

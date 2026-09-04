@@ -21,14 +21,17 @@ platform store and serves the five-minute one-use loopback ceremony, but its
 review callback can neither contact a provider nor write the store. The failed
 raw-terminal reader is no longer a production route. The real browser-to-fixed-
 verifier-to-transactional-store composition is compiled, tested, and enabled
-only on Windows after the user accepted paste/autofill and cancellation.
-Linux remains disabled pending the same platform review. Do not ask the user to
-place a real credential anywhere except the accepted user-operated Windows flow.
+nowhere until a corrected-field recheck. The Windows review passed paste and
+cancellation but exposed an unwanted browser-generated-password prompt; the
+field now requests autocomplete suppression and warns against browser storage.
+Linux remains disabled pending the same platform review. Do not ask the user for
+a real credential before the Windows recheck passes.
 
-The next gate is user-operated Windows enrollment from their own trusted terminal
-and normal browser, followed by sanitized status and bounded live inference. The
-Linux review and protected Linux Nebius path remain the following C6 platform
-gate before broader Linux worker or assembled flows.
+The next gate is one corrected fake Windows review. If it passes, enable
+user-operated Windows enrollment from the same trusted terminal and normal
+browser, followed by sanitized status and bounded live inference. The Linux
+review and protected Linux Nebius path remain the following C6 platform gate
+before broader Linux worker or assembled flows.
 
 The current branch is `codex/13-c6-linux-provider-containment`. Local commits
 from `4fa4f42` through the current branch head implement:

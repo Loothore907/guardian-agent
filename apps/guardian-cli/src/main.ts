@@ -20,7 +20,8 @@ import {
   runGuardianSetupStatus,
 } from "./setup.js";
 
-const LOCAL_BROWSER_ENROLLMENT_ACCEPTED_RUNTIMES: ReadonlySet<NodeJS.Platform> = new Set(["win32"]);
+const LOCAL_BROWSER_ENROLLMENT_ACCEPTED_RUNTIMES: ReadonlySet<NodeJS.Platform> =
+  new Set<NodeJS.Platform>();
 
 function assertInteractiveTerminal(): void {
   if (process.stdin.isTTY !== true || process.stdout.isTTY !== true) {
