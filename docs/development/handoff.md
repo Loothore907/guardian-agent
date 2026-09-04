@@ -10,9 +10,10 @@ and checkpoint history in `docs/development/roadmap.md`.
 ## Start here
 
 - **Active checkpoint:** C6 on issue
-  [#13](https://github.com/Loothore907/guardian-agent/issues/13), branch
-  `codex/13-c6-linux-peer-credentials`, PR
-  [#17](https://github.com/Loothore907/guardian-agent/pull/17).
+  [#13](https://github.com/Loothore907/guardian-agent/issues/13). PR
+  [#17](https://github.com/Loothore907/guardian-agent/pull/17) remains on
+  `codex/13-c6-linux-peer-credentials`; W26 is stacked on branch
+  `codex/13-c6-linux-secret-service`.
 - **Logical transition:** pre-activation mission formation, trusted worker
   assignment, W1 exact turns, the W2 credential-safe workspace, W3 exact
   one-tool/result execution, W4 contained denial/revocation, the W5 controlled
@@ -46,8 +47,9 @@ and checkpoint history in `docs/development/roadmap.md`.
   `bb30574`, with the persistent-plan-authority documentation at `6dae2f9`.
   PR #17 is open and mergeable. Its required and native Linux checks passed on
   all three executions, but the npm advisory endpoint timed out three times per
-  execution, so the required audit remains red. Issue #13 remains open. No
-  merge, release, deployment, or publication followed.
+  execution, so the required audit remains red. W26 now passes a real disposable
+  Secret Service lifecycle in an isolated Linux user session. Issue #13 remains
+  open. No merge, release, deployment, or publication followed.
 - **Phase-1 review checkpoint:** review started from clean, synchronized head
   `b9497a9`. The approved branch update contains a fail-closed broker correction,
   its regression tests, the C6 review matrix, claim/roadmap reconciliation, and
@@ -83,13 +85,13 @@ and checkpoint history in `docs/development/roadmap.md`.
   stage, copy, summarize, or use it as the installation design. Never print or
   export credential-store values.
 
-## Session closeout: W25 and plan-bound authority
+## Session closeout: PR #17 audit review and W26
 
 ### Current state
 
-- Branch `codex/13-c6-linux-peer-credentials` is clean and synchronized with its
-  remote. The final implementation is `bb30574`, plan-authority design is
-  `6dae2f9`, and the first PR-evidence update is `a2f704c`.
+- PR #17 branch `codex/13-c6-linux-peer-credentials` is synchronized with its
+  remote at `bca4313`. The W26 lifecycle work is isolated on stacked branch
+  `codex/13-c6-linux-secret-service`.
 - PR [#17](https://github.com/Loothore907/guardian-agent/pull/17) is open,
   non-draft, and mergeable, with no external reviews. It remains intentionally
   unmerged because its required CI check has no successful dependency-audit
@@ -121,16 +123,27 @@ and checkpoint history in `docs/development/roadmap.md`.
    npm's advisory bulk endpoint and received timeout error 23. A local read-only
    query reproduced the same endpoint timeout; no vulnerability assessment was
    returned.
+6. Rechecked the npm advisory bulk endpoint with a minimal package request; it
+   still timed out with zero response bytes while npm's lightweight ping endpoint
+   remained responsive. Dependabot reports no open repository alerts. This is
+   evidence of advisory-endpoint friction, not evidence that dependencies are
+   vulnerability-free.
+7. Installed `libsecret-tools` and `gnome-keyring` in the WSL development image.
+   The existing login session timed out fail closed, while a disposable isolated
+   user D-Bus session passed the complete real Secret Service lifecycle. The W26
+   complete Linux gate passes 63 files / 379 tests, eight SQLite tests, two reset
+   tests, 181 modules / 364 dependencies, build, and the 2/2 platform probe.
 
 ### Pending debt and next actions
 
 1. **Required before PR #17 can be treated as green:** rerun the required CI
    audit once npm's advisory endpoint is responsive. Do not bypass, downgrade,
    or misreport an unavailable audit as a passing vulnerability check.
-2. **Remaining issue #13 / C6 exit evidence:** exercise a real Linux Secret
-   Service write/lookup/delete lifecycle, verify broader credential-holding
-   service containment, and capture narrow protected Linux GitHub read/merge
-   evidence with exact request and resource-version binding.
+2. **Remaining issue #13 / C6 exit evidence:** W26 now passes a real disposable
+   Linux Secret Service lifecycle in an isolated user session. Verify intended-host
+   credential-service containment and a protected provider credential, then capture
+   narrow protected Linux GitHub read/merge evidence with exact request and
+   resource-version binding.
 3. **Documented operational limitations:** GitHub automatic credential refresh
    still receives provider HTTP 500, with attended re-enrollment as the bounded
    fallback; the pinned `pnpm/action-setup` version emits a Node.js 20 deprecation
@@ -613,18 +626,20 @@ filesystem, credential, network, lifecycle, and authority evidence.
 
 ## Current C6 Linux exit plan
 
-W24 is the first post-merge Linux slice. It fixes a discovered `0644` SQLite
-WAL/SHM sidecar mode, verifies current-user ownership and mode `0600` for the
-authority database files and Unix socket, rejects broad and symbolic-link state
-files, and makes the active Linux probe an explicit Ubuntu CI step. Its WSL2
-Node 24 run passes two of two tests.
+W24 fixes the SQLite WAL/SHM sidecar mode and actively verifies current-user
+ownership and mode `0600` for the authority database files and Unix socket. W25
+then authenticates authority peers with kernel `SO_PEERCRED` PID/UID/GID plus
+supervised ancestry before parsing requests, and adds a fixed, fail-closed
+`/usr/bin/secret-tool` adapter.
 
-Next, record and implement the OS peer-identity choice. Node 24 exposes no public
-Linux `SO_PEERCRED` accessor, so this requires either a narrow native verifier or
-a revised supervised IPC topology. Then select Linux Secret Service integration
-or the ADR-0008 secured fallback, run credential isolation on that host, and only
-afterward request separate authorization for a protected Linux GitHub read/merge.
-C6 remains In progress throughout; W24 does not widen Enforced claims.
+W26 installs the Linux client/service prerequisites in the WSL development image
+and passes missing/write/isolation/status/rotation/scoped-use/zeroing/delete against
+a real disposable GNOME Keyring Secret Service in an isolated user session. The
+existing WSL login session could not start its systemd user session and the first
+write timed out fail closed, so this is compatibility evidence rather than a claim
+about a persistent production desktop keyring. Intended-host credential-service
+containment, a protected provider credential, and narrow Linux GitHub read/merge
+remain. C6 remains In progress and no wider Enforced claim is made.
 
 ## Completed W14-W23 execution history
 
@@ -849,7 +864,7 @@ rejected in the Linux platform probe.
 The W25 platform credential selector uses Windows Credential Manager on Windows
 and fixed `/usr/bin/secret-tool` Secret Service operations on Linux. Secrets use
 stdin only, output is bounded and zeroed, helper diagnostics are sanitized, and
-there is no fallback. The current WSL image has a session bus but lacks
+there is no fallback. Its initial WSL image had a session bus but lacked
 `secret-tool`; the active non-secret status probe failed closed as designed. No
 credential or provider was used. See
 [`w25-linux-peer-and-credentials.md`](evidence/w25-linux-peer-and-credentials.md).
@@ -857,14 +872,21 @@ The W25 complete local gate passes 63 Vitest files / 376 tests, seven SQLite
 spike tests, two reset tests, 180 modules / 362 dependencies, and the production
 build.
 
+W26 then installed the Secret Service prerequisites in the development image and
+added a gated real-service lifecycle test. The existing login session could not
+start its systemd user session and timed out fail closed; a disposable isolated
+user D-Bus session passed the lifecycle and complete Linux gate. See
+[`w26-linux-secret-service-lifecycle.md`](evidence/w26-linux-secret-service-lifecycle.md).
+
 ### Recommended next-session sequence
 
 1. Keep issue #13 open unless every C6 exit criterion is satisfied or remaining
    criteria are explicitly split into named follow-up issues with roadmap/claim
    updates. A merged broker-core PR is not by itself proof that all of C6 passed.
-2. Complete native Ubuntu CI for W25, then provide `libsecret-tools` and a running
-   Secret Service in the intended Linux user session. Under separate protected
-   authorization, prove disposable credential write/lookup/delete and the narrow
+2. Restore PR #17's required production audit once npm's advisory endpoint is
+   responsive. W26 now proves a disposable real Secret Service lifecycle; next
+   verify intended-host credential-service containment and a protected provider
+   credential, then obtain separate protected authorization for the narrow Linux
    GitHub read/merge path. Do not silently defer that current C6 exit criterion.
 3. Keep the reproducible GitHub refresh `HTTP 500` as an external blocker with
    fresh attended enrollment as the bounded fallback. Do not spin on retries or
@@ -976,10 +998,11 @@ forced onto Node.js 24. The GitHub refresh endpoint's documented HTTP 500 remain
 an operational limitation. W24 now actively passes the intended-Linux
 database/socket permission probe and fixes the SQLite sidecar mode discovered by
 its first run. W25 authenticates Linux authority peers before request parsing and
-adds a fail-closed Secret Service adapter. Protected Linux credential resolution,
-service containment, and narrow GitHub read/merge remain the C6 blocker. WebAuthn
-and the single-invocation coordinator remain later evidence slices; no broader
-guarantee is claimed.
+adds a fail-closed Secret Service adapter. W26 passes a real disposable lifecycle
+in an isolated user session. Intended-host credential-service containment,
+protected Linux provider-credential resolution, and narrow GitHub read/merge
+remain the C6 blocker. WebAuthn and the single-invocation coordinator remain later
+evidence slices; no broader guarantee is claimed.
 
 PR #17's last completed CI evidence is at `a2f704c`. Across the original CI run,
 one bounded retry, and that head's run, the required project checks and native
@@ -1073,6 +1096,7 @@ wrapper when the frozen workspace is already usable.
 - [C6 authority service evidence](evidence/c6-authority-service.md)
 - [C6 Linux platform permission evidence](evidence/c6-linux-platform-permissions.md)
 - [W25 Linux peer and credential evidence](evidence/w25-linux-peer-and-credentials.md)
+- [W26 Linux Secret Service lifecycle evidence](evidence/w26-linux-secret-service-lifecycle.md)
 - [C6 terminal bootstrap evidence](evidence/c6-terminal-bootstrap.md)
 - [C6 interaction boundary evidence](evidence/c6-interaction-boundary.md)
 - [C6 process supervision evidence](evidence/c6-process-supervision.md)

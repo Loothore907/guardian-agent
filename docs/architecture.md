@@ -414,10 +414,12 @@ account metadata. The executable Windows/Linux CLI supports enroll, non-secret s
 and exact-confirmation revoke. Enrollment calls only the fixed read-only Nebius
 Token Factory models, Tavily usage, or GitHub authenticated-user endpoint, rejects
 redirects and oversized or malformed responses, and sanitizes every failure.
-Protected Linux credential lifecycle evidence and a macOS adapter remain
-incomplete; see the
-[C6 credential-enrollment evidence](development/evidence/c6-credential-enrollment.md)
-and [ADR-0038](adr/0038-linux-peer-identity-and-secret-service.md).
+An isolated disposable Linux user session passes a real Secret Service
+write/lookup/rotation/delete lifecycle. Protected provider-credential resolution,
+broader service containment, and a macOS adapter remain incomplete; see the
+[C6 credential-enrollment evidence](development/evidence/c6-credential-enrollment.md),
+[ADR-0038](adr/0038-linux-peer-identity-and-secret-service.md), and the
+[W26 lifecycle evidence](development/evidence/w26-linux-secret-service-lifecycle.md).
 
 The C6 single-host authority store is a narrow SQLite infrastructure package that
 depends only on strict contracts. The central authority service is its sole
