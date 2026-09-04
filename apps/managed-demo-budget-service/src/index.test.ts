@@ -10,6 +10,7 @@ import {
 } from "@guardian/contracts";
 import {
   LocalManagedDemoBudgetIpcClient,
+  ManagedDemoJourneyBudgetController,
   createManagedDemoBudgetIpcEndpoint,
 } from "@guardian/managed-demo-budget-client";
 import type { ManagedDemoBudgetIpcError } from "@guardian/managed-demo-budget-client";
@@ -121,7 +122,9 @@ describe("managed-demo budget service", () => {
       "journey.settle",
     ]);
     const interactionBinding = binding("interaction_service", ["usage.record"]);
+    const guardianBinding = binding("guardian_service", ["usage.record"]);
     const workerBinding = binding("worker_service", ["usage.record"]);
+    const researchBinding = binding("research_service", ["usage.record"]);
     const operatorBinding = binding("operator", ["budget.snapshot"]);
     let now = "2026-11-01T12:00:00.000Z";
     const service = await startManagedDemoBudgetService(
@@ -139,7 +142,14 @@ describe("managed-demo budget service", () => {
         },
         policy: INITIAL_PUBLIC_DEMO_BUDGET_POLICY,
         prices: prices(),
-        capabilities: [controllerBinding, interactionBinding, workerBinding, operatorBinding],
+        capabilities: [
+          controllerBinding,
+          interactionBinding,
+          guardianBinding,
+          workerBinding,
+          researchBinding,
+          operatorBinding,
+        ],
       },
       {
         now: () => now,
@@ -148,18 +158,25 @@ describe("managed-demo budget service", () => {
       },
     );
     try {
-      const controller = new LocalManagedDemoBudgetIpcClient({
-        endpoint,
-        binding: controllerBinding,
-      });
-      await expect(
-        controller.admit({
+      const controller = new ManagedDemoJourneyBudgetController(
+        {
           schemaVersion: 1,
-          journeyId: JOURNEY,
-          sourceFingerprint: "a".repeat(64),
-          requestedAt: now,
-        }),
-      ).resolves.toMatchObject({ state: "admitted", reservationId: RESERVATION });
+          controller: { schemaVersion: 1, endpoint, binding: controllerBinding },
+          usage: {
+            interaction: { schemaVersion: 1, endpoint, binding: interactionBinding },
+            guardian: { schemaVersion: 1, endpoint, binding: guardianBinding },
+            worker: { schemaVersion: 1, endpoint, binding: workerBinding },
+            research: { schemaVersion: 1, endpoint, binding: researchBinding },
+          },
+        },
+        { now: () => now },
+      );
+      const begun = await controller.begin(JOURNEY, "a".repeat(64));
+      expect(begun).toMatchObject({
+        state: "admitted",
+        journey: { reservationId: RESERVATION, journeyId: JOURNEY },
+      });
+      if (begun.state !== "admitted") throw new TypeError("test journey was not admitted");
 
       now = "2026-11-01T12:00:30.000Z";
       const workerUsage = {
@@ -174,26 +191,28 @@ describe("managed-demo budget service", () => {
         observedAt: now,
       } as const;
       const interaction = new LocalManagedDemoBudgetIpcClient({
-        endpoint,
-        binding: interactionBinding,
+        endpoint: begun.journey.reporters.interaction.budget.endpoint,
+        binding: begun.journey.reporters.interaction.budget.binding,
       });
       await expect(
         interaction.recordUsage(RESERVATION, JOURNEY, workerUsage),
       ).rejects.toMatchObject({ reason: "operation_not_allowed" });
-      const worker = new LocalManagedDemoBudgetIpcClient({ endpoint, binding: workerBinding });
+      const worker = new LocalManagedDemoBudgetIpcClient({
+        endpoint: begun.journey.reporters.worker.budget.endpoint,
+        binding: begun.journey.reporters.worker.budget.binding,
+      });
       await expect(
         worker.recordUsage(RESERVATION, "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", workerUsage),
       ).rejects.toMatchObject({ reason: "binding_mismatch" });
       await expect(worker.recordUsage(RESERVATION, JOURNEY, workerUsage)).resolves.toBeUndefined();
 
       now = "2026-11-01T12:01:00.000Z";
-      await expect(
-        controller.settle(RESERVATION, JOURNEY, "completed", now),
-      ).resolves.toMatchObject({
+      await expect(begun.journey.settle("completed", now)).resolves.toMatchObject({
         status: "settled",
         chargedMicroUsd: 2,
         budget: { pool: "public", totalCompletedJourneys: 1 },
       });
+      await expect(begun.journey.settle("completed", now)).rejects.toThrow(/already started/u);
       const operator = new LocalManagedDemoBudgetIpcClient({ endpoint, binding: operatorBinding });
       await expect(operator.snapshot()).resolves.toMatchObject({
         pool: "public",

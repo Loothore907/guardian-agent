@@ -4,6 +4,7 @@ import {
   INITIAL_PUBLIC_DEMO_BUDGET_POLICY,
   ManagedDemoBudgetIpcRequestSchema,
   ManagedDemoBudgetServiceProcessConfigSchema,
+  ManagedDemoJourneyBudgetClientBundleSchema,
   ManagedDemoWorkerUsageReporterConfigSchema,
 } from "./index.js";
 
@@ -139,6 +140,69 @@ describe("managed-demo budget IPC contracts", () => {
           binding: {
             ...reporter.budget.binding,
             allowedOperations: ["usage.record", "admission.request"],
+          },
+        },
+      }),
+    ).toThrow();
+  });
+
+  it("requires one endpoint and distinct exact-role capabilities for a journey bundle", () => {
+    const capabilities = {
+      journey_controller: "81111111-1111-4111-8111-111111111111",
+      interaction_service: "82222222-2222-4222-8222-222222222222",
+      guardian_service: "83333333-3333-4333-8333-333333333333",
+      worker_service: "84444444-4444-4444-8444-444444444444",
+      research_service: "85555555-5555-4555-8555-555555555555",
+    } as const;
+    const client = (
+      role:
+        | "journey_controller"
+        | "interaction_service"
+        | "guardian_service"
+        | "worker_service"
+        | "research_service",
+      operations: readonly ("admission.request" | "journey.settle" | "usage.record")[],
+    ) => ({
+      schemaVersion: 1 as const,
+      endpoint: "managed-demo-endpoint",
+      binding: {
+        ...capability,
+        capability: capabilities[role],
+        callerRole: role,
+        allowedOperations: operations,
+      },
+    });
+    const bundle = {
+      schemaVersion: 1,
+      controller: client("journey_controller", ["admission.request", "journey.settle"]),
+      usage: {
+        interaction: client("interaction_service", ["usage.record"]),
+        guardian: client("guardian_service", ["usage.record"]),
+        worker: client("worker_service", ["usage.record"]),
+        research: client("research_service", ["usage.record"]),
+      },
+    } as const;
+    expect(ManagedDemoJourneyBudgetClientBundleSchema.parse(bundle)).toEqual(bundle);
+    expect(() =>
+      ManagedDemoJourneyBudgetClientBundleSchema.parse({
+        ...bundle,
+        usage: {
+          ...bundle.usage,
+          worker: { ...bundle.usage.worker, endpoint: "another-endpoint" },
+        },
+      }),
+    ).toThrow();
+    expect(() =>
+      ManagedDemoJourneyBudgetClientBundleSchema.parse({
+        ...bundle,
+        usage: {
+          ...bundle.usage,
+          worker: {
+            ...bundle.usage.worker,
+            binding: {
+              ...bundle.usage.worker.binding,
+              capability: bundle.usage.guardian.binding.capability,
+            },
           },
         },
       }),

@@ -235,6 +235,89 @@ export type ManagedDemoResearchUsageReporterConfig = DeepReadonly<
   z.infer<typeof ManagedDemoResearchUsageReporterConfigSchema>
 >;
 
+export const ManagedDemoJourneyBudgetClientBundleSchema = z
+  .strictObject({
+    schemaVersion: ContractVersionSchema,
+    controller: ManagedDemoBudgetClientProcessConfigSchema,
+    usage: z.strictObject({
+      interaction: ManagedDemoBudgetClientProcessConfigSchema,
+      guardian: ManagedDemoBudgetClientProcessConfigSchema,
+      worker: ManagedDemoBudgetClientProcessConfigSchema,
+      research: ManagedDemoBudgetClientProcessConfigSchema,
+    }),
+  })
+  .superRefine((bundle, context) => {
+    const expected = [
+      {
+        binding: bundle.controller.binding,
+        role: "journey_controller",
+        operations: ["admission.request", "journey.settle"],
+      },
+      {
+        binding: bundle.usage.interaction.binding,
+        role: "interaction_service",
+        operations: ["usage.record"],
+      },
+      {
+        binding: bundle.usage.guardian.binding,
+        role: "guardian_service",
+        operations: ["usage.record"],
+      },
+      {
+        binding: bundle.usage.worker.binding,
+        role: "worker_service",
+        operations: ["usage.record"],
+      },
+      {
+        binding: bundle.usage.research.binding,
+        role: "research_service",
+        operations: ["usage.record"],
+      },
+    ] as const;
+    const deploymentId = bundle.controller.binding.deploymentId;
+    const endpoint = bundle.controller.endpoint;
+    expected.forEach((item, index) => {
+      if (
+        item.binding.callerRole !== item.role ||
+        item.binding.deploymentId !== deploymentId ||
+        item.binding.allowedOperations.length !== item.operations.length ||
+        item.binding.allowedOperations.some(
+          (operation, operationIndex) => operation !== item.operations[operationIndex],
+        )
+      ) {
+        context.addIssue({
+          code: "custom",
+          message: "managed-demo journey capability bundle is inconsistent",
+          path: [index === 0 ? "controller" : "usage"],
+        });
+      }
+    });
+    const clients = [
+      bundle.controller,
+      bundle.usage.interaction,
+      bundle.usage.guardian,
+      bundle.usage.worker,
+      bundle.usage.research,
+    ];
+    clients.forEach((client, index) => {
+      if (client.endpoint !== endpoint) {
+        context.addIssue({
+          code: "custom",
+          message: "managed-demo journey clients must share one exact endpoint",
+          path: [index === 0 ? "controller" : "usage"],
+        });
+      }
+    });
+    addDuplicateIssue(
+      clients.map((client) => client.binding.capability),
+      context,
+      ["usage"],
+    );
+  });
+export type ManagedDemoJourneyBudgetClientBundle = DeepReadonly<
+  z.infer<typeof ManagedDemoJourneyBudgetClientBundleSchema>
+>;
+
 export const ManagedDemoBudgetServiceProcessConfigSchema = z
   .strictObject({
     schemaVersion: ContractVersionSchema,

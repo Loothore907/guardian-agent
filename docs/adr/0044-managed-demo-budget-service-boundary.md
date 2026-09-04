@@ -41,6 +41,12 @@ only `usage.record`, fits the provider-service lifetime, and is constructed insi
 the credential-holding child. A fake provider is invalid when this managed-demo
 binding is present.
 
+A trusted journey controller validates one exact endpoint and five distinct
+role-bound capabilities, requests admission using its own clock, and constructs
+all provider reporter configs from the returned reservation and journey. It
+permits settlement to start only once. The hosted ingress remains responsible for
+invoking this controller before any provider process and settling failed work.
+
 On Linux, the service uses the existing peer-credential helper to admit only the
 supervisor, the service itself, or a direct same-user child of the supervisor. Its
 Unix socket and ledger files are owner-only. IPC frames are one bounded JSON line.
@@ -62,7 +68,7 @@ the system does not infer missing usage or recreate a cheaper settlement.
   provider work or acquired a reservation.
 - The capability is a bearer value within the local peer-identity boundary; its
   bootstrap delivery and process environment must remain supervisor-controlled.
-- Supervisor composition, source-fingerprint derivation, deployed Linux
+- Hosted ingress/supervisor composition, source-fingerprint derivation, deployed Linux
   inspection, and provider-side spend caps remain separate evidence work.
 
 ## Rejected alternatives

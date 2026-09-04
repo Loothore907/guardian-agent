@@ -9,17 +9,29 @@ import {
   ManagedDemoBudgetIpcFailureReasonSchema,
   ManagedDemoBudgetIpcRequestSchema,
   ManagedDemoBudgetIpcResponseSchema,
+  ManagedDemoJourneyBudgetClientBundleSchema,
+  ManagedDemoGuardianUsageReporterConfigSchema,
+  ManagedDemoInteractionUsageReporterConfigSchema,
   ManagedDemoOperatorPolicyUpdateSchema,
   ManagedDemoOperatorPriceUpdateSchema,
+  ManagedDemoResearchUsageReporterConfigSchema,
   ManagedDemoUsageObservationSchema,
+  ManagedDemoWorkerUsageReporterConfigSchema,
   OpaqueIdSchema,
+  Sha256DigestSchema,
   TimestampSchema,
   type ManagedDemoAdmissionResult,
   type ManagedDemoBudgetCapabilityBinding,
+  type ManagedDemoBudgetClientProcessConfig,
   type ManagedDemoBudgetIpcFailureReason,
   type ManagedDemoBudgetIpcOperation,
   type ManagedDemoBudgetSnapshot,
+  type ManagedDemoGuardianUsageReporterConfig,
+  type ManagedDemoInteractionUsageReporterConfig,
+  type ManagedDemoJourneyBudgetClientBundle,
+  type ManagedDemoResearchUsageReporterConfig,
   type ManagedDemoSettlementResult,
+  type ManagedDemoWorkerUsageReporterConfig,
 } from "@guardian/contracts";
 
 const MAX_IPC_RESPONSE_BYTES = 64 * 1_024;
@@ -239,6 +251,113 @@ export class LocalManagedDemoBudgetIpcClient {
       throw new ManagedDemoBudgetIpcError("budget_unavailable");
     }
     return response.result;
+  }
+}
+
+export interface ManagedDemoJourneyUsageReporters {
+  readonly interaction: ManagedDemoInteractionUsageReporterConfig;
+  readonly guardian: ManagedDemoGuardianUsageReporterConfig;
+  readonly worker: ManagedDemoWorkerUsageReporterConfig;
+  readonly research: ManagedDemoResearchUsageReporterConfig;
+}
+
+export class ManagedDemoAdmittedJourney {
+  readonly reservationId: string;
+  readonly journeyId: string;
+  readonly preauthorizedMicroUsd: number;
+  readonly expiresAt: string;
+  readonly reporters: ManagedDemoJourneyUsageReporters;
+  readonly #client: LocalManagedDemoBudgetIpcClient;
+  #settlementStarted = false;
+
+  constructor(options: {
+    readonly admission: Extract<ManagedDemoAdmissionResult, { readonly state: "admitted" }>;
+    readonly client: LocalManagedDemoBudgetIpcClient;
+    readonly bundle: ManagedDemoJourneyBudgetClientBundle;
+  }) {
+    this.reservationId = options.admission.reservationId;
+    this.journeyId = options.admission.journeyId;
+    this.preauthorizedMicroUsd = options.admission.preauthorizedMicroUsd;
+    this.expiresAt = options.admission.expiresAt;
+    this.#client = options.client;
+    const reporter = (budget: ManagedDemoBudgetClientProcessConfig) => ({
+      schemaVersion: 1 as const,
+      budget,
+      reservationId: this.reservationId,
+      journeyId: this.journeyId,
+    });
+    this.reporters = {
+      interaction: ManagedDemoInteractionUsageReporterConfigSchema.parse(
+        reporter(options.bundle.usage.interaction),
+      ),
+      guardian: ManagedDemoGuardianUsageReporterConfigSchema.parse(
+        reporter(options.bundle.usage.guardian),
+      ),
+      worker: ManagedDemoWorkerUsageReporterConfigSchema.parse(
+        reporter(options.bundle.usage.worker),
+      ),
+      research: ManagedDemoResearchUsageReporterConfigSchema.parse(
+        reporter(options.bundle.usage.research),
+      ),
+    };
+  }
+
+  async settle(
+    outcome: "completed" | "failed",
+    settledAt: unknown,
+  ): Promise<ManagedDemoSettlementResult> {
+    if (this.#settlementStarted) {
+      throw new TypeError("managed-demo journey settlement has already started");
+    }
+    this.#settlementStarted = true;
+    return await this.#client.settle(this.reservationId, this.journeyId, outcome, settledAt);
+  }
+}
+
+export type ManagedDemoJourneyBeginResult =
+  | {
+      readonly state: "denied";
+      readonly admission: Extract<ManagedDemoAdmissionResult, { readonly state: "denied" }>;
+    }
+  | {
+      readonly state: "admitted";
+      readonly journey: ManagedDemoAdmittedJourney;
+    };
+
+export class ManagedDemoJourneyBudgetController {
+  readonly #bundle: ManagedDemoJourneyBudgetClientBundle;
+  readonly #client: LocalManagedDemoBudgetIpcClient;
+  readonly #now: () => string;
+
+  constructor(value: unknown, options: { readonly now?: () => string } = {}) {
+    this.#bundle = ManagedDemoJourneyBudgetClientBundleSchema.parse(value);
+    this.#client = new LocalManagedDemoBudgetIpcClient({
+      endpoint: this.#bundle.controller.endpoint,
+      binding: this.#bundle.controller.binding,
+    });
+    this.#now = options.now ?? (() => new Date().toISOString());
+  }
+
+  async begin(journeyIdValue: unknown, sourceFingerprintValue: unknown) {
+    const journeyId = OpaqueIdSchema.parse(journeyIdValue);
+    const sourceFingerprint = Sha256DigestSchema.parse(sourceFingerprintValue);
+    const admission = await this.#client.admit({
+      schemaVersion: 1,
+      journeyId,
+      sourceFingerprint,
+      requestedAt: TimestampSchema.parse(this.#now()),
+    });
+    if (admission.state === "denied") {
+      return { state: "denied" as const, admission };
+    }
+    return {
+      state: "admitted" as const,
+      journey: new ManagedDemoAdmittedJourney({
+        admission,
+        client: this.#client,
+        bundle: this.#bundle,
+      }),
+    };
   }
 }
 
