@@ -1,7 +1,8 @@
 # ADR-0042: One-time loopback BYOK enrollment surface
 
-- Status: Proposed; executable fake review pending user interaction review
+- Status: Accepted for Windows BYOK; Linux activation pending interaction review
 - Date: 2026-09-03
+- Windows interaction accepted: 2026-09-04
 - Extends: ADR-0007, ADR-0008, ADR-0009, and ADR-0041
 
 ## Context
@@ -44,15 +45,15 @@ byte buffer after submission. The local Node boundary zeroes request chunks and
 the callback-scoped secret buffer. Provider diagnostics are replaced with a
 fixed failure message.
 
-The CLI now exposes the spike only as
+The CLI exposes the fake ceremony as
 `guardian credentials review <nebius|tavily>`. Review mode preflights the actual
 platform store, labels the page as fake-only, and has no provider or store-write
 callback. The real enrollment composition is compiled and deterministically
-tested, but its executable route remains disabled until the user reviews the
-exact interaction. `guardian setup` remains a compatibility alias. Acceptance
-then requires replacement, provider-verification, cancellation, terminal-loss,
-browser-close, expiry, concurrency, and secret-corpus evidence on each claimed
-host.
+tested. It is enabled on Windows after the accepted hands-on review and remains
+disabled on Linux until the same interaction passes there. `guardian setup`
+remains a compatibility alias. Each claimed host still requires replacement,
+provider-verification, cancellation, terminal-loss, browser-close, expiry,
+concurrency, and secret-corpus evidence.
 
 ## Security posture
 
@@ -90,3 +91,12 @@ means only that input was received; it does not mean the credential was stored.
 - verification-before-commit and prior-value preservation under every modeled
   failure;
 - a separate accepted ADR update before real credential entry is enabled.
+
+The Windows user-operated review passed on 2026-09-04. One first submission
+reached the generic failed outcome, exposing that the page did not state its
+ASCII/no-space constraint. A later browser-generated fake password submitted and
+was explicitly reported as discarded with nothing stored or sent. A separate run
+cancelled successfully. The page now states and checks the input constraint before
+submission. No submitted value or one-time URL was copied into the repository or
+agent conversation. This accepts the interaction for Windows only; it does not
+establish a real credential write, provider verification, or Linux/WSL usability.

@@ -46,6 +46,7 @@ describe("local credential enrollment surface", () => {
     expect(response.headers.get("content-security-policy")).toContain("default-src 'none'");
     expect(body).toContain("Add Nebius credential");
     expect(body).toContain("linux secret service");
+    expect(body).toContain("8–4,096 ASCII characters with no spaces");
     expect(body).not.toContain(capability);
   });
 

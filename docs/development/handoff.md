@@ -2,7 +2,7 @@
 
 Last updated: 2026-09-04 (AKDT)
 
-## Current priority: accept credential enrollment and resume live inference
+## Current priority: enroll through the accepted Windows flow and resume live inference
 
 The user explicitly superseded the September 3 emergency stop after confirming
 that the exposed Nebius key was revoked and replaced. They approved the bounded
@@ -15,21 +15,23 @@ managed-demo work is paused at a coherent local seam; SecretStash provisioning,
 hosted startup, Caddy, pricing, calibration, load, and deployment are not required
 before resuming BYOK live inference.
 
-The immediate gate is the user-operated fake review of
+The completed interaction gate was the user-operated fake review of
 `guardian credentials review <nebius|tavily>`. The command preflights the actual
 platform store and serves the five-minute one-use loopback ceremony, but its
 review callback can neither contact a provider nor write the store. The failed
 raw-terminal reader is no longer a production route. The real browser-to-fixed-
-verifier-to-transactional-store composition is compiled and tested but remains
-explicitly disabled until the user accepts the interaction and ADR-0042 is
-updated. Do not ask for or use a real credential before that acceptance.
+verifier-to-transactional-store composition is compiled, tested, and enabled
+only on Windows after the user accepted paste/autofill and cancellation.
+Linux remains disabled pending the same platform review. Do not ask the user to
+place a real credential anywhere except the accepted user-operated Windows flow.
 
-After acceptance, enable the route, let the user enroll from their own trusted
-terminal and normal browser, verify only sanitized status, then resume the narrow
-protected Linux Nebius inference path before broader worker or assembled flows.
+The next gate is user-operated Windows enrollment from their own trusted terminal
+and normal browser, followed by sanitized status and bounded live inference. The
+Linux review and protected Linux Nebius path remain the following C6 platform
+gate before broader Linux worker or assembled flows.
 
 The current branch is `codex/13-c6-linux-provider-containment`. Local commits
-`4fa4f42` through `fa1809b` implement:
+`4fa4f42` through `37be246` implement:
 
 - strict public/judge policies, integer micro-USD price evidence, admission,
   sanitized usage, settlement, and operator-update contracts;
@@ -55,12 +57,15 @@ The current branch is `codex/13-c6-linux-provider-containment`. Local commits
 - an admission-before-execution coordinator that attempts one settlement for
   completion, failure, malformed output, exception, abort, and disconnect paths,
   plus the reference supervisor's projection of exact interaction, Guardian,
-  worker, and research reporters without exposing a ledger path.
+  worker, and research reporters without exposing a ledger path; and
+- the stable `guardian credentials` entry point, provider-free/store-read-only
+  fake review, hardened one-use loopback surface, and review-gated transactional
+  enrollment composition with no production raw-terminal path.
 
 ADRs 0043 through 0046 record these decisions. The complete ordinary gate passes:
-72 Vitest files / 518 tests with 4 protected files / 10 protected tests skipped,
+72 Vitest files / 524 tests with 4 protected files / 10 protected tests skipped,
 7/8 SQLite spike tests with the POSIX-only case skipped on Windows, 2/2 reset
-tests, 201 modules / 426 dependency edges, TypeScript, lint, formatting, Linux
+tests, 201 modules / 427 dependency edges, TypeScript, lint, formatting, Linux
 peer-helper build, and the production web build.
 
 This is locally implemented containment, not a deployed or calibrated budget

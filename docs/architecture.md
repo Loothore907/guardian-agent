@@ -447,9 +447,9 @@ Secret Service is unavailable. The setup orchestrator verifies the exact provide
 before writing and emits only bounded account metadata. The failed raw-terminal
 reader has been removed from the production route. A preflighted one-use loopback
 browser surface is compiled with a provider-free, store-read-only fake review
-mode; real Nebius/Tavily enrollment remains disabled until the ADR-0042
-interaction review is accepted. The supported local setup surface, verified
-replacement lifecycle, and preflight behavior are tracked in the
+mode. Windows Nebius/Tavily enrollment is enabled after accepted hands-on review;
+Linux remains disabled until the same review passes there. The supported local
+setup surface, verified replacement lifecycle, and preflight behavior are tracked in the
 [credential custody plan](development/credential-custody-plan.md).
 The deterministic bridge evidence is recorded in
 [local credential review bridge evidence](development/evidence/local-credential-review-bridge.md).

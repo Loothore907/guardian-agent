@@ -3,7 +3,8 @@
 - Date: 2026-09-04
 - Scope: deterministic BYOK browser ceremony, CLI composition, and fake-review
   gate
-- Assurance: implemented locally; user interaction and real enrollment pending
+- Assurance: Windows interaction accepted; real enrollment and provider
+  consumption pending
 
 ## Outcome
 
@@ -16,9 +17,9 @@ The executable `review` operation preflights the actual platform credential stor
 before opening an ephemeral `127.0.0.1` surface. Its callback does not construct a
 provider verifier and cannot write, read, or delete credential material. The page
 labels itself as fake-only. Real browser enrollment is compiled and tested through
-fixed provider verification and transactional store replacement, but a local
-acceptance constant keeps that command disabled until the user completes the
-hands-on review and ADR-0042 is accepted.
+fixed provider verification and transactional store replacement. Windows
+activation is now enabled after hands-on acceptance. Linux activation remains
+disabled pending the same platform review.
 
 ## Deterministic controls
 
@@ -64,28 +65,30 @@ cancel/failure/expiry handling, fake-only page copy, local-destination rejection
 invalid and oversized terminal completion, callback failure, one-use replay, and
 buffer clearing.
 
-## Hands-on review gate
+## Hands-on review result
 
-After building, the user must launch the following command from their own trusted
-interactive terminal, not from an agent-created terminal:
+The user launched the following command from their own trusted interactive
+Windows terminal, not from an agent-created terminal:
 
 ```text
 node apps/guardian-cli/dist/main.js credentials review nebius
 ```
 
-The user opens the printed one-time URL in their normal browser, confirms the
-provider and destination, and either submits an obvious fake value or cancels.
-The URL and fake value must not be pasted into chat. Acceptance requires the user
-to confirm that the origin, ownership, destination, copy, paste behavior,
-cancellation, and terminal/browser completion are understandable.
+The first fake submission returned only `credential review failed`. A later
+browser-generated fake password was accepted and the terminal reported that it
+was discarded with nothing stored or sent. A separate invocation cancelled
+successfully. The first result exposed unclear input requirements, so the page now
+states and checks its 8-4,096 printable ASCII, no-space constraint before sending.
+No submitted value or one-time URL was copied into chat or repository state.
 
 ## Non-claims and next step
 
 - No real credential was requested, entered, read, written, or exposed.
 - No provider, SecretStash, GitHub, deployment, or other remote operation ran.
-- Browser usability, Windows Credential Manager enrollment, WSL/Linux loopback
-  forwarding, persistent Linux Secret Service setup, and protected provider
-  consumption are not established by deterministic tests.
-- After hands-on acceptance, update ADR-0042, enable real enrollment, run the
-  relevant platform review again, and let the user enroll one provider from the
-  same trusted terminal/browser boundary before resuming bounded live inference.
+- Windows Credential Manager enrollment, WSL/Linux loopback forwarding,
+  persistent Linux Secret Service setup, and protected provider consumption are
+  not established by this fake review.
+- ADR-0042 is accepted for Windows. The next action is user-operated Windows
+  enrollment of one provider from the same trusted terminal/browser boundary,
+  followed by sanitized status and bounded live inference. Linux remains
+  separately review-gated.

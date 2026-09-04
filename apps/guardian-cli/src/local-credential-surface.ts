@@ -72,7 +72,8 @@ function page(
     <p>${explanation}</p>
     <form id="credential-form">
       <label for="credential">Credential</label>
-      <input id="credential" name="credential" type="password" minlength="8" maxlength="4096" required autocomplete="new-password" autocapitalize="off" spellcheck="false">
+      <input id="credential" name="credential" type="password" minlength="8" maxlength="4096" required autocomplete="new-password" autocapitalize="off" spellcheck="false" aria-describedby="credential-help">
+      <p id="credential-help">Use 8–4,096 ASCII characters with no spaces.</p>
       <p id="status" role="status" aria-live="polite"></p>
       <menu><button id="cancel" type="button">Cancel</button><button type="submit">${submitLabel}</button></menu>
     </form>
@@ -95,7 +96,16 @@ function page(
     }
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const bytes = new TextEncoder().encode(input.value);
+      const value = input.value;
+      if (value.length < 8 || value.length > 4096 || [...value].some((character) => {
+        const code = character.codePointAt(0);
+        return code === undefined || code < 0x21 || code > 0x7e;
+      })) {
+        input.value = "";
+        status.textContent = "Use 8–4,096 ASCII characters with no spaces.";
+        return;
+      }
+      const bytes = new TextEncoder().encode(value);
       input.value = "";
       try {
         const response = await send("/submit", bytes);

@@ -20,7 +20,7 @@ import {
   runGuardianSetupStatus,
 } from "./setup.js";
 
-const LOCAL_BROWSER_ENROLLMENT_ACCEPTED = false;
+const LOCAL_BROWSER_ENROLLMENT_ACCEPTED_RUNTIMES: ReadonlySet<NodeJS.Platform> = new Set(["win32"]);
 
 function assertInteractiveTerminal(): void {
   if (process.stdin.isTTY !== true || process.stdout.isTTY !== true) {
@@ -73,9 +73,9 @@ async function runSetup(arguments_: readonly string[]): Promise<void> {
       });
       return;
     }
-    if (!LOCAL_BROWSER_ENROLLMENT_ACCEPTED) {
+    if (!LOCAL_BROWSER_ENROLLMENT_ACCEPTED_RUNTIMES.has(process.platform)) {
       throw new TypeError(
-        "local browser credential enrollment is pending hands-on review; run guardian credentials review nebius",
+        "local browser credential enrollment is pending hands-on review for this platform; run guardian credentials review nebius",
       );
     }
     await runGuardianLocalCredentialEnrollment({

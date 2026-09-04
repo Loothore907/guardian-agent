@@ -333,13 +333,12 @@ guardian credentials revoke nebius
 `guardian setup` remains a compatibility alias. Nebius and Tavily no longer use
 the failed raw-terminal reader. The review command preflights the platform store,
 opens a five-minute one-use loopback ceremony, accepts only fake interaction
-testing, and neither contacts a provider nor writes the store. Real
-`guardian credentials enroll <provider>` activation remains deliberately blocked
-until the hands-on review in ADR-0042 is accepted. The compiled enrollment path
-then verifies against a fixed read-only provider endpoint before transactionally
-writing Windows Credential Manager or Linux Secret Service. Tavily uses the same
-registered `default` slot. GitHub retains its expiring App device flow instead of
-pasted or ambient tokens:
+testing, and neither contacts a provider nor writes the store. The Windows review
+is accepted, so `guardian credentials enroll <provider>` now verifies against a
+fixed read-only provider endpoint before transactionally writing Windows
+Credential Manager. Linux enrollment remains disabled pending its own hands-on
+review. Tavily uses the same registered `default` slot. GitHub retains its
+expiring App device flow instead of pasted or ambient tokens:
 
 ```powershell
 $env:GUARDIAN_GITHUB_APP_CLIENT_ID = "Iv23liP8Sq3ZEAyeIHju"
