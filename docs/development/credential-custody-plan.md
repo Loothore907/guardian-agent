@@ -22,11 +22,11 @@ capabilities to assignments and typed sanitized results to workers.
 
 ### Providers, slots, verification, and consumers
 
-| Provider | Current slots | Enrollment/verification | Credential-holding consumers |
-| --- | --- | --- | --- |
-| Nebius | `default` | Pasted credential; fixed Token Factory models endpoint | interaction, Guardian-risk, and native-worker services |
-| Tavily | `default` | Pasted credential; fixed usage endpoint | research service |
-| GitHub | `default`, `refresh`, `metadata` | Fixed GitHub App device flow; authenticated-user verification | GitHub broker |
+| Provider | Current slots                    | Enrollment/verification                                       | Credential-holding consumers                           |
+| -------- | -------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------ |
+| Nebius   | `default`                        | Pasted credential; fixed Token Factory models endpoint        | interaction, Guardian-risk, and native-worker services |
+| Tavily   | `default`                        | Pasted credential; fixed usage endpoint                       | research service                                       |
+| GitHub   | `default`, `refresh`, `metadata` | Fixed GitHub App device flow; authenticated-user verification | GitHub broker                                          |
 
 `metadata` is non-secret JSON but currently shares the credential-store
 abstraction. The future registry must identify it as credential-associated
@@ -35,13 +35,13 @@ and refresh material.
 
 ### Current stores
 
-| Store | Status | Important limits |
-| --- | --- | --- |
-| In-memory | deterministic tests | not persistent or a product store |
-| Windows Credential Manager | implemented and protected locally | Windows-only; replacement semantics need explicit evidence |
-| Linux Secret Service | deterministic adapter and disposable lifecycle pass | intended persistent user session and enrollment UX unproven |
-| macOS Keychain | absent | selected by ADR-0008 but not implemented |
-| Nebius SecretStash | deterministic fixed-resource adapter and consumer-bound bootstrap routing implemented | protected IAM, deployment, and retrieval evidence pending |
+| Store                      | Status                                                                                                                             | Important limits                                                       |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| In-memory                  | deterministic tests                                                                                                                | not persistent or a product store                                      |
+| Windows Credential Manager | implemented and protected locally                                                                                                  | Windows-only; replacement semantics need explicit evidence             |
+| Linux Secret Service       | disposable and normal-user persistent lifecycle, real Nebius enrollment, sanitized status, and protected provider consumption pass | complete service containment and broader secret-corpus evidence remain |
+| macOS Keychain             | absent                                                                                                                             | selected by ADR-0008 but not implemented                               |
+| Nebius SecretStash         | deterministic fixed-resource adapter and consumer-bound bootstrap routing implemented                                              | protected IAM, deployment, and retrieval evidence pending              |
 
 ### Current setup and protected paths
 
@@ -95,6 +95,10 @@ evidence remain platform-specific.
 8. Do not request another real credential until the fake-secret setup surface,
    preflight, cancellation, replacement, and redaction gates pass and the user
    reviews the exact interaction.
+9. For providers that display a new key only once, prepare and inspect the exact
+   Guardian destination form before creating the key. Retain the provider modal
+   until Guardian reports storage and the sanitized status plus narrow protected
+   authentication gate pass.
 
 ## Worktree handling
 
@@ -121,17 +125,17 @@ claimed. Slice 3 now has a hardened one-time loopback browser modal, stable CLI
 alias, actual-store preflight, a provider-free/store-read-only review mode, and a
 deterministically tested real enrollment composition. Windows submission,
 cancellation, and the corrected no-autofill interaction are accepted. The Linux
-fake review then passed through the real intended-host Secret Service preflight,
-so real enrollment is enabled on both platforms. Real Linux storage and provider
-consumption remain unproven.
+fake review passed through the intended-host Secret Service preflight. The user
+then completed a persistent fixture lifecycle, real Linux Nebius enrollment,
+sanitized availability, and bounded protected Qwen/Nemotron consumption.
 
 The user subsequently completed Windows Nebius enrollment. A sanitized status
 check returned `available` in the user context and `missing` in the sandboxed
 agent context. After adding the explicit non-secret BYOK store descriptor to a
 stale protected harness, the supervised Qwen/Nemotron live sequence passed. This
-completes the Windows bridge. The subsequent Linux review completed the platform
-interaction gate but did not advance real Linux storage, provider consumption, or
-hosted SecretStash assurance.
+completes the Windows bridge. The subsequent Linux lifecycle, browser enrollment,
+and provider test complete the local Linux credential bridge. Hosted SecretStash
+assurance and broader intended-Linux service containment remain separate gates.
 
 ### Slice 0: Reconcile the contract and inventory
 

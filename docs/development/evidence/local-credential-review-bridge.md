@@ -3,8 +3,8 @@
 - Date: 2026-09-04
 - Scope: deterministic BYOK browser ceremony, CLI composition, and fake-review
   gate
-- Assurance: Windows interaction, real Nebius enrollment, and bounded supervised
-  provider consumption passed; Linux interaction and real-store preflight passed
+- Assurance: Windows and Linux interaction, real Nebius enrollment, sanitized
+  availability, and bounded supervised provider consumption passed
 
 ## Outcome
 
@@ -105,13 +105,21 @@ No submitted value or one-time URL was copied into chat or repository state.
   approximately 9.2 seconds. It printed no credential or raw provider response and
   performed no privileged external effect beyond paid inference usage.
 - SecretStash, GitHub, deployment, and other remote mutation did not run.
-  WSL/Linux loopback forwarding, persistent Linux Secret Service enrollment, the
-  complete secret corpus, and macOS remain unestablished.
+  Complete intended-Linux service containment, the complete secret corpus, and
+  macOS remain unestablished.
 - From a clean tracked-source-only WSL2 ext4 stage, sanitized Linux status returned
   `nebius: missing` through the exact current-user `/run/user/1000/bus` route. The
   user then completed the fake-only Linux browser review successfully. No store
   write or provider call was available to that review callback.
-- The Windows bridge and Linux interaction gate are complete. The next credential-
-  custody gate is a user-operated fake persistent-store lifecycle that completes
-  the graphical keyring prompt. Real Linux Nebius enrollment and the protected
-  provider path remain blocked until that succeeds.
+- The user-operated persistent fixture lifecycle subsequently passed write,
+  resolve, rotation, zeroing, and deletion in the normal WSL user session. After
+  Guardian reset a stale revoked local entry to `missing`, the user prepared the
+  Linux browser form before creating a new provider key and completed real
+  enrollment. Sanitized status returned `available` and the protected Linux
+  Qwen/Nemotron service gate passed in approximately 3.9 seconds without printing
+  credential material or raw model output.
+- Provider keys with one-time display must be created only after the destination
+  Guardian form is open and verified. Keep the provider modal open until local
+  storage, sanitized status, and the narrow protected authentication gate pass.
+  This ordering is now an explicit operator requirement rather than conversational
+  guidance inferred during the ceremony.

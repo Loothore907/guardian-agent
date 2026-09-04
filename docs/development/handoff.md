@@ -2,7 +2,7 @@
 
 Last updated: 2026-09-04 (AKDT)
 
-## Current priority: initialize the WSL keyring with a user-operated fake lifecycle
+## Current priority: resume C6 after protected Linux Nebius consumption
 
 The user explicitly superseded the September 3 emergency stop after confirming
 that the exposed Nebius key was revoked and replaced. They approved the bounded
@@ -35,13 +35,16 @@ omitted the newly required non-secret custody descriptor. After the harness was
 corrected, the bounded supervised Qwen/Nemotron live-inference test passed in
 approximately 9.2 seconds without printing a credential or raw provider response.
 
-The return-to-roadmap bridge and Linux interaction review are complete. A normal-
-user fixture lifecycle then reached the graphical keyring prompt but could not
-complete that human ceremony from the agent-controlled test; it failed closed at
-the first write after 15 seconds. The next C6 gate is the same isolated fixture
-lifecycle from the user's trusted WSL terminal. Only after it passes should real
-Secret Service enrollment and the narrow protected Linux Nebius path run. Broader
-Linux worker or assembled flows come only after that credential boundary passes.
+The return-to-roadmap bridge and Linux credential boundary are now complete. A
+normal-user fixture lifecycle first reached a graphical keyring prompt and failed
+closed when the agent-controlled test could not complete it. The user then ran the
+same isolated fixture lifecycle from their WSL terminal; write, resolve, rotate,
+zero, and delete passed. After the destination was reset to `missing`, the user
+completed the accepted browser enrollment into Linux Secret Service. Sanitized
+status returned `nebius: available`, and the protected Linux Qwen/Nemotron service
+test passed in approximately 3.9 seconds without printing a credential or raw
+provider response. Broader Linux service containment and the narrow GitHub path
+remain separate C6 gates.
 
 The current branch is `codex/13-c6-linux-provider-containment`. Local commits
 from `4fa4f42` through the current branch head implement:
@@ -153,17 +156,16 @@ approved local plan unless separately authorized.
   bootstrap. Managed-demo configurations are projected per consumer, and each
   instantiated store independently rejects providers outside that service's
   capability.
-- ADR-0042 accepts the five-minute, one-use `127.0.0.1` browser modal on Windows.
-  Fake review covers origin/capability binding, replay, cancellation, bounded
-  input, sanitized failure, CSP/no-store headers, and zeroing. The accepted real
-  Windows route verified and stored Nebius, and bounded supervised inference
-  consumed it successfully. The Linux fake review and real store preflight also
-  pass. An agent-run persistent fixture write correctly failed when its graphical
-  keyring prompt was not completed; user-operated fake lifecycle, real Linux
-  enrollment, and provider consumption remain next.
+- ADR-0042 defines the five-minute, one-use `127.0.0.1` browser modal; hands-on
+  review now accepts it on Windows and Linux. Fake review covers origin/capability
+  binding, replay, cancellation, bounded input, sanitized failure, CSP/no-store
+  headers, and zeroing. Real Nebius enrollment, sanitized availability, and
+  bounded supervised Qwen/Nemotron consumption pass on both platforms. The Linux
+  normal-user fixture lifecycle also passes write, resolve, rotation, zeroing,
+  and deletion through the intended Secret Service route.
 - No IAM, deployment, push, pull-request, merge, release, or other remote mutation
-  was used for this checkpoint. User-operated fake Secret Service lifecycle, real
-  Linux enrollment, and protected provider consumption are next.
+  was used for this checkpoint. Broader intended-Linux service containment and
+  the narrow protected Linux GitHub path remain next.
 
 This is the single rotating pickup page for a fresh development session. Treat it
 as context and sequencing guidance, not as the next session's goal by itself.
@@ -287,7 +289,7 @@ evidence passes may any older roadmap action below be reconsidered.
 - The broader W27 changes had passed focused and ordinary checks before the
   protected provider attempt, but no protected Linux provider credential result
   exists. The final user-launched attempt stopped at `credential input is
-  invalid`.
+invalid`.
 - The npm advisory investigation found repeatable bulk-endpoint timeouts while
   npm status reported operational. The npm support page was blocked by human
   verification and no report was submitted. This is paused.

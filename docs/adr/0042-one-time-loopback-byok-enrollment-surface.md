@@ -3,6 +3,7 @@
 - Status: Accepted for Windows and Linux BYOK
 - Date: 2026-09-03
 - Windows interaction accepted: 2026-09-04
+- Linux interaction and provider consumption accepted: 2026-09-04
 - Extends: ADR-0007, ADR-0008, ADR-0009, and ADR-0041
 
 ## Context
@@ -69,6 +70,11 @@ outside any agent-controlled browser automation.
 
 Provider verification remains mandatory before commit. A successful local POST
 means only that input was received; it does not mean the credential was stored.
+For a provider that reveals a new key only once, the operator must start and
+inspect the exact destination form before creating the key and retain the
+provider modal until storage, sanitized status, and narrow authentication
+validation pass. This avoids creating an active key whose value is no longer
+available for its intended store.
 
 ## Alternatives not selected for the spike
 
@@ -121,5 +127,10 @@ The Linux user then ran the same fake-only ceremony from the clean ext4 WSL2
 stage with the exact current-user `/run/user/1000/bus` route. The real Secret
 Service preflight returned `nebius: missing`, the page named Linux Secret Service,
 and the fake submission completed successfully without storage or provider use.
-This accepts Linux enrollment interaction; it does not establish real Linux
-credential storage or protected Linux provider consumption.
+The user subsequently completed the normal-user fixture lifecycle, reset one
+stale revoked local entry to `missing`, and prepared the Guardian form before
+creating a replacement provider key. Real enrollment reported verified storage,
+status returned `nebius: available`, and the protected Linux Qwen/Nemotron gate
+passed in approximately 3.9 seconds. No credential or raw model output was
+printed. This accepts the Linux enrollment interaction and bounded provider
+consumption; broader intended-host service containment remains separate evidence.
