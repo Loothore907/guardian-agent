@@ -11,7 +11,8 @@ and checkpoint history in `docs/development/roadmap.md`.
 
 - **Active checkpoint:** C6 on issue
   [#13](https://github.com/Loothore907/guardian-agent/issues/13), branch
-  `codex/13-c6-linux-reference`.
+  `codex/13-c6-linux-peer-credentials`, PR
+  [#17](https://github.com/Loothore907/guardian-agent/pull/17).
 - **Logical transition:** pre-activation mission formation, trusted worker
   assignment, W1 exact turns, the W2 credential-safe workspace, W3 exact
   one-tool/result execution, W4 contained denial/revocation, the W5 controlled
@@ -41,7 +42,12 @@ and checkpoint history in `docs/development/roadmap.md`.
   generated lockfile correction in `9acab1f`. The Phase-1 implementation-review
   checkpoint is `ddf194c`. PR #14 squash-merged as
   `b69e9338d5464cac31d52cf8510256a2d9f21c33`; post-merge `main` CI passed in
-  2m25s. Issue #13 remains open. No release, deployment, or publication followed.
+  2m25s. W24 then squash-merged through PR #16 as `1893aef`; W25 is committed as
+  `bb30574`, with the persistent-plan-authority documentation at `6dae2f9`.
+  PR #17 is open and mergeable. Its required and native Linux checks passed on
+  both CI attempts, but the npm advisory endpoint timed out three times per
+  attempt, so the required audit remains red. Issue #13 remains open. No release,
+  deployment, or publication followed.
 - **Phase-1 review checkpoint:** review started from clean, synchronized head
   `b9497a9`. The approved branch update contains a fail-closed broker correction,
   its regression tests, the C6 review matrix, claim/roadmap reconciliation, and

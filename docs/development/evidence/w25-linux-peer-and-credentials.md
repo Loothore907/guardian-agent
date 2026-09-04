@@ -61,6 +61,15 @@ files / eight tests skipped on Windows, seven SQLite spike tests with one POSIX
 skip, two reset-planner tests, 180 modules / 362 dependencies, and the production
 build. Formatting, ESLint, TypeScript, and `git diff --check` were clean.
 
+PR [#17](https://github.com/Loothore907/guardian-agent/pull/17) runs the clean
+Ubuntu workflow at head `6dae2f9`. Both the initial run and one bounded retry
+passed the complete required-check step and the native Linux platform-boundary
+step. Both then failed only because the npm advisory bulk endpoint timed out on
+all three `pnpm audit` attempts with error 23. A local read-only audit query
+reproduced the same endpoint timeout. No vulnerability finding was returned, no
+third blind retry was issued, and the PR remains unmerged until the required
+audit completes successfully.
+
 ## Claim boundary and next step
 
 This evidence implements and actively exercises the authority peer check and
