@@ -11,6 +11,7 @@ import {
 import { ProviderRequestIdSchema } from "./actions.js";
 import { CredentialStoreConfigSchema } from "./credentials.js";
 import { ToolCapabilitySchema } from "./mission.js";
+import { ManagedDemoInteractionUsageReporterConfigSchema } from "./managed-demo-budget-ipc.js";
 
 export const InteractionMissionContextSchema = z.strictObject({
   objective: boundedVisibleText(1_000),
@@ -78,6 +79,7 @@ export const InteractionServiceProcessConfigSchema = z
     ...InteractionBindingShape,
     capability: OpaqueIdSchema,
     credentialStore: CredentialStoreConfigSchema.optional(),
+    managedDemoBudget: ManagedDemoInteractionUsageReporterConfigSchema.optional(),
     endpoint: z.string().min(1).max(260),
     startsAt: TimestampSchema,
     expiresAt: TimestampSchema,
@@ -89,6 +91,18 @@ export const InteractionServiceProcessConfigSchema = z
         code: "custom",
         message: "interaction service expiry must follow its start",
         path: ["expiresAt"],
+      });
+    }
+    const budgetBinding = config.managedDemoBudget?.budget.binding;
+    if (
+      budgetBinding !== undefined &&
+      (Date.parse(config.startsAt) < Date.parse(budgetBinding.issuedAt) ||
+        Date.parse(config.expiresAt) > Date.parse(budgetBinding.expiresAt))
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "interaction lifetime must fit its managed-demo budget capability",
+        path: ["managedDemoBudget", "budget", "binding"],
       });
     }
   });

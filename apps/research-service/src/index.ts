@@ -728,6 +728,7 @@ export async function startCredentialStoreResearchIpcServer(options: {
   readonly transport?: TavilyTransport;
   readonly timeoutMs?: number;
   readonly now?: () => string;
+  readonly onUsage?: (usage: ManagedDemoTavilyUsageObservation) => void | Promise<void>;
 }): Promise<LocalResearchIpcServer> {
   const config = ResearchServiceProcessConfigSchema.parse(options.config);
   const sequencer = new ResearchJourneySequencer();
@@ -735,6 +736,8 @@ export async function startCredentialStoreResearchIpcServer(options: {
     credentialStore: options.credentialStore,
     ...(options.transport === undefined ? {} : { transport: options.transport }),
     ...(options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs }),
+    ...(options.onUsage === undefined ? {} : { onUsage: options.onUsage }),
+    ...(options.now === undefined ? {} : { now: options.now }),
   });
   const service = new DurableCredentialHoldingResearchService({
     sessionId: config.sessionId,

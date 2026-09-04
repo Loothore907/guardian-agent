@@ -27,6 +27,7 @@ import {
 } from "./model-policy.js";
 import { DEFAULT_WORKER_VIOLATION_POLICY } from "./worker-policy.js";
 import { CredentialStoreConfigSchema } from "./credentials.js";
+import { ManagedDemoWorkerUsageReporterConfigSchema } from "./managed-demo-budget-ipc.js";
 
 const WorkerLocalCommandRequestSchema = LocalCommandRequestSchema.superRefine(
   (request, context) => {
@@ -468,14 +469,30 @@ export const WorkerTurnIpcResponseSchema = z.discriminatedUnion("ok", [
 ]);
 export type WorkerTurnIpcResponse = DeepReadonly<z.infer<typeof WorkerTurnIpcResponseSchema>>;
 
-export const WorkerServiceProcessConfigSchema = z.strictObject({
-  schemaVersion: ContractVersionSchema,
-  serviceKind: z.literal("worker_turn"),
-  endpoint: z.string().min(1).max(260),
-  capability: OpaqueIdSchema,
-  credentialStore: CredentialStoreConfigSchema.optional(),
-  turn: WorkerTurnEnvelopeSchema,
-});
+export const WorkerServiceProcessConfigSchema = z
+  .strictObject({
+    schemaVersion: ContractVersionSchema,
+    serviceKind: z.literal("worker_turn"),
+    endpoint: z.string().min(1).max(260),
+    capability: OpaqueIdSchema,
+    credentialStore: CredentialStoreConfigSchema.optional(),
+    managedDemoBudget: ManagedDemoWorkerUsageReporterConfigSchema.optional(),
+    turn: WorkerTurnEnvelopeSchema,
+  })
+  .superRefine((config, context) => {
+    const budgetBinding = config.managedDemoBudget?.budget.binding;
+    if (
+      budgetBinding !== undefined &&
+      (Date.parse(config.turn.startsAt) < Date.parse(budgetBinding.issuedAt) ||
+        Date.parse(config.turn.expiresAt) > Date.parse(budgetBinding.expiresAt))
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "worker lifetime must fit its managed-demo budget capability",
+        path: ["managedDemoBudget", "budget", "binding"],
+      });
+    }
+  });
 export type WorkerServiceProcessConfig = DeepReadonly<
   z.infer<typeof WorkerServiceProcessConfigSchema>
 >;

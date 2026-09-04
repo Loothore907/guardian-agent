@@ -190,6 +190,51 @@ export type ManagedDemoBudgetClientProcessConfig = DeepReadonly<
   z.infer<typeof ManagedDemoBudgetClientProcessConfigSchema>
 >;
 
+function usageReporterSchema(
+  role: Exclude<ManagedDemoBudgetCallerRole, "journey_controller" | "operator">,
+) {
+  return z
+    .strictObject({
+      schemaVersion: ContractVersionSchema,
+      budget: ManagedDemoBudgetClientProcessConfigSchema,
+      reservationId: OpaqueIdSchema,
+      journeyId: OpaqueIdSchema,
+    })
+    .superRefine((reporter, context) => {
+      const binding = reporter.budget.binding;
+      if (
+        binding.callerRole !== role ||
+        binding.allowedOperations.length !== 1 ||
+        binding.allowedOperations[0] !== "usage.record"
+      ) {
+        context.addIssue({
+          code: "custom",
+          message: "managed-demo usage reporter has the wrong caller capability",
+          path: ["budget", "binding"],
+        });
+      }
+    });
+}
+
+export const ManagedDemoInteractionUsageReporterConfigSchema =
+  usageReporterSchema("interaction_service");
+export const ManagedDemoGuardianUsageReporterConfigSchema = usageReporterSchema("guardian_service");
+export const ManagedDemoWorkerUsageReporterConfigSchema = usageReporterSchema("worker_service");
+export const ManagedDemoResearchUsageReporterConfigSchema = usageReporterSchema("research_service");
+
+export type ManagedDemoInteractionUsageReporterConfig = DeepReadonly<
+  z.infer<typeof ManagedDemoInteractionUsageReporterConfigSchema>
+>;
+export type ManagedDemoGuardianUsageReporterConfig = DeepReadonly<
+  z.infer<typeof ManagedDemoGuardianUsageReporterConfigSchema>
+>;
+export type ManagedDemoWorkerUsageReporterConfig = DeepReadonly<
+  z.infer<typeof ManagedDemoWorkerUsageReporterConfigSchema>
+>;
+export type ManagedDemoResearchUsageReporterConfig = DeepReadonly<
+  z.infer<typeof ManagedDemoResearchUsageReporterConfigSchema>
+>;
+
 export const ManagedDemoBudgetServiceProcessConfigSchema = z
   .strictObject({
     schemaVersion: ContractVersionSchema,

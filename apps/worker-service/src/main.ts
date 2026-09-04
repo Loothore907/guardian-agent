@@ -1,5 +1,9 @@
-import { WorkerServiceProcessConfigSchema } from "@guardian/contracts";
+import {
+  WorkerServiceProcessConfigSchema,
+  type ManagedDemoUsageObservation,
+} from "@guardian/contracts";
 import { createCredentialStore } from "@guardian/credential-store";
+import { LocalManagedDemoBudgetIpcClient } from "@guardian/managed-demo-budget-client";
 
 import {
   NebiusNativeWorkerProvider,
@@ -44,6 +48,17 @@ async function main(): Promise<void> {
     throw new TypeError("worker provider selection is invalid");
   }
   const bootstrap = WorkerServiceProcessConfigSchema.parse(await readBootstrapFrame());
+  const managedDemoBudget = bootstrap.managedDemoBudget;
+  if (providerMode === "fake" && managedDemoBudget !== undefined) {
+    throw new TypeError("managed-demo worker requires the metered Nebius provider");
+  }
+  const budgetClient =
+    managedDemoBudget === undefined
+      ? undefined
+      : new LocalManagedDemoBudgetIpcClient({
+          endpoint: managedDemoBudget.budget.endpoint,
+          binding: managedDemoBudget.budget.binding,
+        });
   const provider =
     providerMode === "fake"
       ? createFakeWorkerProvider()
@@ -51,6 +66,16 @@ async function main(): Promise<void> {
           credentialStore: createCredentialStore(bootstrap.credentialStore, {
             consumer: "worker_service",
           }),
+          ...(budgetClient === undefined || managedDemoBudget === undefined
+            ? {}
+            : {
+                onUsage: (usage: ManagedDemoUsageObservation) =>
+                  budgetClient.recordUsage(
+                    managedDemoBudget.reservationId,
+                    managedDemoBudget.journeyId,
+                    usage,
+                  ),
+              }),
         });
   const service = await startWorkerService(bootstrap, provider);
   process.stdout.write("guardian worker service ready\n");

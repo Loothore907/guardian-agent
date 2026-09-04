@@ -10,6 +10,7 @@
     "@guardian/authority-client": "workspace:*",
     "@guardian/contracts": "workspace:*",
     "@guardian/credential-store": "workspace:*",
+    "@guardian/managed-demo-budget-client": "workspace:*",
     "@guardian/research": "workspace:*"
   }
 }

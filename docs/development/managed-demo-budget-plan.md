@@ -8,9 +8,11 @@
 Progress: strict contracts, a deployment-bound SQLite ledger, sanitized provider-
 usage projection, per-journey observation binding, and bounded FIFO admission
 queue enforcement are implemented locally under ADR-0043. A deployment-bound
-trusted service, role-scoped IPC, and awaited metering callbacks are implemented
-under ADR-0044. Supervisor wiring, source-fingerprint derivation, protected
-calibration, load testing, and deployment remain pending.
+trusted service, role-scoped IPC, awaited metering callbacks, and optional exact-
+journey usage reporters in all four credential-holding provider bootstraps are
+implemented under ADR-0044. Admission/settlement orchestration in the supervisor,
+source-fingerprint derivation, protected calibration, load testing, and deployment
+remain pending.
 
 ## Outcome
 

@@ -10,6 +10,7 @@
   "references": [
     { "path": "../../packages/contracts" },
     { "path": "../../packages/credential-store" },
+    { "path": "../../packages/managed-demo-budget-client" },
     { "path": "../../packages/worker" }
   ]
 }

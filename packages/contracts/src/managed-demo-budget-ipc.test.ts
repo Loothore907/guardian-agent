@@ -4,6 +4,7 @@ import {
   INITIAL_PUBLIC_DEMO_BUDGET_POLICY,
   ManagedDemoBudgetIpcRequestSchema,
   ManagedDemoBudgetServiceProcessConfigSchema,
+  ManagedDemoWorkerUsageReporterConfigSchema,
 } from "./index.js";
 
 const IDS = {
@@ -101,6 +102,45 @@ describe("managed-demo budget IPC contracts", () => {
       ManagedDemoBudgetServiceProcessConfigSchema.parse({
         ...config,
         deployment: { ...config.deployment, pool: "judge" },
+      }),
+    ).toThrow();
+  });
+
+  it("binds provider usage reporters to one role, operation, reservation, and journey", () => {
+    const reporter = {
+      schemaVersion: 1,
+      budget: {
+        schemaVersion: 1,
+        endpoint: "managed-demo-endpoint",
+        binding: {
+          ...capability,
+          callerRole: "worker_service",
+          allowedOperations: ["usage.record"],
+        },
+      },
+      reservationId: "88888888-8888-4888-8888-888888888888",
+      journeyId: IDS.journey,
+    } as const;
+    expect(ManagedDemoWorkerUsageReporterConfigSchema.parse(reporter)).toEqual(reporter);
+    expect(() =>
+      ManagedDemoWorkerUsageReporterConfigSchema.parse({
+        ...reporter,
+        budget: {
+          ...reporter.budget,
+          binding: { ...reporter.budget.binding, callerRole: "interaction_service" },
+        },
+      }),
+    ).toThrow();
+    expect(() =>
+      ManagedDemoWorkerUsageReporterConfigSchema.parse({
+        ...reporter,
+        budget: {
+          ...reporter.budget,
+          binding: {
+            ...reporter.budget.binding,
+            allowedOperations: ["usage.record", "admission.request"],
+          },
+        },
       }),
     ).toThrow();
   });

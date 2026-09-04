@@ -35,6 +35,12 @@ its bootstrap binding, capability lifetime, role-operation allowlist, and fixed
 deployment. Provider roles are also checked against the observation type. A
 reservation and journey must match the server-owned collector.
 
+The existing interaction, Guardian, worker, and research process contracts accept
+an optional exact-journey usage reporter. The reporter is role-specific, permits
+only `usage.record`, fits the provider-service lifetime, and is constructed inside
+the credential-holding child. A fake provider is invalid when this managed-demo
+binding is present.
+
 On Linux, the service uses the existing peer-credential helper to admit only the
 supervisor, the service itself, or a direct same-user child of the supervisor. Its
 Unix socket and ledger files are owner-only. IPC frames are one bounded JSON line.
