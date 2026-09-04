@@ -196,6 +196,17 @@ function input(
       },
     },
     githubClientId: "Iv23liP8Sq3ZEAyeIHju",
+    credentialStore: {
+      schemaVersion: 1,
+      custodyProfile: "byok",
+      location: {
+        schemaVersion: 1,
+        custodyProfile: "byok",
+        pool: "personal",
+        runtime: "windows",
+        storeTarget: "windows_credential_manager",
+      },
+    },
     now: () => REQUESTED_AT,
   };
 }

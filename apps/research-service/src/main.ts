@@ -1,6 +1,6 @@
 import { LocalAuthorityIpcClient } from "@guardian/authority-client";
 import { CredentialStoreResearchServiceProcessConfigSchema } from "@guardian/contracts";
-import { createPlatformCredentialStore } from "@guardian/credential-store";
+import { createCredentialStore } from "@guardian/credential-store";
 
 import { startCredentialStoreResearchIpcServer } from "./index.js";
 
@@ -41,7 +41,9 @@ async function main(): Promise<void> {
   );
   const server = await startCredentialStoreResearchIpcServer({
     config: config.research,
-    credentialStore: createPlatformCredentialStore(),
+    credentialStore: createCredentialStore(config.credentialStore, {
+      consumer: "research_service",
+    }),
     authority: new LocalAuthorityIpcClient(config.authority),
   });
   process.stdout.write("guardian research service ready\n");

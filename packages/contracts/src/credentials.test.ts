@@ -7,6 +7,7 @@ import {
   ManagedDemoSecretResourceSchema,
   RegisteredCredentialReferenceSchema,
   credentialMaterialKind,
+  credentialStoreConfigForConsumer,
   registeredCredentialReference,
 } from "./credentials.js";
 
@@ -269,5 +270,41 @@ describe("credential registry contracts", () => {
         location: resource.location,
       }),
     ).toThrow();
+  });
+
+  it("projects managed-demo configuration to one credential consumer", () => {
+    const location = {
+      schemaVersion: 1,
+      custodyProfile: "managed_demo",
+      pool: "judge",
+      runtime: "linux",
+      storeTarget: "nebius_secretstash",
+    } as const;
+    const config = {
+      schemaVersion: 1,
+      custodyProfile: "managed_demo",
+      pool: "judge",
+      resources: [
+        {
+          schemaVersion: 1,
+          location,
+          reference: registeredCredentialReference("nebius", "default"),
+          secretId: "mbsec-judgenebius123",
+          payloadKey: "nebius_api_key",
+        },
+        {
+          schemaVersion: 1,
+          location,
+          reference: registeredCredentialReference("tavily", "default"),
+          secretId: "mbsec-judgetavily123",
+          payloadKey: "tavily_api_key",
+        },
+      ],
+    } as const;
+
+    expect(credentialStoreConfigForConsumer(config, "research_service")).toMatchObject({
+      resources: [{ reference: { provider: "tavily" } }],
+    });
+    expect(() => credentialStoreConfigForConsumer(config, "broker_service")).toThrow();
   });
 });

@@ -482,6 +482,7 @@ describe("Nebius SecretStash managed-demo adapter", () => {
         resources: [resource("tavily", "default", "judge")],
       },
       {
+        consumer: "research_service",
         secretStashRunner: () => Promise.resolve({ code: 0, stdout, stderr: new Uint8Array() }),
       },
     );
@@ -489,12 +490,35 @@ describe("Nebius SecretStash managed-demo adapter", () => {
     await expect(store.status(TAVILY)).resolves.toMatchObject({ state: "available" });
     expect(stdout.every((byte) => byte === 0)).toBe(true);
     expect(() =>
-      createCredentialStore({
+      createCredentialStore(
+        {
+          schemaVersion: 1,
+          custodyProfile: "managed_demo",
+          pool: "public",
+          resources: [resource("tavily", "default", "judge")],
+        },
+        { consumer: "research_service" },
+      ),
+    ).toThrow();
+  });
+
+  it("binds each store instance to one credential consumer capability", () => {
+    const stdout = Uint8Array.from(Buffer.from("managed-demo-secret-fixture\n"));
+    const store = createCredentialStore(
+      {
         schemaVersion: 1,
         custodyProfile: "managed_demo",
         pool: "public",
-        resources: [resource("tavily", "default", "judge")],
-      }),
-    ).toThrow();
+        resources: [resource("nebius", "default"), resource("tavily", "default")],
+      },
+      {
+        consumer: "research_service",
+        secretStashRunner: () => Promise.resolve({ code: 0, stdout, stderr: new Uint8Array() }),
+      },
+    );
+
+    expect(() => store.status(NEBIUS)).toThrow(CredentialStoreError);
+    expect(() => store.use(NEBIUS, () => Promise.resolve())).toThrow(CredentialStoreError);
+    expect(stdout.every((byte) => byte !== 0)).toBe(true);
   });
 });

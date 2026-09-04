@@ -2,6 +2,25 @@
 
 Last updated: 2026-09-03 (AKDT)
 
+## Credential-custody implementation checkpoint
+
+- Accepted ADR-0041 and the actionable credential-custody plan split the Linux
+  hackathon deployment into isolated `public` and `judge` managed-demo pools while
+  retaining a separate local-first BYOK profile.
+- Added strict provider/slot/location/capability contracts, transactional
+  replacement preservation, and preflight-before-input/device-flow behavior.
+- Added a deterministic, read-only SecretStash resolver using one fixed
+  `mysterybox payload get-by-key` invocation. Configuration contains only
+  validated non-secret resource IDs and payload keys; output and callback buffers
+  are zeroed and failures are sanitized.
+- Credential store selection now travels in the supervisor-owned one-frame
+  bootstrap. Managed-demo configurations are projected per consumer, and each
+  instantiated store independently rejects providers outside that service's
+  capability.
+- No credential, live provider, IAM, deployment, push, pull-request, merge,
+  release, or other remote mutation was used for this checkpoint. Protected
+  SecretStash retrieval and fake-secret BYOK surface review remain next gates.
+
 This is the single rotating pickup page for a fresh development session. Treat it
 as context and sequencing guidance, not as the next session's goal by itself.
 Durable choices live in ADRs, verified guarantees in `docs/security-claims.md`,

@@ -5,6 +5,8 @@ import {
   AuthorityCapabilityBindingSchema,
   CanonicalRequestSchema,
   CompetitionJourneyServiceBundleSchema,
+  CredentialStoreConfigSchema,
+  credentialStoreConfigForConsumer,
   GitHubOAuthClientIdSchema,
   ResearchServiceProcessConfigSchema,
   TimestampSchema,
@@ -28,6 +30,7 @@ export interface ActivatedCompetitionJourneyServiceInput {
   readonly legitimateRequest: unknown;
   readonly authority: ActivatedCompetitionJourneyAuthority;
   readonly githubClientId: unknown;
+  readonly credentialStore: unknown;
   readonly now?: () => string;
 }
 
@@ -69,6 +72,7 @@ export async function buildActivatedCompetitionJourneyServices(
   const requestedAt = TimestampSchema.parse(input.now?.() ?? new Date().toISOString());
   const request = CanonicalRequestSchema.parse(input.legitimateRequest);
   const githubClientId = GitHubOAuthClientIdSchema.parse(input.githubClientId);
+  const credentialStore = CredentialStoreConfigSchema.parse(input.credentialStore);
   const brokerBinding = AuthorityCapabilityBindingSchema.parse(input.authority.brokerBinding);
   const researchBinding = AuthorityCapabilityBindingSchema.parse(input.authority.researchBinding);
   const research = ResearchServiceProcessConfigSchema.parse(input.launched.research?.serviceConfig);
@@ -138,6 +142,7 @@ export async function buildActivatedCompetitionJourneyServices(
     broker: {
       schemaVersion: 1,
       serviceKind: "github_broker",
+      credentialStore: credentialStoreConfigForConsumer(credentialStore, "broker_service"),
       broker: {
         schemaVersion: 1,
         ...createBrokerIpcCredentials(),
@@ -154,6 +159,7 @@ export async function buildActivatedCompetitionJourneyServices(
       guardian: {
         schemaVersion: 1,
         serviceKind: "action_risk",
+        credentialStore: credentialStoreConfigForConsumer(credentialStore, "guardian_service"),
         ...createGuardianActionRiskIpcCredentials(),
         sessionId: status.sessionId,
         callerId: status.callerId,
@@ -177,6 +183,7 @@ export async function buildActivatedCompetitionJourneyServices(
     research: {
       schemaVersion: 1,
       serviceKind: "tavily_research",
+      credentialStore: credentialStoreConfigForConsumer(credentialStore, "research_service"),
       research,
       authority: {
         schemaVersion: 1,

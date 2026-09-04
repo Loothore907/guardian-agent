@@ -2,11 +2,14 @@ import { spawn } from "node:child_process";
 import { tmpdir } from "node:os";
 
 import {
+  CredentialCapabilityBindingSchema,
   CredentialReferenceSchema,
   CredentialStoreConfigSchema,
   CredentialStatusSchema,
   ManagedDemoSecretResourceSchema,
   RegisteredCredentialReferenceSchema,
+  type CredentialConsumer,
+  type CredentialLocation,
   type CredentialPool,
   type CredentialReference,
   type CredentialStatus,
@@ -708,21 +711,76 @@ export function createPlatformCredentialStore(): CredentialStore {
   throw new CredentialStoreError();
 }
 
+class ConsumerBoundCredentialStore implements CredentialStore {
+  readonly #store: CredentialStore;
+  readonly #consumer: CredentialConsumer;
+  readonly #location: CredentialLocation;
+
+  constructor(options: {
+    readonly store: CredentialStore;
+    readonly consumer: CredentialConsumer;
+    readonly location: CredentialLocation;
+  }) {
+    this.#store = options.store;
+    this.#consumer = options.consumer;
+    this.#location = options.location;
+  }
+
+  #reference(referenceValue: unknown) {
+    try {
+      const reference = RegisteredCredentialReferenceSchema.parse(referenceValue);
+      CredentialCapabilityBindingSchema.parse({
+        schemaVersion: 1,
+        location: this.#location,
+        reference,
+        consumer: this.#consumer,
+      });
+      return reference;
+    } catch {
+      throw new CredentialStoreError();
+    }
+  }
+
+  status(referenceValue: unknown): Promise<CredentialStatus> {
+    return this.#store.status(this.#reference(referenceValue));
+  }
+
+  write(referenceValue: unknown, secret: Uint8Array): Promise<void> {
+    return this.#store.write(this.#reference(referenceValue), secret);
+  }
+
+  delete(referenceValue: unknown): Promise<"deleted" | "missing"> {
+    return this.#store.delete(this.#reference(referenceValue));
+  }
+
+  use<T>(referenceValue: unknown, operation: (secret: Uint8Array) => Promise<T>): Promise<T> {
+    return this.#store.use(this.#reference(referenceValue), operation);
+  }
+}
+
 export function createCredentialStore(
   configValue: unknown,
-  options: { readonly secretStashRunner?: SecretStashRunner } = {},
+  options: {
+    readonly consumer: CredentialConsumer;
+    readonly secretStashRunner?: SecretStashRunner;
+  },
 ): CredentialStore {
   const config = CredentialStoreConfigSchema.parse(configValue);
+  const location =
+    config.custodyProfile === "managed_demo" ? config.resources[0]?.location : config.location;
+  if (location === undefined) throw new CredentialStoreError();
+  let store: CredentialStore;
   if (config.custodyProfile === "managed_demo") {
-    return new SecretStashCredentialStore({
+    store = new SecretStashCredentialStore({
       pool: config.pool,
       resources: config.resources,
       ...(options.secretStashRunner === undefined ? {} : { runner: options.secretStashRunner }),
     });
+  } else {
+    const expectedRuntime =
+      process.platform === "win32" ? "windows" : process.platform === "linux" ? "linux" : undefined;
+    if (config.location.runtime !== expectedRuntime) throw new CredentialStoreError();
+    store = createPlatformCredentialStore();
   }
-
-  const expectedRuntime =
-    process.platform === "win32" ? "windows" : process.platform === "linux" ? "linux" : undefined;
-  if (config.location.runtime !== expectedRuntime) throw new CredentialStoreError();
-  return createPlatformCredentialStore();
+  return new ConsumerBoundCredentialStore({ store, consumer: options.consumer, location });
 }

@@ -26,6 +26,7 @@ import {
   GuardianModelPolicyIdSchema,
 } from "./model-policy.js";
 import { DEFAULT_WORKER_VIOLATION_POLICY } from "./worker-policy.js";
+import { CredentialStoreConfigSchema } from "./credentials.js";
 
 const WorkerLocalCommandRequestSchema = LocalCommandRequestSchema.superRefine(
   (request, context) => {
@@ -472,6 +473,7 @@ export const WorkerServiceProcessConfigSchema = z.strictObject({
   serviceKind: z.literal("worker_turn"),
   endpoint: z.string().min(1).max(260),
   capability: OpaqueIdSchema,
+  credentialStore: CredentialStoreConfigSchema.optional(),
   turn: WorkerTurnEnvelopeSchema,
 });
 export type WorkerServiceProcessConfig = DeepReadonly<

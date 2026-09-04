@@ -262,6 +262,25 @@ export const CredentialStoreConfigSchema = z.union([
 ]);
 export type CredentialStoreConfig = z.infer<typeof CredentialStoreConfigSchema>;
 
+export function credentialStoreConfigForConsumer(
+  configValue: unknown,
+  consumerValue: unknown,
+): CredentialStoreConfig {
+  const config = CredentialStoreConfigSchema.parse(configValue);
+  const consumer = CredentialConsumerSchema.parse(consumerValue);
+  if (config.custodyProfile === "byok") return config;
+  const resources = config.resources.filter(
+    (resource) =>
+      CredentialCapabilityBindingSchema.safeParse({
+        schemaVersion: 1,
+        location: resource.location,
+        reference: resource.reference,
+        consumer,
+      }).success,
+  );
+  return ManagedDemoCredentialStoreConfigSchema.parse({ ...config, resources });
+}
+
 export const CredentialStatusSchema = z.strictObject({
   schemaVersion: z.literal(1),
   reference: CredentialReferenceSchema,

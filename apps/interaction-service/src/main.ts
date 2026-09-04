@@ -2,7 +2,7 @@ import {
   InteractionServiceProcessConfigSchema,
   MissionDraftReviewServiceProcessConfigSchema,
 } from "@guardian/contracts";
-import { createPlatformCredentialStore } from "@guardian/credential-store";
+import { createCredentialStore } from "@guardian/credential-store";
 
 import {
   QwenInteractionProvider,
@@ -48,23 +48,25 @@ async function main(): Promise<void> {
     throw new TypeError("interaction provider selection is invalid");
   }
   const bootstrap = await readBootstrapFrame();
-  const provider =
-    providerMode === "fake"
-      ? createFakeInteractionProvider()
-      : new QwenInteractionProvider({ credentialStore: createPlatformCredentialStore() });
-  const service =
+  const config =
     typeof bootstrap === "object" &&
     bootstrap !== null &&
     "serviceKind" in bootstrap &&
     bootstrap.serviceKind === "mission_draft_review"
-      ? await startMissionDraftReviewService(
-          MissionDraftReviewServiceProcessConfigSchema.parse(bootstrap),
-          provider,
-        )
-      : await startInteractionService(
-          InteractionServiceProcessConfigSchema.parse(bootstrap),
-          provider,
-        );
+      ? MissionDraftReviewServiceProcessConfigSchema.parse(bootstrap)
+      : InteractionServiceProcessConfigSchema.parse(bootstrap);
+  const provider =
+    providerMode === "fake"
+      ? createFakeInteractionProvider()
+      : new QwenInteractionProvider({
+          credentialStore: createCredentialStore(config.credentialStore, {
+            consumer: "interaction_service",
+          }),
+        });
+  const service =
+    "serviceKind" in config && config.serviceKind === "mission_draft_review"
+      ? await startMissionDraftReviewService(config, provider)
+      : await startInteractionService(config, provider);
   process.stdout.write("guardian interaction service ready\n");
 
   const close = () => {

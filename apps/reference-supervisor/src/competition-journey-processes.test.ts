@@ -14,6 +14,18 @@ const callerId = "22222222-2222-4222-8222-222222222222";
 const connectionId = "33333333-3333-4333-8333-333333333333";
 const missionId = "44444444-4444-4444-8444-444444444444";
 const profileId = "55555555-5555-4555-8555-555555555555";
+const credentialStore = {
+  schemaVersion: 1,
+  custodyProfile: "byok",
+  location: {
+    schemaVersion: 1,
+    custodyProfile: "byok",
+    pool: "personal",
+    runtime: process.platform === "win32" ? "windows" : "linux",
+    storeTarget:
+      process.platform === "win32" ? "windows_credential_manager" : "linux_secret_service",
+  },
+} as const;
 
 function authorityBinding(
   role: "broker_service" | "research_service",
@@ -91,6 +103,7 @@ function serviceBundle() {
     broker: {
       schemaVersion: 1,
       serviceKind: "github_broker",
+      credentialStore,
       broker: {
         schemaVersion: 1,
         ...createBrokerIpcCredentials(),
@@ -111,6 +124,7 @@ function serviceBundle() {
     research: {
       schemaVersion: 1,
       serviceKind: "tavily_research",
+      credentialStore,
       research: {
         schemaVersion: 1,
         ...createResearchIpcCredentials(),

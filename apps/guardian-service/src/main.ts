@@ -4,7 +4,7 @@ import {
   GuardianActionRiskServiceProcessConfigSchema,
   MissionSetupRiskServiceProcessConfigSchema,
 } from "@guardian/contracts";
-import { createPlatformCredentialStore } from "@guardian/credential-store";
+import { createCredentialStore } from "@guardian/credential-store";
 
 import {
   NemotronGuardianProvider,
@@ -60,7 +60,11 @@ async function main(): Promise<void> {
   const provider =
     providerMode === "fake"
       ? createFakeMissionSetupRiskProvider()
-      : new NemotronGuardianProvider({ credentialStore: createPlatformCredentialStore() });
+      : new NemotronGuardianProvider({
+          credentialStore: createCredentialStore(config.credentialStore, {
+            consumer: "guardian_service",
+          }),
+        });
   const service =
     config.serviceKind === "action_risk"
       ? await startGuardianActionRiskService(config, provider)

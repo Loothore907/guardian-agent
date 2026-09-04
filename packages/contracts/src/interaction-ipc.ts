@@ -9,6 +9,7 @@ import {
   VersionNumberSchema,
 } from "./common.js";
 import { ProviderRequestIdSchema } from "./actions.js";
+import { CredentialStoreConfigSchema } from "./credentials.js";
 import { ToolCapabilitySchema } from "./mission.js";
 
 export const InteractionMissionContextSchema = z.strictObject({
@@ -76,6 +77,7 @@ export const InteractionServiceProcessConfigSchema = z
   .strictObject({
     ...InteractionBindingShape,
     capability: OpaqueIdSchema,
+    credentialStore: CredentialStoreConfigSchema.optional(),
     endpoint: z.string().min(1).max(260),
     startsAt: TimestampSchema,
     expiresAt: TimestampSchema,

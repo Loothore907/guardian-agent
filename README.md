@@ -52,9 +52,11 @@ ceremony design, and cross-platform assurance remain goals.
 The normal installation, provider accounts, billing, credentials, policy, and
 audit data belong to the user. ADR-0041 separately defines a project-funded
 managed-demo profile: its planned Linux deployment uses fixed Nebius SecretStash
-resources and isolated public/judge credential pools. That adapter is not yet
-implemented. BYOK uses the host operating system's credential store. The runner
-and models receive typed results, never reusable keys.
+resources and isolated public/judge credential pools. A deterministic read-only
+adapter and strict service-bootstrap routing are implemented; IAM, deployment,
+budget isolation, and protected retrieval evidence remain pending. BYOK uses the
+host operating system's credential store. The runner and models receive typed
+results, never reusable keys.
 
 The infrastructure currently provides registered provider/slot contracts,
 deterministic fakes, setup orchestration, a tested Windows Credential Manager

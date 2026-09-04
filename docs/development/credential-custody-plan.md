@@ -41,7 +41,7 @@ and refresh material.
 | Windows Credential Manager | implemented and protected locally | Windows-only; replacement semantics need explicit evidence |
 | Linux Secret Service | deterministic adapter and disposable lifecycle pass | intended persistent user session and enrollment UX unproven |
 | macOS Keychain | absent | selected by ADR-0008 but not implemented |
-| Nebius SecretStash | absent | selected by ADR-0041 for hosted managed-demo custody |
+| Nebius SecretStash | deterministic fixed-resource adapter and consumer-bound bootstrap routing implemented | protected IAM, deployment, and retrieval evidence pending |
 
 ### Current setup and protected paths
 
@@ -54,9 +54,10 @@ and refresh material.
 - Protected scripts directly assume `nebius/default`, `tavily/default`, or the
   GitHub slots already exist. They must consume enrollment; they must not become
   enrollment interfaces.
-- Credential-store constructors currently select only by `process.platform`.
-  They do not represent custody profile, deployment pool, intended runtime, or a
-  preflight result.
+- Credential-holding service bootstraps now carry a strict non-secret custody
+  profile, deployment pool, intended runtime, target store, and allowlisted
+  SecretStash resources. Local BYOK defaults remain OS-selected; store preflight
+  status still needs richer typed states.
 - Status currently reports only `available` or `missing`; it does not distinguish
   unavailable store, invalid configuration, wrong runtime, or verification state.
 
@@ -106,6 +107,13 @@ performing a changed-line review.
   work in credential-custody commits.
 
 ## Execution slices
+
+Progress through 2026-09-03: slices 0 and 1 are complete locally; the
+verify-before-commit and prior-value-preservation core of slice 2 is complete;
+slice 4 has deterministic contracts, a fixed CLI resolver, callback zeroing,
+read-only behavior, consumer projection, and strict service-bootstrap wiring.
+Protected IAM/retrieval evidence and the remaining slices are intentionally not
+claimed.
 
 ### Slice 0: Reconcile the contract and inventory
 
