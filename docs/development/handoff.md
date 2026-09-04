@@ -2,7 +2,7 @@
 
 Last updated: 2026-09-04 (AKDT)
 
-## Current priority: enroll Nebius into Linux Secret Service and run the protected path
+## Current priority: initialize the WSL keyring with a user-operated fake lifecycle
 
 The user explicitly superseded the September 3 emergency stop after confirming
 that the exposed Nebius key was revoked and replaced. They approved the bounded
@@ -35,10 +35,13 @@ omitted the newly required non-secret custody descriptor. After the harness was
 corrected, the bounded supervised Qwen/Nemotron live-inference test passed in
 approximately 9.2 seconds without printing a credential or raw provider response.
 
-The return-to-roadmap bridge and Linux interaction review are complete. The next
-C6 gate is intended-host Secret Service enrollment followed by the narrow protected
-Linux Nebius path. Broader Linux worker or assembled flows come only after that
-credential boundary passes.
+The return-to-roadmap bridge and Linux interaction review are complete. A normal-
+user fixture lifecycle then reached the graphical keyring prompt but could not
+complete that human ceremony from the agent-controlled test; it failed closed at
+the first write after 15 seconds. The next C6 gate is the same isolated fixture
+lifecycle from the user's trusted WSL terminal. Only after it passes should real
+Secret Service enrollment and the narrow protected Linux Nebius path run. Broader
+Linux worker or assembled flows come only after that credential boundary passes.
 
 The current branch is `codex/13-c6-linux-provider-containment`. Local commits
 from `4fa4f42` through the current branch head implement:
@@ -155,10 +158,12 @@ approved local plan unless separately authorized.
   input, sanitized failure, CSP/no-store headers, and zeroing. The accepted real
   Windows route verified and stored Nebius, and bounded supervised inference
   consumed it successfully. The Linux fake review and real store preflight also
-  pass; real Linux enrollment and provider consumption remain next.
+  pass. An agent-run persistent fixture write correctly failed when its graphical
+  keyring prompt was not completed; user-operated fake lifecycle, real Linux
+  enrollment, and provider consumption remain next.
 - No IAM, deployment, push, pull-request, merge, release, or other remote mutation
-  was used for this checkpoint. Real Linux Secret Service enrollment and protected
-  provider consumption are next.
+  was used for this checkpoint. User-operated fake Secret Service lifecycle, real
+  Linux enrollment, and protected provider consumption are next.
 
 This is the single rotating pickup page for a fresh development session. Treat it
 as context and sequencing guidance, not as the next session's goal by itself.

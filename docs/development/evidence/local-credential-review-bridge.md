@@ -112,5 +112,6 @@ No submitted value or one-time URL was copied into chat or repository state.
   user then completed the fake-only Linux browser review successfully. No store
   write or provider call was available to that review callback.
 - The Windows bridge and Linux interaction gate are complete. The next credential-
-  custody gate is real Linux Nebius enrollment followed by the protected Linux
-  provider path.
+  custody gate is a user-operated fake persistent-store lifecycle that completes
+  the graphical keyring prompt. Real Linux Nebius enrollment and the protected
+  provider path remain blocked until that succeeds.

@@ -80,11 +80,20 @@ the Linux peer-helper build, and the production web build passed. The correspond
 Windows gate passed 72 files / 524 tests with four files / ten protected or
 other-platform tests skipped.
 
+The first normal-user persistent lifecycle attempt was deliberately run with only
+generated fixture material. Secret Service activated and requested its graphical
+keyring prompt, but the agent-controlled test could not complete that human prompt.
+The helper timed out after 15 seconds and the lifecycle failed closed at its first
+write. No provider was contacted and no successful credential write was reported.
+This demonstrates that lookup/preflight readiness is not persistent-write
+readiness in the WSL login environment. A user-operated fake lifecycle must create
+or unlock the collection before any real Linux credential is entered.
+
 ## Claim boundary and next step
 
 This is active compatibility evidence for a real disposable Linux Secret Service
 lifecycle plus successful intended-host preflight and fake enrollment interaction.
-It does not prove a real persistent credential write, that credential-holding
+It does not prove a user-completed persistent credential write, that credential-holding
 service processes are fully contained on the intended Linux host, or that a
 protected provider credential can be resolved without leakage. Those claims remain
 open, followed by the separately authorized narrow Linux GitHub read/merge evidence.
