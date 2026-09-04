@@ -1,8 +1,8 @@
 import {
-  CredentialReferenceSchema,
   DEFAULT_GUARDIAN_MODEL_POLICY,
   GuardianModelPolicySchema,
   ProviderRequestIdSchema,
+  registeredCredentialReference,
   WorkerOutcomeSchema,
   WorkerTurnEnvelopeSchema,
   type GuardianModelPolicy,
@@ -323,7 +323,7 @@ export class NebiusNativeWorkerProvider {
     };
     try {
       return await this.#store.use(
-        CredentialReferenceSchema.parse({ schemaVersion: 1, provider: "nebius", slot: "default" }),
+        registeredCredentialReference("nebius", "default"),
         async (credential) => {
           const apiKey = new TextDecoder("utf-8", { fatal: true }).decode(credential);
           let response: Response;
@@ -393,5 +393,5 @@ export const nativeWorkerBoundary = {
   modelPolicyId: DEFAULT_GUARDIAN_MODEL_POLICY.policyId,
   modelPolicyVersion: DEFAULT_GUARDIAN_MODEL_POLICY.version,
   model: DEFAULT_GUARDIAN_MODEL_POLICY.nativeWorker.modelId,
-  credential: { schemaVersion: 1, provider: "nebius", slot: "default" },
+  credential: registeredCredentialReference("nebius", "default"),
 } as const;

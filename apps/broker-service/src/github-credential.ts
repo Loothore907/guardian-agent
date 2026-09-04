@@ -1,6 +1,6 @@
 import {
-  CredentialReferenceSchema,
   GitHubCredentialMetadataSchema,
+  registeredCredentialReference,
   type CredentialReference,
   type GitHubCredentialMetadata,
 } from "@guardian/contracts";
@@ -50,7 +50,7 @@ export class GitHubCredentialError extends Error {
 }
 
 function reference(slot: "default" | "refresh" | "metadata"): CredentialReference {
-  return CredentialReferenceSchema.parse({ schemaVersion: 1, provider: "github", slot });
+  return registeredCredentialReference("github", slot);
 }
 
 function text(secret: Uint8Array, prefix: "ghu_" | "ghr_"): string {

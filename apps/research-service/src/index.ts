@@ -1,8 +1,8 @@
 import {
   ControlledContentProviderResponseSchema,
-  CredentialReferenceSchema,
   ResearchProviderResponseSchema,
   ResearchServiceProcessConfigSchema,
+  registeredCredentialReference,
   type ControlledContentProviderResponse,
   type ControlledContentRequest,
   type ControlledContentScope,
@@ -354,7 +354,7 @@ export class CredentialStoreTavilyProvider
 
   search(request: ResearchRequest): Promise<ResearchProviderResponse> {
     return this.#store.use(
-      CredentialReferenceSchema.parse({ schemaVersion: 1, provider: "tavily", slot: "default" }),
+      registeredCredentialReference("tavily", "default"),
       async (credential) => {
         let apiKey: string;
         try {
@@ -373,7 +373,7 @@ export class CredentialStoreTavilyProvider
 
   extract(request: ControlledContentRequest): Promise<ControlledContentProviderResponse> {
     return this.#store.use(
-      CredentialReferenceSchema.parse({ schemaVersion: 1, provider: "tavily", slot: "default" }),
+      registeredCredentialReference("tavily", "default"),
       async (credential) => {
         let apiKey: string;
         try {

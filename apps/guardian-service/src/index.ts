@@ -1,10 +1,10 @@
 import {
-  CredentialReferenceSchema,
   DEFAULT_GUARDIAN_MODEL_POLICY,
   GuardianRecommendationSchema,
   GuardianModelPolicySchema,
   MissionSetupRiskEnvelopeSchema,
   ProviderRequestIdSchema,
+  registeredCredentialReference,
   type GuardianRecommendation,
   type GuardianModelPolicy,
   type MissionSetupRiskEnvelope,
@@ -278,7 +278,7 @@ export class NemotronGuardianProvider {
   ): Promise<GuardianEvaluation> {
     try {
       const result = await this.#store.use(
-        CredentialReferenceSchema.parse({ schemaVersion: 1, provider: "nebius", slot: "default" }),
+        registeredCredentialReference("nebius", "default"),
         async (credential) => {
           const apiKey = new TextDecoder("utf-8", { fatal: true }).decode(credential);
           const evaluateWithModel = async (model: string) => {
