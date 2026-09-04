@@ -150,6 +150,16 @@ describe("Linux Secret Service adapter", () => {
         timeoutMs: 1_000,
       }),
     ).rejects.toBeInstanceOf(CredentialStoreError);
+
+    await expect(
+      runLinuxSecretTool({
+        file: process.execPath,
+        arguments: ["--eval", 'process.stderr.write("x".repeat(8193))'],
+        stdin: new Uint8Array(),
+        environment: {},
+        timeoutMs: 1_000,
+      }),
+    ).rejects.toBeInstanceOf(CredentialStoreError);
   });
 
   it("uses a fixed helper and attributes while passing the secret only through stdin", async () => {

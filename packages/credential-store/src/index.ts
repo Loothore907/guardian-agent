@@ -110,6 +110,17 @@ export interface LinuxSecretToolResult {
   readonly stderr: Uint8Array;
 }
 
+function copyAndZeroChunks(chunks: Buffer[], totalBytes: number): Uint8Array {
+  let joined: Buffer | undefined;
+  try {
+    joined = Buffer.concat(chunks, totalBytes);
+    return Uint8Array.from(joined);
+  } finally {
+    joined?.fill(0);
+    for (const chunk of chunks) chunk.fill(0);
+  }
+}
+
 export type LinuxSecretToolRunner = (
   invocation: LinuxSecretToolInvocation,
 ) => Promise<LinuxSecretToolResult>;
@@ -373,6 +384,7 @@ export async function runLinuxSecretTool(
       stdoutBytes += chunk.byteLength;
       if (stdoutBytes > MAX_SECRET_BYTES) {
         oversized = true;
+        chunk.fill(0);
         fail();
       } else {
         stdoutChunks.push(chunk);
@@ -382,6 +394,7 @@ export async function runLinuxSecretTool(
       stderrBytes += chunk.byteLength;
       if (stderrBytes > MAXIMUM_LINUX_DIAGNOSTIC_BYTES) {
         oversized = true;
+        chunk.fill(0);
         fail();
       } else {
         stderrChunks.push(chunk);
@@ -398,10 +411,15 @@ export async function runLinuxSecretTool(
         return;
       }
       settled = true;
-      const stdout = Uint8Array.from(Buffer.concat(stdoutChunks, stdoutBytes));
-      const stderr = Uint8Array.from(Buffer.concat(stderrChunks, stderrBytes));
-      for (const chunk of [...stdoutChunks, ...stderrChunks]) chunk.fill(0);
-      resolve({ code, stdout, stderr });
+      let stdout: Uint8Array | undefined;
+      try {
+        stdout = copyAndZeroChunks(stdoutChunks, stdoutBytes);
+        const stderr = copyAndZeroChunks(stderrChunks, stderrBytes);
+        resolve({ code, stdout, stderr });
+      } catch {
+        stdout?.fill(0);
+        reject(new CredentialStoreError());
+      }
     });
     child.stdin.once("error", fail);
     child.stdin.end(invocation.stdin);
