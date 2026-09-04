@@ -1,6 +1,7 @@
 # Managed-demo capacity and budget plan
 
-- Status: Working plan; runtime enforcement not yet implemented
+- Status: Working plan; local budget and ingress enforcement implemented,
+  protected deployment pending
 - Date: 2026-09-04
 - Authority: user-directed managed-demo planning and ADR-0041
 - Applies to: project-funded Linux judge and bounded public deployments
@@ -11,9 +12,12 @@ queue enforcement are implemented locally under ADR-0043. A deployment-bound
 trusted service, role-scoped IPC, awaited metering callbacks, and optional exact-
 journey usage reporters in all four credential-holding provider bootstraps are
 implemented under ADR-0044. A reusable trusted journey controller binds admission,
-reporter construction, and one settlement to the returned reservation. Hosted
-ingress/supervisor attachment, source-fingerprint derivation, protected
-calibration, load testing, and deployment remain pending.
+reporter construction, and one settlement to the returned reservation. ADR-0046
+adds a locally tested fixed judge route, fixed-length access-digest comparison,
+deployment-keyed source fingerprint, admission-before-execution coordinator, and
+exact four-role supervisor reporter projection. Protected SecretStash ingress
+secret resolution, concrete hosted startup, Caddy/Linux inspection, calibration,
+load testing, and deployment remain pending.
 
 ## Outcome
 
@@ -164,18 +168,23 @@ security incident requires shutdown.
    request-supplied pool, model, price, or budget value.
 5. Add queue, concurrency, cooldown, source-rate, global, daily, and kill-switch
    enforcement, including public-to-judge substitution tests.
-6. Run a protected 20-journey calibration, record p50/p95 usage and cost, then
+6. Attach a fixed authenticated judge ingress to admission and supervisor
+   reporter projection, derive a keyed one-way source fingerprint, and attempt
+   one settlement for every terminal path without returning budget or source
+   details.
+7. Run a protected 20-journey calibration, record p50/p95 usage and cost, then
    replace the provisional $0.10 envelope with a measured ceiling plus headroom.
-7. Load-test the candidate Linux host, fund the judge reserve, and only then enable
+8. Load-test the candidate Linux host, fund the judge reserve, and only then enable
    the public pilot.
 
 ## Evidence and non-claims
 
-This document is a plan. It does not establish that managed-demo cost controls,
-provider-side limits, judge availability, or public rate limits are currently
-enforced. Those claims require deterministic tests, restart and race evidence,
-protected provider calibration, deployment evidence, and corresponding updates to
-`docs/security-claims.md`.
+The deterministic budget, ingress, and reporter-composition controls are
+implemented locally and tested. This document does not establish provider-side
+limits, protected SecretStash ingress custody, target-Linux proxy/process
+containment, judge availability, calibrated cost, or public rate limits. Those
+claims require protected provider and deployment evidence plus corresponding
+updates to `docs/security-claims.md`.
 
 ## Current external references
 

@@ -3,6 +3,8 @@
 ## Protected assets
 
 - service credentials and credential-equivalent provider session material;
+- managed-demo judge-access credential digests, source-fingerprint keys,
+  transient client addresses, pseudonymous fingerprints, and budget state;
 - locally stored provider credentials, GitHub credential material, short-lived
   tokens, WebAuthn challenges, and verified approval assertions;
 - untrusted mission drafts, clarification state, compiled mission intent, session
@@ -25,6 +27,8 @@
   or mutating a session draft, clarification exchange, compiled candidate, or
   terminal-to-browser ceremony handoff;
 - a local caller attempting scope expansion, replay, impersonation, or false assurance reporting;
+- an Internet caller spoofing proxy headers, source identity, hostname, pool, or
+  deployment to consume judge capacity;
 - a local process attempting to impersonate an authority-service client or open the authority database directly;
 - malformed or adversarial mission, research, proposal, or adapter input;
 - exfiltration attempts encoded in an otherwise allowed search query or destination;
@@ -79,6 +83,10 @@
     its enumerated operation classes, selectors, limits, and lifetime. Each
     concrete action is re-normalized and checked for plan membership; models and
     public content cannot create or widen the grant.
+26. A managed-demo Internet request reaches no paid provider process before
+    fixed-deployment authentication and atomic admission. Raw source addresses
+    are replaced with deployment-separated keyed fingerprints, and every admitted
+    terminal path requires one conservative settlement.
 
 ## Primary threats and controls
 
@@ -91,6 +99,7 @@
 | Credential exfiltration                    | Caller requests a token or triggers a verbose provider error                                                                                                                 | No export capability, broker-only credentials, separate command sandbox, allowlisted results, redaction tests                                                                                                                                                               |
 | Local credential enrollment capture        | A key reaches shell history, argv, a hosted page, mission text, MCP arguments, logs, or SQLite during setup                                                                  | User-launched trusted local setup surface, preflight before input, OS credential-store adapter, no generic secret API, secret-corpus and process inspection                                                                                                                  |
 | Managed-demo credential escape              | A public request, worker, model, or compromised pool selects or retrieves a project-owned judge/public credential                                                           | Fixed SecretStash resource bindings, payload-read-only credential service, separate public/judge pools and identities, no generic secret retrieval, cross-pool rejection, provider and Guardian budget ceilings                                                               |
+| Managed-demo ingress spoofing                | A caller supplies a hostname, forwarding chain, source address, pool field, or copied fingerprint to consume judge capacity                                               | Loopback-only same-host proxy, overwritten forwarding fields, separate bearer verification, canonical address parsing, deployment-keyed HMAC, server-generated journey ID, strict request schema, admission before supervisor startup, generic public failures                   |
 | Confused deputy                            | Valid credentials perform an unintended but syntactically valid action                                                                                                       | Human-authored mission, narrow adapters, explicit effects, scoped grants, consequence prompts, exact binding                                                                                                                                                                |
 | Mission drift                              | A long-running agent changes from research to execution                                                                                                                      | Immutable mission record, versioned scope expansion, action-count and time limits, deterministic side-effect policy                                                                                                                                                         |
 | Persistent context poisoning               | Hostile content is copied into memory or a future task handoff                                                                                                               | Bounded session lifetime, provenance labels, minimized handoff, no public prose in policy or grants                                                                                                                                                                         |

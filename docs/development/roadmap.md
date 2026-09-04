@@ -20,12 +20,15 @@ peer-authenticated budget service, provider-process usage reporters, and a
 single-settlement journey controller. See ADR-0043, ADR-0044, and
 `docs/development/managed-demo-budget-plan.md`.
 
-This checkpoint is not deployed or calibrated. Hosted ingress attachment,
-privacy-preserving source fingerprinting, authenticated provider-price evidence,
-20 protected calibration journeys, Linux load/containment evidence, separate
-SecretStash/IAM/provider-cap provisioning, judge-window funding, and deployment
-remain on the critical path. Public traffic must not start before the judge
-reserve is funded and isolated.
+ADR-0046 now adds a locally tested fixed judge HTTP route, private access-
+credential verification, deployment-keyed source fingerprinting, admission-
+before-execution ordering, exact four-role supervisor reporter projection, and
+conservative terminal settlement. This checkpoint is not deployed or calibrated.
+Protected SecretStash ingress-secret resolution, concrete hosted startup, Caddy
+and Linux inspection, authenticated provider-price evidence, 20 protected
+calibration journeys, load/containment evidence, separate IAM/provider-cap
+provisioning, judge-window funding, and deployment remain on the critical path.
+Public traffic must not start before the judge reserve is funded and isolated.
 
 The competition deadline is October 30, 2026 at 10:00 a.m. Pacific time. The internal submission target is October 28, leaving two calendar days for recovery and submission issues. Recheck the [official rules](https://nebiusglobalaihackathon.devpost.com/rules) at every release checkpoint.
 

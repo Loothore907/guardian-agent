@@ -393,6 +393,7 @@ contracts <- adapters <- privileged broker <- application orchestration
 contracts <- audit
 contracts <- authority client <- trusted control, research, and broker orchestration
 contracts <- durable authority store <- central authority service
+contracts <- managed-demo ingress <- trusted control API and supervisor orchestration
 ```
 
 The command sandbox must not import or receive provider credentials. Agent-facing
@@ -406,7 +407,35 @@ provider/slot pairs. ADR-0041 separates project-owned `managed_demo` custody fro
 user-owned `byok` custody while sharing verification, lifecycle, status,
 redaction, broker, and assignment-capability contracts. The managed Linux demo
 uses fixed Nebius SecretStash resources with separate public and judge pools;
-that adapter and its IAM evidence remain implementation work.
+the deterministic resolver is implemented locally, while its service-account IAM
+and protected hosted evidence remain implementation work.
+
+The managed-demo judge HTTP seam follows ADR-0046. Same-host Caddy is the only
+public listener and overwrites the HTTPS and single-client-address forwarding
+fields before proxying over loopback. The control API verifies a distinct private
+judge-access credential, canonicalizes the address, and derives a deployment-
+separated HMAC fingerprint. It retains neither the raw address nor the credential
+in application state or automatic request logs. The hostname routes traffic but
+does not authenticate it.
+
+```text
+Internet judge
+  -> Caddy (TLS; overwrite forwarding fields; no raw access log)
+  -> loopback control API (judge authentication; strict objective)
+  -> HMAC source fingerprint
+  -> deployment-fixed budget admission
+  -> reference supervisor
+       -> interaction / Guardian / worker / research usage reporters
+  -> exact completed-or-failed settlement
+```
+
+The local coordinator generates the journey ID, admits before invoking its
+supervisor executor, passes one exact four-role reporter set, and requires a
+matching settlement before returning success. The control API imports neither
+the SQLite ledger nor provider credential resolution. The default executable
+does not enable this route until a protected SecretStash ingress-secret loader
+and fixed judge startup composition exist. Local tests therefore establish the
+contract and ordering, not hosted enforcement, proxy correctness, or custody.
 
 The BYOK Windows adapter uses fixed Credential Manager targets. Its Linux adapter
 invokes only `/usr/bin/secret-tool` with fixed attributes, sends secret input

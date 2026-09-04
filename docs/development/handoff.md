@@ -11,7 +11,7 @@ capacity. The historical incident record below remains important security
 context, but it is no longer the active work prohibition.
 
 The current branch is `codex/13-c6-linux-provider-containment`. Local commits
-`4fa4f42` through `e658209` implement:
+`4fa4f42` through `fa1809b` implement:
 
 - strict public/judge policies, integer micro-USD price evidence, admission,
   sanitized usage, settlement, and operator-update contracts;
@@ -29,22 +29,32 @@ The current branch is `codex/13-c6-linux-provider-containment`. Local commits
 - awaited provider metering and optional exact-journey usage reporters in all
   four credential-holding provider process bootstraps; and
 - a trusted journey controller that admits with its own clock, derives all four
-  reporters from the returned reservation, and permits settlement to start once.
+  reporters from the returned reservation, and permits settlement to start once;
+- a fixed judge HTTP contract and local control-API route that require same-host
+  loopback proxy evidence, private bearer authentication, a strict credential-
+  safe objective, deployment-keyed HMAC source identity, bounded public results,
+  no-store responses, and no automatic request log; and
+- an admission-before-execution coordinator that attempts one settlement for
+  completion, failure, malformed output, exception, abort, and disconnect paths,
+  plus the reference supervisor's projection of exact interaction, Guardian,
+  worker, and research reporters without exposing a ledger path.
 
-ADRs 0043 and 0044 record these decisions. The complete ordinary gate passes:
-69 Vitest files / 482 tests with 10 platform/protected skips, 7/8 SQLite spike
-tests with the POSIX-only case skipped on Windows, 2/2 reset tests, 195 modules /
-413 dependency edges, TypeScript, lint, formatting, Linux peer-helper build, and
-the production web build.
+ADRs 0043 through 0046 record these decisions. The complete ordinary gate passes:
+72 Vitest files / 518 tests with 4 protected files / 10 protected tests skipped,
+7/8 SQLite spike tests with the POSIX-only case skipped on Windows, 2/2 reset
+tests, 201 modules / 426 dependency edges, TypeScript, lint, formatting, Linux
+peer-helper build, and the production web build.
 
 This is locally implemented containment, not a deployed or calibrated budget
 guarantee. No credential, provider call, IAM change, deployment, push, pull
 request, merge, release, or other remote mutation occurred. Remaining gates are:
 
-1. attach the journey controller to the hosted ingress/supervisor before any paid
-   provider call and settle every success/failure path;
-2. choose and implement privacy-preserving stable source-fingerprint derivation
-   and key custody at that trusted ingress;
+1. add the protected judge startup that resolves the access digest and source key
+   from fixed SecretStash payloads, constructs the budget controller and concrete
+   supervisor executor, and leaves the route disabled when any binding is absent;
+2. verify same-VM Caddy header overwrite and log suppression, loopback-only
+   Guardian binding, client-disconnect settlement, and source-key custody on the
+   target Linux host;
 3. capture authenticated current Nebius/Tavily prices, run the protected
    20-journey calibration, and replace the provisional $0.10 envelope;
 4. load-test the target Linux VM and inspect real peer/socket/database isolation;
@@ -1359,6 +1369,8 @@ wrapper when the frozen workspace is already usable.
 - [ADR-0038: Linux peer identity and Secret Service credential resolution](../adr/0038-linux-peer-identity-and-secret-service.md)
 - [ADR-0039: Persistent plan-bound session authority](../adr/0039-persistent-plan-bound-session-authority.md)
 - [ADR-0045: Nebius judge hosting and domain ingress](../adr/0045-nebius-judge-hosting-and-domain-ingress.md)
+- [ADR-0046: Managed-demo judge ingress and source fingerprints](../adr/0046-managed-demo-judge-ingress-and-source-fingerprints.md)
+- [Managed-demo judge ingress evidence](evidence/managed-demo-judge-ingress.md)
 - [W2 session workspace evidence](evidence/w2-session-workspace.md)
 - [W3 worker tool round-trip evidence](evidence/w3-worker-tool-round-trip.md)
 - [W4 denial containment evidence](evidence/w4-denial-containment.md)
