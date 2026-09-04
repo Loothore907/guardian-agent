@@ -20,6 +20,7 @@ import {
   DEFAULT_NEBIUS_WORKER_SELECTION,
   DEFAULT_REFERENCE_WORKER_SELECTION,
   GitHubRepositoryDestinationSchema,
+  ManagedDemoJourneyUsageReportersSchema,
   OpaqueIdSchema,
   ResearchScopeSchema,
   TimestampSchema,
@@ -30,6 +31,7 @@ import {
   type CredentialStoreConfig,
   type MissionDraftReviewEnvelope,
   type MissionSetupRiskEnvelope,
+  type ManagedDemoJourneyUsageReporters,
   type WorkerTurnEnvelope,
 } from "@guardian/contracts";
 import {
@@ -81,6 +83,12 @@ export {
 } from "./competition-journey-attachment.js";
 export { startSupervisedControlledCompetitionJourney } from "./competition-journey-processes.js";
 export { TrustedWorkerToolDispatcher, WorkerToolExecutionError } from "./worker-execution.js";
+
+export function normalizeManagedDemoJourneyUsageReporters(
+  value: unknown,
+): ManagedDemoJourneyUsageReporters {
+  return ManagedDemoJourneyUsageReportersSchema.parse(value);
+}
 
 const ROLE_OPERATIONS = {
   launcher: ["connection.create", "session.create"],
@@ -226,6 +234,7 @@ export async function startReferenceAuthoritySupervisor(
     readonly riskProcess?: "fake" | "nemotron";
     readonly workerMode?: "deterministic_reference" | "nebius_native";
     readonly competition?: ReferenceCompetitionSessionConfig;
+    readonly managedDemoBudget?: unknown;
   } = {},
 ): Promise<ReferenceAuthoritySupervisor> {
   const sessionId = OpaqueIdSchema.parse(config.sessionId);
@@ -235,6 +244,13 @@ export async function startReferenceAuthoritySupervisor(
   const credentialStore = CredentialStoreConfigSchema.parse(
     config.credentialStore ?? localByokCredentialStoreConfig(),
   );
+  const managedDemoBudget =
+    options.managedDemoBudget === undefined
+      ? undefined
+      : normalizeManagedDemoJourneyUsageReporters(options.managedDemoBudget);
+  if (managedDemoBudget !== undefined && credentialStore.custodyProfile !== "managed_demo") {
+    throw new TypeError("managed-demo usage reporters require managed-demo credential custody");
+  }
   const credentialStoreFor = (consumer: CredentialConsumer) =>
     credentialStoreConfigForConsumer(credentialStore, consumer);
   const competition =
@@ -374,6 +390,9 @@ export async function startReferenceAuthoritySupervisor(
                 ...input,
                 ...credentials,
                 credentialStore: credentialStoreFor("interaction_service"),
+                ...(managedDemoBudget === undefined
+                  ? {}
+                  : { managedDemoBudget: managedDemoBudget.interaction }),
               },
               readyLine: "guardian interaction service ready",
               environment:
@@ -417,6 +436,9 @@ export async function startReferenceAuthoritySupervisor(
                 serviceKind: "mission_draft_review",
                 ...credentials,
                 credentialStore: credentialStoreFor("interaction_service"),
+                ...(managedDemoBudget === undefined
+                  ? {}
+                  : { managedDemoBudget: managedDemoBudget.interaction }),
                 startsAt,
                 expiresAt,
                 envelope,
@@ -459,6 +481,9 @@ export async function startReferenceAuthoritySupervisor(
                 serviceKind: "mission_setup_risk",
                 ...credentials,
                 credentialStore: credentialStoreFor("guardian_service"),
+                ...(managedDemoBudget === undefined
+                  ? {}
+                  : { managedDemoBudget: managedDemoBudget.guardian }),
                 startsAt,
                 expiresAt,
                 envelope,
@@ -491,6 +516,9 @@ export async function startReferenceAuthoritySupervisor(
           serviceKind: "worker_turn",
           ...credentials,
           credentialStore: credentialStoreFor("worker_service"),
+          ...(managedDemoBudget === undefined
+            ? {}
+            : { managedDemoBudget: managedDemoBudget.worker }),
           turn,
         },
         readyLine: "guardian worker service ready",
@@ -544,6 +572,14 @@ export async function startReferenceAuthoritySupervisor(
               records: broker,
             },
             credentialStore,
+            ...(managedDemoBudget === undefined
+              ? {}
+              : {
+                  managedDemoBudget: {
+                    guardian: managedDemoBudget.guardian,
+                    research: managedDemoBudget.research,
+                  },
+                }),
             ...(options.now === undefined ? {} : { now: options.now }),
           });
           competitionJourney = await startSupervisedControlledCompetitionJourney({
