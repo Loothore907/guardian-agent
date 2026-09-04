@@ -29,6 +29,26 @@ export const CompetitionJourneyServiceBundleSchema = z
         message: "competition services must share the exact lifetime",
       });
     }
+    const guardianBudget = config.broker.guardian.managedDemoBudget;
+    const researchBudget = config.research.managedDemoBudget;
+    if ((guardianBudget === undefined) !== (researchBudget === undefined)) {
+      context.addIssue({
+        code: "custom",
+        message: "managed-demo competition services require both usage reporters",
+      });
+    } else if (
+      guardianBudget !== undefined &&
+      researchBudget !== undefined &&
+      (guardianBudget.reservationId !== researchBudget.reservationId ||
+        guardianBudget.journeyId !== researchBudget.journeyId ||
+        guardianBudget.budget.endpoint !== researchBudget.budget.endpoint ||
+        guardianBudget.budget.binding.deploymentId !== researchBudget.budget.binding.deploymentId)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "managed-demo competition usage reporters have inconsistent bindings",
+      });
+    }
   });
 
 export type CompetitionJourneyServiceBundle = DeepReadonly<

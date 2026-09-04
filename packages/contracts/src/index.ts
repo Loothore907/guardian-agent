@@ -21,6 +21,7 @@ export * from "./mission-formation.js";
 export * from "./mission-dialogue-ipc.js";
 export * from "./managed-demo-budget.js";
 export * from "./managed-demo-budget-ipc.js";
+export * from "./managed-demo-ingress.js";
 export * from "./model-policy.js";
 export * from "./worker.js";
 export * from "./worker-policy.js";

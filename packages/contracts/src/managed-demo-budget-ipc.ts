@@ -222,6 +222,33 @@ export const ManagedDemoGuardianUsageReporterConfigSchema = usageReporterSchema(
 export const ManagedDemoWorkerUsageReporterConfigSchema = usageReporterSchema("worker_service");
 export const ManagedDemoResearchUsageReporterConfigSchema = usageReporterSchema("research_service");
 
+export const ManagedDemoJourneyUsageReportersSchema = z
+  .strictObject({
+    interaction: ManagedDemoInteractionUsageReporterConfigSchema,
+    guardian: ManagedDemoGuardianUsageReporterConfigSchema,
+    worker: ManagedDemoWorkerUsageReporterConfigSchema,
+    research: ManagedDemoResearchUsageReporterConfigSchema,
+  })
+  .superRefine((reporters, context) => {
+    const expected = reporters.interaction;
+    const values = [reporters.guardian, reporters.worker, reporters.research];
+    const paths = ["guardian", "worker", "research"] as const;
+    values.forEach((reporter, index) => {
+      if (
+        reporter.reservationId !== expected.reservationId ||
+        reporter.journeyId !== expected.journeyId ||
+        reporter.budget.endpoint !== expected.budget.endpoint ||
+        reporter.budget.binding.deploymentId !== expected.budget.binding.deploymentId
+      ) {
+        context.addIssue({
+          code: "custom",
+          message: "managed-demo journey usage reporters have inconsistent bindings",
+          path: [paths[index] ?? "research"],
+        });
+      }
+    });
+  });
+
 export type ManagedDemoInteractionUsageReporterConfig = DeepReadonly<
   z.infer<typeof ManagedDemoInteractionUsageReporterConfigSchema>
 >;
@@ -233,6 +260,9 @@ export type ManagedDemoWorkerUsageReporterConfig = DeepReadonly<
 >;
 export type ManagedDemoResearchUsageReporterConfig = DeepReadonly<
   z.infer<typeof ManagedDemoResearchUsageReporterConfigSchema>
+>;
+export type ManagedDemoJourneyUsageReporters = DeepReadonly<
+  z.infer<typeof ManagedDemoJourneyUsageReportersSchema>
 >;
 
 export const ManagedDemoJourneyBudgetClientBundleSchema = z
