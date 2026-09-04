@@ -1,6 +1,6 @@
 # ADR-0042: One-time loopback BYOK enrollment surface
 
-- Status: Proposed; pending user interaction review
+- Status: Proposed; executable fake review pending user interaction review
 - Date: 2026-09-03
 - Extends: ADR-0007, ADR-0008, ADR-0009, and ADR-0041
 
@@ -44,11 +44,15 @@ byte buffer after submission. The local Node boundary zeroes request chunks and
 the callback-scoped secret buffer. Provider diagnostics are replaced with a
 fixed failure message.
 
-The first implementation remains a fake-secret spike. It must not be connected
-to `guardian setup` or accept a real credential until the user reviews the exact
-interaction on the intended Linux host. Acceptance then requires replacement,
-provider-verification, cancellation, terminal-loss, browser-close, expiry,
-concurrency, and secret-corpus evidence.
+The CLI now exposes the spike only as
+`guardian credentials review <nebius|tavily>`. Review mode preflights the actual
+platform store, labels the page as fake-only, and has no provider or store-write
+callback. The real enrollment composition is compiled and deterministically
+tested, but its executable route remains disabled until the user reviews the
+exact interaction. `guardian setup` remains a compatibility alias. Acceptance
+then requires replacement, provider-verification, cancellation, terminal-loss,
+browser-close, expiry, concurrency, and secret-corpus evidence on each claimed
+host.
 
 ## Security posture
 

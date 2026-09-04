@@ -30,6 +30,21 @@ calibration journeys, load/containment evidence, separate IAM/provider-cap
 provisioning, judge-window funding, and deployment remain on the critical path.
 Public traffic must not start before the judge reserve is funded and isolated.
 
+## Current return-to-roadmap bridge
+
+The managed-demo branch is paused at that local seam. The immediate path back to
+the primary roadmap is the BYOK enrollment gate that interrupted the protected
+Linux inference work. The failed raw-terminal input route is removed from the
+production command. `guardian credentials review <nebius|tavily>` now exercises
+the preflighted one-use loopback ceremony with no provider or store write, while
+the compiled transactional enrollment path remains disabled pending hands-on
+review and ADR-0042 acceptance.
+
+After that review, enable one provider at a time, enroll into the intended OS
+store from a user-launched process, verify only sanitized availability, and
+resume the narrow protected Linux Nebius path. Managed-demo SecretStash, Caddy,
+calibration, and deployment work do not block this C6-to-C7 return.
+
 The competition deadline is October 30, 2026 at 10:00 a.m. Pacific time. The internal submission target is October 28, leaving two calendar days for recovery and submission issues. Recheck the [official rules](https://nebiusglobalaihackathon.devpost.com/rules) at every release checkpoint.
 
 ## How time is tracked

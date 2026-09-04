@@ -2,13 +2,31 @@
 
 Last updated: 2026-09-04 (AKDT)
 
-## Current priority: managed-demo budget and capacity hardening
+## Current priority: accept credential enrollment and resume live inference
 
 The user explicitly superseded the September 3 emergency stop after confirming
 that the exposed Nebius key was revoked and replaced. They approved the bounded
 local implementation plan for separate project-funded judge and public demo
 capacity. The historical incident record below remains important security
 context, but it is no longer the active work prohibition.
+
+The user has now directed the project back toward the primary C6-C7 roadmap. The
+managed-demo work is paused at a coherent local seam; SecretStash provisioning,
+hosted startup, Caddy, pricing, calibration, load, and deployment are not required
+before resuming BYOK live inference.
+
+The immediate gate is the user-operated fake review of
+`guardian credentials review <nebius|tavily>`. The command preflights the actual
+platform store and serves the five-minute one-use loopback ceremony, but its
+review callback can neither contact a provider nor write the store. The failed
+raw-terminal reader is no longer a production route. The real browser-to-fixed-
+verifier-to-transactional-store composition is compiled and tested but remains
+explicitly disabled until the user accepts the interaction and ADR-0042 is
+updated. Do not ask for or use a real credential before that acceptance.
+
+After acceptance, enable the route, let the user enroll from their own trusted
+terminal and normal browser, verify only sanitized status, then resume the narrow
+protected Linux Nebius inference path before broader worker or assembled flows.
 
 The current branch is `codex/13-c6-linux-provider-containment`. Local commits
 `4fa4f42` through `fa1809b` implement:
@@ -120,7 +138,8 @@ approved local plan unless separately authorized.
 - ADR-0042 proposes a five-minute, one-use `127.0.0.1` browser modal for pasted
   BYOK credentials. Its fake-secret spike covers origin/capability binding,
   replay, cancellation, bounded input, sanitized failure, CSP/no-store headers,
-  and zeroing. It is not connected to real setup pending user interaction review.
+  and zeroing. Fake review is executable; the compiled real enrollment route is
+  disabled pending user interaction review.
 - No credential, live provider, IAM, deployment, push, pull-request, merge,
   release, or other remote mutation was used for this checkpoint. Protected
   SecretStash retrieval and fake-secret BYOK surface review remain next gates.
@@ -1371,6 +1390,7 @@ wrapper when the frozen workspace is already usable.
 - [ADR-0045: Nebius judge hosting and domain ingress](../adr/0045-nebius-judge-hosting-and-domain-ingress.md)
 - [ADR-0046: Managed-demo judge ingress and source fingerprints](../adr/0046-managed-demo-judge-ingress-and-source-fingerprints.md)
 - [Managed-demo judge ingress evidence](evidence/managed-demo-judge-ingress.md)
+- [Local credential review bridge evidence](evidence/local-credential-review-bridge.md)
 - [W2 session workspace evidence](evidence/w2-session-workspace.md)
 - [W3 worker tool round-trip evidence](evidence/w3-worker-tool-round-trip.md)
 - [W4 denial containment evidence](evidence/w4-denial-containment.md)

@@ -45,10 +45,13 @@ and refresh material.
 
 ### Current setup and protected paths
 
-- `guardian setup [enroll|status|revoke] <provider>` is the current management
-  surface.
-- Nebius and Tavily use a raw-terminal byte reader. The protected Linux paste
-  attempt failed and this reader is not accepted as the finished product.
+- `guardian credentials [enroll|review|status|revoke] <provider>` is the stable
+  management surface; `guardian setup` remains a compatibility alias.
+- Nebius and Tavily no longer use the failed raw-terminal reader. The one-use
+  browser composition is compiled, but real enrollment is explicitly disabled
+  pending the fake-review gate.
+- Review mode preflights the actual platform store, then accepts and discards an
+  obvious fake value without provider access or a store write.
 - GitHub uses a browser device flow and stores an access token, refresh token,
   and expiry metadata.
 - Protected scripts directly assume `nebius/default`, `tavily/default`, or the
@@ -95,9 +98,10 @@ evidence remain platform-specific.
 
 ## Worktree handling
 
-The existing branch contains uncommitted W27 containment work, ADR-0040, protected
-provider harness changes, and failed launcher prototypes. Preserve it while
-performing a changed-line review.
+The current branch contains checkpointed W27 containment, custody, budget, and
+judge-ingress work. The failed launcher prototypes are absent. Preserve those
+coherent commits while completing only the credential bridge needed to resume
+the roadmap.
 
 - Salvage only containment work that remains valid under ADR-0041.
 - Do not run or recommend either failed `run-linux-nebius-provider-live` launcher.
@@ -108,14 +112,15 @@ performing a changed-line review.
 
 ## Execution slices
 
-Progress through 2026-09-03: slices 0 and 1 are complete locally; the
+Progress through 2026-09-04: slices 0 and 1 are complete locally; the
 verify-before-commit and prior-value-preservation core of slice 2 is complete;
 slice 4 has deterministic contracts, a fixed CLI resolver, callback zeroing,
 read-only behavior, consumer projection, and strict service-bootstrap wiring.
 Protected IAM/retrieval evidence and the remaining slices are intentionally not
-claimed. Slice 3 now has a proposed one-time loopback browser-modal spike with
-deterministic fake-secret tests; user interaction review is still required before
-acceptance or real setup-command wiring.
+claimed. Slice 3 now has a hardened one-time loopback browser modal, stable CLI
+alias, actual-store preflight, a provider-free/store-read-only review mode, and a
+deterministically tested real enrollment composition. User interaction review is
+still required before real enrollment is enabled or ADR-0042 is accepted.
 
 ### Slice 0: Reconcile the contract and inventory
 
