@@ -11,6 +11,22 @@ back into the design, and establish a stable base for later feature expansion an
 competition hardening. See
 [ADR-0029](../adr/0029-end-to-end-architectural-validation.md).
 
+## Current managed-demo capacity checkpoint
+
+The project-funded Linux demo now has locally tested strict budget contracts,
+separate public/judge SQLite ledgers, atomic preauthorization and settlement,
+bounded queues and rate limits, sanitized provider usage, a deployment-bound
+peer-authenticated budget service, provider-process usage reporters, and a
+single-settlement journey controller. See ADR-0043, ADR-0044, and
+`docs/development/managed-demo-budget-plan.md`.
+
+This checkpoint is not deployed or calibrated. Hosted ingress attachment,
+privacy-preserving source fingerprinting, authenticated provider-price evidence,
+20 protected calibration journeys, Linux load/containment evidence, separate
+SecretStash/IAM/provider-cap provisioning, judge-window funding, and deployment
+remain on the critical path. Public traffic must not start before the judge
+reserve is funded and isolated.
+
 The competition deadline is October 30, 2026 at 10:00 a.m. Pacific time. The internal submission target is October 28, leaving two calendar days for recovery and submission issues. Recheck the [official rules](https://nebiusglobalaihackathon.devpost.com/rules) at every release checkpoint.
 
 ## How time is tracked

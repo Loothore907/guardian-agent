@@ -1,6 +1,62 @@
 # Current development handoff
 
-Last updated: 2026-09-03 (AKDT)
+Last updated: 2026-09-04 (AKDT)
+
+## Current priority: managed-demo budget and capacity hardening
+
+The user explicitly superseded the September 3 emergency stop after confirming
+that the exposed Nebius key was revoked and replaced. They approved the bounded
+local implementation plan for separate project-funded judge and public demo
+capacity. The historical incident record below remains important security
+context, but it is no longer the active work prohibition.
+
+The current branch is `codex/13-c6-linux-provider-containment`. The worktree is
+clean. Local commits `4fa4f42` through `e658209` implement:
+
+- strict public/judge policies, integer micro-USD price evidence, admission,
+  sanitized usage, settlement, and operator-update contracts;
+- physically separate deployment-bound SQLite ledgers with atomic reservation,
+  restart/race/replay/expiry behavior, conservative forfeiture, and active-judge
+  capacity protection;
+- bounded FIFO queue, concurrency, cooldown, source, daily, global, stale-price,
+  availability, and kill-switch enforcement;
+- sanitized numeric usage projection for Qwen, Kimi, Nemotron primary/escalation,
+  and Tavily Search/Extract, with no prompt, response, credential, or provider
+  body retained as budget telemetry;
+- one trusted budget-service process per deployment, owner-only Linux socket and
+  database rules, peer-identity verification, exact deployment/caller/role
+  capabilities, and dependency-enforced sole ledger ownership;
+- awaited provider metering and optional exact-journey usage reporters in all
+  four credential-holding provider process bootstraps; and
+- a trusted journey controller that admits with its own clock, derives all four
+  reporters from the returned reservation, and permits settlement to start once.
+
+ADRs 0043 and 0044 record these decisions. The complete ordinary gate passes:
+69 Vitest files / 482 tests with 10 platform/protected skips, 7/8 SQLite spike
+tests with the POSIX-only case skipped on Windows, 2/2 reset tests, 195 modules /
+413 dependency edges, TypeScript, lint, formatting, Linux peer-helper build, and
+the production web build.
+
+This is locally implemented containment, not a deployed or calibrated budget
+guarantee. No credential, provider call, IAM change, deployment, push, pull
+request, merge, release, or other remote mutation occurred. Remaining gates are:
+
+1. attach the journey controller to the hosted ingress/supervisor before any paid
+   provider call and settle every success/failure path;
+2. choose and implement privacy-preserving stable source-fingerprint derivation
+   and key custody at that trusted ingress;
+3. capture authenticated current Nebius/Tavily prices, run the protected
+   20-journey calibration, and replace the provisional $0.10 envelope;
+4. load-test the target Linux VM and inspect real peer/socket/database isolation;
+5. provision separate public/judge SecretStash resources, identities, ledgers,
+   provider-side caps, funding, and kill switches; and
+6. deploy the judge pool for the confirmed access window before optionally
+   enabling the public pilot.
+
+Do not ask for or expose a key in chat, agent-controlled terminal input, source,
+configuration committed to Git, logs, or test fixtures. Protected provisioning
+must use the accepted operator/SecretStash path. Remote work remains outside the
+approved local plan unless separately authorized.
 
 ## Credential-custody implementation checkpoint
 
@@ -30,7 +86,11 @@ as context and sequencing guidance, not as the next session's goal by itself.
 Durable choices live in ADRs, verified guarantees in `docs/security-claims.md`,
 and checkpoint history in `docs/development/roadmap.md`.
 
-## STOP: secret enrollment is the only active objective
+## Historical STOP: secret enrollment incident (superseded 2026-09-04)
+
+The current priority and authority are stated above. Preserve this section as the
+incident record and credential-enrollment product requirements; do not treat its
+former stop-work language as overriding the newer user direction.
 
 Update after user review: the exposed Nebius credential described below was
 revoked at the provider and replaced. The retired value remains prohibited from
