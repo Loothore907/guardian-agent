@@ -26,8 +26,11 @@ and real-child coverage remains intact.
 ## Preserved source and review order
 
 The initial working tree was saved to an ignored source archive and binary patch
-before staging. Original branches and commits remain intact. Recovery uses
-additive commits and named feature branches; no reset, force-push or deletion.
+before staging. Original local branches and commits remain intact. Recovery uses additive commits
+and named feature branches; no reset, force-push or manual branch deletion was
+performed. GitHub already had automatic remote-branch deletion after merge enabled.
+Merged remote branches may therefore disappear; local recovery refs and the archive
+remain available. No private operational state is part of that public source.
 
 | PR | Slice | Dependency |
 | --- | --- | --- |
@@ -42,6 +45,8 @@ additive commits and named feature branches; no reset, force-push or deletion.
 | [29](https://github.com/Loothore907/guardian-agent/pull/29) | Bounded supervisor/worker runtime | 28 |
 | [30](https://github.com/Loothore907/guardian-agent/pull/30) | Portal HTTP/UI and explicit host factory | 29 |
 | [31](https://github.com/Loothore907/guardian-agent/pull/31) | Session Git-hygiene checks and workflow rules | independent main-based |
+| [32](https://github.com/Loothore907/guardian-agent/pull/32) | Evidence, current handoff and archived chronology | 30 |
+| [36](https://github.com/Loothore907/guardian-agent/pull/36) | Current CI selection and merged-branch start guard | independent main-based |
 
 Tracking: [18 recovery](https://github.com/Loothore907/guardian-agent/issues/18),
 [19 C7](https://github.com/Loothore907/guardian-agent/issues/19),
@@ -49,9 +54,11 @@ Tracking: [18 recovery](https://github.com/Loothore907/guardian-agent/issues/18)
 [21 budgets](https://github.com/Loothore907/guardian-agent/issues/21), and existing
 [13 C6](https://github.com/Loothore907/guardian-agent/issues/13).
 
-These are recovered review candidates, not claims of completed review, merge or
-milestone acceptance. Intermediate snapshots are separately checked by CI. Some
-recovery PRs remain larger than the desired steady-state size: shared supervisor
+All product slices (#17 and #22–#30) and the initial governance PR #31 are merged
+after their updated exact-head checks. The final checker refinement is #36 and
+the evidence/handoff closeout is #32. These merges do not establish milestone
+acceptance. Intermediate snapshots were separately checked by CI. Some recovery
+PRs were larger than the desired steady-state size: shared supervisor
 bootstrap methods bind launch authority and continuation, and the older budget
 history spans a real contracts-to-service dependency chain. Their PR descriptions
 name review seams; do not manufacture an untested split to meet a line-count target.
@@ -64,7 +71,7 @@ later authority/runtime source. This is a recovery-boundary correction.
 
 - Fresh full Windows check: 667 tests passed, 18 skipped; required scripts,
   boundaries and production build passed.
-- New hygiene checks: five Node tests pass, including temporary real Git states.
+- New hygiene checks: seven Node tests pass, including temporary real Git states.
 - Existing cost/fixture helper checks: three Node tests pass.
 - Recovery comparison checked 265 code/script/style files against the initial
   archive (normalizing CRLF only). The only differences were the two test fixture
@@ -79,13 +86,36 @@ Global session instructions were installed in the existing empty Codex-home
 checks are in PR #31. File installation is verified; automatic compliance by future
 models is not claimed. Codex discovers global guidance when a new run starts.
 
+## Review and integration discipline
+
+The recovery review inspected credential ownership and enrollment boundaries,
+Linux peer/socket identity and shutdown behavior, durable plan and broker
+revalidation, budget admission/settlement, worker dispatch/risk-context binding,
+and portal confirmation/host composition. This was agent review in a solo-owner
+project, not independent human approval or a new security certification. Existing
+hosted and platform limitations remain in the security claims and owning issues.
+
+Squash integration required ancestry reconciliation in the older stacked branches.
+For predecessor reconciliation, the incoming main tree was verified identical to
+the just-reviewed predecessor tree; the resulting candidate tree was checked
+unchanged before commit. Governance reconciliation separately verified unchanged
+incoming baseline blobs. Conflicts were not resolved by blindly choosing a side.
+Every updated candidate still required its fresh protected build before merge.
+
+The hygiene follow-up handles an older cancelled check and a newer successful
+check on the same SHA. It selects the latest timestamp and rejects missing,
+pending, failing, skipped or ambiguous latest results. It cannot use an old
+successful run to mask a newer failure. Start also rejects reuse of an already
+merged feature branch, while close permits the completed PR to be verified.
+
 ## Remaining work
 
-Complete exact-head review, pass required CI and integrate eligible slices through
-PRs. Reconcile each dependent base after squash integration, preserving source and
-never bypassing the required up-to-date build. Keep C6/C7 issues open until their
-documented evidence criteria pass. Retain explicit blocked PRs rather than calling
-publication alone completion.
+Finish the final checker/documentation PRs with fresh required CI, then verify
+remote closeout and leave the primary checkout on clean current main. Recovery
+issue #18 closes only after that verification. Custody source review #20 is closed;
+C6 #13, C7 #19 and budget/hosted #21 remain open for their evidence gates. Platform
+debt is explicit in #33 (Windows IPC clocks) and #34 (WSL restart); hosted BYOK
+and typed credential-copy design is #35.
 
 Then resume offline budget-update/startup preparation from the
 [hosted research plan](session-plan-2026-09-06-hosted-research.md). Cloud execution

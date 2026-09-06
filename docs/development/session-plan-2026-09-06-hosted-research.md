@@ -30,18 +30,24 @@ Nebius/Tavily cloud copies and exact-resource reader grants are verified; runtim
 retrieval and live provider use remain unverified. The campaign ledger is disabled
 with zero admissions. Previous admission/price windows must be refreshed.
 
-Local inspection confirms the existing containment branch and a large mixed
-worktree: 101 tracked changed files, plus untracked additions. Preserve all of it.
+That hosted snapshot is historical. The source backlog has since been recovered
+into dependency-ordered PRs; use the recovery record and current main for the
+source baseline. Never deploy the older snapshot merely because it has retained
+test results. Rebuild the manifest from the reviewed revision selected for the run.
 
 ## Ordered work and completion gates
 
-1. **Establish the source and evidence baseline offline.** Inventory tracked and
-   untracked changes against the tested manifest. Map C6/C7 criteria to evidence,
-   remaining tests and explicit limitations. Propose dependency-ordered source
-   groups: containment/prerequisites, session authority/headless, portal/runtime,
-   then hosted corrections, with each group's tests and documentation. Resolve
-   the actual PR/base relationship before proposing publication.
-   Done when the candidate identity, review groups and acceptance matrix are saved.
+1. **Verify the recovered source baseline offline.** Run the remote start check
+   from clean current main, read the recovery closeout and check for new reviews.
+   The old source inventory and dependency packaging are already in the recovery
+   record; do not repeat them or resume the old containment branch. Choose the
+   reviewed revision for the next deployment manifest and map remaining C6/C7
+   acceptance criteria to evidence. Use issue #21 for operator budget corrections
+   and #19 for protected startup/ingress. Suggested separate branches are
+   `codex/21-operator-budget-clock` and `codex/19-protected-host-startup`.
+   Done when source identity, focused branch/PR scope, required checks and exact
+   remaining acceptance gates are recorded. Integrate each completed slice before
+   making it a deployment prerequisite.
 
 2. **Repair or prove operator budget updates offline.** Inspect policy/price
    updates across real IPC; ADR-0053 only fixes admission and settlement. Define
@@ -96,7 +102,7 @@ worktree: 101 tracked changed files, plus untracked additions. Preserve all of i
 | Current session scope | Offline preparation and source-integration recovery; no cloud execution | User selected |
 | Compute window | Up to two hours from replacement startup, only after offline readiness; same cumulative USD 25 ceiling, no top-up | Confirm exact fresh window before restart |
 | Research versus GitHub | Research first; inventory App setup now, defer installation/mutations until this slice passes | Now |
-| Source integration | Prepare dependency-ordered groups now; decide exact base/branch/PR before commits or publication | After inventory |
+| Source integration | Recovery is authorized in this cleanup session; subsequent preparation uses focused issue-linked branches and protected PRs | Verify recovery closeout before new scope |
 | Ingress custody | Use the existing fixed protected-store design; make resource, readers and provisioning effects concrete | Before hosted run approval |
 | Finland | Treat declined quota as a deferred comparison, not a blocker for KC acceptance; no new region provisioned | Revisit after KC evidence |
 | Supported-host scope | Native Linux for this acceptance; keep Windows/WSL limitations explicit | Now; does not remove existing platform obligations |
@@ -112,8 +118,8 @@ worktree: 101 tracked changed files, plus untracked additions. Preserve all of i
 | Incomplete intended-host credential/service containment and retained live audit | Blocking for corresponding security claims; successful model calls alone cannot close it |
 | External HTTPS intermittent timeouts | Blocking for externally usable acceptance; diagnose without broadening SSH access |
 | Provider settlement, billing reconciliation, retained disk/IP costs | Reconcile before spending and at closeout; recorded compute estimate is not a bill |
-| Large uncommitted prerequisite/C7 stack and unresolved review base | High priority: inventory now, package with tests, obtain exact-head review/CI before integration |
-| Historical instructions mixed into current handoff/roadmap | Consolidate active status and ordered actions; retain history by links to evidence |
+| Recovered prerequisite/C7 stack | Follow the recovery record and live PR state; resolve any remaining integration gate before feature work |
+| Historical instructions mixed into current handoff/roadmap | Current handoff now links an archived chronology; dated sections are evidence, not current execution instructions |
 | Ignored operational helpers/state/evidence absent from a clone | Identify which sanitized procedures/helpers must ship for reproducibility; preserve private state outside source |
 | Windows clock drift and WSL warm-restart cgroup failures | Separate platform track with documented recovery; no permanent fix claimed |
 | Missing GitHub App installation/private-key slots and disposable exact targets | Next acceptance slice; never substitute OAuth or reuse merged PR 3 |
@@ -123,8 +129,10 @@ worktree: 101 tracked changed files, plus untracked additions. Preserve all of i
 
 ## Plan boundaries
 
-This review creates only this draft. It does not start compute, call paid providers,
-change credentials or remote settings, publish source, or authorize GitHub effects.
+This hosted plan remains a draft. It does not start compute, call paid providers,
+change credentials or authorize hosted effects. The separately requested repository
+cleanup covers its bounded source integration and Git-hygiene settings; do not
+interpret this draft as revoking that scope or extending it to deployment.
 Existing approved resource/credential scope remains reusable; only expired or missing
 material scope requires a new decision. Budget remains USD 20 API allocation plus
 USD 5 infrastructure reserve within the shared USD 25 allowance, subject to actual

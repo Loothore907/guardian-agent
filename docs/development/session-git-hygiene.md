@@ -7,7 +7,9 @@ milestone remaining open does not justify withholding completed slices from PRs.
 
 Run `node scripts/session-hygiene.mjs start --remote`. Inspect the current branch,
 dirty paths, upstream divergence, issue, PR and exact-head CI. Read the current
-handoff and outstanding reviews. Before feature work, either resolve inherited
+handoff and outstanding reviews. A merged feature branch is valid for closeout,
+but the start check rejects resuming work on it; select current main and create
+an appropriate issue-linked branch for the next change. Before feature work, either resolve inherited
 integration debt or record its exact blocker, owning issue and next action. Never
 stash, discard, overwrite or publish unrelated user work to obtain a clean result.
 

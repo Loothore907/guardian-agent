@@ -1,8 +1,9 @@
 # Development Roadmap
 
 Current source-integration priority: [September 6 repository recovery](repo-hygiene-recovery-2026-09-06.md).
-Recovered slices now have issue tracking and dependent draft PRs. Resolve their
-review/CI/integration gates before new runtime scope; C6/C7 remain open.
+Recovered product slices are integrated through protected issue-linked PRs. The
+recovery record tracks governance and documentation closeout; verify its final
+state before new runtime scope. C6/C7 remain open for their own acceptance gates.
 
 September 6 operational pickup: [KC handoff](c7-kc-hosted-acceptance-handoff.md).
 Both VMs are stopped; Nebius/Tavily copies and scoped grants are verified. The
@@ -35,8 +36,8 @@ activation before worker execution, standing deployment consent, headless host
 composition and broker-only GitHub installation-token minting. See
 [current evidence](evidence/2026-09-05-launch-headless.md).
 
-Next review and checkpoint the accumulated uncommitted changes, then prepare the
-bounded [hosted deployment plan](headless-judge-setup.md). Resolve repeatable judge
+The accumulated source was integrated during the September 6 recovery. Next prepare
+the bounded [hosted deployment plan](headless-judge-setup.md) from reviewed current main. Resolve repeatable judge
 fixture preparation before provisioning and rehearse the actual Linux host with
 real workload identity, secret access and unattended execution. Preserve separate
 WSL repair and C6 containment review tracks. The competition mission remains five
