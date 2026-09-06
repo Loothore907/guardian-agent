@@ -10,6 +10,7 @@
     }
   },
   "dependencies": {
+    "@guardian/linux-peer-identity": "workspace:*",
     "@guardian/audit": "workspace:*",
     "@guardian/canonical": "workspace:*",
     "@guardian/contracts": "workspace:*"

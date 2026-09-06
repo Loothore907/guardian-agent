@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "target": {
+    "owner": "Loothore907",
+    "repository": "guardian-agent-demo",
+    "repositoryId": 1352093544,
+    "baseBranch": "main",
+    "fixtureBranch": "guardian/demo-fixture-pr",
+    "fixturePath": "fixtures/approved-change.md"
+  },
+  "expectedBaseCommit": "7df353afe005b74811dfcd081ac98af5695a8170",
+  "createBranch": {
+    "name": "guardian/demo-fixture-pr",
+    "fromCommit": "7df353afe005b74811dfcd081ac98af5695a8170"
+  },
+  "writeFixture": {
+    "path": "fixtures/approved-change.md",
+    "branch": "guardian/demo-fixture-pr",
+    "content": "# Approved demo change\n\nThis harmless file exists solely to exercise Agentic Guardian's repository-bound pull-request read, exact-request approval, head revalidation, and squash-merge controls.\n\nIt contains no credentials, executable code, network destination, or authority-bearing instruction.\n\nReset baseline: `7df353afe005b74811dfcd081ac98af5695a8170`\n",
+    "commitMessage": "test: seed Guardian demo fixture"
+  },
+  "openPullRequest": {
+    "title": "test: exercise exact Guardian approval path",
+    "body": "Harmless disposable fixture for the Agentic Guardian exact-approval demonstration.",
+    "base": "main",
+    "head": "guardian/demo-fixture-pr",
+    "draft": false
+  }
+}

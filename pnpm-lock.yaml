@@ -388,6 +388,9 @@ importers:
       '@guardian/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@guardian/linux-peer-identity':
+        specifier: workspace:*
+        version: link:../linux-peer-identity
       '@guardian/policy':
         specifier: workspace:*
         version: link:../policy
@@ -439,12 +442,18 @@ importers:
       '@guardian/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@guardian/linux-peer-identity':
+        specifier: workspace:*
+        version: link:../linux-peer-identity
 
   packages/interaction:
     dependencies:
       '@guardian/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@guardian/linux-peer-identity':
+        specifier: workspace:*
+        version: link:../linux-peer-identity
 
   packages/linux-peer-identity: {}
 
@@ -480,6 +489,9 @@ importers:
       '@guardian/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@guardian/linux-peer-identity':
+        specifier: workspace:*
+        version: link:../linux-peer-identity
 
   packages/session:
     dependencies:
@@ -504,6 +516,9 @@ importers:
       '@guardian/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@guardian/linux-peer-identity':
+        specifier: workspace:*
+        version: link:../linux-peer-identity
     devDependencies:
       vitest:
         specifier: 4.1.11

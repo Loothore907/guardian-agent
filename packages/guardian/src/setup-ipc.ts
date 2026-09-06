@@ -1,7 +1,8 @@
+import { LocalServiceIpcServer, verifyLocalServiceConnection } from "@guardian/linux-peer-identity";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import { tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
-import { createConnection, createServer, type Server, type Socket } from "node:net";
+import { createConnection, type Socket } from "node:net";
 
 import {
   MissionSetupRiskEvaluationSchema,
@@ -99,8 +100,8 @@ export class LocalMissionSetupRiskIpcServer {
   readonly #config: MissionSetupRiskServiceProcessConfig;
   readonly #handler: (envelope: MissionSetupRiskEnvelope) => Promise<MissionSetupRiskEvaluation>;
   readonly #now: () => string;
-  readonly #server: Server;
-  #listening = false;
+  readonly #server: LocalServiceIpcServer;
+
   #consumed = false;
 
   constructor(
@@ -112,27 +113,15 @@ export class LocalMissionSetupRiskIpcServer {
     this.#config = { ...config, endpoint: assertLocalEndpoint(config.endpoint) };
     this.#handler = handler;
     this.#now = options.now ?? (() => new Date().toISOString());
-    this.#server = createServer((socket) => void this.#serve(socket));
+    this.#server = new LocalServiceIpcServer((socket) => this.#serve(socket));
   }
 
   async listen(): Promise<void> {
-    await new Promise<void>((resolveListen, rejectListen) => {
-      const onError = (error: Error) => rejectListen(error);
-      this.#server.once("error", onError);
-      this.#server.listen(this.#config.endpoint, () => {
-        this.#server.off("error", onError);
-        this.#listening = true;
-        resolveListen();
-      });
-    });
+    await this.#server.listen(this.#config.endpoint);
   }
 
   async close(): Promise<void> {
-    if (!this.#listening) return;
-    await new Promise<void>((resolveClose, rejectClose) => {
-      this.#server.close((error) => (error ? rejectClose(error) : resolveClose()));
-    });
-    this.#listening = false;
+    await this.#server.close();
   }
 
   async #serve(socket: Socket): Promise<void> {
@@ -233,7 +222,9 @@ export class LocalMissionSetupRiskIpcClient {
     const socket = createConnection(this.#endpoint);
     socket.setTimeout(DEFAULT_TIMEOUT_MS, () => socket.destroy());
     try {
+      await verifyLocalServiceConnection(socket, this.#endpoint);
       const responsePromise = readJsonLine(socket);
+      socket.resume();
       socket.write(`${JSON.stringify(frame)}\n`);
       const response = MissionSetupRiskIpcResponseSchema.parse(
         JSON.parse(await responsePromise) as unknown,

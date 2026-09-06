@@ -29,6 +29,98 @@ afterEach(async () => {
 });
 
 describe("supervised service processes", () => {
+  it("reports a sanitized startup timeout and terminates the silent child", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "guardian-supervised-timeout-"));
+    temporaryDirectories.push(directory);
+    const outputPath = join(directory, "inspection.json");
+    await expect(
+      startSupervisedServiceProcess({
+        entrypoint: fileURLToPath(
+          new URL("../test-fixtures/supervised-failure.mjs", import.meta.url),
+        ),
+        bootstrap: { mode: "silent", outputPath },
+        readyLine: "guardian test service ready",
+      }),
+    ).rejects.toMatchObject({
+      message: "supervised service failed to start",
+      cause: "startup_timeout",
+    });
+    const { pid } = JSON.parse(await readFile(outputPath, "utf8")) as { pid: number };
+    expect(() => process.kill(pid, 0)).toThrow();
+  });
+
+  it("terminates a ready child on extra stdout even without a newline", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "guardian-supervised-failure-"));
+    temporaryDirectories.push(directory);
+    const child = await startSupervisedServiceProcess({
+      entrypoint: fileURLToPath(
+        new URL("../test-fixtures/supervised-failure.mjs", import.meta.url),
+      ),
+      bootstrap: { mode: "extra_stdout", outputPath: join(directory, "inspection.json") },
+      readyLine: "guardian test service ready",
+    });
+    let timeout: NodeJS.Timeout | undefined;
+    try {
+      await expect(
+        Promise.race([
+          child.exited.then(() => "exited"),
+          new Promise<string>((resolve) => {
+            timeout = setTimeout(() => resolve("still_running"), 2_000);
+          }),
+        ]),
+      ).resolves.toBe("exited");
+    } finally {
+      if (timeout !== undefined) clearTimeout(timeout);
+      await child.close();
+    }
+  });
+
+  it("awaits bounded cleanup when a rejected child ignores graceful termination", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "guardian-supervised-failure-"));
+    temporaryDirectories.push(directory);
+    const outputPath = join(directory, "inspection.json");
+    let pid: number | undefined;
+    let timeout: NodeJS.Timeout | undefined;
+    try {
+      await expect(
+        Promise.race([
+          startSupervisedServiceProcess({
+            entrypoint: fileURLToPath(
+              new URL("../test-fixtures/supervised-failure.mjs", import.meta.url),
+            ),
+            bootstrap: { mode: "reject_ignoring_term", outputPath },
+            readyLine: "guardian test service ready",
+          }),
+          new Promise<never>((_resolve, reject) => {
+            timeout = setTimeout(
+              () => reject(new Error("fixture cleanup exceeded deadline")),
+              7_000,
+            );
+          }),
+        ]),
+      ).rejects.toThrow(/^supervised service failed to start$/u);
+      ({ pid } = JSON.parse(await readFile(outputPath, "utf8")) as { pid: number });
+      expect(() => process.kill(pid!, 0)).toThrow();
+    } finally {
+      if (timeout !== undefined) clearTimeout(timeout);
+      // Also clean up the fixture if a regression leaves startup pending.
+      if (pid === undefined) {
+        try {
+          ({ pid } = JSON.parse(await readFile(outputPath, "utf8")) as { pid: number });
+        } catch {
+          /* No child started. */
+        }
+      }
+      if (pid !== undefined) {
+        try {
+          process.kill(pid, "SIGKILL");
+        } catch {
+          /* Already terminated. */
+        }
+      }
+    }
+  });
+
   it("sends bootstrap authority only over stdin with a minimal environment", async () => {
     const directory = await mkdtemp(join(tmpdir(), "guardian-supervised-process-"));
     temporaryDirectories.push(directory);
@@ -266,6 +358,7 @@ describe("supervised service processes", () => {
     } catch (error) {
       expect(String(error)).toBe("TypeError: supervised service failed to start");
       expect(String(error)).not.toContain(secret);
+      expect((error as Error).cause).toBe("startup_rejected");
     }
   });
 });

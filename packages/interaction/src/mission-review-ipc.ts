@@ -1,7 +1,8 @@
+import { LocalServiceIpcServer, verifyLocalServiceConnection } from "@guardian/linux-peer-identity";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import { tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
-import { createConnection, createServer, type Server, type Socket } from "node:net";
+import { createConnection, type Socket } from "node:net";
 
 import {
   MissionDraftReviewIpcFailureReasonSchema,
@@ -117,8 +118,8 @@ export class LocalMissionDraftReviewIpcServer {
   readonly #config: MissionDraftReviewServiceProcessConfig;
   readonly #handler: MissionDraftReviewIpcHandler;
   readonly #now: () => string;
-  readonly #server: Server;
-  #listening = false;
+  readonly #server: LocalServiceIpcServer;
+
   #turnConsumed = false;
 
   constructor(
@@ -130,28 +131,15 @@ export class LocalMissionDraftReviewIpcServer {
     this.#config = { ...config, endpoint: assertLocalEndpoint(config.endpoint) };
     this.#handler = handler;
     this.#now = options.now ?? (() => new Date().toISOString());
-    this.#server = createServer((socket) => void this.#serve(socket));
+    this.#server = new LocalServiceIpcServer((socket) => this.#serve(socket));
   }
 
   async listen(): Promise<void> {
-    if (this.#listening) throw new TypeError("mission review IPC server is already listening");
-    await new Promise<void>((resolveListen, rejectListen) => {
-      const onError = (error: Error) => rejectListen(error);
-      this.#server.once("error", onError);
-      this.#server.listen(this.#config.endpoint, () => {
-        this.#server.off("error", onError);
-        this.#listening = true;
-        resolveListen();
-      });
-    });
+    await this.#server.listen(this.#config.endpoint);
   }
 
   async close(): Promise<void> {
-    if (!this.#listening) return;
-    await new Promise<void>((resolveClose, rejectClose) => {
-      this.#server.close((error) => (error ? rejectClose(error) : resolveClose()));
-    });
-    this.#listening = false;
+    await this.#server.close();
   }
 
   async #serve(socket: Socket): Promise<void> {
@@ -259,7 +247,9 @@ export class LocalMissionDraftReviewIpcClient {
       socket.destroy(new Error("mission review IPC timeout")),
     );
     try {
+      await verifyLocalServiceConnection(socket, this.#endpoint);
       const responsePromise = readJsonLine(socket, MAXIMUM_RESPONSE_BYTES);
+      socket.resume();
       socket.write(`${JSON.stringify(frame)}\n`);
       const response = MissionDraftReviewIpcResponseSchema.parse(
         JSON.parse(await responsePromise) as unknown,
