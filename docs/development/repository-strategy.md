@@ -1,5 +1,10 @@
 # Repository Strategy
 
+Session cadence is defined in [session Git hygiene](session-git-hygiene.md).
+Completed slices move through issues, commits, draft PRs, required checks and
+review independently of milestone closure. A dirty or unpublished handoff is an
+explicit exception with an owning issue and next action, not a default workflow.
+
 ## Lifecycle
 
 1. Prepare and review the governance bootstrap locally.
