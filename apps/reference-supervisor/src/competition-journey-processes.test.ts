@@ -5,7 +5,7 @@ import { createBrokerIpcCredentials } from "@guardian/broker";
 import { CompetitionJourneyServiceBundleSchema } from "@guardian/contracts";
 import { createGuardianActionRiskIpcCredentials } from "@guardian/guardian";
 import { createResearchIpcCredentials } from "@guardian/research";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { startSupervisedControlledCompetitionJourney } from "./competition-journey-processes.js";
 
@@ -155,6 +155,16 @@ function serviceBundle() {
 }
 
 describe("supervised controlled competition service composition", () => {
+  beforeEach(() => {
+    if (process.platform !== "linux") return;
+    // This startup-only fixture never resolves credentials. Give it a valid,
+    // deterministic desktop descriptor instead of inheriting the CI runner bus.
+    const runtime = `/run/user/${process.getuid!()}`;
+    vi.stubEnv("XDG_RUNTIME_DIR", runtime);
+    vi.stubEnv("DBUS_SESSION_BUS_ADDRESS", `unix:path=${runtime}/bus`);
+  });
+  afterEach(() => vi.unstubAllEnvs());
+
   it("starts the fixed Guardian, broker, and research children without exposing process IDs", async () => {
     const attachment = await startSupervisedControlledCompetitionJourney({
       services: serviceBundle(),
