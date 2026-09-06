@@ -81,17 +81,26 @@ export function workerTurnDigest(turnValue: unknown): string {
     Reflect.deleteProperty(candidate, "turnDigest");
   }
   const turn = WorkerTurnEnvelopeWithoutDigestSchema.parse(candidate);
+  const historyProjection =
+    turn.toolHistory === undefined
+      ? {}
+      : { toolHistory: turn.toolHistory.map(projectToolResultForDigest) };
   return canonicalDigest(
     "worker.turn",
     1,
     turn.previousToolResult === undefined
       ? turn
-      : { ...turn, previousToolResult: projectToolResultForDigest(turn.previousToolResult) },
+      : {
+          ...turn,
+          ...historyProjection,
+          previousToolResult: projectToolResultForDigest(turn.previousToolResult),
+        },
   );
 }
 
 export function createWorkerTurnEnvelope(turnValue: unknown): WorkerTurnEnvelope {
   const turn = WorkerTurnEnvelopeWithoutDigestSchema.parse(turnValue);
+  turn.toolHistory?.forEach(assertExactWorkerToolResult);
   if (turn.previousToolResult !== undefined) {
     assertExactWorkerToolResult(turn.previousToolResult);
   }
@@ -99,6 +108,7 @@ export function createWorkerTurnEnvelope(turnValue: unknown): WorkerTurnEnvelope
 }
 
 function assertExactTurnDigest(turn: WorkerTurnEnvelope): void {
+  turn.toolHistory?.forEach(assertExactWorkerToolResult);
   if (turn.previousToolResult !== undefined) {
     assertExactWorkerToolResult(turn.previousToolResult);
   }
@@ -247,12 +257,20 @@ function writeResponse(socket: Socket, response: unknown): void {
 function assertOutcomeWithinTurn(outcomeValue: unknown, turn: WorkerTurnEnvelope): WorkerOutcome {
   const outcome = WorkerOutcomeSchema.parse(outcomeValue);
   if (outcome.kind === "final_response") return outcome;
-  if (turn.previousToolResult !== undefined) {
-    throw Object.assign(new TypeError("the bounded worker loop permits only one tool request"), {
-      reason: "provider_malformed" as const,
-    });
+  if (
+    (turn.previousToolResult !== undefined && turn.continuation === undefined) ||
+    (turn.continuation !== undefined && turn.turnNumber >= turn.continuation.maxTurns)
+  ) {
+    throw Object.assign(
+      new TypeError(
+        "the bounded worker loop permits only one tool request or its bound continuation limit",
+      ),
+      {
+        reason: "provider_malformed" as const,
+      },
+    );
   }
-  if (!turn.allowedTools.includes(outcome.request.name)) {
+  if (!turn.allowedTools.includes(outcome.request.name) && turn.continuation === undefined) {
     throw Object.assign(new TypeError("worker requested a tool outside the bound catalog"), {
       reason: "provider_malformed" as const,
     });
@@ -275,7 +293,8 @@ function assertOutcomeWithinTurn(outcomeValue: unknown, turn: WorkerTurnEnvelope
   }
   if (
     outcome.request.name === "github.pull_request.merge" &&
-    budget.remainingPrivilegedActions < 1
+    budget.remainingPrivilegedActions < 1 &&
+    turn.continuation === undefined
   ) {
     throw Object.assign(new TypeError("worker requested an action after budget exhaustion"), {
       reason: "provider_malformed" as const,

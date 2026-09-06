@@ -33,3 +33,4 @@ export * from "./session-status.js";
 
 export { ResearchRequestSchema as ToolArgumentsSchema } from "./actions.js";
 export * from "./session-plan.js";
+export * from "./judge-portal.js";

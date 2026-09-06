@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 
 import {
   CanonicalRequestSchema,
+  SessionPlanTargetSchema,
   ControlledContentRequestSchema,
   GitHubOAuthClientIdSchema,
   GitHubPullRequestVersionSchema,
@@ -25,7 +26,6 @@ import type {
 import {
   parseGuardianCompetitionCliArguments,
   runGuardianAssistedCli,
-  runGuardianCompetitionCli,
   type GuardianCliAssistedBootstrap,
   type GuardianCliIo,
   type GuardianCompetitionCliRunner,
@@ -36,6 +36,7 @@ const COMPETITION_OBJECTIVE =
   "Validate Guardian's controlled public-research, scope-denial, and exact GitHub authorization journey.";
 
 export interface GuardianCompetitionDeployment {
+  readonly baseBranch: string;
   readonly githubClientId: string;
   readonly researchRequest: ResearchRequest;
   readonly researchRequiredTerms: readonly string[];
@@ -154,7 +155,11 @@ export function parseGuardianCompetitionDeploymentEnvironment(
       "competition unsafe and legitimate targets must use different repositories",
     );
   }
+  const baseBranch = SessionPlanTargetSchema.shape.baseBranch.parse(
+    required(environment, "GUARDIAN_COMPETITION_BASE_BRANCH"),
+  );
   return {
+    baseBranch,
     githubClientId: GitHubOAuthClientIdSchema.parse(
       required(environment, "GUARDIAN_GITHUB_APP_CLIENT_ID"),
     ),
@@ -272,6 +277,22 @@ export async function runGuardianCompetitionCommand(options: {
     {
       sessionId,
       callerId,
+      sessionPlan: {
+        maxActions: 1,
+        maxMutations: 1,
+        mutationRetries: 0,
+        targets: [
+          {
+            operation: "github.pull_request.merge",
+            connectionId,
+            owner: deployment.legitimateTarget.owner,
+            repository: deployment.legitimateTarget.repository,
+            pullRequest: deployment.legitimateTarget.pullRequest,
+            headCommit: deployment.legitimateTarget.headCommit,
+            baseBranch: deployment.baseBranch,
+          },
+        ],
+      },
       authorityStorePath: resolve(stateDirectory, "authority.sqlite"),
       projectRoot: options.projectRoot,
       workspaceRoots: [resolve(stateDirectory, "workspaces")],
@@ -308,14 +329,18 @@ export async function runGuardianCompetitionCommand(options: {
       proposedAt: now(),
       randomId,
     });
-    return await runGuardianCompetitionCli({
-      principalId,
-      runner: supervisor,
+    if (activation.sessionPlanGrantId === undefined)
+      throw new TypeError("competition launch did not activate session-plan authority");
+    const result = await supervisor.runCompetitionJourney({
       ...requests,
       githubClientId: deployment.githubClientId,
-      io: options.io,
-      now,
     });
+    options.io.write(
+      result.state === "completed"
+        ? "Guardian controlled competition journey completed\n"
+        : `Guardian controlled competition journey stopped: ${result.stage}/${result.code}\n`,
+    );
+    return result;
   } finally {
     await supervisor.close();
   }

@@ -225,13 +225,18 @@ describe("Nebius native worker provider", () => {
         policyVersion: 1,
       },
     });
+    const nextDenialInput = { ...denial, sourceTurnNumber: 2 };
+    Reflect.deleteProperty(nextDenialInput, "resultDigest");
+    const nextDenial = createWorkerToolResult(nextDenialInput);
     const finalTurn = turn(DEFAULT_NEBIUS_WORKER_SELECTION, {
       turnId: "77777777-7777-4777-8777-777777777777",
-      turnNumber: 2,
+      turnNumber: 3,
+      continuation: { kind: "bounded_v1", maxTurns: 3, deadline: firstTurn.expiresAt },
       startsAt: "2026-09-01T00:00:20.000Z",
       allowedTools: [],
       remainingBudget: denial.remainingBudget,
-      previousToolResult: denial,
+      previousToolResult: nextDenial,
+      toolHistory: [denial],
     });
     const fetchMock = vi.fn<typeof fetch>(() =>
       Promise.resolve(

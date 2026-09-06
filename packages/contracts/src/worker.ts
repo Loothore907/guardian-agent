@@ -15,7 +15,11 @@ import {
   LocalCommandRequestSchema,
   ProviderRequestIdSchema,
   ResearchRequestSchema,
+  ControlledPublicHttpsUrlSchema,
+  ControlledContentJourneyResultSchema,
 } from "./actions.js";
+import { ResearchJourneyResultSchema } from "./research-ipc.js";
+import { GitHubPullRequestSnapshotSchema, GitHubMergeResultSchema } from "./github.js";
 import { ToolCapabilitySchema } from "./mission.js";
 import { BoundSessionStatusSchema } from "./session-status.js";
 import { LocalCommandResultSchema } from "./executor.js";
@@ -96,7 +100,14 @@ export const WorkerToolRequestSchema = z.discriminatedUnion("name", [
   }),
   z.strictObject({
     name: z.literal("guardian.research"),
-    arguments: ResearchRequestSchema,
+    arguments: z.union([
+      ResearchRequestSchema,
+      z.strictObject({
+        sourceUrl: ControlledPublicHttpsUrlSchema.refine(
+          (v) => !v.includes("%") && !containsSecretLikeMaterial(v),
+        ),
+      }),
+    ]),
   }),
   z.strictObject({
     name: z.literal("guardian.local_command"),
@@ -108,6 +119,7 @@ export const WorkerToolRequestSchema = z.discriminatedUnion("name", [
       owner: GitHubNameSchema,
       repository: GitHubNameSchema,
       pullRequest: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+      content: z.literal("review").optional(),
     }),
   }),
   z.strictObject({
@@ -162,9 +174,19 @@ export const WorkerOutcomeSchema = z
   .refine((outcome) => !containsCredentialLikeValue(outcome), {
     message: "worker outcome cannot contain credential-like material",
   })
-  .refine((outcome) => !containsArbitraryTransportValue(outcome), {
-    message: "worker outcome cannot contain arbitrary URLs or headers",
-  });
+  .refine(
+    (outcome) =>
+      !containsArbitraryTransportValue(
+        outcome.kind === "tool_request" &&
+          outcome.request.name === "guardian.research" &&
+          "sourceUrl" in outcome.request.arguments
+          ? { ...outcome, request: { ...outcome.request, arguments: {} } }
+          : outcome,
+      ),
+    {
+      message: "worker outcome cannot contain arbitrary URLs or headers",
+    },
+  );
 export type WorkerOutcome = DeepReadonly<z.infer<typeof WorkerOutcomeSchema>>;
 
 export const WorkerRemainingBudgetSchema = z.strictObject({
@@ -177,22 +199,24 @@ export const WorkerRemainingBudgetSchema = z.strictObject({
 });
 export type WorkerRemainingBudget = DeepReadonly<z.infer<typeof WorkerRemainingBudgetSchema>>;
 
-export const WorkerRuntimeToolRequestSchema = z.discriminatedUnion("name", [
-  z.strictObject({
-    name: z.literal("guardian.session_status"),
-    arguments: z.strictObject({}),
-  }),
-  z.strictObject({
-    name: z.literal("guardian.local_command"),
-    arguments: WorkerLocalCommandRequestSchema,
-  }),
-]);
+export const WorkerRuntimeToolRequestSchema = WorkerToolRequestSchema;
 export type WorkerRuntimeToolRequest = DeepReadonly<z.infer<typeof WorkerRuntimeToolRequestSchema>>;
+
+export const WorkerContinuationProfileSchema = z.strictObject({
+  kind: z.literal("bounded_v1"),
+  maxTurns: z.number().int().min(2).max(20),
+  deadline: TimestampSchema,
+});
+export type WorkerContinuationProfile = DeepReadonly<
+  z.infer<typeof WorkerContinuationProfileSchema>
+>;
 
 export const WorkerToolExecutionEnvelopeWithoutDigestSchema = z
   .strictObject({
     schemaVersion: ContractVersionSchema,
     executionId: OpaqueIdSchema,
+    sessionPlanGrantId: OpaqueIdSchema.optional(),
+    continuation: WorkerContinuationProfileSchema.optional(),
     sessionId: OpaqueIdSchema,
     callerId: OpaqueIdSchema,
     missionId: OpaqueIdSchema,
@@ -230,6 +254,7 @@ export type WorkerToolExecutionEnvelope = DeepReadonly<
 
 const WorkerToolResultBindingShape = {
   schemaVersion: ContractVersionSchema,
+  sessionPlanGrantId: OpaqueIdSchema.optional(),
   executionId: OpaqueIdSchema,
   executionDigest: Sha256DigestSchema,
   sessionId: OpaqueIdSchema,
@@ -257,7 +282,40 @@ function localCommandOutputIsSafe(output: { readonly stdout: string; readonly st
   );
 }
 
+function publicToolResultIsSafe(value: unknown): boolean {
+  if (typeof value === "string")
+    return (
+      !containsSecretLikeMaterial(value) &&
+      !containsPrivateHostPath(value) &&
+      !/https?:\/\/[^\s/]*@/iu.test(value)
+    );
+  if (Array.isArray(value)) return value.every(publicToolResultIsSafe);
+  return (
+    typeof value !== "object" ||
+    value === null ||
+    Object.values(value).every(publicToolResultIsSafe)
+  );
+}
+
 const WorkerToolSuccessResultWithoutDigestSchema = z.discriminatedUnion("name", [
+  z.strictObject({
+    ...WorkerToolResultBindingShape,
+    outcome: z.literal("succeeded"),
+    name: z.literal("guardian.research"),
+    output: z.union([ResearchJourneyResultSchema, ControlledContentJourneyResultSchema]),
+  }),
+  z.strictObject({
+    ...WorkerToolResultBindingShape,
+    outcome: z.literal("succeeded"),
+    name: z.literal("github.pull_request.read"),
+    output: GitHubPullRequestSnapshotSchema,
+  }),
+  z.strictObject({
+    ...WorkerToolResultBindingShape,
+    outcome: z.literal("succeeded"),
+    name: z.literal("github.pull_request.merge"),
+    output: GitHubMergeResultSchema,
+  }),
   z.strictObject({
     ...WorkerToolResultBindingShape,
     outcome: z.literal("succeeded"),
@@ -284,12 +342,32 @@ const WorkerToolDenialShape = {
 } as const;
 
 const WorkerToolDeniedResultWithoutDigestSchema = z.discriminatedUnion("name", [
+  z.strictObject({ ...WorkerToolDenialShape, name: z.literal("guardian.research") }),
+  z.strictObject({ ...WorkerToolDenialShape, name: z.literal("github.pull_request.read") }),
+  z.strictObject({ ...WorkerToolDenialShape, name: z.literal("github.pull_request.merge") }),
   z.strictObject({ ...WorkerToolDenialShape, name: z.literal("guardian.session_status") }),
   z.strictObject({ ...WorkerToolDenialShape, name: z.literal("guardian.local_command") }),
 ]);
 
 export const WorkerToolResultWithoutDigestSchema = z
   .union([WorkerToolSuccessResultWithoutDigestSchema, WorkerToolDeniedResultWithoutDigestSchema])
+  .refine(publicToolResultIsSafe, "unsafe worker result")
+  .refine(
+    (r) =>
+      !["guardian.research", "github.pull_request.read", "github.pull_request.merge"].includes(
+        r.name,
+      ) || new TextEncoder().encode(JSON.stringify(r)).byteLength <= 24_000,
+    "external result exceeds byte budget",
+  )
+  .refine(
+    (r) =>
+      r.outcome !== "succeeded" ||
+      r.name !== "guardian.research" ||
+      (Array.isArray(r.output.provenance) ? r.output.provenance : [r.output.provenance]).every(
+        (p) => p.sessionId === r.sessionId,
+      ),
+    "research result session mismatch",
+  )
   .refine(
     (result) =>
       result.outcome !== "succeeded" ||
@@ -299,6 +377,27 @@ export const WorkerToolResultWithoutDigestSchema = z
   );
 
 const WorkerToolSuccessResultSchema = z.discriminatedUnion("name", [
+  z.strictObject({
+    ...WorkerToolResultBindingShape,
+    resultDigest: Sha256DigestSchema,
+    outcome: z.literal("succeeded"),
+    name: z.literal("guardian.research"),
+    output: z.union([ResearchJourneyResultSchema, ControlledContentJourneyResultSchema]),
+  }),
+  z.strictObject({
+    ...WorkerToolResultBindingShape,
+    resultDigest: Sha256DigestSchema,
+    outcome: z.literal("succeeded"),
+    name: z.literal("github.pull_request.read"),
+    output: GitHubPullRequestSnapshotSchema,
+  }),
+  z.strictObject({
+    ...WorkerToolResultBindingShape,
+    resultDigest: Sha256DigestSchema,
+    outcome: z.literal("succeeded"),
+    name: z.literal("github.pull_request.merge"),
+    output: GitHubMergeResultSchema,
+  }),
   z.strictObject({
     ...WorkerToolResultBindingShape,
     resultDigest: Sha256DigestSchema,
@@ -319,6 +418,21 @@ const WorkerToolDeniedResultSchema = z.discriminatedUnion("name", [
   z.strictObject({
     ...WorkerToolDenialShape,
     resultDigest: Sha256DigestSchema,
+    name: z.literal("guardian.research"),
+  }),
+  z.strictObject({
+    ...WorkerToolDenialShape,
+    resultDigest: Sha256DigestSchema,
+    name: z.literal("github.pull_request.read"),
+  }),
+  z.strictObject({
+    ...WorkerToolDenialShape,
+    resultDigest: Sha256DigestSchema,
+    name: z.literal("github.pull_request.merge"),
+  }),
+  z.strictObject({
+    ...WorkerToolDenialShape,
+    resultDigest: Sha256DigestSchema,
     name: z.literal("guardian.session_status"),
   }),
   z.strictObject({
@@ -330,6 +444,14 @@ const WorkerToolDeniedResultSchema = z.discriminatedUnion("name", [
 
 export const WorkerToolResultSchema = z
   .union([WorkerToolSuccessResultSchema, WorkerToolDeniedResultSchema])
+  .refine(publicToolResultIsSafe, "unsafe worker result")
+  .refine(
+    (r) =>
+      !["guardian.research", "github.pull_request.read", "github.pull_request.merge"].includes(
+        r.name,
+      ) || new TextEncoder().encode(JSON.stringify(r)).byteLength <= 24_000,
+    "external result exceeds byte budget",
+  )
   .refine(
     (result) =>
       result.outcome !== "succeeded" ||
@@ -354,16 +476,57 @@ const WorkerTurnEnvelopeWithoutDigestSchema = z
     modelPolicyVersion: VersionNumberSchema,
     worker: SessionWorkerSelectionSchema,
     turnNumber: VersionNumberSchema,
+    continuation: WorkerContinuationProfileSchema.optional(),
     startsAt: TimestampSchema,
     expiresAt: TimestampSchema,
     objective: boundedCredentialSafeText(1_000),
     constraints: z.array(boundedCredentialSafeText(500)).min(1).max(32),
     allowedTools: z.array(ToolCapabilitySchema).max(16),
     remainingBudget: WorkerRemainingBudgetSchema,
+    sessionPlanGrantId: OpaqueIdSchema.optional(),
     previousToolResult: WorkerToolResultSchema.optional(),
+    toolHistory: z.array(WorkerToolResultSchema).max(3).optional(),
   })
   .superRefine((turn, context) => {
     addDuplicateIssue(turn.allowedTools, context, ["allowedTools"]);
+    if (
+      turn.continuation !== undefined &&
+      new TextEncoder().encode(JSON.stringify(turn)).byteLength > 48_000
+    )
+      context.addIssue({ code: "custom", message: "worker context exceeds byte budget" });
+    if (
+      turn.toolHistory !== undefined &&
+      (turn.continuation === undefined ||
+        turn.toolHistory.some(
+          (r, i, history) =>
+            r.sessionPlanGrantId !== turn.sessionPlanGrantId ||
+            r.sessionId !== turn.sessionId ||
+            r.callerId !== turn.callerId ||
+            r.missionId !== turn.missionId ||
+            r.missionVersion !== turn.missionVersion ||
+            r.profileId !== turn.profileId ||
+            r.profileVersion !== turn.profileVersion ||
+            r.policyVersion !== turn.policyVersion ||
+            r.sourceTurnNumber >= turn.turnNumber - 1 ||
+            (i > 0 && r.sourceTurnNumber <= history[i - 1]!.sourceTurnNumber),
+        ))
+    )
+      context.addIssue({ code: "custom", message: "history does not bind the current turn" });
+    if (
+      turn.continuation !== undefined &&
+      (turn.turnNumber > turn.continuation.maxTurns ||
+        Date.parse(turn.expiresAt) > Date.parse(turn.continuation.deadline))
+    )
+      context.addIssue({ code: "custom", message: "turn exceeds continuation profile" });
+    if (
+      turn.previousToolResult !== undefined &&
+      Object.keys(turn.remainingBudget).some(
+        (key) =>
+          turn.remainingBudget[key as keyof typeof turn.remainingBudget] >
+          turn.previousToolResult!.remainingBudget[key as keyof typeof turn.remainingBudget],
+      )
+    )
+      context.addIssue({ code: "custom", message: "turn budget cannot increase" });
     if (Date.parse(turn.expiresAt) <= Date.parse(turn.startsAt)) {
       context.addIssue({
         code: "custom",
@@ -398,7 +561,8 @@ const WorkerTurnEnvelopeWithoutDigestSchema = z
     }
     if (
       turn.previousToolResult !== undefined &&
-      (turn.previousToolResult.sessionId !== turn.sessionId ||
+      (turn.previousToolResult.sessionPlanGrantId !== turn.sessionPlanGrantId ||
+        turn.previousToolResult.sessionId !== turn.sessionId ||
         turn.previousToolResult.callerId !== turn.callerId ||
         turn.previousToolResult.missionId !== turn.missionId ||
         turn.previousToolResult.missionVersion !== turn.missionVersion ||

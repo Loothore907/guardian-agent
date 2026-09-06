@@ -1,3 +1,4 @@
+import { canonicalDigest } from "@guardian/canonical";
 import { execFileSync } from "node:child_process";
 import { chmod, mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -318,6 +319,110 @@ describe("reference authority supervisor", () => {
         request: request(),
         scopeDigest: "d".repeat(64),
         confirmation: { principalId: IDS.principal, confirmedAt: NOW },
+      });
+
+      const plan = {
+        schemaVersion: 1,
+        sessionId: IDS.session,
+        callerId: IDS.caller,
+        missionId: IDS.mission,
+        missionVersion: 1,
+        profileId: IDS.profile,
+        profileVersion: 1,
+        policyVersion: 1,
+        version: 1,
+        startsAt: START,
+        expiresAt: EXPIRY,
+        maxActions: 2,
+        maxMutations: 1,
+        mutationRetries: 0,
+        targets: [
+          {
+            operation: "github.pull_request.merge",
+            connectionId: IDS.connection,
+            owner: "loothore907",
+            repository: "guardian-agent-demo",
+            pullRequest: 1,
+            headCommit: "a".repeat(40),
+            baseBranch: "main",
+          },
+        ],
+      };
+      const grant = await supervisor.authorizationIssuer.issueSessionPlan({
+        plan,
+        confirmation: { principalId: IDS.principal, confirmedAt: NOW },
+      });
+      await expect(supervisor.authorizationIssuer.getSessionPlan()).resolves.toMatchObject({
+        grant,
+        revoked: false,
+        usedActions: 0,
+      });
+      const planCheck = { request: request(), requestDigest: "e".repeat(64), phase: "inspect" };
+      await expect(supervisor.broker.checkSessionPlan(planCheck)).resolves.toMatchObject({
+        status: "allowed",
+        grantId: grant.grantId,
+      });
+      await expect(
+        supervisor.authorizationIssuer.issueSessionPlan({
+          plan: { ...plan, version: 2 },
+          confirmation: { principalId: IDS.principal, confirmedAt: START },
+        }),
+      ).rejects.toThrow("fresh");
+      await expect(supervisor.authorizationIssuer.revokeSessionPlan(grant.grantId)).resolves.toBe(
+        true,
+      );
+      await expect(supervisor.broker.checkSessionPlan(planCheck)).resolves.toMatchObject({
+        status: "blocked",
+        reason: "revoked",
+      });
+      await expect(supervisor.authorizationIssuer.getPendingPlanRequests()).resolves.toMatchObject([
+        { requestDigest: planCheck.requestDigest, reason: "revoked" },
+      ]);
+
+      const standing = {
+        authorizationId: IDS.principal,
+        deploymentId: IDS.connection,
+        principalId: IDS.principal,
+        authorizedAt: "2026-08-01T00:00:00.000Z",
+        expiresAt: EXPIRY,
+        objectiveDigest: "a".repeat(64),
+        permissionsDigest: "b".repeat(64),
+        workspaceSnapshotDigest: "c".repeat(64),
+        sessionPlanIntentDigest: canonicalDigest("session_plan_intent", 1, {
+          maxActions: plan.maxActions,
+          maxMutations: plan.maxMutations,
+          mutationRetries: plan.mutationRetries,
+          targets: plan.targets,
+        }),
+      };
+      const deploymentGrant = await supervisor.authorizationIssuer.issueDeploymentSessionPlan({
+        plan: { ...plan, version: 2 },
+        authorization: standing,
+      });
+      expect(deploymentGrant).toMatchObject({
+        assurance: "deployment_authorization",
+        confirmedAt: standing.authorizedAt,
+      });
+      await expect(supervisor.broker.checkSessionPlan(planCheck)).resolves.toMatchObject({
+        status: "allowed",
+        grantId: deploymentGrant.grantId,
+      });
+      await expect(
+        supervisor.authorizationIssuer.issueDeploymentSessionPlan({
+          plan: { ...plan, version: 3, maxActions: 3 },
+          authorization: standing,
+        }),
+      ).rejects.toThrow("does not cover");
+      await expect(
+        supervisor.authorizationIssuer.issueDeploymentSessionPlan({
+          plan: { ...plan, version: 3 },
+          authorization: { ...standing, expiresAt: START },
+        }),
+      ).rejects.toThrow("does not cover");
+      await supervisor.authorizationIssuer.revokeSessionPlan(deploymentGrant.grantId);
+      await expect(supervisor.broker.checkSessionPlan(planCheck)).resolves.toMatchObject({
+        status: "blocked",
+        reason: "revoked",
       });
 
       expect(issued.assurance).toBe("development_confirmation");

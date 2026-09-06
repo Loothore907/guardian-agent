@@ -1,3 +1,13 @@
+import { withinWorkerDeadline } from "./worker-deadline.js";
+import {
+  SessionPlanIntentSchema,
+  OpaqueIdSchema,
+  DeploymentAuthorizationSchema,
+  SessionLaunchConfirmationSchema,
+  type DeploymentAuthorization,
+  type SessionLaunchConfirmation,
+  type SessionPlanIntent,
+} from "@guardian/contracts";
 import { randomUUID } from "node:crypto";
 
 import type { AuthorityWorkerClient } from "@guardian/authority-client";
@@ -5,7 +15,6 @@ import type { AuthorityWorkerClient } from "@guardian/authority-client";
 import {
   DEFAULT_REFERENCE_WORKER_SELECTION,
   DEFAULT_GUARDIAN_MODEL_POLICY,
-  DevelopmentSessionConfirmationSchema,
   PermissionEnvelopeSchema,
   SessionBootstrapResultSchema,
   SessionDraftInputSchema,
@@ -16,7 +25,6 @@ import {
   ToolCapabilitySchema,
   WorkerTurnIpcFailureReasonSchema,
   type CompiledMissionCandidate,
-  type DevelopmentSessionConfirmation,
   type InteractionMissionContext,
   type InteractionRunnerState,
   type MissionDraftReviewEnvelope,
@@ -110,10 +118,14 @@ export type RunMissionDraftReview = (
 export type RunMissionSetupRisk = (
   envelope: MissionSetupRiskEnvelope,
 ) => Promise<MissionSetupRiskEvaluation>;
-export type RunWorkerTurn = (turn: WorkerTurnEnvelope) => Promise<WorkerTurnResult>;
+export type RunWorkerTurn = (
+  turn: WorkerTurnEnvelope,
+  signal?: AbortSignal,
+) => Promise<WorkerTurnResult>;
 export type ExecuteWorkerTool = (
   execution: WorkerToolExecutionEnvelope,
   launched: LaunchedReferenceSession,
+  signal?: AbortSignal,
 ) => Promise<WorkerToolResult>;
 
 interface PendingDraft {
@@ -123,7 +135,20 @@ interface PendingDraft {
   consumed: boolean;
 }
 
+export type WorkerObservation =
+  | { kind: "turn"; turn: WorkerTurnEnvelope; result: WorkerTurnResult }
+  | { kind: "tool"; result: WorkerToolResult };
+
 export interface ReferenceSessionBootstrapOptions {
+  readonly observeWorker?: (event: WorkerObservation) => void;
+  readonly workerMaxTurns?: number;
+  readonly sessionPlan?: unknown;
+  readonly deploymentAuthorization?: unknown;
+  readonly activateSessionPlan?: (
+    intent: SessionPlanIntent,
+    launched: LaunchedReferenceSession,
+    confirmation: SessionLaunchConfirmation,
+  ) => Promise<string>;
   readonly sessionId: string;
   readonly callerId: string;
   readonly launchSession: LaunchSession;
@@ -146,6 +171,11 @@ export interface ReferenceSessionBootstrapOptions {
 }
 
 export class ReferenceSessionBootstrapCoordinator {
+  readonly #deploymentAuthorization: DeploymentAuthorization | undefined;
+  readonly #observeWorker: ReferenceSessionBootstrapOptions["observeWorker"];
+  readonly #workerMaxTurns: number | undefined;
+  readonly #sessionPlan: SessionPlanIntent | undefined;
+  readonly #activateSessionPlan: ReferenceSessionBootstrapOptions["activateSessionPlan"];
   readonly #sessionId: string;
   readonly #callerId: string;
   readonly #launchSession: LaunchSession;
@@ -168,6 +198,26 @@ export class ReferenceSessionBootstrapCoordinator {
   readonly #pendingFormationDraftIds = new Set<string>();
 
   constructor(options: ReferenceSessionBootstrapOptions) {
+    this.#deploymentAuthorization =
+      options.deploymentAuthorization === undefined
+        ? undefined
+        : DeploymentAuthorizationSchema.parse(options.deploymentAuthorization);
+    this.#observeWorker = options.observeWorker;
+    this.#workerMaxTurns = options.workerMaxTurns;
+    if (
+      options.workerMaxTurns !== undefined &&
+      (!Number.isInteger(options.workerMaxTurns) ||
+        options.workerMaxTurns < 2 ||
+        options.workerMaxTurns > 20)
+    )
+      throw new TypeError("invalid worker continuation limit");
+    this.#sessionPlan =
+      options.sessionPlan === undefined
+        ? undefined
+        : SessionPlanIntentSchema.parse(options.sessionPlan);
+    this.#activateSessionPlan = options.activateSessionPlan;
+    if (this.#sessionPlan !== undefined && this.#activateSessionPlan === undefined)
+      throw new TypeError("session plan requires an activation boundary");
     this.#sessionId = options.sessionId;
     this.#callerId = options.callerId;
     this.#launchSession = options.launchSession;
@@ -326,8 +376,8 @@ export class ReferenceSessionBootstrapCoordinator {
     return this.#storeCandidate(candidate, expectedRevision);
   }
 
-  async confirmAndLaunch(input: DevelopmentSessionConfirmation): Promise<SessionBootstrapResult> {
-    const confirmation = DevelopmentSessionConfirmationSchema.parse(input);
+  async confirmAndLaunch(input: SessionLaunchConfirmation): Promise<SessionBootstrapResult> {
+    const confirmation = SessionLaunchConfirmationSchema.parse(input);
     const pending = this.#drafts.get(confirmation.draftId);
     if (pending === undefined) throw new TypeError("session draft is unknown");
     if (pending.consumed) throw new TypeError("session draft is already consumed");
@@ -340,7 +390,37 @@ export class ReferenceSessionBootstrapCoordinator {
       throw new TypeError("session draft is expired");
     }
     const confirmationAge = Date.parse(evaluatedAt) - Date.parse(confirmation.confirmedAt);
-    if (confirmationAge < 0 || confirmationAge > MAXIMUM_CONFIRMATION_AGE_MS) {
+    if (confirmation.assurance === "deployment_authorization") {
+      const standing = this.#deploymentAuthorization;
+      const preview = pending.preview;
+      if (
+        standing === undefined ||
+        confirmation.journeyId !== this.#sessionId ||
+        standing.authorizationId !== confirmation.authorizationId ||
+        standing.principalId !== confirmation.confirmedBy.principalId ||
+        confirmation.confirmedAt !== standing.authorizedAt ||
+        Date.parse(evaluatedAt) < Date.parse(standing.authorizedAt) ||
+        Date.parse(evaluatedAt) >= Date.parse(standing.expiresAt) ||
+        canonicalDigest("deployment_objective", 1, preview.objective) !==
+          standing.objectiveDigest ||
+        canonicalDigest("deployment_permissions", 1, preview.permissions) !==
+          standing.permissionsDigest ||
+        (preview.sessionPlan === undefined &&
+          preview.workerTools.some((t) => t.startsWith("github."))) ||
+        canonicalDigest("session_plan_intent", 1, preview.sessionPlan ?? null) !==
+          standing.sessionPlanIntentDigest ||
+        (preview.workerMaxTurns !== undefined &&
+          canonicalDigest("deployment_worker_profile", 1, {
+            constraints: preview.constraints,
+            workerTools: preview.workerTools,
+            maxTurns: preview.workerMaxTurns,
+          }) !== standing.workerProfileDigest) ||
+        Date.parse(evaluatedAt) + preview.permissions.time.maxDurationSeconds * 1000 >
+          Date.parse(standing.expiresAt) ||
+        preview.workspace.sourceSnapshotDigest !== standing.workspaceSnapshotDigest
+      )
+        throw new TypeError("deployment authorization does not cover preview");
+    } else if (confirmationAge < 0 || confirmationAge > MAXIMUM_CONFIRMATION_AGE_MS) {
       throw new TypeError("development session confirmation is not fresh");
     }
 
@@ -359,7 +439,7 @@ export class ReferenceSessionBootstrapCoordinator {
       callerId: this.#callerId,
       revocationHandle: this.#randomId(),
       policyVersion: POLICY_VERSION,
-      durationSeconds: PROFILE_DURATION_SECONDS,
+      durationSeconds: pending.preview.permissions.time.maxDurationSeconds,
       workspace,
       mission: {
         schemaVersion: 1,
@@ -384,6 +464,17 @@ export class ReferenceSessionBootstrapCoordinator {
     });
     const status = launched.runtime.status(new Date().toISOString());
     if (status.state !== "active") throw new TypeError("launched session is not active");
+    let sessionPlanGrantId: string | undefined;
+    if (pending.preview.sessionPlan !== undefined) {
+      try {
+        sessionPlanGrantId = OpaqueIdSchema.parse(
+          await this.#activateSessionPlan!(pending.preview.sessionPlan, launched, confirmation),
+        );
+      } catch {
+        launched.interrupt();
+        throw new TypeError("session plan activation failed; session interrupted");
+      }
+    }
     const runner =
       this.#runInteraction === undefined
         ? { state: "not_attached" as const }
@@ -407,7 +498,7 @@ export class ReferenceSessionBootstrapCoordinator {
     const turnExpiresAt = new Date(
       Math.min(Date.parse(status.expiresAt), Date.parse(turnStartsAt) + 60_000),
     ).toISOString();
-    const turn = createWorkerTurnEnvelope({
+    let turn = createWorkerTurnEnvelope({
       schemaVersion: 1,
       turnId: this.#randomId(),
       sessionId: status.sessionId,
@@ -421,6 +512,16 @@ export class ReferenceSessionBootstrapCoordinator {
       modelPolicyVersion: DEFAULT_GUARDIAN_MODEL_POLICY.version,
       worker: pending.preview.worker,
       turnNumber: 1,
+      ...(sessionPlanGrantId === undefined ? {} : { sessionPlanGrantId }),
+      ...(pending.preview.workerMaxTurns === undefined
+        ? {}
+        : {
+            continuation: {
+              kind: "bounded_v1",
+              maxTurns: pending.preview.workerMaxTurns,
+              deadline: status.expiresAt,
+            },
+          }),
       startsAt: turnStartsAt,
       expiresAt: turnExpiresAt,
       objective: pending.preview.objective,
@@ -444,71 +545,48 @@ export class ReferenceSessionBootstrapCoordinator {
     if (this.#runWorkerTurn !== undefined) {
       let fallbackFailure: WorkerTurnIpcFailureReason = "provider_unavailable";
       try {
-        const firstResult = assertWorkerTurnResultForTurn(await this.#runWorkerTurn(turn), turn);
-        if (
-          firstResult.outcome.kind === "final_response" ||
-          this.#executeWorkerTool === undefined
-        ) {
-          workerTurn = { state: "completed", result: firstResult };
-        } else {
-          if (
-            firstResult.outcome.request.name !== "guardian.session_status" &&
-            firstResult.outcome.request.name !== "guardian.local_command"
-          ) {
-            throw Object.assign(new TypeError("worker requested an unsupported W3 capability"), {
-              reason: "provider_malformed" as const,
-            });
+        let previous: WorkerToolResult | undefined;
+        const history: WorkerToolResult[] = [];
+        while (true) {
+          if (turn.continuation !== undefined) {
+            if (
+              !this.#workerAuthority?.getWorkerBudget ||
+              (await this.#workerAuthority.getWorkerBudget(turn.sessionId)) === null
+            )
+              throw Object.assign(new Error("worker authority unavailable"), {
+                reason: "authority_unavailable",
+              });
           }
-          const requestedAt = TimestampSchema.parse(this.#now());
-          fallbackFailure = "provider_malformed";
-          const execution = createWorkerToolExecutionEnvelope({
-            schemaVersion: 1,
-            executionId: this.#randomId(),
-            sessionId: turn.sessionId,
-            callerId: turn.callerId,
-            missionId: turn.missionId,
-            missionVersion: turn.missionVersion,
-            profileId: turn.profileId,
-            profileVersion: turn.profileVersion,
-            policyVersion: turn.policyVersion,
-            worker: turn.worker,
-            sourceTurnId: turn.turnId,
-            sourceTurnNumber: turn.turnNumber,
-            sourceTurnDigest: turn.turnDigest,
-            requestDigest: workerToolRequestDigest(firstResult.outcome.request),
-            request: firstResult.outcome.request,
-            workspace: launched.workspace,
-            requestedAt,
-            expiresAt: new Date(
-              Math.min(Date.parse(status.expiresAt), Date.parse(requestedAt) + 60_000),
-            ).toISOString(),
-          });
-          fallbackFailure = "tool_unavailable";
-          const toolResult = assertExactWorkerToolResult(
-            await this.#executeWorkerTool(execution, launched),
+          const firstResult = assertWorkerTurnResultForTurn(
+            await withinWorkerDeadline({
+              deadline: turn.expiresAt,
+              now: this.#now,
+              interrupt: launched.interrupt,
+              run: (signal) => this.#runWorkerTurn!(turn, signal),
+            }),
+            turn,
           );
-          fallbackFailure = "tool_denied";
+          this.#observeWorker?.({ kind: "turn", turn, result: firstResult });
           if (
-            toolResult.executionId !== execution.executionId ||
-            toolResult.executionDigest !== execution.executionDigest ||
-            toolResult.requestDigest !== execution.requestDigest ||
-            toolResult.sourceTurnId !== turn.turnId ||
-            toolResult.sourceTurnDigest !== turn.turnDigest ||
-            toolResult.name !== execution.request.name
+            firstResult.outcome.kind === "final_response" ||
+            this.#executeWorkerTool === undefined
           ) {
-            throw Object.assign(new TypeError("tool result does not bind the exact execution"), {
-              reason: "tool_denied" as const,
-            });
-          }
-          if (toolResult.outcome === "denied" && toolResult.denial.disposition === "revoked") {
-            launched.revoke();
-            workerTurn = { state: "revoked", toolResult };
+            workerTurn = {
+              state: "completed",
+              result: firstResult,
+              ...(previous === undefined ? {} : { toolResult: previous }),
+            };
+            break;
           } else {
-            const secondTurnStartsAt = TimestampSchema.parse(this.#now());
+            const requestedAt = TimestampSchema.parse(this.#now());
             fallbackFailure = "provider_malformed";
-            const secondTurn = createWorkerTurnEnvelope({
+            const execution = createWorkerToolExecutionEnvelope({
               schemaVersion: 1,
-              turnId: this.#randomId(),
+              executionId: this.#randomId(),
+              ...(turn.sessionPlanGrantId === undefined
+                ? {}
+                : { sessionPlanGrantId: turn.sessionPlanGrantId }),
+              ...(turn.continuation === undefined ? {} : { continuation: turn.continuation }),
               sessionId: turn.sessionId,
               callerId: turn.callerId,
               missionId: turn.missionId,
@@ -516,27 +594,102 @@ export class ReferenceSessionBootstrapCoordinator {
               profileId: turn.profileId,
               profileVersion: turn.profileVersion,
               policyVersion: turn.policyVersion,
-              modelPolicyId: turn.modelPolicyId,
-              modelPolicyVersion: turn.modelPolicyVersion,
               worker: turn.worker,
-              turnNumber: 2,
-              startsAt: secondTurnStartsAt,
+              sourceTurnId: turn.turnId,
+              sourceTurnNumber: turn.turnNumber,
+              sourceTurnDigest: turn.turnDigest,
+              requestDigest: workerToolRequestDigest(firstResult.outcome.request),
+              request: firstResult.outcome.request,
+              workspace: launched.workspace,
+              requestedAt,
               expiresAt: new Date(
-                Math.min(Date.parse(status.expiresAt), Date.parse(secondTurnStartsAt) + 60_000),
+                Math.min(Date.parse(status.expiresAt), Date.parse(requestedAt) + 60_000),
               ).toISOString(),
-              objective: turn.objective,
-              constraints: turn.constraints,
-              allowedTools: [],
-              remainingBudget: toolResult.remainingBudget,
-              previousToolResult: toolResult,
             });
-            lastBoundary = { id: secondTurn.turnId, digest: secondTurn.turnDigest };
-            fallbackFailure = "provider_unavailable";
-            const finalResult = assertWorkerTurnResultForTurn(
-              await this.#runWorkerTurn(secondTurn),
-              secondTurn,
+            fallbackFailure = "tool_unavailable";
+            const toolResult = assertExactWorkerToolResult(
+              await withinWorkerDeadline({
+                deadline: execution.expiresAt,
+                now: this.#now,
+                interrupt: launched.interrupt,
+                run: (signal) => this.#executeWorkerTool!(execution, launched, signal),
+              }),
             );
-            workerTurn = { state: "completed", result: finalResult, toolResult };
+            fallbackFailure = "tool_denied";
+            if (
+              toolResult.sessionPlanGrantId !== execution.sessionPlanGrantId ||
+              toolResult.sessionId !== execution.sessionId ||
+              toolResult.callerId !== execution.callerId ||
+              toolResult.missionId !== execution.missionId ||
+              toolResult.missionVersion !== execution.missionVersion ||
+              toolResult.profileId !== execution.profileId ||
+              toolResult.profileVersion !== execution.profileVersion ||
+              toolResult.policyVersion !== execution.policyVersion ||
+              toolResult.sourceTurnNumber !== execution.sourceTurnNumber ||
+              toolResult.executionId !== execution.executionId ||
+              toolResult.executionDigest !== execution.executionDigest ||
+              toolResult.requestDigest !== execution.requestDigest ||
+              toolResult.sourceTurnId !== turn.turnId ||
+              toolResult.sourceTurnDigest !== turn.turnDigest ||
+              toolResult.name !== execution.request.name
+            ) {
+              throw Object.assign(new TypeError("tool result does not bind the exact execution"), {
+                reason: "tool_denied" as const,
+              });
+            }
+            this.#observeWorker?.({ kind: "tool", result: toolResult });
+            if (toolResult.outcome === "denied" && toolResult.denial.disposition === "revoked") {
+              launched.revoke();
+              workerTurn = { state: "revoked", toolResult };
+              break;
+            } else {
+              const secondTurnStartsAt = TimestampSchema.parse(this.#now());
+              fallbackFailure = "provider_malformed";
+              if (previous !== undefined) history.push(previous);
+              while (
+                history.length > 3 ||
+                (history.length > 0 &&
+                  Buffer.byteLength(JSON.stringify({ history, toolResult }), "utf8") > 40_000)
+              )
+                history.shift();
+              const secondTurn = createWorkerTurnEnvelope({
+                schemaVersion: 1,
+                turnId: this.#randomId(),
+                sessionId: turn.sessionId,
+                callerId: turn.callerId,
+                missionId: turn.missionId,
+                missionVersion: turn.missionVersion,
+                profileId: turn.profileId,
+                profileVersion: turn.profileVersion,
+                policyVersion: turn.policyVersion,
+                modelPolicyId: turn.modelPolicyId,
+                modelPolicyVersion: turn.modelPolicyVersion,
+                worker: turn.worker,
+                turnNumber: turn.turnNumber + 1,
+                ...(turn.sessionPlanGrantId === undefined
+                  ? {}
+                  : { sessionPlanGrantId: turn.sessionPlanGrantId }),
+                ...(turn.continuation === undefined ? {} : { continuation: turn.continuation }),
+                startsAt: secondTurnStartsAt,
+                expiresAt: new Date(
+                  Math.min(Date.parse(status.expiresAt), Date.parse(secondTurnStartsAt) + 60_000),
+                ).toISOString(),
+                objective: turn.objective,
+                constraints: turn.constraints,
+                allowedTools:
+                  turn.continuation === undefined ||
+                  turn.turnNumber + 1 >= turn.continuation.maxTurns
+                    ? []
+                    : pending.preview.workerTools,
+                remainingBudget: toolResult.remainingBudget,
+                previousToolResult: toolResult,
+                ...(turn.continuation === undefined ? {} : { toolHistory: history.slice(-3) }),
+              });
+              lastBoundary = { id: secondTurn.turnId, digest: secondTurn.turnDigest };
+              fallbackFailure = "provider_unavailable";
+              previous = toolResult;
+              turn = secondTurn;
+            }
           }
         }
       } catch (error) {
@@ -611,6 +764,7 @@ export class ReferenceSessionBootstrapCoordinator {
       tools: status.tools,
       workerTools: pending.preview.workerTools,
       confirmationAssurance: confirmation.assurance,
+      ...(sessionPlanGrantId === undefined ? {} : { sessionPlanGrantId }),
       worker: pending.preview.worker,
       workspace: launched.workspace,
       runner,
@@ -634,6 +788,8 @@ export class ReferenceSessionBootstrapCoordinator {
     };
     const previewDigest = canonicalDigest("session_bootstrap.preview", 1, {
       formationPreviewDigest: candidate.previewDigest,
+      ...(this.#sessionPlan === undefined ? {} : { sessionPlan: this.#sessionPlan }),
+      ...(this.#workerMaxTurns === undefined ? {} : { workerMaxTurns: this.#workerMaxTurns }),
       integration,
       worker: this.#workerSelection,
       workerTools: this.#workerTools,
@@ -653,6 +809,8 @@ export class ReferenceSessionBootstrapCoordinator {
       worker: this.#workerSelection,
       workspace: this.#workspaceSelection,
       previewDigest,
+      ...(this.#sessionPlan === undefined ? {} : { sessionPlan: this.#sessionPlan }),
+      ...(this.#workerMaxTurns === undefined ? {} : { workerMaxTurns: this.#workerMaxTurns }),
     });
     this.#drafts.set(preview.draftId, {
       preview,
@@ -660,6 +818,6 @@ export class ReferenceSessionBootstrapCoordinator {
       formationRevision,
       consumed: false,
     });
-    return preview;
+    return structuredClone(preview);
   }
 }

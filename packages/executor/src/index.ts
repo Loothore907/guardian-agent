@@ -27,6 +27,31 @@ function toWslPath(windowsPath: string): string {
   return `/mnt/${match[1].toLowerCase()}/${match[2].replaceAll("\\", "/")}`;
 }
 
+function runtimePath(value: string): string {
+  if (process.platform === "win32") return toWslPath(value);
+  if (process.platform === "linux" && path.isAbsolute(value)) return value;
+  throw new TypeError("reference executor supports only Windows/WSL and Linux");
+}
+function namespaceCommand(arguments_: string[]) {
+  if (process.platform === "linux")
+    return {
+      file: "/usr/bin/unshare",
+      arguments: arguments_,
+      environment: { PATH: "/usr/sbin:/usr/bin:/sbin:/bin", LANG: "C.UTF-8" },
+    };
+  if (process.platform === "win32")
+    return {
+      file: "wsl.exe",
+      arguments: ["-d", "Ubuntu-22.04", "--exec", "unshare", ...arguments_],
+      environment: Object.fromEntries(
+        ["SystemRoot", "WINDIR", "PATH"].flatMap((name) =>
+          process.env[name] === undefined ? [] : [[name, process.env[name]]],
+        ),
+      ),
+    };
+  throw new TypeError("unsupported reference executor platform");
+}
+
 export function parseIsolationProbeOutput(output: string): IsolationProbeResult {
   if (Buffer.byteLength(output, "utf8") > 32_768) {
     throw new TypeError("isolation probe output exceeds the limit");
@@ -42,39 +67,41 @@ export async function runReferenceIsolationProbe(
   observedAt: string,
 ): Promise<IsolationProbeResult> {
   const canonicalObservedAt = TimestampSchema.parse(observedAt);
-  const sandboxPath = toWslPath(
+  const sandboxPath = runtimePath(
     fileURLToPath(new URL("../runtime/reference-sandbox.sh", import.meta.url)),
   );
-  const probePath = toWslPath(
+  const probePath = runtimePath(
     fileURLToPath(new URL("../runtime/reference-probe.py", import.meta.url)),
   );
-  const allowedEnvironment = Object.fromEntries(
-    ["SystemRoot", "WINDIR", "PATH"].flatMap((name) => {
-      const value = process.env[name];
-      return value === undefined ? [] : [[name, value]];
-    }),
-  );
-  const child = spawn(
-    "wsl.exe",
-    [
-      "-d",
-      "Ubuntu-22.04",
-      "--exec",
-      "unshare",
-      "--user",
-      "--map-root-user",
-      "--mount",
-      "--net",
-      "--pid",
-      "--fork",
-      "--mount-proc",
-      "bash",
-      sandboxPath,
-      probePath,
-      canonicalObservedAt,
-    ],
-    { env: allowedEnvironment, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] },
-  );
+  const command = namespaceCommand([
+    "--user",
+    "--map-root-user",
+    "--mount",
+    "--net",
+    "--pid",
+    "--fork",
+    "--mount-proc",
+    "/usr/bin/bash",
+    sandboxPath,
+    probePath,
+    canonicalObservedAt,
+    process.platform === "linux" ? "linux_namespace_v1" : "windows_wsl2_ubuntu_22_04_namespace_v1",
+  ]);
+  const child = spawn(command.file, command.arguments, {
+    env: command.environment,
+    detached: process.platform === "linux",
+    windowsHide: true,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  const kill = () => {
+    try {
+      if (process.platform === "linux" && child.pid !== undefined)
+        process.kill(-child.pid, "SIGKILL");
+      else child.kill();
+    } catch {
+      /* Already exited. */
+    }
+  };
 
   let stdout = "";
   let stderr = "";
@@ -87,7 +114,7 @@ export async function runReferenceIsolationProbe(
     stderr = `${stderr}${chunk}`.slice(0, 2_048);
   });
 
-  const timeout = setTimeout(() => child.kill(), 30_000);
+  const timeout = setTimeout(kill, 30_000);
   const exitCode = await new Promise<number | null>((resolve, reject) => {
     child.on("error", reject);
     child.on("close", resolve);
@@ -153,40 +180,41 @@ export async function runReferenceLocalCommand(
   if (!(await stat(workspaceHostPath)).isDirectory()) {
     throw new TypeError("the trusted session workspace is unavailable");
   }
-  const workspaceWslPath = toWslPath(workspaceHostPath);
-  const sandboxPath = toWslPath(
+  const workspaceWslPath = runtimePath(workspaceHostPath);
+  const sandboxPath = runtimePath(
     fileURLToPath(new URL("../runtime/reference-command-sandbox.sh", import.meta.url)),
   );
-  const allowedEnvironment = Object.fromEntries(
-    ["SystemRoot", "WINDIR", "PATH"].flatMap((name) => {
-      const environmentValue = process.env[name];
-      return environmentValue === undefined ? [] : [[name, environmentValue]];
-    }),
-  );
-  const child = spawn(
-    "wsl.exe",
-    [
-      "-d",
-      "Ubuntu-22.04",
-      "--exec",
-      "unshare",
-      "--user",
-      "--map-root-user",
-      "--mount",
-      "--net",
-      "--pid",
-      "--fork",
-      "--mount-proc",
-      "bash",
-      sandboxPath,
-      workspaceWslPath,
-      request.workingDirectory,
-      String(request.timeoutSeconds),
-      request.executable,
-      ...request.arguments,
-    ],
-    { env: allowedEnvironment, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] },
-  );
+  const command = namespaceCommand([
+    "--user",
+    "--map-root-user",
+    "--mount",
+    "--net",
+    "--pid",
+    "--fork",
+    "--mount-proc",
+    "/usr/bin/bash",
+    sandboxPath,
+    workspaceWslPath,
+    request.workingDirectory,
+    String(request.timeoutSeconds),
+    request.executable,
+    ...request.arguments,
+  ]);
+  const child = spawn(command.file, command.arguments, {
+    env: command.environment,
+    detached: process.platform === "linux",
+    windowsHide: true,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  const kill = () => {
+    try {
+      if (process.platform === "linux" && child.pid !== undefined)
+        process.kill(-child.pid, "SIGKILL");
+      else child.kill();
+    } catch {
+      /* Already exited. */
+    }
+  };
 
   let stdout = "";
   let stderr = "";
@@ -198,7 +226,7 @@ export async function runReferenceLocalCommand(
   child.stderr.on("data", (chunk: string) => {
     stderr = `${stderr}${chunk}`.slice(0, 8_193);
   });
-  const outerTimeout = setTimeout(() => child.kill(), (request.timeoutSeconds + 5) * 1_000);
+  const outerTimeout = setTimeout(kill, (request.timeoutSeconds + 5) * 1_000);
   const exitCode = await new Promise<number | null>((resolve, reject) => {
     child.on("error", reject);
     child.on("close", resolve);

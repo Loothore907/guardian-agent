@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import { assertLinuxKeyringReady } from "./linux-keyring-preflight.mjs";
 
 import {
   createMissionSetupRiskIpcCredentials,
@@ -36,6 +37,7 @@ const credentialStore = {
 protectedTest(
   "supervised Qwen and Nemotron services use the credential-isolated live path",
   async () => {
+    assertLinuxKeyringReady();
     const now = new Date().toISOString();
     const interactionCredentials = createInteractionIpcCredentials();
     const interactionConfig = {
