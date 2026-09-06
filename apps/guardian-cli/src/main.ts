@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
 import { createInterface } from "node:readline/promises";
 
-import { WindowsCredentialStore } from "@guardian/credential-store";
+import { createPlatformCredentialStore } from "@guardian/credential-store";
 import { createCredentialVerifier, GitHubDeviceFlow } from "@guardian/credential-verification";
 import { startReferenceAuthoritySupervisor } from "@guardian/reference-supervisor";
 
@@ -27,11 +27,11 @@ function assertInteractiveTerminal(): void {
 
 async function runSetup(arguments_: readonly string[]): Promise<void> {
   assertInteractiveTerminal();
-  if (process.platform !== "win32") {
-    throw new TypeError("guardian setup currently supports Windows Credential Manager only");
+  if (process.platform !== "win32" && process.platform !== "linux") {
+    throw new TypeError("guardian setup does not support this platform");
   }
   const command = parseGuardianSetupArguments(arguments_);
-  const store = new WindowsCredentialStore();
+  const store = createPlatformCredentialStore();
   if (command.operation === "enroll") {
     if (command.provider === "github") {
       const clientId = process.env.GUARDIAN_GITHUB_APP_CLIENT_ID;

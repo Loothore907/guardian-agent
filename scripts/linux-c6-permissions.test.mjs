@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { chmod, mkdtemp, readdir, rm, stat, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -34,6 +35,34 @@ async function privateDirectory(prefix) {
   const directory = await mkdtemp(join(tmpdir(), prefix));
   await chmod(directory, 0o700);
   return directory;
+}
+
+async function attemptFromUnrelatedChild(endpoint, authorizedBinding) {
+  const source = String.raw`
+import { LocalAuthorityIpcClient } from "./packages/authority-client/dist/index.js";
+const chunks = [];
+for await (const chunk of process.stdin) chunks.push(chunk);
+const { endpoint, binding, sessionId } = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+try {
+  await new LocalAuthorityIpcClient({ endpoint, binding }).getSession(sessionId);
+  process.exitCode = 2;
+} catch {
+  process.exitCode = 0;
+}
+`;
+  await new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, ["--input-type=module", "--eval", source], {
+      cwd: process.cwd(),
+      env: {},
+      stdio: ["pipe", "ignore", "ignore"],
+    });
+    child.once("error", reject);
+    child.once("close", (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`unrelated child unexpectedly reached authority service (${code})`));
+    });
+    child.stdin.end(JSON.stringify({ endpoint, binding: authorizedBinding, sessionId: SESSION }));
+  });
 }
 
 test(
@@ -76,6 +105,8 @@ test(
         unknownClient.getSession(SESSION),
         (error) => error?.reason === "unauthorized",
       );
+
+      await attemptFromUnrelatedChild(endpoint, authorizedBinding);
     } finally {
       await service.close();
       await rm(directory, { recursive: true, force: true });

@@ -65,6 +65,9 @@ importers:
       '@guardian/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@guardian/linux-peer-identity':
+        specifier: workspace:*
+        version: link:../../packages/linux-peer-identity
 
   apps/authorization-service:
     dependencies:
@@ -415,6 +418,8 @@ importers:
       '@guardian/contracts':
         specifier: workspace:*
         version: link:../contracts
+
+  packages/linux-peer-identity: {}
 
   packages/policy:
     dependencies:

@@ -84,6 +84,14 @@ module.exports = {
       to: { path: "^packages/(?!authority-store/|contracts/)" },
     },
     {
+      name: "linux-peer-identity-is-trusted-boundary-only",
+      severity: "error",
+      from: {
+        path: "^(?!packages/linux-peer-identity/|apps/authority-service/)",
+      },
+      to: { path: "^packages/linux-peer-identity/" },
+    },
+    {
       name: "authority-store-is-only-opened-by-the-authority-service",
       severity: "error",
       from: {

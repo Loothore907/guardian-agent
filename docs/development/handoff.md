@@ -11,7 +11,8 @@ and checkpoint history in `docs/development/roadmap.md`.
 
 - **Active checkpoint:** C6 on issue
   [#13](https://github.com/Loothore907/guardian-agent/issues/13), branch
-  `codex/13-c6-linux-reference`.
+  `codex/13-c6-linux-peer-credentials`, PR
+  [#17](https://github.com/Loothore907/guardian-agent/pull/17).
 - **Logical transition:** pre-activation mission formation, trusted worker
   assignment, W1 exact turns, the W2 credential-safe workspace, W3 exact
   one-tool/result execution, W4 contained denial/revocation, the W5 controlled
@@ -41,7 +42,12 @@ and checkpoint history in `docs/development/roadmap.md`.
   generated lockfile correction in `9acab1f`. The Phase-1 implementation-review
   checkpoint is `ddf194c`. PR #14 squash-merged as
   `b69e9338d5464cac31d52cf8510256a2d9f21c33`; post-merge `main` CI passed in
-  2m25s. Issue #13 remains open. No release, deployment, or publication followed.
+  2m25s. W24 then squash-merged through PR #16 as `1893aef`; W25 is committed as
+  `bb30574`, with the persistent-plan-authority documentation at `6dae2f9`.
+  PR #17 is open and mergeable. Its required and native Linux checks passed on
+  all three executions, but the npm advisory endpoint timed out three times per
+  execution, so the required audit remains red. Issue #13 remains open. No
+  merge, release, deployment, or publication followed.
 - **Phase-1 review checkpoint:** review started from clean, synchronized head
   `b9497a9`. The approved branch update contains a fail-closed broker correction,
   its regression tests, the C6 review matrix, claim/roadmap reconciliation, and
@@ -76,6 +82,66 @@ and checkpoint history in `docs/development/roadmap.md`.
 - **Secret caution:** `.env.local` is ignored development input. Never print,
   stage, copy, summarize, or use it as the installation design. Never print or
   export credential-store values.
+
+## Session closeout: W25 and plan-bound authority
+
+### Current state
+
+- Branch `codex/13-c6-linux-peer-credentials` is clean and synchronized with its
+  remote. The final implementation is `bb30574`, plan-authority design is
+  `6dae2f9`, and the first PR-evidence update is `a2f704c`.
+- PR [#17](https://github.com/Loothore907/guardian-agent/pull/17) is open,
+  non-draft, and mergeable, with no external reviews. It remains intentionally
+  unmerged because its required CI check has no successful dependency-audit
+  result.
+- Issue [#13](https://github.com/Loothore907/guardian-agent/issues/13) remains
+  open and C6 remains **In progress**.
+
+### Session summary
+
+1. Reviewed issue #13 against the code, roadmap, claims, and remaining intended-
+   Linux exit criteria instead of treating the earlier Windows evidence as C6
+   completion.
+2. Added Linux authority peer authentication using kernel `SO_PEERCRED`
+   PID/UID/GID plus trusted supervised ancestry before request parsing. Added a
+   fixed, fail-closed Secret Service credential adapter and minimal Linux
+   credential-child environment forwarding in `bb30574`.
+3. Passed the complete local gate (63 Vitest files / 376 tests), the active WSL2
+   Node 24 peer/process probe (2/2), and the absent-`secret-tool` fail-closed
+   credential probe. The GitHub Ubuntu workflow's complete required-check and
+   native Linux boundary steps also passed on every execution.
+4. The approved workflow exposed repeated-approval friction caused by a lossy
+   repository rule and downstream approval interpretation. ADR-0039 and the
+   repository working agreement now define confirmed plans as persistent,
+   revocable, typed authority for enumerated bounded actions, while retaining
+   step-up for scope/effect expansion. Runtime enforcement remains a Goal.
+5. Pushed the feature branch and opened PR #17. CI run `33827057982` and its one
+   bounded retry, followed by final-head run `33828103000`, all reached only the
+   production dependency audit failure. Each audit made three attempts against
+   npm's advisory bulk endpoint and received timeout error 23. A local read-only
+   query reproduced the same endpoint timeout; no vulnerability assessment was
+   returned.
+
+### Pending debt and next actions
+
+1. **Required before PR #17 can be treated as green:** rerun the required CI
+   audit once npm's advisory endpoint is responsive. Do not bypass, downgrade,
+   or misreport an unavailable audit as a passing vulnerability check.
+2. **Remaining issue #13 / C6 exit evidence:** exercise a real Linux Secret
+   Service write/lookup/delete lifecycle, verify broader credential-holding
+   service containment, and capture narrow protected Linux GitHub read/merge
+   evidence with exact request and resource-version binding.
+3. **Documented operational limitations:** GitHub automatic credential refresh
+   still receives provider HTTP 500, with attended re-enrollment as the bounded
+   fallback; the pinned `pnpm/action-setup` version emits a Node.js 20 deprecation
+   warning while GitHub forces it onto Node.js 24.
+4. **Later separately tracked evidence:** WebAuthn user verification,
+   worker-generated research/GitHub dispatch, the complete single-invocation
+   coordinator, and formal C7 reconciliation remain outside this W25 merge.
+5. **New cross-cutting implementation debt:** implement and adversarially test
+   ADR-0039 plan grants, including membership, expiry, exhaustion, revocation,
+   policy change, context compaction, near-miss refs/destinations, and protected
+   or destructive step-up behavior. Until then, the claim remains `Goal`.
 
 ## Development hygiene working agreement
 
@@ -768,15 +834,38 @@ After explicit authorization, PR #14 exact-head squash-merged at `2026-09-03T16:
 as `b69e9338d5464cac31d52cf8510256a2d9f21c33`. Post-merge `main` CI passed in
 2m25s. Issue #13 remained open. The feature branch was retained.
 
+### W24-W25 Linux transition
+
+PR #16 exact-head squash-merged as
+`1893aef525587d854443f27455032de2e1a5fa15` at
+`2026-09-04T01:01:12Z`; post-merge `main` CI passed in 2m22s. W25 then added the
+ADR-0038 peer boundary: a narrow C
+helper receives only the accepted Unix socket on fd 3, reports kernel
+`SO_PEERCRED`, and the authority accepts only its same-UID/GID process,
+supervisor, or direct sibling before reading any request. The independent exact
+capability remains mandatory. A valid-capability unrelated child is actively
+rejected in the Linux platform probe.
+
+The W25 platform credential selector uses Windows Credential Manager on Windows
+and fixed `/usr/bin/secret-tool` Secret Service operations on Linux. Secrets use
+stdin only, output is bounded and zeroed, helper diagnostics are sanitized, and
+there is no fallback. The current WSL image has a session bus but lacks
+`secret-tool`; the active non-secret status probe failed closed as designed. No
+credential or provider was used. See
+[`w25-linux-peer-and-credentials.md`](evidence/w25-linux-peer-and-credentials.md).
+The W25 complete local gate passes 63 Vitest files / 376 tests, seven SQLite
+spike tests, two reset tests, 180 modules / 362 dependencies, and the production
+build.
+
 ### Recommended next-session sequence
 
 1. Keep issue #13 open unless every C6 exit criterion is satisfied or remaining
    criteria are explicitly split into named follow-up issues with roadmap/claim
    updates. A merged broker-core PR is not by itself proof that all of C6 passed.
-2. Perform the C6 residual disposition before starting C7: the strongest next
-   implementation slice is the intended self-hosted Linux peer-identity, database
-   permission, local credential-resolution, and narrow GitHub read/merge proof.
-   Do not silently defer that current C6 exit criterion.
+2. Complete native Ubuntu CI for W25, then provide `libsecret-tools` and a running
+   Secret Service in the intended Linux user session. Under separate protected
+   authorization, prove disposable credential write/lookup/delete and the narrow
+   GitHub read/merge path. Do not silently defer that current C6 exit criterion.
 3. Keep the reproducible GitHub refresh `HTTP 500` as an external blocker with
    fresh attended enrollment as the bounded fallback. Do not spin on retries or
    weaken the refresh contract. Keep WebAuthn in the later user-verifying approval
@@ -886,9 +975,29 @@ pinned `pnpm/action-setup` action targets deprecated Node.js 20 and is being
 forced onto Node.js 24. The GitHub refresh endpoint's documented HTTP 500 remains
 an operational limitation. W24 now actively passes the intended-Linux
 database/socket permission probe and fixes the SQLite sidecar mode discovered by
-its first run. Intended-Linux peer identity, local credential resolution, service
-containment, and narrow GitHub read/merge remain the C6 blocker. WebAuthn and the single-invocation
-coordinator remain later evidence slices; no broader guarantee is claimed.
+its first run. W25 authenticates Linux authority peers before request parsing and
+adds a fail-closed Secret Service adapter. Protected Linux credential resolution,
+service containment, and narrow GitHub read/merge remain the C6 blocker. WebAuthn
+and the single-invocation coordinator remain later evidence slices; no broader
+guarantee is claimed.
+
+PR #17's last completed CI evidence is at `a2f704c`. Across the original CI run,
+one bounded retry, and that head's run, the required project checks and native
+Linux boundary checks passed. The only failing step was `pnpm audit --prod
+--audit-level high`: npm's advisory bulk endpoint timed out on all three internal
+attempts in each execution, and a local query reproduced the same timeout. No
+advisory result exists, so CI correctly remains red and no merge was attempted.
+
+This session also exposed approval fatigue as a concrete product risk: a reviewed
+plan explicitly required a feature-branch push and pull-request creation, but a
+lossy repository rule and downstream approval reviewer repeatedly treated those
+steps as new authority requests. ADR-0039 now defines the intended correction:
+direct confirmation creates a persistent, revocable, typed plan grant; each
+concrete action is still re-normalized and checked for membership, while only
+scope or effect expansion triggers a new step-up. The repository working
+agreement now follows that rule for bounded non-destructive workflow actions.
+Runtime enforcement of plan grants remains a documented Goal, not an implemented
+claim.
 
 Previously captured protected evidence still records successful Windows
 Credential Manager isolation, Tavily research, Qwen mission brief, Nemotron
@@ -950,6 +1059,8 @@ wrapper when the frozen workspace is already usable.
 - [ADR-0033: Explicit model portability and provenance qualification](../adr/0033-explicit-model-portability-and-provenance-qualification.md)
 - [ADR-0034: Bounded public and piloted demo modes](../adr/0034-bounded-public-and-piloted-demo-modes.md)
 - [ADR-0035: Fixed controlled-content Extract boundary](../adr/0035-fixed-controlled-content-extract.md)
+- [ADR-0038: Linux peer identity and Secret Service credential resolution](../adr/0038-linux-peer-identity-and-secret-service.md)
+- [ADR-0039: Persistent plan-bound session authority](../adr/0039-persistent-plan-bound-session-authority.md)
 - [W2 session workspace evidence](evidence/w2-session-workspace.md)
 - [W3 worker tool round-trip evidence](evidence/w3-worker-tool-round-trip.md)
 - [W4 denial containment evidence](evidence/w4-denial-containment.md)
@@ -961,6 +1072,7 @@ wrapper when the frozen workspace is already usable.
 - [W19 controlled-content Extract evidence](evidence/w19-controlled-content-extract.md)
 - [C6 authority service evidence](evidence/c6-authority-service.md)
 - [C6 Linux platform permission evidence](evidence/c6-linux-platform-permissions.md)
+- [W25 Linux peer and credential evidence](evidence/w25-linux-peer-and-credentials.md)
 - [C6 terminal bootstrap evidence](evidence/c6-terminal-bootstrap.md)
 - [C6 interaction boundary evidence](evidence/c6-interaction-boundary.md)
 - [C6 process supervision evidence](evidence/c6-process-supervision.md)
