@@ -2,6 +2,12 @@
 
 ## Working agreement
 
+- Follow `docs/development/session-git-hygiene.md` for source-changing sessions.
+  Run `node scripts/session-hygiene.mjs start --remote` before new feature work
+  and `node scripts/session-hygiene.mjs close --remote` before closeout. Resolve
+  failures or record an owning issue, exact blocker and next action; never describe
+  a failing hygiene check as complete. Plan bounded integration authority early.
+
 - Treat this repository as a security-sensitive public project.
 - Keep changes small, reviewable, and tied to a documented user or security outcome.
 - A user-approved session plan is explicit authority for the non-destructive actions it enumerates, including commits, feature-branch pushes, and pull-request creation or updates when the repository, destination, and ref constraints are bounded. Do not ask again for each in-scope action.
