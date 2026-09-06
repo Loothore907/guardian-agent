@@ -46,6 +46,40 @@ const prices = [
 ] as const;
 
 describe("managed-demo budget contracts", () => {
+  it("supports bounded C7 call and research ceilings without changing initial policies", () => {
+    const policy = {
+      ...INITIAL_JUDGE_DEMO_BUDGET_POLICY,
+      models: INITIAL_JUDGE_DEMO_BUDGET_POLICY.models.map((model) => ({
+        ...model,
+        maxCallsPerJourney: 8,
+      })),
+      research: {
+        maxBasicSearchesPerJourney: 0,
+        maxBasicExtractsPerJourney: 2,
+        maxTavilyCreditsPerJourney: 2,
+      },
+    };
+    expect(ManagedDemoBudgetPolicySchema.parse(policy).research.maxBasicExtractsPerJourney).toBe(2);
+    expect(INITIAL_JUDGE_DEMO_BUDGET_POLICY.research.maxBasicExtractsPerJourney).toBe(1);
+    expect(() =>
+      ManagedDemoBudgetPolicySchema.parse({
+        ...policy,
+        models: policy.models.map((model) => ({ ...model, maxCallsPerJourney: 9 })),
+      }),
+    ).toThrow();
+    expect(() =>
+      ManagedDemoBudgetPolicySchema.parse({
+        ...policy,
+        research: { ...policy.research, maxBasicExtractsPerJourney: 3 },
+      }),
+    ).toThrow();
+    expect(() =>
+      ManagedDemoBudgetPolicySchema.parse({
+        ...policy,
+        research: { ...policy.research, maxTavilyCreditsPerJourney: 3 },
+      }),
+    ).toThrow();
+  });
   it("publishes separate bounded initial judge and public policies", () => {
     expect(INITIAL_JUDGE_DEMO_BUDGET_POLICY).toMatchObject({
       pool: "judge",

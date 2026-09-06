@@ -19,6 +19,7 @@ import {
 
 const MAX_MONEY_MICRO_USD = 1_000_000_000_000;
 const MAX_TOKEN_COUNT = 10_000_000;
+export const MAX_MANAGED_DEMO_USAGE_ENTRIES = 34;
 
 export const ManagedDemoPoolSchema = z.enum(["public", "judge"]);
 export type ManagedDemoPool = z.infer<typeof ManagedDemoPoolSchema>;
@@ -139,7 +140,7 @@ export type ManagedDemoPriceSnapshot = DeepReadonly<z.infer<typeof ManagedDemoPr
 export const ManagedDemoModelCeilingSchema = z.strictObject({
   role: ManagedDemoModelRoleSchema,
   modelId: GuardianModelIdSchema,
-  maxCallsPerJourney: PositiveCountSchema.max(4),
+  maxCallsPerJourney: PositiveCountSchema.max(8),
   maxPromptTokensPerCall: PositiveTokenCountSchema,
   maxCompletionTokensPerCall: PositiveTokenCountSchema,
 });
@@ -221,8 +222,8 @@ export const ManagedDemoBudgetPolicySchema = z
     modelPolicyVersion: VersionNumberSchema,
     models: z.array(ManagedDemoModelCeilingSchema).min(1).max(4),
     research: z.strictObject({
-      maxBasicSearchesPerJourney: z.literal(1),
-      maxBasicExtractsPerJourney: z.literal(1),
+      maxBasicSearchesPerJourney: z.number().int().min(0).max(1),
+      maxBasicExtractsPerJourney: z.number().int().min(0).max(2),
       maxTavilyCreditsPerJourney: z.literal(2),
     }),
     limits: ManagedDemoBudgetLimitsSchema,
@@ -462,7 +463,7 @@ export const ManagedDemoSettlementRequestSchema = z
     journeyId: OpaqueIdSchema,
     settledAt: TimestampSchema,
     outcome: z.enum(["completed", "failed"]),
-    usage: z.array(ManagedDemoUsageSchema).max(8),
+    usage: z.array(ManagedDemoUsageSchema).max(MAX_MANAGED_DEMO_USAGE_ENTRIES),
   })
   .superRefine((request, context) => {
     if (request.outcome === "completed" && request.usage.length === 0) {
