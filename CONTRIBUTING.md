@@ -4,6 +4,10 @@ Agentic Guardian welcomes focused contributions that preserve its trust boundari
 
 ## Before opening a change
 
+For source-changing sessions, follow the [session Git hygiene procedure](docs/development/session-git-hygiene.md).
+Run the start check before new feature work and the close check before handoff.
+Integration debt must be resolved or explicitly tracked before adding new scope.
+
 1. Read the [architecture](docs/architecture.md), [threat model](docs/threat-model.md), and [security claims](docs/security-claims.md).
 2. Open or reference a GitHub issue for every meaningful change.
 3. Record consequential architecture decisions in `docs/adr/`.
