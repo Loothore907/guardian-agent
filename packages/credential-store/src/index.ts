@@ -584,13 +584,49 @@ function managedResourceKey(reference: CredentialReference): string {
   return `${reference.provider}/${reference.slot}`;
 }
 
-function secretFromSecretStashOutput(output: Uint8Array): Uint8Array {
-  let end = output.byteLength;
-  if (end > 0 && output[end - 1] === 0x0a) end -= 1;
-  if (end > 0 && output[end - 1] === 0x0d) end -= 1;
-  const secret = Uint8Array.from(output.subarray(0, end));
+function secretFromSecretStashOutput(
+  output: Uint8Array,
+  payloadKey: string,
+  privateKey = false,
+): Uint8Array {
+  const text = new TextDecoder("utf-8", { fatal: true }).decode(output);
+  const envelope: unknown = JSON.parse(text);
+  if (typeof envelope !== "object" || envelope === null || Array.isArray(envelope))
+    throw new CredentialStoreError();
+  const record = envelope as Record<string, unknown>;
+  if (
+    Object.keys(record).length !== 2 ||
+    typeof record.version_id !== "string" ||
+    !/^mbsecver-[a-z0-9]{1,64}$/u.test(record.version_id) ||
+    typeof record.data !== "object" ||
+    record.data === null ||
+    Array.isArray(record.data)
+  )
+    throw new CredentialStoreError();
+  const data = record.data as Record<string, unknown>;
+  if (
+    Object.keys(data).length !== 2 ||
+    data.key !== payloadKey ||
+    typeof data.string_value !== "string"
+  )
+    throw new CredentialStoreError();
+  // JSON.parse accepts duplicate members. The fixed envelope has exactly four
+  // member names; tokenize complete strings so escaped payload text is not a key.
+  const members = [...text.matchAll(/"(?:[^"\\]|\\.)*"/gu)].filter((match) =>
+    /^\s*:/u.test(text.slice(match.index + match[0].length)),
+  );
+  if (members.length !== 4) throw new CredentialStoreError();
+  const secret = Uint8Array.from(Buffer.from(data.string_value, "utf8"));
   try {
-    if (output.subarray(0, end).some((byte) => byte === 0x0a || byte === 0x0d)) {
+    if (privateKey) {
+      const pem = new TextDecoder("utf-8", { fatal: true }).decode(secret);
+      if (
+        !/^-----BEGIN (RSA PRIVATE KEY|PRIVATE KEY)-----\r?\n(?:[A-Za-z0-9+/=]+\r?\n)+-----END \1-----(?:\r?\n)?$/u.test(
+          pem,
+        )
+      )
+        throw new CredentialStoreError();
+    } else if (secret.some((byte) => byte === 0x0a || byte === 0x0d)) {
       throw new CredentialStoreError();
     }
     assertTextSecret(secret);
@@ -645,7 +681,7 @@ export class SecretStashCredentialStore implements CredentialStore {
           "--secret-id",
           resource.secretId,
           "--format",
-          "text",
+          "json",
           "--no-browser",
           "--no-check-update",
           "--no-progress",
@@ -663,7 +699,11 @@ export class SecretStashCredentialStore implements CredentialStore {
         timeoutMs: SECRETSTASH_HELPER_TIMEOUT_MS,
       });
       if (result.code !== 0 || !isEmpty(result.stderr)) throw new CredentialStoreError();
-      return secretFromSecretStashOutput(result.stdout);
+      return secretFromSecretStashOutput(
+        result.stdout,
+        resource.payloadKey,
+        reference.provider === "github" && reference.slot === "app_private_key",
+      );
     } catch {
       throw new CredentialStoreError();
     } finally {

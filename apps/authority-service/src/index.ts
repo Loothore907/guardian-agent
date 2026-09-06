@@ -23,11 +23,18 @@ const DEFAULT_IPC_TIMEOUT_MS = 15_000;
 const ROLE_OPERATIONS: Readonly<Record<AuthorityCallerRole, ReadonlySet<AuthorityIpcOperation>>> = {
   launcher: new Set(["connection.create", "session.create"]),
   research_service: new Set(["research.reserve", "research.settle", "context.append_exposures"]),
-  authorization_service: new Set(["approval.store"]),
+  authorization_service: new Set([
+    "approval.store",
+    "plan.store",
+    "plan.get",
+    "plan.revoke",
+    "plan.pending",
+  ]),
   broker_service: new Set([
     "session.get",
     "connection.list",
     "approval.get",
+    "plan.check",
     "approval.state",
     "budget.consume_tool",
     "approval.consume",
@@ -36,6 +43,8 @@ const ROLE_OPERATIONS: Readonly<Record<AuthorityCallerRole, ReadonlySet<Authorit
   ]),
   worker_dispatcher: new Set([
     "budget.consume_worker_tool",
+    "worker.claim_external",
+    "worker.budget",
     "budget.consume_local_command",
     "worker.record_violation",
     "worker.interrupt",
@@ -310,6 +319,52 @@ export class LocalAuthorityIpcServer implements AuthorityServiceBoundary {
           this.#store.createSession(request.session, request.budget, request.connectionIds);
           writeResponse(socket, { ...base, operation: request.operation, result: "created" });
           return;
+        case "plan.store":
+          if (
+            request.grant.plan.sessionId !== request.sessionId ||
+            request.grant.plan.callerId !== request.callerId
+          ) {
+            fail("binding_mismatch");
+            return;
+          }
+          this.#store.storeSessionPlan(request.grant);
+          writeResponse(socket, { ...base, operation: request.operation, result: "stored" });
+          return;
+        case "plan.get":
+          writeResponse(socket, {
+            ...base,
+            operation: request.operation,
+            result: this.#store.getSessionPlan(request.sessionId),
+          });
+          return;
+        case "plan.revoke":
+          writeResponse(socket, {
+            ...base,
+            operation: request.operation,
+            result: this.#store.revokeSessionPlan(request.sessionId, request.grantId),
+          });
+          return;
+        case "plan.pending":
+          writeResponse(socket, {
+            ...base,
+            operation: request.operation,
+            result: this.#store.getPendingPlanRequests(request.sessionId),
+          });
+          return;
+        case "plan.check":
+          if (
+            request.check.request.sessionId !== request.sessionId ||
+            request.check.request.callerId !== request.callerId
+          ) {
+            fail("binding_mismatch");
+            return;
+          }
+          writeResponse(socket, {
+            ...base,
+            operation: request.operation,
+            result: this.#store.checkSessionPlan(request.check),
+          });
+          return;
         case "approval.store":
           if (
             request.approval.sessionId !== request.sessionId ||
@@ -398,6 +453,24 @@ export class LocalAuthorityIpcServer implements AuthorityServiceBoundary {
               request.executionId,
               request.executionDigest,
             ),
+          });
+          return;
+        case "worker.claim_external":
+          writeResponse(socket, {
+            ...base,
+            operation: request.operation,
+            result: this.#store.claimExternalExecution(
+              request.sessionId,
+              request.executionId,
+              request.executionDigest,
+            ),
+          });
+          return;
+        case "worker.budget":
+          writeResponse(socket, {
+            ...base,
+            operation: request.operation,
+            result: this.#store.getActiveWorkerBudget(request.sessionId),
           });
           return;
         case "budget.consume_worker_tool":

@@ -42,7 +42,7 @@ Public content, tool output, model rationale, and compressed conversation state 
 - Approval prompts regain meaning because they occur at actual authority boundaries.
 - A session plan becomes security state, not merely conversational guidance.
 - Guardian must expose the active grant and remaining limits clearly enough for review and revocation.
-- The current implementation does not yet provide this runtime grant. This ADR defines the target contract; `docs/security-claims.md` must continue to label it as a goal until reproducible evidence exists.
+- [ADR-0048](0048-typed-session-plan-runtime.md) implements the first local runtime slice for exact GitHub read/squash targets. The broader derived-value workflow in this ADR remains a goal; `docs/security-claims.md` distinguishes the scopes.
 
 ## Rejected alternatives
 

@@ -207,6 +207,7 @@ export const ActionProposalSchema = z
         owner: GitHubNameSchema,
         repository: GitHubNameSchema,
         pullRequest: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+        content: z.literal("review").optional(),
       }),
       resourceVersion: GitHubPullRequestVersionSchema,
     }),

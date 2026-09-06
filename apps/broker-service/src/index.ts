@@ -1,3 +1,4 @@
+import { GitHubInstallationCredentialResolver } from "./github-installation.js";
 import { LocalAuthorityIpcClient } from "@guardian/authority-client";
 import {
   GitHubBroker,
@@ -32,7 +33,9 @@ export function createBrokerService(options: {
   readonly credentialStoreHandle: unknown;
   readonly credentialStore: CredentialStore;
   readonly githubClientId: string;
+  readonly useInstallationCredentials?: boolean;
   readonly guardian: GuardianEvaluator;
+  readonly guardianContext?: ConstructorParameters<typeof GitHubBroker>[2]["guardianContext"];
   readonly fetch?: typeof fetch;
   readonly now?: () => string;
   readonly onCredentialRefreshDiagnostic?: GitHubCredentialRefreshDiagnosticSink;
@@ -48,18 +51,38 @@ export function createBrokerService(options: {
   });
   const broker = new GitHubBroker(
     authority,
-    new GitHubStoredCredentialResolver({
-      store: options.credentialStore,
-      credentialStoreHandle,
-      clientId: options.githubClientId,
-      ...(options.fetch === undefined ? {} : { fetch: options.fetch }),
-      ...(options.now === undefined ? {} : { now: () => Date.parse(options.now!()) }),
-      ...(options.onCredentialRefreshDiagnostic === undefined
-        ? {}
-        : { onRefreshDiagnostic: options.onCredentialRefreshDiagnostic }),
-    }),
+    options.useInstallationCredentials === true
+      ? new GitHubInstallationCredentialResolver({
+          store: options.credentialStore,
+          credentialStoreHandle,
+          expectedRepository: async () => {
+            const connection = (
+              await authority.getSessionConnections(authorityBinding.sessionId)
+            ).find(
+              (c) => c.status === "active" && c.credentialStoreHandle === credentialStoreHandle,
+            );
+            if (connection === undefined)
+              throw new TypeError("installation connection unavailable");
+            return { owner: connection.owner, repository: connection.repository };
+          },
+          ...(options.fetch === undefined ? {} : { fetch: options.fetch }),
+          ...(options.now === undefined ? {} : { now: () => Date.parse(options.now!()) }),
+        })
+      : new GitHubStoredCredentialResolver({
+          store: options.credentialStore,
+          credentialStoreHandle,
+          clientId: options.githubClientId,
+          ...(options.fetch === undefined ? {} : { fetch: options.fetch }),
+          ...(options.now === undefined ? {} : { now: () => Date.parse(options.now!()) }),
+          ...(options.onCredentialRefreshDiagnostic === undefined
+            ? {}
+            : { onRefreshDiagnostic: options.onCredentialRefreshDiagnostic }),
+        }),
     {
       guardian: options.guardian,
+      ...(options.guardianContext === undefined
+        ? {}
+        : { guardianContext: options.guardianContext }),
       ...(options.fetch === undefined ? {} : { fetch: options.fetch }),
       ...(options.now === undefined ? {} : { now: options.now }),
     },
@@ -88,7 +111,16 @@ export async function startBrokerServiceIpcServer(options: {
     credentialStoreHandle: config.credentialStoreHandle,
     credentialStore: options.credentialStore,
     githubClientId: config.githubClientId,
+    useInstallationCredentials:
+      config.credentialStore.custodyProfile === "managed_demo" &&
+      config.credentialStore.resources.some(
+        (r) => r.reference.provider === "github" && r.reference.slot === "app_private_key",
+      ),
     guardian,
+    guardianContext: {
+      requestDigest: config.guardian.requestDigest,
+      envelope: config.guardian.envelope,
+    },
     ...(options.fetch === undefined ? {} : { fetch: options.fetch }),
     ...(options.now === undefined ? {} : { now: options.now }),
     ...(options.onCredentialRefreshDiagnostic === undefined
