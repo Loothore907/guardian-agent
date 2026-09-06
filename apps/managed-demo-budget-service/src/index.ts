@@ -289,6 +289,7 @@ export class LocalManagedDemoBudgetIpcServer implements ManagedDemoBudgetService
 
     const fail = (
       error:
+        | "invalid_request"
         | "unauthorized"
         | "stale_capability"
         | "binding_mismatch"
@@ -329,6 +330,15 @@ export class LocalManagedDemoBudgetIpcServer implements ManagedDemoBudgetService
       !ROLE_OPERATIONS[capabilityBinding.callerRole].has(request.operation)
     ) {
       fail("operation_not_allowed");
+      return;
+    }
+    if (
+      (request.operation === "policy.update" || request.operation === "prices.update") &&
+      (Date.parse(request.update.updatedAt) < Date.parse(capabilityBinding.issuedAt) ||
+        Date.parse(request.update.updatedAt) >= Date.parse(capabilityBinding.expiresAt) ||
+        Date.parse(request.update.updatedAt) > Date.parse(evaluatedAt))
+    ) {
+      fail("invalid_request");
       return;
     }
 
@@ -389,14 +399,14 @@ export class LocalManagedDemoBudgetIpcServer implements ManagedDemoBudgetService
           writeResponse(socket, {
             ...base,
             operation: request.operation,
-            result: this.#queue.updatePolicy(request.update),
+            result: this.#queue.updatePolicy(request.update, evaluatedAt),
           });
           return;
         case "prices.update":
           writeResponse(socket, {
             ...base,
             operation: request.operation,
-            result: this.#queue.updatePrices(request.update),
+            result: this.#queue.updatePrices(request.update, evaluatedAt),
           });
           return;
       }

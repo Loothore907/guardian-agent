@@ -224,6 +224,144 @@ describe("managed-demo budget service", () => {
     }
   });
 
+  it("executes delayed operator proposals at one trusted IPC time without restamping evidence", async () => {
+    const { databasePath } = await location();
+    const endpoint = createManagedDemoBudgetIpcEndpoint();
+    const operatorBinding = binding("operator", [
+      "budget.snapshot",
+      "policy.update",
+      "prices.update",
+    ]);
+    const snapshotOnlyBinding = binding("operator", ["budget.snapshot"]);
+    let tick = Date.parse("2026-11-01T12:00:00.000Z");
+    const now = () => new Date(tick++).toISOString();
+    const service = await startManagedDemoBudgetService(
+      {
+        schemaVersion: 1,
+        serviceInstanceId: randomUUID(),
+        endpoint,
+        ledgerPath: databasePath,
+        deployment: {
+          schemaVersion: 1,
+          deploymentId: DEPLOYMENT,
+          pool: "public",
+          policyId: INITIAL_PUBLIC_DEMO_BUDGET_POLICY.policyId,
+          policyVersion: INITIAL_PUBLIC_DEMO_BUDGET_POLICY.version,
+        },
+        policy: INITIAL_PUBLIC_DEMO_BUDGET_POLICY,
+        prices: prices(),
+        capabilities: [operatorBinding, snapshotOnlyBinding],
+      },
+      {
+        now,
+        peerVerifier: { verify: () => Promise.resolve(undefined) },
+      },
+    );
+    try {
+      const client = new LocalManagedDemoBudgetIpcClient({ endpoint, binding: operatorBinding });
+      const replacementPolicy = { ...INITIAL_PUBLIC_DEMO_BUDGET_POLICY, version: 2 } as const;
+      const policyUpdate = {
+        schemaVersion: 1,
+        deploymentId: DEPLOYMENT,
+        expectedPolicyId: INITIAL_PUBLIC_DEMO_BUDGET_POLICY.policyId,
+        expectedPolicyVersion: 1,
+        replacement: replacementPolicy,
+        reason: "Renew the bounded campaign without changing its limits.",
+        updatedAt: "2026-11-01T11:59:59.000Z",
+      } as const;
+      await expect(client.updatePolicy(policyUpdate)).resolves.toMatchObject({
+        policyVersion: 2,
+        totalJourneyAdmissions: 0,
+        totalReservedMicroUsd: 0,
+        totalSettledMicroUsd: 0,
+      });
+      await expect(client.updatePolicy(policyUpdate)).rejects.toMatchObject({
+        reason: "budget_unavailable",
+      });
+      for (const updatedAt of ["2026-10-30T16:59:59.999Z", "2026-11-01T12:01:00.000Z"]) {
+        await expect(
+          client.updatePolicy({
+            ...policyUpdate,
+            expectedPolicyVersion: 2,
+            replacement: { ...replacementPolicy, version: 3 },
+            reason: "Attempt a proposal outside its capability-bound time.",
+            updatedAt,
+          }),
+        ).rejects.toMatchObject({ reason: "invalid_request" });
+      }
+
+      const replacementPrices = {
+        ...prices(),
+        version: 2,
+        evidence: {
+          capturedAt: "2026-11-01T11:59:58.000Z",
+          expiresAt: "2026-11-01T12:05:00.000Z",
+        },
+      } as const;
+      await expect(
+        client.updatePrices({
+          schemaVersion: 1,
+          deploymentId: DEPLOYMENT,
+          expectedSnapshotId: SNAPSHOT,
+          expectedSnapshotVersion: 1,
+          replacement: replacementPrices,
+          reason: "Apply provider evidence captured immediately before submission.",
+          updatedAt: "2026-11-01T11:59:59.500Z",
+        }),
+      ).resolves.toMatchObject({ policyVersion: 2 });
+
+      await expect(
+        client.updatePrices({
+          schemaVersion: 1,
+          deploymentId: DEPLOYMENT,
+          expectedSnapshotId: SNAPSHOT,
+          expectedSnapshotVersion: 2,
+          replacement: {
+            ...replacementPrices,
+            version: 3,
+            evidence: {
+              capturedAt: "2026-11-01T12:01:00.000Z",
+              expiresAt: "2026-11-01T12:05:00.000Z",
+            },
+          },
+          reason: "Attempt to attach future provider evidence.",
+          updatedAt: "2026-11-01T12:00:00.000Z",
+        }),
+      ).rejects.toMatchObject({ reason: "budget_unavailable" });
+
+      const forgedExpansion = new LocalManagedDemoBudgetIpcClient({
+        endpoint,
+        binding: {
+          ...snapshotOnlyBinding,
+          allowedOperations: ["budget.snapshot", "policy.update"],
+        },
+      });
+      await expect(
+        forgedExpansion.updatePolicy({
+          ...policyUpdate,
+          expectedPolicyVersion: 2,
+          replacement: {
+            ...replacementPolicy,
+            version: 3,
+            limits: {
+              ...replacementPolicy.limits,
+              totalMicroUsd: replacementPolicy.limits.totalMicroUsd + 1,
+            },
+          },
+          reason: "Attempt to expand limits without update authority.",
+        }),
+      ).rejects.toMatchObject({ reason: "operation_not_allowed" });
+      await expect(client.snapshot()).resolves.toMatchObject({
+        policyVersion: 2,
+        totalJourneyAdmissions: 0,
+        totalReservedMicroUsd: 0,
+        totalSettledMicroUsd: 0,
+      });
+    } finally {
+      await service.close();
+    }
+  });
+
   it("rejects cross-deployment client bindings even when a capability value is copied", async () => {
     const { databasePath } = await location();
     const endpoint = createManagedDemoBudgetIpcEndpoint();

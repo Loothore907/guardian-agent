@@ -24,7 +24,9 @@ The older source snapshot and results below remain historical evidence.
 Next gates: protected runtime retrieval/redaction and provider checks for the
 enrolled Nebius/Tavily secrets; GitHub App private key
 and installation setup; authenticated ingress, live provider/budget settlement,
-operator price/policy update real-clock checks, and external fixture reachability.
+intended-host verification of the offline-tested
+[ADR-0054](../adr/0054-operator-budget-service-clock.md) operator-update path, and
+external fixture reachability.
 Resume only within an explicitly bounded window and establish cloud shutdown
 before restarting; leave the original stopped. Do not treat the old cutoff as a
 new uptime allowance. C7 remains incomplete.
@@ -58,11 +60,12 @@ Nebius/Tavily credentials, with admission before provider calls and durable usag
 settlement afterward. This is the next acceptance slice, not a promise to finish
 every C7 gate in one window. Do preparation while the VMs remain stopped:
 
-- Inspect/fix real-clock operator policy and price updates, which still require
-  exact timestamp matching. The campaign policy closes at September 6 21:01 UTC
-  and its price evidence expires at 21:06 UTC; these are expired for a later session.
-  Refresh/update through a tested path without resetting the durable campaign
-  ledger or increasing the shared allowance.
+- Use the reviewed [ADR-0054](../adr/0054-operator-budget-service-clock.md)
+  operator path to refresh policy and prices on the intended host. Its
+  production-child real-clock contract is tested offline; live
+  KC use remains unverified. The campaign policy closed at September 6 21:01 UTC
+  and its price evidence expired at 21:06 UTC. Do not reset the durable campaign
+  ledger or increase the shared allowance while replacing them.
 - Prepare the protected ingress-secret loader and fixed hosted startup composition.
   The default executable currently leaves live judge execution disabled.
 - Inventory missing GitHub App installation/private-key setup and exact disposable

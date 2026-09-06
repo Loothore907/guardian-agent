@@ -39,8 +39,10 @@ composition exist. Default live portal execution remains disabled. Review
 
 The next hosted milestone is one authenticated research-only journey with
 protected Nebius/Tavily use, admission before paid calls and durable settlement.
-Offline blockers are operator policy/price real-clock updates and protected
-startup/ingress composition. Hosted gates include full credential/service
+The operator policy/price real-clock contract is implemented and tested offline
+through the production service child; see
+[ADR-0054](../adr/0054-operator-budget-service-clock.md). Protected startup/ingress
+composition remains the next offline blocker. Hosted gates include full credential/service
 containment, runtime retrieval/redaction, reliable external HTTPS, live settlement,
 and later clean/seeded evaluations. Missing GitHub App setup and exact disposable
 targets gate mutations. Never reuse merged PR 3.
@@ -56,7 +58,8 @@ Both KC VMs were cloud-confirmed stopped at the prior closeout. No cloud query o
 state change occurred in this repository-cleanup session. Existing Nebius/Tavily
 copies and exact-resource grants were verified by the operator, but runtime use
 remains unverified. The durable campaign ledger was disabled with zero admissions.
-Old policy/price windows and the old two-hour uptime grant have ended.
+Old policy/price windows and the old two-hour uptime grant have ended. The offline
+clock correction does not renew either one or change the durable allowance.
 
 Leave the original VM stopped. Reuse the replacement, resources and fixtures only
 under a fresh bounded execution window with cloud-stop fallback. Preserve the

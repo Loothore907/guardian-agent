@@ -19,10 +19,20 @@ static-fixture TLS/hash checks, and actual Caddy private-path isolation. The
 production budget-child preflight uses Linux peer verification and demonstrates
 disabled campaign admission, synthetic settlement, role/journey rejection and
 restart persistence. Queued operations use the ledger clock (ADR-0053); advancing
-clock and backdating/window regression tests are in the budget package. These
-checks do not establish live provider custody, operator policy/price update
-real-clock readiness, judge ingress or complete C7 acceptance. External fixture
-reachability from the operator machine was intermittent; host-side checks passed.
+clock and backdating/window regression tests are in the budget package.
+
+**Implemented and tested offline:** authenticated operator policy and price IPC
+updates use one service-owned time for capability validation and execution
+([ADR-0054](adr/0054-operator-budget-service-clock.md)). Package and service tests
+cover delayed/future proposals, capability
+binding, exact-version replay, future/expired price evidence and unchanged durable
+counters. `scripts/managed-demo-budget-operator-clock.test.mjs` exercises the
+production child with real clocks and verifies update/replay/restart behavior.
+Provider evidence retains its actual capture time; receipt never makes it fresh.
+This is not the general Windows IPC clock contract and does not establish a KC
+deployment, live provider custody, judge ingress or complete C7 acceptance.
+External fixture reachability from the operator machine was intermittent;
+host-side checks passed.
 
 After explicit transfer approval, the stopped-host operator helper copied the
 existing Nebius/Tavily testing keys into two exact KC resources and verified each
