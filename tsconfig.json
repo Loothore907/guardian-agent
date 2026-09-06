@@ -2,6 +2,8 @@
   "files": [],
   "references": [
     { "path": "packages/contracts" },
+    { "path": "packages/managed-demo-budget" },
+    { "path": "packages/managed-demo-budget-client" },
     { "path": "packages/credential-store" },
     { "path": "packages/credential-verification" },
     { "path": "packages/canonical" },
@@ -26,6 +28,7 @@
     { "path": "apps/interaction-service" },
     { "path": "apps/worker-service" },
     { "path": "apps/authority-service" },
+    { "path": "apps/managed-demo-budget-service" },
     { "path": "apps/authorization-service" },
     { "path": "apps/reference-supervisor" },
     { "path": "apps/session-host" },

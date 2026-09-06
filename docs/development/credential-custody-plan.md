@@ -235,6 +235,9 @@ Gate:
 
 ### Slice 5: Judge/public budget isolation
 
+The working quantities, tunable controls, calibration method, and initial reserve
+are specified in [managed-demo-budget-plan.md](managed-demo-budget-plan.md).
+
 Deliverables:
 
 - fixed `judge` and `public` deployment pool policies;

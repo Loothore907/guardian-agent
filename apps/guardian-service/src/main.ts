@@ -3,8 +3,10 @@
 import {
   GuardianActionRiskServiceProcessConfigSchema,
   MissionSetupRiskServiceProcessConfigSchema,
+  type ManagedDemoUsageObservation,
 } from "@guardian/contracts";
 import { createCredentialStore } from "@guardian/credential-store";
+import { LocalManagedDemoBudgetIpcClient } from "@guardian/managed-demo-budget-client";
 
 import {
   NemotronGuardianProvider,
@@ -57,6 +59,17 @@ async function main(): Promise<void> {
     configValue.serviceKind === "action_risk"
       ? GuardianActionRiskServiceProcessConfigSchema.parse(configValue)
       : MissionSetupRiskServiceProcessConfigSchema.parse(configValue);
+  const managedDemoBudget = config.managedDemoBudget;
+  if (providerMode === "fake" && managedDemoBudget !== undefined) {
+    throw new TypeError("managed-demo Guardian requires the metered Nemotron provider");
+  }
+  const budgetClient =
+    managedDemoBudget === undefined
+      ? undefined
+      : new LocalManagedDemoBudgetIpcClient({
+          endpoint: managedDemoBudget.budget.endpoint,
+          binding: managedDemoBudget.budget.binding,
+        });
   const provider =
     providerMode === "fake"
       ? createFakeMissionSetupRiskProvider()
@@ -64,6 +77,16 @@ async function main(): Promise<void> {
           credentialStore: createCredentialStore(config.credentialStore, {
             consumer: "guardian_service",
           }),
+          ...(budgetClient === undefined || managedDemoBudget === undefined
+            ? {}
+            : {
+                onUsage: (usage: ManagedDemoUsageObservation) =>
+                  budgetClient.recordUsage(
+                    managedDemoBudget.reservationId,
+                    managedDemoBudget.journeyId,
+                    usage,
+                  ),
+              }),
         });
   const service =
     config.serviceKind === "action_risk"

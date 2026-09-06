@@ -1,11 +1,13 @@
 import {
   DEFAULT_GUARDIAN_MODEL_POLICY,
   GuardianModelPolicySchema,
+  projectManagedDemoNebiusUsageObservation,
   ProviderRequestIdSchema,
   registeredCredentialReference,
   WorkerOutcomeSchema,
   WorkerTurnEnvelopeSchema,
   type GuardianModelPolicy,
+  type ManagedDemoNebiusUsageObservation,
   type WorkerTurnEnvelope,
 } from "@guardian/contracts";
 import type { CredentialStore } from "@guardian/credential-store";
@@ -276,6 +278,9 @@ export class NebiusNativeWorkerProvider {
   readonly #timeoutMs: number;
   readonly #modelPolicy: GuardianModelPolicy;
   readonly #diagnostic: (diagnostic: NativeWorkerProviderDiagnostic) => void;
+  readonly #onUsage:
+    ((usage: ManagedDemoNebiusUsageObservation) => void | Promise<void>) | undefined;
+  readonly #now: () => string;
 
   constructor(options: {
     readonly credentialStore: CredentialStore;
@@ -283,6 +288,8 @@ export class NebiusNativeWorkerProvider {
     readonly timeoutMs?: number;
     readonly modelPolicy?: GuardianModelPolicy;
     readonly onDiagnostic?: (diagnostic: NativeWorkerProviderDiagnostic) => void;
+    readonly onUsage?: (usage: ManagedDemoNebiusUsageObservation) => void | Promise<void>;
+    readonly now?: () => string;
   }) {
     this.#store = options.credentialStore;
     this.#fetch = options.fetch ?? globalThis.fetch;
@@ -291,6 +298,8 @@ export class NebiusNativeWorkerProvider {
       options.modelPolicy ?? DEFAULT_GUARDIAN_MODEL_POLICY,
     );
     this.#diagnostic = options.onDiagnostic ?? (() => undefined);
+    this.#onUsage = options.onUsage;
+    this.#now = options.now ?? (() => new Date().toISOString());
     if (!Number.isInteger(this.#timeoutMs) || this.#timeoutMs < 100 || this.#timeoutMs > 60_000) {
       throw new TypeError("native worker provider timeout is invalid");
     }
@@ -367,6 +376,15 @@ export class NebiusNativeWorkerProvider {
           let providerJson: unknown;
           try {
             providerJson = await boundedProviderJson(response);
+            if (this.#onUsage !== undefined) {
+              await this.#onUsage(
+                projectManagedDemoNebiusUsageObservation(providerJson, {
+                  role: "native_worker",
+                  modelId: selection.modelId,
+                  observedAt: this.#now(),
+                }),
+              );
+            }
           } catch {
             report({ kind: "response_envelope_invalid" });
             throw new NativeWorkerProviderError();

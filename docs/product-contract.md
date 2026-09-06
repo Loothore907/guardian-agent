@@ -105,6 +105,17 @@ database. Credential-holding services resolve them only for fixed, typed provide
 operations and return sanitized results. `.env.local` is development-only, not an
 installation mechanism. See ADR-0041.
 
+The hosted judge-access credential is distinct from every provider credential
+and grants access only to the fixed judge journey route. Trusted ingress verifies
+it before budget admission, derives a keyed one-way source fingerprint without
+retaining the raw client address, and never accepts a request-selected pool,
+ledger, model, price, provider option, or privileged-effect approval. A hostname
+or forwarded address is not authority. Every admitted journey reserves before a
+paid provider process starts and must settle through its exact role reporters.
+The local seam is not a hosted-enforcement claim until the target Caddy,
+SecretStash, Linux, network, lifecycle, and recovery evidence passes. See
+ADR-0046.
+
 Cloud mode sends only selected minimized Guardian context to Nebius and, when research is enabled,
 bounded public-research queries to Tavily. The user owns those accounts and their
 billing. Future provider adapters may support hybrid or local modes, but current

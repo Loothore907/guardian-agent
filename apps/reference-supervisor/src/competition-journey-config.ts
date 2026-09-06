@@ -8,6 +8,8 @@ import {
   CredentialStoreConfigSchema,
   credentialStoreConfigForConsumer,
   GitHubOAuthClientIdSchema,
+  ManagedDemoGuardianUsageReporterConfigSchema,
+  ManagedDemoResearchUsageReporterConfigSchema,
   ResearchServiceProcessConfigSchema,
   TimestampSchema,
   type CompetitionJourneyServiceBundle,
@@ -31,6 +33,10 @@ export interface ActivatedCompetitionJourneyServiceInput {
   readonly authority: ActivatedCompetitionJourneyAuthority;
   readonly githubClientId: unknown;
   readonly credentialStore: unknown;
+  readonly managedDemoBudget?: {
+    readonly guardian: unknown;
+    readonly research: unknown;
+  };
   readonly now?: () => string;
 }
 
@@ -73,6 +79,17 @@ export async function buildActivatedCompetitionJourneyServices(
   const request = CanonicalRequestSchema.parse(input.legitimateRequest);
   const githubClientId = GitHubOAuthClientIdSchema.parse(input.githubClientId);
   const credentialStore = CredentialStoreConfigSchema.parse(input.credentialStore);
+  const managedDemoBudget =
+    input.managedDemoBudget === undefined
+      ? undefined
+      : {
+          guardian: ManagedDemoGuardianUsageReporterConfigSchema.parse(
+            input.managedDemoBudget.guardian,
+          ),
+          research: ManagedDemoResearchUsageReporterConfigSchema.parse(
+            input.managedDemoBudget.research,
+          ),
+        };
   const brokerBinding = AuthorityCapabilityBindingSchema.parse(input.authority.brokerBinding);
   const researchBinding = AuthorityCapabilityBindingSchema.parse(input.authority.researchBinding);
   const research = ResearchServiceProcessConfigSchema.parse(input.launched.research?.serviceConfig);
@@ -160,6 +177,9 @@ export async function buildActivatedCompetitionJourneyServices(
         schemaVersion: 1,
         serviceKind: "action_risk",
         credentialStore: credentialStoreConfigForConsumer(credentialStore, "guardian_service"),
+        ...(managedDemoBudget === undefined
+          ? {}
+          : { managedDemoBudget: managedDemoBudget.guardian }),
         ...createGuardianActionRiskIpcCredentials(),
         sessionId: status.sessionId,
         callerId: status.callerId,
@@ -190,6 +210,7 @@ export async function buildActivatedCompetitionJourneyServices(
         endpoint: input.authority.endpoint,
         binding: researchBinding,
       },
+      ...(managedDemoBudget === undefined ? {} : { managedDemoBudget: managedDemoBudget.research }),
     },
   });
 }

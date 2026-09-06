@@ -9,6 +9,7 @@
   "dependencies": {
     "@guardian/contracts": "workspace:*",
     "@guardian/credential-store": "workspace:*",
+    "@guardian/managed-demo-budget-client": "workspace:*",
     "@guardian/guardian": "workspace:*",
     "@guardian/policy": "workspace:*"
   },

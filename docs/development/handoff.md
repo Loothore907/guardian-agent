@@ -1,6 +1,106 @@
 # Current development handoff
 
-Last updated: 2026-09-03 (AKDT)
+Last updated: 2026-09-04 (AKDT)
+
+## Current priority: managed-demo budget and capacity hardening
+
+The user explicitly superseded the September 3 emergency stop after confirming
+that the exposed Nebius key was revoked and replaced. They approved the bounded
+local implementation plan for separate project-funded judge and public demo
+capacity. The historical incident record below remains important security
+context, but it is no longer the active work prohibition.
+
+The current branch is `codex/13-c6-linux-provider-containment`. Local commits
+`4fa4f42` through `fa1809b` implement:
+
+- strict public/judge policies, integer micro-USD price evidence, admission,
+  sanitized usage, settlement, and operator-update contracts;
+- physically separate deployment-bound SQLite ledgers with atomic reservation,
+  restart/race/replay/expiry behavior, conservative forfeiture, and active-judge
+  capacity protection;
+- bounded FIFO queue, concurrency, cooldown, source, daily, global, stale-price,
+  availability, and kill-switch enforcement;
+- sanitized numeric usage projection for Qwen, Kimi, Nemotron primary/escalation,
+  and Tavily Search/Extract, with no prompt, response, credential, or provider
+  body retained as budget telemetry;
+- one trusted budget-service process per deployment, owner-only Linux socket and
+  database rules, peer-identity verification, exact deployment/caller/role
+  capabilities, and dependency-enforced sole ledger ownership;
+- awaited provider metering and optional exact-journey usage reporters in all
+  four credential-holding provider process bootstraps; and
+- a trusted journey controller that admits with its own clock, derives all four
+  reporters from the returned reservation, and permits settlement to start once;
+- a fixed judge HTTP contract and local control-API route that require same-host
+  loopback proxy evidence, private bearer authentication, a strict credential-
+  safe objective, deployment-keyed HMAC source identity, bounded public results,
+  no-store responses, and no automatic request log; and
+- an admission-before-execution coordinator that attempts one settlement for
+  completion, failure, malformed output, exception, abort, and disconnect paths,
+  plus the reference supervisor's projection of exact interaction, Guardian,
+  worker, and research reporters without exposing a ledger path.
+
+ADRs 0043 through 0046 record these decisions. The complete ordinary gate passes:
+72 Vitest files / 518 tests with 4 protected files / 10 protected tests skipped,
+7/8 SQLite spike tests with the POSIX-only case skipped on Windows, 2/2 reset
+tests, 201 modules / 426 dependency edges, TypeScript, lint, formatting, Linux
+peer-helper build, and the production web build.
+
+This is locally implemented containment, not a deployed or calibrated budget
+guarantee. No credential, provider call, IAM change, deployment, push, pull
+request, merge, release, or other remote mutation occurred. Remaining gates are:
+
+1. add the protected judge startup that resolves the access digest and source key
+   from fixed SecretStash payloads, constructs the budget controller and concrete
+   supervisor executor, and leaves the route disabled when any binding is absent;
+2. verify same-VM Caddy header overwrite and log suppression, loopback-only
+   Guardian binding, client-disconnect settlement, and source-key custody on the
+   target Linux host;
+3. capture authenticated current Nebius/Tavily prices, run the protected
+   20-journey calibration, and replace the provisional $0.10 envelope;
+4. load-test the target Linux VM and inspect real peer/socket/database isolation;
+5. provision separate public/judge SecretStash resources, identities, ledgers,
+   provider-side caps, funding, and kill switches; and
+6. deploy the judge pool for the confirmed access window before optionally
+   enabling the public pilot.
+
+## Locked hosted deployment and ingress baseline
+
+User review on 2026-09-04 accepted
+[ADR-0045](../adr/0045-nebius-judge-hosting-and-domain-ingress.md). Do not reopen
+these choices next session merely because deployment work has begun:
+
+- The judge experience runs on a dedicated, regular CPU-based Linux Compute VM
+  in Nebius AI Cloud. Guardian uses Nebius Token Factory for its fixed model
+  roles, including Nemotron; it does not self-host Nemotron on a GPU VM.
+- This is a both/and competition story: runtime Token Factory use supplies the
+  explicit Nebius qualification path and Nemotron supplies the required NVIDIA
+  open-source model path. Do not rely on a plain Compute VM as the only rules
+  qualification claim.
+- Initial public ingress is same-VM Caddy on a reusable Nebius public IP. DNS
+  maps `judge.agentic-guardian.com` to that IP; Caddy owns ports 80/443 and TLS,
+  while Guardian listens only on loopback and privileged services remain on
+  owner-only local IPC.
+- A hostname is not judge authorization. The judge route must authenticate the
+  low-friction credential provided in private testing instructions before it can
+  reach the fixed judge deployment capability. Requests cannot select a pool or
+  ledger.
+- The optional public application uses `demo.agentic-guardian.com` and a separate
+  Nebius deployment, identity, credentials, ledger, capacity, and kill switch.
+  Do not co-host it on the judge VM; leave it disabled until separately funded.
+- Keep the apex `agentic-guardian.com` available for project documentation,
+  downloads, and general competition material.
+
+These defaults hold through the judging window. Reconsider VM sizing, a public
+deployment, redundancy, or a managed/external edge only after authenticated price
+evidence, the protected journey calibration, target-Linux load measurements,
+observed demand/abuse, availability evidence, available funding, or a material
+rules clarification changes an assumption. Traffic does not automatically
+authorize spending or weaken judge isolation.
+
+Do not ask for or expose a key in chat, agent-controlled terminal input, source,
+configuration committed to Git, logs, or test fixtures. Protected provisioning
+must use the accepted operator/SecretStash path. Remote work remains outside the
+approved local plan unless separately authorized.
 
 ## Credential-custody implementation checkpoint
 
@@ -30,7 +130,11 @@ as context and sequencing guidance, not as the next session's goal by itself.
 Durable choices live in ADRs, verified guarantees in `docs/security-claims.md`,
 and checkpoint history in `docs/development/roadmap.md`.
 
-## STOP: secret enrollment is the only active objective
+## Historical STOP: secret enrollment incident (superseded 2026-09-04)
+
+The current priority and authority are stated above. Preserve this section as the
+incident record and credential-enrollment product requirements; do not treat its
+former stop-work language as overriding the newer user direction.
 
 Update after user review: the exposed Nebius credential described below was
 revoked at the provider and replaced. The retired value remains prohibited from
@@ -150,7 +254,12 @@ evidence passes may any older roadmap action below be reconsidered.
 - PR #17, issue #13, all pushes, pull-request updates, GitHub evidence, merges,
   releases, deployments, and publication are paused.
 
-## Start here
+## Historical C6 checkpoint context
+
+The material below records the earlier C6 transition and is retained for audit
+and design context. It is not the current session pickup sequence; the active
+managed-demo priority and remaining gates at the top of this handoff supersede
+its older sequencing language.
 
 - **Active checkpoint:** C6 on issue
   [#13](https://github.com/Loothore907/guardian-agent/issues/13). PR
@@ -228,9 +337,9 @@ evidence passes may any older roadmap action below be reconsidered.
   stage, copy, summarize, or use it as the installation design. Never print or
   export credential-store values.
 
-## Session closeout: PR #17 audit review and W26
+## Historical session closeout: PR #17 audit review and W26
 
-### Current state
+### State recorded at that checkpoint
 
 - PR #17's remote branch `codex/13-c6-linux-peer-credentials` remains at
   `bca4313`. Its local branch has the W25 status reconciliation at `ed84e27` and
@@ -293,7 +402,7 @@ evidence passes may any older roadmap action below be reconsidered.
     was rejected by the action guard as insufficiently specific publication
     authority; do not assume GitHub contains the W26 summary.
 
-### Pending debt and next actions
+### Debt and next actions recorded at that checkpoint
 
 1. **Required before PR #17 can be treated as green:** once a minimal advisory
    canary returns a real response, push local commits `ed84e27` and `d58d761`, then
@@ -1039,7 +1148,7 @@ start its systemd user session and timed out fail closed; a disposable isolated
 user D-Bus session passed the lifecycle and complete Linux gate. See
 [`w26-linux-secret-service-lifecycle.md`](evidence/w26-linux-secret-service-lifecycle.md).
 
-### Recommended next-session sequence
+### Historical recommended sequence (superseded by the active priority)
 
 1. Keep issue #13 open unless every C6 exit criterion is satisfied or remaining
    criteria are explicitly split into named follow-up issues with roadmap/claim
@@ -1259,6 +1368,9 @@ wrapper when the frozen workspace is already usable.
 - [ADR-0035: Fixed controlled-content Extract boundary](../adr/0035-fixed-controlled-content-extract.md)
 - [ADR-0038: Linux peer identity and Secret Service credential resolution](../adr/0038-linux-peer-identity-and-secret-service.md)
 - [ADR-0039: Persistent plan-bound session authority](../adr/0039-persistent-plan-bound-session-authority.md)
+- [ADR-0045: Nebius judge hosting and domain ingress](../adr/0045-nebius-judge-hosting-and-domain-ingress.md)
+- [ADR-0046: Managed-demo judge ingress and source fingerprints](../adr/0046-managed-demo-judge-ingress-and-source-fingerprints.md)
+- [Managed-demo judge ingress evidence](evidence/managed-demo-judge-ingress.md)
 - [W2 session workspace evidence](evidence/w2-session-workspace.md)
 - [W3 worker tool round-trip evidence](evidence/w3-worker-tool-round-trip.md)
 - [W4 denial containment evidence](evidence/w4-denial-containment.md)

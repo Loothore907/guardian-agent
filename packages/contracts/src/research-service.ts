@@ -4,6 +4,7 @@ import { AuthorityClientProcessConfigSchema } from "./authority-ipc.js";
 import { ContractVersionSchema, type DeepReadonly } from "./common.js";
 import { CredentialStoreConfigSchema } from "./credentials.js";
 import { ResearchServiceProcessConfigSchema } from "./research-ipc.js";
+import { ManagedDemoResearchUsageReporterConfigSchema } from "./managed-demo-budget-ipc.js";
 
 const RESEARCH_AUTHORITY_OPERATIONS = new Set([
   "research.reserve",
@@ -18,6 +19,7 @@ export const CredentialStoreResearchServiceProcessConfigSchema = z
     credentialStore: CredentialStoreConfigSchema,
     research: ResearchServiceProcessConfigSchema,
     authority: AuthorityClientProcessConfigSchema,
+    managedDemoBudget: ManagedDemoResearchUsageReporterConfigSchema.optional(),
   })
   .superRefine((config, context) => {
     const binding = config.authority.binding;
@@ -42,6 +44,18 @@ export const CredentialStoreResearchServiceProcessConfigSchema = z
         code: "custom",
         message: "research lifetime must fit its authority capability",
         path: ["research"],
+      });
+    }
+    const budgetBinding = config.managedDemoBudget?.budget.binding;
+    if (
+      budgetBinding !== undefined &&
+      (Date.parse(config.research.startsAt) < Date.parse(budgetBinding.issuedAt) ||
+        Date.parse(config.research.expiresAt) > Date.parse(budgetBinding.expiresAt))
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "research lifetime must fit its managed-demo budget capability",
+        path: ["managedDemoBudget", "budget", "binding"],
       });
     }
   });

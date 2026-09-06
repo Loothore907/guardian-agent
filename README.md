@@ -53,9 +53,15 @@ The normal installation, provider accounts, billing, credentials, policy, and
 audit data belong to the user. ADR-0041 separately defines a project-funded
 managed-demo profile: its planned Linux deployment uses fixed Nebius SecretStash
 resources and isolated public/judge credential pools. A deterministic read-only
-adapter and strict service-bootstrap routing are implemented; IAM, deployment,
-budget isolation, and protected retrieval evidence remain pending. BYOK uses the
-host operating system's credential store. The runner and models receive typed
+adapter, strict service-bootstrap routing, independent budget ledgers, atomic
+admission/settlement, bounded queues, and role-scoped usage reporting are
+implemented locally. ADR-0046 adds a local fixed judge route with separate access
+authentication, deployment-keyed source fingerprints, admission-before-
+supervisor ordering, and generic no-store results. The default executable leaves
+that route disabled until protected SecretStash ingress-secret loading and fixed
+hosted startup exist. IAM, Caddy/Linux inspection, provider caps, calibration,
+funding, deployment, and protected retrieval evidence remain pending. BYOK uses
+the host operating system's credential store. The runner and models receive typed
 results, never reusable keys.
 
 The infrastructure currently provides registered provider/slot contracts,

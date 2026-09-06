@@ -55,6 +55,7 @@ describe("Nebius native worker provider", () => {
           JSON.stringify({
             id: "nebius_worker_1",
             model: nativeWorkerBoundary.model,
+            usage: { prompt_tokens: 500, completion_tokens: 100, total_tokens: 600 },
             choices: [
               {
                 finish_reason: "stop",
@@ -79,9 +80,12 @@ describe("Nebius native worker provider", () => {
         ),
       ),
     );
+    const onUsage = vi.fn();
     const provider = new NebiusNativeWorkerProvider({
       credentialStore,
       fetch: fetchMock,
+      onUsage,
+      now: () => "2026-11-01T12:00:30.000Z",
     });
     const exactTurn = turn();
     await expect(provider.runTurn(exactTurn)).resolves.toMatchObject({
@@ -115,6 +119,50 @@ describe("Nebius native worker provider", () => {
     expect(request.messages[0]?.content).toContain('"name":{"const":"guardian.session_status"}');
     expect(request.messages[0]?.content).not.toContain("guardian.research");
     expect(request.messages[0]?.content).not.toContain("github.pull_request");
+    expect(onUsage).toHaveBeenCalledWith({
+      schemaVersion: 1,
+      provider: "nebius_token_factory",
+      providerRequestId: "nebius_worker_1",
+      role: "native_worker",
+      modelId: nativeWorkerBoundary.model,
+      promptTokens: 500,
+      completionTokens: 100,
+      totalTokens: 600,
+      observedAt: "2026-11-01T12:00:30.000Z",
+    });
+  });
+
+  it("fails the turn when durable usage recording fails", async () => {
+    const credentialStore = new InMemoryCredentialStore();
+    await credentialStore.write(
+      nativeWorkerBoundary.credential,
+      new TextEncoder().encode("worker-provider-metering-fixture"),
+    );
+    const provider = new NebiusNativeWorkerProvider({
+      credentialStore,
+      fetch: () =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({
+              id: "nebius_worker_metering_failure",
+              model: nativeWorkerBoundary.model,
+              usage: { prompt_tokens: 2, completion_tokens: 1, total_tokens: 3 },
+              choices: [
+                {
+                  finish_reason: "stop",
+                  message: {
+                    content: JSON.stringify({ kind: "final_response", summary: "Complete." }),
+                  },
+                },
+              ],
+            }),
+            { status: 200, headers: { "content-type": "application/json" } },
+          ),
+        ),
+      onUsage: async () => await Promise.reject(new Error("budget service unavailable")),
+    });
+
+    await expect(provider.runTurn(turn())).rejects.toBeInstanceOf(NativeWorkerProviderError);
   });
 
   it("rejects mismatched policy or model before credential use and provider invocation", async () => {

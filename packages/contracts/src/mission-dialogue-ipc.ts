@@ -13,6 +13,7 @@ import {
   MissionDraftReviewEnvelopeSchema,
   MissionDraftReviewOutcomeSchema,
 } from "./mission-formation.js";
+import { ManagedDemoInteractionUsageReporterConfigSchema } from "./managed-demo-budget-ipc.js";
 
 export const MissionDraftReviewIpcFailureReasonSchema = z.enum([
   "expired",
@@ -63,6 +64,7 @@ export const MissionDraftReviewServiceProcessConfigSchema = z
     endpoint: z.string().min(1).max(260),
     capability: OpaqueIdSchema,
     credentialStore: CredentialStoreConfigSchema.optional(),
+    managedDemoBudget: ManagedDemoInteractionUsageReporterConfigSchema.optional(),
     startsAt: TimestampSchema,
     expiresAt: TimestampSchema,
     envelope: MissionDraftReviewEnvelopeSchema,
@@ -73,6 +75,18 @@ export const MissionDraftReviewServiceProcessConfigSchema = z
         code: "custom",
         message: "mission draft review service expiry must follow its start",
         path: ["expiresAt"],
+      });
+    }
+    const budgetBinding = config.managedDemoBudget?.budget.binding;
+    if (
+      budgetBinding !== undefined &&
+      (Date.parse(config.startsAt) < Date.parse(budgetBinding.issuedAt) ||
+        Date.parse(config.expiresAt) > Date.parse(budgetBinding.expiresAt))
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "mission review lifetime must fit its managed-demo budget capability",
+        path: ["managedDemoBudget", "budget", "binding"],
       });
     }
   });
