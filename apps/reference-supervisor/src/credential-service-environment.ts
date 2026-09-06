@@ -1,3 +1,4 @@
+import { CredentialStoreConfigSchema } from "@guardian/contracts";
 const MAXIMUM_SESSION_VALUE_LENGTH = 4_096;
 
 function validatedUserId(userId: number | undefined): number {
@@ -64,4 +65,16 @@ export function credentialServiceEnvironment(
     DBUS_SESSION_BUS_ADDRESS: busAddress,
     XDG_RUNTIME_DIR: runtimeDirectory,
   };
+}
+
+/** Managed service identities use no desktop bus or inherited authentication environment. */
+export function credentialEnvironmentForStore(
+  config: unknown,
+  base: Readonly<Record<string, string>> = {},
+  options: Parameters<typeof credentialServiceEnvironment>[1] = {},
+) {
+  const store = CredentialStoreConfigSchema.parse(config);
+  return store.custodyProfile === "managed_demo"
+    ? { ...base }
+    : credentialServiceEnvironment(base, options);
 }

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { TimestampSchema, type DeepReadonly } from "./common.js";
 
 export const IsolationProbeResultSchema = z.strictObject({
-  runtimeProfile: z.literal("windows_wsl2_ubuntu_22_04_namespace_v1"),
+  runtimeProfile: z.enum(["windows_wsl2_ubuntu_22_04_namespace_v1", "linux_namespace_v1"]),
   observedAt: TimestampSchema,
   checks: z.strictObject({
     localCommandSucceeded: z.boolean(),

@@ -9,6 +9,7 @@ import {
   type GuardianModelPolicy,
   type ManagedDemoNebiusUsageObservation,
   type WorkerTurnEnvelope,
+  type WorkerToolResult,
 } from "@guardian/contracts";
 import type { CredentialStore } from "@guardian/credential-store";
 
@@ -104,47 +105,63 @@ export function projectNebiusWorkerResponse(
   }
 }
 
+function projectToolContent(result: WorkerToolResult) {
+  if (result.outcome === "denied")
+    return {
+      name: result.name,
+      outcome: result.outcome,
+      denial: { code: result.denial.code, disposition: result.denial.disposition },
+    };
+  const output =
+    result.name === "guardian.session_status"
+      ? {
+          state: result.output.state,
+          assurance: result.output.assurance,
+          expiresAt: result.output.expiresAt,
+          tools: result.output.tools,
+        }
+      : result.name === "guardian.research"
+        ? { evidence: result.output.evidence }
+        : result.output;
+  return { name: result.name, outcome: result.outcome, output };
+}
+
 function providerProjection(turn: WorkerTurnEnvelope) {
-  const previousToolResult =
-    turn.previousToolResult === undefined
-      ? undefined
-      : turn.previousToolResult.outcome === "denied"
-        ? {
-            name: turn.previousToolResult.name,
-            outcome: turn.previousToolResult.outcome,
-            denial: {
-              code: turn.previousToolResult.denial.code,
-              disposition: turn.previousToolResult.denial.disposition,
-            },
-          }
-        : turn.previousToolResult.name === "guardian.session_status"
-          ? {
-              name: turn.previousToolResult.name,
-              outcome: turn.previousToolResult.outcome,
-              output: {
-                state: turn.previousToolResult.output.state,
-                assurance: turn.previousToolResult.output.assurance,
-                expiresAt: turn.previousToolResult.output.expiresAt,
-                tools: turn.previousToolResult.output.tools,
-              },
-            }
-          : {
-              name: turn.previousToolResult.name,
-              outcome: turn.previousToolResult.outcome,
-              output: turn.previousToolResult.output,
-            };
   return {
     turnNumber: turn.turnNumber,
     objective: turn.objective,
     constraints: turn.constraints,
     allowedTools: turn.allowedTools,
     remainingBudget: turn.remainingBudget,
-    ...(previousToolResult === undefined ? {} : { previousToolResult }),
+    ...(turn.previousToolResult === undefined
+      ? {}
+      : {
+          previousToolResult: projectToolContent(turn.previousToolResult),
+        }),
+    ...(turn.toolHistory === undefined
+      ? {}
+      : {
+          toolHistory: turn.toolHistory.map(projectToolContent),
+        }),
   };
 }
 
 const TOOL_REQUEST_SCHEMA = {
   oneOf: [
+    {
+      type: "object",
+      additionalProperties: false,
+      required: ["name", "arguments"],
+      properties: {
+        name: { const: "guardian.research" },
+        arguments: {
+          type: "object",
+          additionalProperties: false,
+          required: ["sourceUrl"],
+          properties: { sourceUrl: { type: "string", format: "uri", maxLength: 2048 } },
+        },
+      },
+    },
     {
       type: "object",
       additionalProperties: false,
@@ -215,6 +232,7 @@ const TOOL_REQUEST_SCHEMA = {
             owner: { type: "string", pattern: "^[a-z0-9_.-]+$", maxLength: 100 },
             repository: { type: "string", pattern: "^[a-z0-9_.-]+$", maxLength: 100 },
             pullRequest: { type: "integer", minimum: 1 },
+            content: { const: "review" },
           },
         },
       },
@@ -354,7 +372,8 @@ export class NebiusNativeWorkerProvider {
                   {
                     role: "system",
                     content:
-                      turn.previousToolResult === undefined
+                      turn.previousToolResult === undefined ||
+                      (turn.continuation !== undefined && turn.allowedTools.length > 0)
                         ? `You are Guardian's bounded native worker. Use only the supplied credential-free mission projection. Return exactly one JSON object matching this schema: ${outcomeGuidance}. A tool request is pending only: you cannot execute it or claim approval. Never emit session bindings, proposal IDs, approval state, assurance, credentials, URLs, headers, or shell text outside the typed schema.`
                         : `You are Guardian's bounded native worker. Guardian has returned the single sanitized tool result permitted for this task. Return exactly one final-response JSON object and do not request another tool. The complete output schema is: ${outcomeGuidance}. Never emit session bindings, proposal IDs, approval state, credentials, URLs, headers, or shell text.`,
                   },

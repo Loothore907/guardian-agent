@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+import { canonicalDigest } from "@guardian/canonical";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -14,7 +16,10 @@ import type {
 } from "@guardian/session-host/launcher";
 import { createWorkerToolResult } from "@guardian/worker";
 
-import { ReferenceSessionBootstrapCoordinator } from "./bootstrap.js";
+import {
+  type ReferenceSessionBootstrapOptions,
+  ReferenceSessionBootstrapCoordinator,
+} from "./bootstrap.js";
 
 const IDS = {
   session: "11111111-1111-4111-8111-111111111111",
@@ -67,6 +72,7 @@ function coordinator(
     execution: WorkerToolExecutionEnvelope,
     launched: LaunchedReferenceSession,
   ) => Promise<WorkerToolResult>,
+  overrides: Partial<ReferenceSessionBootstrapOptions> = {},
 ) {
   let now = CREATED_AT;
   const randomIds = [
@@ -129,6 +135,14 @@ function coordinator(
     },
     ...(runWorkerTurn === undefined ? {} : { runWorkerTurn }),
     ...(executeWorkerTool === undefined ? {} : { executeWorkerTool }),
+    ...overrides,
+    ...(overrides.workerMaxTurns === undefined || overrides.workerAuthority !== undefined
+      ? {}
+      : {
+          workerAuthority: {
+            getWorkerBudget: async () => await Promise.resolve({ sessionId: IDS.session }),
+          } as never,
+        }),
   });
   return {
     bootstrap,
@@ -977,5 +991,317 @@ describe("reference terminal session bootstrap", () => {
       } as never),
     ).toThrow();
     expect(harness.launchSession).not.toHaveBeenCalled();
+  });
+});
+
+const planIntent = {
+  maxActions: 1,
+  maxMutations: 1,
+  mutationRetries: 0,
+  targets: [
+    {
+      operation: "github.pull_request.merge",
+      connectionId: IDS.execution,
+      owner: "owner",
+      repository: "demo",
+      pullRequest: 1,
+      headCommit: "a".repeat(40),
+      baseBranch: "main",
+    },
+  ],
+} as const;
+const planMission = {
+  constraints: ["Only execute the confirmed plan."],
+  workerTools: ["guardian.session_status"],
+  permissions: {
+    tools: ["guardian.session_status", "github.pull_request.merge"],
+    filesystem: { mode: "workspace_write", roots: ["/workspace"] },
+    network: {
+      mode: "guardian_only",
+      destinations: [{ kind: "github_repository", owner: "owner", repository: "demo" }],
+    },
+    sideEffects: ["write_workspace", "merge_pull_request"],
+    time: { maxDurationSeconds: 300 },
+    volume: {
+      maxToolCalls: 2,
+      maxLocalCommands: 0,
+      maxResearchRequests: 0,
+      maxResearchResults: 0,
+      maxPrivilegedActions: 1,
+    },
+  },
+} as const;
+
+it("binds targets into the initial preview and activates the grant before any worker turn", async () => {
+  const events: string[] = [];
+  const grant = vi.fn(async () => {
+    events.push("grant");
+    return await Promise.resolve(IDS.execution);
+  });
+  const { bootstrap } = coordinator(undefined, undefined, {
+    sessionPlan: planIntent,
+    missionTemplate: planMission,
+    activateSessionPlan: grant,
+    runInteraction: async () => {
+      events.push("interaction");
+      return await Promise.resolve({ state: "not_attached" });
+    },
+  });
+  const preview = bootstrap.createDraft({
+    schemaVersion: 1,
+    objective: "Review the approved merge.",
+  });
+  expect(preview.sessionPlan).toEqual(planIntent);
+  const altered = coordinator(undefined, undefined, {
+    sessionPlan: {
+      ...planIntent,
+      targets: planIntent.targets.map((t) => ({ ...t, headCommit: "b".repeat(40) })),
+    },
+    missionTemplate: planMission,
+    activateSessionPlan: grant,
+  });
+  const other = altered.bootstrap.createDraft({
+    schemaVersion: 1,
+    objective: "Review the approved merge.",
+  });
+  expect(other.previewDigest).not.toBe(preview.previewDigest);
+  await expect(
+    bootstrap.confirmAndLaunch(confirmation(preview.draftId, preview.previewDigest)),
+  ).resolves.toMatchObject({ sessionPlanGrantId: IDS.execution });
+  expect(events).toEqual(["grant", "interaction"]);
+  expect(grant).toHaveBeenCalledOnce();
+});
+
+it("rejects grant intent outside the mission before producing a confirmable preview", () => {
+  const { bootstrap } = coordinator(undefined, undefined, {
+    sessionPlan: planIntent,
+    activateSessionPlan: () => Promise.resolve(IDS.execution),
+  });
+  expect(() => bootstrap.createDraft({ schemaVersion: 1, objective: "Review." })).toThrow(
+    "exceeds mission",
+  );
+});
+
+it("interrupts launch and never starts the worker when grant persistence fails", async () => {
+  const worker = vi.fn();
+  const { bootstrap, launchSession } = coordinator(worker, undefined, {
+    sessionPlan: planIntent,
+    missionTemplate: planMission,
+    activateSessionPlan: async () => {
+      return await Promise.reject(new Error("unavailable"));
+    },
+  });
+  const preview = bootstrap.createDraft({ schemaVersion: 1, objective: "Review." });
+  await expect(
+    bootstrap.confirmAndLaunch(confirmation(preview.draftId, preview.previewDigest)),
+  ).rejects.toThrow("session interrupted");
+  expect(worker).not.toHaveBeenCalled();
+  const launched = await Promise.resolve(
+    launchSession.mock.results[0]!.value as Promise<LaunchedReferenceSession>,
+  );
+  expect(launched.runtime.status(CREATED_AT).state).toBe("interrupted");
+});
+
+it("uses standing deployment consent without fabricating fresh human presence", async () => {
+  const base = coordinator(undefined, undefined, {
+    sessionPlan: planIntent,
+    missionTemplate: planMission,
+    activateSessionPlan: () => Promise.resolve(IDS.execution),
+  });
+  const objective = "Review the approved merge.";
+  const preview = base.bootstrap.createDraft({ schemaVersion: 1, objective });
+  const authorization = {
+    authorizationId: IDS.principal,
+    deploymentId: IDS.execution,
+    principalId: IDS.principal,
+    authorizedAt: "2026-08-30T10:00:00.000Z",
+    expiresAt: "2026-09-01T10:00:00.000Z",
+    objectiveDigest: canonicalDigest("deployment_objective", 1, objective),
+    permissionsDigest: canonicalDigest("deployment_permissions", 1, preview.permissions),
+    sessionPlanIntentDigest: canonicalDigest("session_plan_intent", 1, planIntent),
+    workspaceSnapshotDigest: preview.workspace.sourceSnapshotDigest,
+  };
+  const activate = vi.fn<NonNullable<ReferenceSessionBootstrapOptions["activateSessionPlan"]>>(() =>
+    Promise.resolve(IDS.execution),
+  );
+  const configured = coordinator(undefined, undefined, {
+    sessionPlan: planIntent,
+    missionTemplate: planMission,
+    activateSessionPlan: activate,
+    deploymentAuthorization: authorization,
+  });
+  const pending = configured.bootstrap.createDraft({ schemaVersion: 1, objective });
+  const consent = {
+    ...confirmation(pending.draftId, pending.previewDigest),
+    confirmedAt: authorization.authorizedAt,
+    assurance: "deployment_authorization" as const,
+    authorizationId: authorization.authorizationId,
+    journeyId: IDS.session,
+  };
+  await expect(configured.bootstrap.confirmAndLaunch(consent)).resolves.toMatchObject({
+    confirmationAssurance: "deployment_authorization",
+    sessionPlanGrantId: IDS.execution,
+  });
+  expect(activate.mock.calls[0]?.[2]).toMatchObject({ confirmedAt: authorization.authorizedAt });
+  await expect(
+    base.bootstrap.confirmAndLaunch({
+      ...consent,
+      draftId: preview.draftId,
+      previewDigest: preview.previewDigest,
+    }),
+  ).rejects.toThrow("does not cover preview");
+});
+
+it("does not let a returned preview mutate the internally confirmed plan", async () => {
+  const grant = vi.fn<NonNullable<ReferenceSessionBootstrapOptions["activateSessionPlan"]>>(() =>
+    Promise.resolve(IDS.execution),
+  );
+  const { bootstrap } = coordinator(undefined, undefined, {
+    sessionPlan: planIntent,
+    missionTemplate: planMission,
+    activateSessionPlan: grant,
+  });
+  const preview = bootstrap.createDraft({ schemaVersion: 1, objective: "Review." });
+  Object.assign(preview.sessionPlan!.targets[0]!, { headCommit: "b".repeat(40) });
+  await bootstrap.confirmAndLaunch(confirmation(preview.draftId, preview.previewDigest));
+  expect(grant.mock.calls[0]?.[0].targets[0]?.headCommit).toBe("a".repeat(40));
+});
+
+function continuationResult(
+  e: WorkerToolExecutionEnvelope,
+  overrides: Record<string, unknown> = {},
+) {
+  const fields = [
+    "schemaVersion",
+    "executionId",
+    "executionDigest",
+    "sessionId",
+    "callerId",
+    "missionId",
+    "missionVersion",
+    "profileId",
+    "profileVersion",
+    "policyVersion",
+    "sourceTurnId",
+    "sourceTurnNumber",
+    "sourceTurnDigest",
+    "requestDigest",
+  ];
+  return createWorkerToolResult({
+    ...Object.fromEntries(fields.map((key) => [key, e[key as keyof typeof e]])),
+    completedAt: CREATED_AT,
+    remainingBudget: {
+      remainingDurationSeconds: 300,
+      remainingToolCalls: 20 - e.sourceTurnNumber,
+      remainingResearchRequests: 0,
+      remainingResearchResults: 0,
+      remainingLocalCommands: 10,
+      remainingPrivilegedActions: 0,
+    },
+    outcome: "denied",
+    name: e.request.name,
+    denial: {
+      code: "request_denied",
+      disposition: "continue",
+      policyId: "reference-worker-violations-2026-09-02",
+      policyVersion: 1,
+    },
+    ...overrides,
+  });
+}
+describe("C7 bounded continuation", () => {
+  it("continues after eligible denial, binds history, and produces a final answer", async () => {
+    const turns: WorkerTurnEnvelope[] = [];
+    const harness = coordinator(
+      async (t) => {
+        await Promise.resolve();
+        turns.push(t);
+        return {
+          providerRequestId: "fixture",
+          turnId: t.turnId,
+          turnDigest: t.turnDigest,
+          turnNumber: t.turnNumber,
+          outcome:
+            t.turnNumber < 3
+              ? {
+                  kind: "tool_request",
+                  request: { name: "guardian.session_status", arguments: {} },
+                }
+              : { kind: "final_response", response: "The denied requests were contained." },
+        };
+      },
+      async (e) => await Promise.resolve(continuationResult(e)),
+      { workerMaxTurns: 4, randomId: randomUUID },
+    );
+    const preview = harness.bootstrap.createDraft({
+      schemaVersion: 1,
+      objective: "Inspect safely.",
+    });
+    expect(preview.workerMaxTurns).toBe(4);
+    const result = await harness.bootstrap.confirmAndLaunch(
+      confirmation(preview.draftId, preview.previewDigest),
+    );
+    expect(result.workerTurn).toMatchObject({
+      state: "completed",
+      result: { turnNumber: 3, outcome: { kind: "final_response" } },
+    });
+    expect(turns[2]?.toolHistory).toHaveLength(1);
+    expect(turns.map((t) => t.continuation?.deadline)).toEqual(
+      Array(3).fill("2026-08-31T10:05:00.000Z"),
+    );
+  });
+  it.each(["callerId", "sessionId", "missionId", "profileId"])(
+    "rejects a correctly hashed result from another %s",
+    async (field) => {
+      const run = vi.fn(
+        async (t: WorkerTurnEnvelope): Promise<WorkerTurnResult> =>
+          await Promise.resolve({
+            providerRequestId: "fixture",
+            turnId: t.turnId,
+            turnDigest: t.turnDigest,
+            turnNumber: t.turnNumber,
+            outcome: {
+              kind: "tool_request",
+              request: { name: "guardian.session_status", arguments: {} },
+            },
+          }),
+      );
+      const h = coordinator(
+        run,
+        async (e) => await Promise.resolve(continuationResult(e, { [field]: randomUUID() })),
+        {
+          workerMaxTurns: 4,
+          randomId: randomUUID,
+        },
+      );
+      const p = h.bootstrap.createDraft({ schemaVersion: 1, objective: "Inspect safely." });
+      expect(
+        (await h.bootstrap.confirmAndLaunch(confirmation(p.draftId, p.previewDigest))).workerTurn
+          .state,
+      ).toBe("failed_closed");
+      expect(run).toHaveBeenCalledOnce();
+    },
+  );
+  it("rejects a tool request on the final permitted turn", async () => {
+    const h = coordinator(
+      async (t) =>
+        await Promise.resolve({
+          providerRequestId: "fixture",
+          turnId: t.turnId,
+          turnDigest: t.turnDigest,
+          turnNumber: t.turnNumber,
+          outcome: {
+            kind: "tool_request",
+            request: { name: "guardian.session_status", arguments: {} },
+          },
+        }),
+      async (e) => await Promise.resolve(continuationResult(e)),
+      { workerMaxTurns: 2, randomId: randomUUID },
+    );
+    const p = h.bootstrap.createDraft({ schemaVersion: 1, objective: "Inspect safely." });
+    expect(
+      (await h.bootstrap.confirmAndLaunch(confirmation(p.draftId, p.previewDigest))).workerTurn
+        .state,
+    ).toBe("failed_closed");
   });
 });
