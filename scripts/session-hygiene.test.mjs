@@ -48,3 +48,10 @@ test("uses the latest same-head build without hiding pending/failing or ambiguou
   }
   assert.ok(checkRemote({head:pr.headRefOid},{...pr,statusCheckRollup:[latest,{...latest,conclusion:"FAILURE"}]}).includes("build_not_green"));
 });
+
+test("allows merged-PR closeout but refuses to resume feature work on that branch", () => {
+  const merged = {...pr,state:"MERGED"};
+  assert.deepEqual(checkRemote({head:pr.headRefOid},merged,"close"),[]);
+  assert.ok(checkRemote({head:pr.headRefOid},merged,"start").includes("merged_branch_requires_new_work_branch"));
+  assert.deepEqual(checkRemote({head:pr.headRefOid},pr,"start"),[]);
+});

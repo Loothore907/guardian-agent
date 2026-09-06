@@ -41,8 +41,9 @@ export function localBlockers(state) {
   return errors;
 }
 
-export function checkRemote(state, pr) {
+export function checkRemote(state, pr, mode = "close") {
   const errors = validatePullRequest(pr);
+  if (mode === "start" && pr.state === "MERGED") errors.push("merged_branch_requires_new_work_branch");
   if (pr.headRefOid !== state.head) errors.push("remote_head_mismatch");
   if (pr.state !== "OPEN" && pr.state !== "MERGED") errors.push("pull_request_closed_unmerged");
   let builds = (pr.statusCheckRollup ?? []).filter(check => check.name === "build");
@@ -82,7 +83,7 @@ export function main(args = process.argv.slice(2)) {
     } else {
       try {
         const pr = JSON.parse(execFileSync("gh", ["pr", "view", state.branch, "--json", "title,body,headRefName,headRefOid,state,statusCheckRollup,url"], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }));
-        errors.push(...checkRemote(state, pr));
+        errors.push(...checkRemote(state, pr, mode));
         const issue = branchPattern.exec(state.branch)?.[2];
         if (issue) execFileSync("gh", ["issue", "view", issue, "--json", "number,state"], { stdio: ["ignore", "pipe", "pipe"] });
         remote = "verified"; prUrl = pr.url;
