@@ -4,6 +4,7 @@ import { dirname, extname, isAbsolute, resolve } from "node:path";
 import { DatabaseSync, type StatementResultingChanges } from "node:sqlite";
 
 import {
+  MAX_MANAGED_DEMO_USAGE_ENTRIES,
   ManagedDemoAdmissionRequestSchema,
   ManagedDemoAdmissionResultSchema,
   ManagedDemoBudgetPolicySchema,
@@ -209,7 +210,8 @@ export class ManagedDemoJourneyUsageCollector {
 
   readonly record = (value: unknown): void => {
     if (this.#settled) throw new TypeError("managed-demo usage collector is already settled");
-    if (this.#usage.length >= 8) throw new TypeError("managed-demo usage collector is full");
+    if (this.#usage.length >= MAX_MANAGED_DEMO_USAGE_ENTRIES)
+      throw new TypeError("managed-demo usage collector is full");
     const observation: ManagedDemoUsageObservation = ManagedDemoUsageObservationSchema.parse(value);
     if (this.#providerRequestIds.has(observation.providerRequestId)) {
       throw new TypeError("managed-demo provider usage observation was replayed");
@@ -304,13 +306,13 @@ export class ManagedDemoAdmissionQueue {
   async admit(value: unknown): Promise<ManagedDemoAdmissionResult> {
     if (this.#closed) throw new TypeError("managed-demo admission queue is closed");
     const request = ManagedDemoAdmissionRequestSchema.parse(value);
-    const result = this.#ledger.admit(request);
+    const result = this.#ledger.admitNow(request);
     if (result.state !== "denied" || result.reason !== "concurrency_exhausted") return result;
     if (this.#pending.length >= this.#policy.limits.queueCapacity) {
       return this.#denied("queue_full");
     }
     const deadline =
-      Date.parse(request.requestedAt) + this.#policy.limits.queueTimeoutSeconds * 1_000;
+      Date.parse(result.budget.capturedAt) + this.#policy.limits.queueTimeoutSeconds * 1_000;
     return await new Promise<ManagedDemoAdmissionResult>((resolveAdmission, rejectAdmission) => {
       const pending: PendingManagedDemoAdmission = {
         request,
@@ -329,7 +331,7 @@ export class ManagedDemoAdmissionQueue {
 
   settle(value: unknown): ManagedDemoSettlementResult {
     if (this.#closed) throw new TypeError("managed-demo admission queue is closed");
-    const result = this.#ledger.settle(value);
+    const result = this.#ledger.settleNow(value);
     this.#drain();
     return result;
   }
@@ -398,7 +400,7 @@ export class ManagedDemoAdmissionQueue {
         pending.resolve(this.#denied("queue_timeout"));
         continue;
       }
-      const result = this.#ledger.admit({ ...pending.request, requestedAt: now });
+      const result = this.#ledger.admitNow(pending.request);
       if (result.state === "denied" && result.reason === "concurrency_exhausted") return;
       this.#pending.shift();
       this.#cancel(pending.timer);
@@ -633,6 +635,17 @@ export class SqliteManagedDemoBudgetLedger {
     if (request.requestedAt !== now) {
       throw new TypeError("managed-demo admission time must match the trusted ledger clock");
     }
+    return this.#admitAt(request, now);
+  }
+
+  /** Stamp IPC/queue requests with one trusted clock sample at execution. */
+  admitNow(value: unknown): ManagedDemoAdmissionResult {
+    const request = ManagedDemoAdmissionRequestSchema.parse(value);
+    const now = TimestampSchema.parse(this.#now());
+    return this.#admitAt({ ...request, requestedAt: now }, now);
+  }
+
+  #admitAt(request: ManagedDemoAdmissionRequest, now: string): ManagedDemoAdmissionResult {
     return this.#immediate(() => {
       this.#expireInside(now);
       const snapshot = this.#snapshotInside(now);
@@ -727,6 +740,20 @@ export class SqliteManagedDemoBudgetLedger {
     if (request.settledAt !== now) {
       throw new TypeError("managed-demo settlement time must match the trusted ledger clock");
     }
+    return this.#settleAt(request, now);
+  }
+
+  /** Caller timestamps cannot backdate settlement or extend a reservation. */
+  settleNow(value: unknown): ManagedDemoSettlementResult {
+    const request = ManagedDemoSettlementRequestSchema.parse(value);
+    const now = TimestampSchema.parse(this.#now());
+    return this.#settleAt({ ...request, settledAt: now }, now);
+  }
+
+  #settleAt(
+    request: ReturnType<typeof ManagedDemoSettlementRequestSchema.parse>,
+    now: string,
+  ): ManagedDemoSettlementResult {
     return this.#immediate(() => {
       this.#expireInside(now);
       const row = this.#database

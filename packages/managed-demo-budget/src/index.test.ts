@@ -177,6 +177,131 @@ async function openLedger(
 }
 
 describe("managed-demo SQLite budget ledger", () => {
+  it("uses one advancing server clock sample for queued admission and settlement", async () => {
+    let tick = Date.parse("2026-11-01T12:00:00.000Z");
+    const now = () => new Date(tick++).toISOString();
+    const ledger = new SqliteManagedDemoBudgetLedger(await databasePath(), {
+      deployment: deployment("public"),
+      policy: INITIAL_PUBLIC_DEMO_BUDGET_POLICY,
+      prices: prices(),
+      now,
+      randomId: () => IDS.reservation1,
+    });
+    ledger.initialize();
+    const queue = new ManagedDemoAdmissionQueue({
+      ledger,
+      policy: INITIAL_PUBLIC_DEMO_BUDGET_POLICY,
+      now,
+    });
+    try {
+      const clientTime = "2026-11-01T11:59:59.000Z";
+      const result = await queue.admit(admission(IDS.journey1, clientTime));
+      expect(result.state).toBe("admitted");
+      expect(Date.parse(result.budget.capturedAt)).toBeGreaterThan(Date.parse(clientTime));
+      expect(
+        queue.settle(
+          settlement({
+            reservationId: IDS.reservation1,
+            journeyId: IDS.journey1,
+            now: clientTime,
+            outcome: "failed",
+            usage: [],
+          }),
+        ),
+      ).toMatchObject({ status: "forfeited", chargedMicroUsd: 100_000 });
+    } finally {
+      queue.close();
+    }
+  });
+
+  it("cannot use caller timestamps to reopen admission or backdate an expired settlement", async () => {
+    const { ledger, setNow, now } = await openLedger();
+    const queue = new ManagedDemoAdmissionQueue({
+      ledger,
+      policy: INITIAL_PUBLIC_DEMO_BUDGET_POLICY,
+      now,
+    });
+    try {
+      const clientTime = now();
+      const admitted = await queue.admit(admission(IDS.journey1, "2026-12-01T12:00:00.000Z"));
+      expect(admitted).toMatchObject({ state: "admitted", expiresAt: "2026-11-01T12:10:00.000Z" });
+      setNow("2026-11-01T12:10:00.000Z");
+      expect(
+        queue.settle(
+          settlement({ reservationId: IDS.reservation1, journeyId: IDS.journey1, now: clientTime }),
+        ),
+      ).toMatchObject({ status: "forfeited", chargedMicroUsd: 100_000 });
+      setNow(INITIAL_PUBLIC_DEMO_BUDGET_POLICY.availability.closesAt);
+      expect(await queue.admit(admission(IDS.journey2, clientTime))).toMatchObject({
+        state: "denied",
+        reason: "outside_window",
+      });
+    } finally {
+      queue.close();
+    }
+  });
+
+  it("settles eight worker calls and two Extracts while rejecting a ninth call or third credit", async () => {
+    const policy = {
+      ...INITIAL_JUDGE_DEMO_BUDGET_POLICY,
+      models: INITIAL_JUDGE_DEMO_BUDGET_POLICY.models.map((model) => ({
+        ...model,
+        maxCallsPerJourney: 8,
+      })),
+      research: {
+        maxBasicSearchesPerJourney: 0,
+        maxBasicExtractsPerJourney: 2,
+        maxTavilyCreditsPerJourney: 2 as const,
+      },
+      limits: {
+        ...INITIAL_JUDGE_DEMO_BUDGET_POLICY.limits,
+        perJourneyPreauthorizationMicroUsd: 1_000_000,
+      },
+    };
+    const { ledger, setNow } = await openLedger({ pool: "judge", policy });
+    try {
+      expect(ledger.admit(admission(IDS.journey1, "2026-11-01T12:00:00.000Z"))).toMatchObject({
+        state: "admitted",
+      });
+      const collector = new ManagedDemoJourneyUsageCollector({
+        reservationId: IDS.reservation1,
+        journeyId: IDS.journey1,
+      });
+      for (let index = 0; index < 8; index++)
+        collector.record({
+          schemaVersion: 1,
+          provider: "nebius_token_factory",
+          role: "native_worker",
+          modelId: policy.models.find((model) => model.role === "native_worker")!.modelId,
+          providerRequestId: `c7-worker-${index}`,
+          promptTokens: 100,
+          completionTokens: 10,
+          totalTokens: 110,
+          observedAt: "2026-11-01T12:00:30.000Z",
+        });
+      for (let index = 0; index < 2; index++)
+        collector.record({
+          schemaVersion: 1,
+          provider: "tavily",
+          operation: "basic_extract",
+          credits: 1,
+          providerRequestId: `c7-extract-${index}`,
+          observedAt: "2026-11-01T12:00:30.000Z",
+        });
+      setNow("2026-11-01T12:01:00.000Z");
+      const request = collector.settlement("completed", "2026-11-01T12:01:00.000Z");
+      expect(request.usage).toHaveLength(10);
+      expect(() =>
+        ledger.settle({ ...request, usage: [...request.usage, request.usage[0]] }),
+      ).toThrow(/fixed call ceiling/u);
+      expect(() =>
+        ledger.settle({ ...request, usage: [...request.usage, request.usage[8]] }),
+      ).toThrow(/fixed research ceiling/u);
+      expect(ledger.settle(request)).toMatchObject({ status: "settled" });
+    } finally {
+      ledger.close();
+    }
+  });
   it("queues at the concurrency boundary and admits the oldest request after settlement", async () => {
     const policy = {
       ...INITIAL_PUBLIC_DEMO_BUDGET_POLICY,
