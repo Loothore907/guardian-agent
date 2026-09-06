@@ -72,6 +72,42 @@ describe("outbound research gate", () => {
     ).rejects.toMatchObject({ reason: "unsafe_outbound_content" });
     expect(search).not.toHaveBeenCalled();
   });
+
+  it.each(["127.0.0.2", "127.10.20.30", "172.16.0.1", "172.31.255.254", "169.254.169.254"])(
+    "rejects non-public IPv4 query content %s before invoking the provider",
+    async (address) => {
+      const search = vi.fn(() => Promise.resolve({ results: [] }));
+      await expect(
+        invokeBoundedResearch(
+          {
+            ...request,
+            query: `branch protection at ${address}`,
+          },
+          scope,
+          { search },
+        ),
+      ).rejects.toMatchObject({ reason: "unsafe_outbound_content" });
+      expect(search).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(["172.15.255.254", "172.32.0.1", "169.253.1.1"])(
+    "allows relevant public IPv4 query content adjacent to blocked ranges: %s",
+    async (address) => {
+      const search = vi.fn(() => Promise.resolve({ results: [] }));
+      await expect(
+        invokeBoundedResearch(
+          {
+            ...request,
+            query: `branch protection at ${address}`,
+          },
+          scope,
+          { search },
+        ),
+      ).resolves.toEqual({ results: [] });
+      expect(search).toHaveBeenCalledOnce();
+    },
+  );
 });
 
 describe("research evidence boundary", () => {

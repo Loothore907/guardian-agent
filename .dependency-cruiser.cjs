@@ -102,7 +102,7 @@ module.exports = {
       name: "linux-peer-identity-is-trusted-boundary-only",
       severity: "error",
       from: {
-        path: "^(?!packages/linux-peer-identity/|apps/(authority-service|managed-demo-budget-service)/)",
+        path: "^(?!packages/linux-peer-identity/|apps/(authority-service|managed-demo-budget-service)/|packages/(interaction/src/(ipc|mission-review-ipc)|guardian/src/(setup-ipc|action-ipc)|research/src/ipc|broker/src/ipc|worker/src/index)\\.ts$)",
       },
       to: { path: "^packages/linux-peer-identity/" },
     },

@@ -1,7 +1,8 @@
+import { LocalServiceIpcServer, verifyLocalServiceConnection } from "@guardian/linux-peer-identity";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import { tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
-import { createConnection, createServer, type Server, type Socket } from "node:net";
+import { createConnection, type Socket } from "node:net";
 
 import {
   ControlledContentIpcRequestSchema,
@@ -143,8 +144,7 @@ export class LocalResearchIpcServer {
   readonly #handler: ResearchIpcHandler;
   readonly #controlledContentHandler: ControlledContentIpcHandler | undefined;
   readonly #now: () => string;
-  readonly #server: Server;
-  #listening = false;
+  readonly #server: LocalServiceIpcServer;
 
   constructor(
     configValue: unknown,
@@ -159,31 +159,15 @@ export class LocalResearchIpcServer {
     this.#handler = handler;
     this.#controlledContentHandler = options.controlledContentHandler;
     this.#now = options.now ?? (() => new Date().toISOString());
-    this.#server = createServer((socket) => void this.#serve(socket));
+    this.#server = new LocalServiceIpcServer((socket) => this.#serve(socket));
   }
 
   async listen(): Promise<void> {
-    if (this.#listening) throw new TypeError("research IPC server is already listening");
-    await new Promise<void>((resolveListen, rejectListen) => {
-      const onError = (error: Error) => rejectListen(error);
-      this.#server.once("error", onError);
-      this.#server.listen(this.#config.endpoint, () => {
-        this.#server.off("error", onError);
-        this.#listening = true;
-        resolveListen();
-      });
-    });
+    await this.#server.listen(this.#config.endpoint);
   }
 
   async close(): Promise<void> {
-    if (!this.#listening) return;
-    await new Promise<void>((resolveClose, rejectClose) => {
-      this.#server.close((error) => {
-        if (error) rejectClose(error);
-        else resolveClose();
-      });
-    });
-    this.#listening = false;
+    await this.#server.close();
   }
 
   async #serve(socket: Socket): Promise<void> {
@@ -344,7 +328,9 @@ export class LocalResearchIpcClient
     const socket = createConnection(this.#endpoint);
     socket.setTimeout(this.#timeoutMs, () => socket.destroy(new Error("research IPC timeout")));
     try {
+      await verifyLocalServiceConnection(socket, this.#endpoint);
       const responsePromise = readJsonLine(socket, MAX_IPC_RESPONSE_BYTES);
+      socket.resume();
       socket.write(`${JSON.stringify(frame)}\n`);
       const response = ResearchIpcResponseSchema.parse(
         JSON.parse(await responsePromise) as unknown,
@@ -380,7 +366,9 @@ export class LocalResearchIpcClient
     const socket = createConnection(this.#endpoint);
     socket.setTimeout(this.#timeoutMs, () => socket.destroy(new Error("research IPC timeout")));
     try {
+      await verifyLocalServiceConnection(socket, this.#endpoint);
       const responsePromise = readJsonLine(socket, MAX_IPC_RESPONSE_BYTES);
+      socket.resume();
       socket.write(`${JSON.stringify(frame)}\n`);
       const response = ControlledContentIpcResponseSchema.parse(
         JSON.parse(await responsePromise) as unknown,
