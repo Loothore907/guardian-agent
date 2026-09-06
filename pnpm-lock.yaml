@@ -469,8 +469,6 @@ importers:
         specifier: workspace:*
         version: link:../contracts
 
-  packages/linux-peer-identity: {}
-
   packages/policy:
     dependencies:
       '@guardian/canonical':
