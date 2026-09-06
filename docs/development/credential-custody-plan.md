@@ -1,5 +1,15 @@
 # Credential custody implementation plan
 
+September 6 product discussion: Nebius remains the default provider, with BYOK,
+model and deployment choice. [Credential placement and plan approval](credential-placement-and-plan-approval.md)
+separates credential ownership from execution location and describes a proposed
+trusted provisioning path for hosted BYOK. That general flow is not implemented.
+The KC operator path has now copied and exactly verified the two explicitly
+approved testing keys into SecretStash while keeping both VMs stopped; runtime
+retrieval and live-provider verification remain pending.
+
+Historical 2026-09-05 update: [launch-bound authority and headless preparation](../adr/0049-launch-and-headless-session-authority.md). The competition launch grants the exact action before worker execution; managed GitHub installation credentials are noninteractive. Hosted IAM, cold-boot judging and WSL repair remain unverified/open. Earlier descriptions of a required second competition prompt are historical.
+
 - Status: Active local implementation plan
 - Date: 2026-09-03
 - Authority: user-directed credential-enrollment priority and ADR-0041
@@ -102,10 +112,14 @@ evidence remain platform-specific.
 
 ## Worktree handling
 
-The current branch contains checkpointed W27 containment, custody, budget, and
-judge-ingress work. The failed launcher prototypes are absent. Preserve those
-coherent commits while completing only the credential bridge needed to resume
-the roadmap.
+The current branch contains checkpointed local Secret Service routing, process
+supervision, custody, budget, and judge-ingress work. The failed launcher
+prototypes are absent. The Windows/Linux Nebius bridge is complete; broader W27
+provider-service containment and its intended-host evidence remain incomplete.
+W27 now supplies shared Linux peer admission and client listener authentication
+for all seven service protocols; see [the narrow evidence](evidence/w27-linux-provider-ipc-containment.md).
+Protected post-change consumption and the wider containment corpus remain gates.
+Preserve the existing commits while resuming that bounded C6 slice.
 
 - Salvage only containment work that remains valid under ADR-0041.
 - Do not run or recommend either failed `run-linux-nebius-provider-live` launcher.
@@ -341,3 +355,19 @@ The active objective is complete when:
 - every security claim is limited to reproducible evidence; and
 - the old failed launcher prototypes are either removed or clearly quarantined
   and cannot be mistaken for supported setup.
+
+
+## Unattended session integration (2026-09-05)
+
+The [launch/headless slice](evidence/2026-09-05-launch-headless.md) connects the
+initial plan grant to launch and implements noninteractive broker-only GitHub
+installation-token minting. Synthetic tests cover narrow scope, renewal after a
+simulated two-hour clock advance, renewal failure, read-only SecretStash callbacks
+and absence of desktop credential routing. Standing deployment consent is distinct
+from a fresh human confirmation; it does not renew the user's authority silently.
+
+Actual hosted startup, VM identity/SecretStash policy, live credential lifecycle
+and process isolation still require [deployment validation](headless-judge-setup.md).
+Desktop keyring unlock remains a BYOK mechanism, not the hosted judge mechanism.
+No secret migration or deployment occurred. Local simulated renewal does not prove
+hosted availability or a two-hour worker mission.

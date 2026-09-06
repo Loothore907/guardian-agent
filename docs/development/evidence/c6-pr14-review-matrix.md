@@ -1,5 +1,16 @@
 # C6 / PR #14 review matrix
 
+This is the historical PR #14 review, not the current C6 status matrix. PR #14
+subsequently merged; W24-W26 then added Linux authority permissions, kernel peer
+verification, real credential lifecycles, and protected Nebius consumption.
+The [current state review](../state-review-2026-09-04.md) supersedes the
+pending-control and governance statements below for current pickup. W27 adds
+provider IPC peer authentication; W28 adds the synthetic harness and now passes
+real Linux enrollment/read/approved merge. See the
+[current C6 residual review](../c6-residual-review.md). C6 remains
+In progress because broader intended-host containment and source review are
+still incomplete.
+
 Date: 2026-09-03 (AKDT)
 
 Review base: PR #14 head `b9497a9b7518a71c403dc10b4ee96b205a267502`
