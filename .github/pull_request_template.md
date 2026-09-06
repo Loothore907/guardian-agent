@@ -4,7 +4,10 @@ Describe the user or security outcome and why this is the smallest coherent chan
 
 ## Linked issue
 
-Closes #
+Refs #
+
+Use a closing keyword only when the whole issue's acceptance criteria are met.
+For a stacked PR, name the predecessor PR and explain the dependency.
 
 ## Trust-boundary impact
 
@@ -46,3 +49,8 @@ List exact commands and results. Include both intended behavior and rejected nea
 ## Reviewer notes
 
 Call out uncertainty, deferred work, and the highest-risk line or decision.
+
+## Integration state
+
+Record exact-head CI/review status and any remaining integration blocker. A
+passing local suite does not substitute for required GitHub checks or review.
