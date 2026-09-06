@@ -3,6 +3,8 @@ set -euo pipefail
 
 probe_source="${1:?probe source path is required}"
 observed_at="${2:?observation timestamp is required}"
+runtime_profile="${3:?runtime profile is required}"
+case "$runtime_profile" in linux_namespace_v1|windows_wsl2_ubuntu_22_04_namespace_v1) ;; *) exit 125 ;; esac
 sandbox_root="$(mktemp -d /tmp/guardian-runtime.XXXXXX)"
 
 cleanup() {
@@ -44,4 +46,4 @@ chroot "$sandbox_root" /usr/bin/setpriv \
   USER=guardian \
   GIT_CONFIG_NOSYSTEM=1 \
   GIT_TERMINAL_PROMPT=0 \
-  /usr/bin/python3 /workspace/reference-probe.py "$observed_at"
+  /usr/bin/python3 /workspace/reference-probe.py "$observed_at" "$runtime_profile"

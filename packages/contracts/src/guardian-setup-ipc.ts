@@ -13,6 +13,7 @@ import {
   MissionSetupRiskEnvelopeSchema,
   MissionSetupRiskEvaluationSchema,
 } from "./mission-formation.js";
+import { ManagedDemoGuardianUsageReporterConfigSchema } from "./managed-demo-budget-ipc.js";
 
 export const MissionSetupRiskIpcFailureReasonSchema = z.enum([
   "expired",
@@ -53,6 +54,7 @@ export const MissionSetupRiskServiceProcessConfigSchema = z
     schemaVersion: ContractVersionSchema,
     serviceKind: z.literal("mission_setup_risk"),
     credentialStore: CredentialStoreConfigSchema.optional(),
+    managedDemoBudget: ManagedDemoGuardianUsageReporterConfigSchema.optional(),
     endpoint: z.string().min(1).max(260),
     capability: OpaqueIdSchema,
     startsAt: TimestampSchema,
@@ -65,6 +67,18 @@ export const MissionSetupRiskServiceProcessConfigSchema = z
         code: "custom",
         message: "mission setup risk service expiry must follow its start",
         path: ["expiresAt"],
+      });
+    }
+    const budgetBinding = config.managedDemoBudget?.budget.binding;
+    if (
+      budgetBinding !== undefined &&
+      (Date.parse(config.startsAt) < Date.parse(budgetBinding.issuedAt) ||
+        Date.parse(config.expiresAt) > Date.parse(budgetBinding.expiresAt))
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "setup risk lifetime must fit its managed-demo budget capability",
+        path: ["managedDemoBudget", "budget", "binding"],
       });
     }
   });

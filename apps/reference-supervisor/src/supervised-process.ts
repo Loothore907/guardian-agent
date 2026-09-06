@@ -12,7 +12,13 @@ export interface SupervisedServiceProcess {
 }
 
 function exitPromise(child: ChildProcessWithoutNullStreams): Promise<void> {
-  return new Promise((resolve) => child.once("exit", () => resolve()));
+  return new Promise((resolve) => {
+    child.once("exit", () => resolve());
+    // A failed spawn emits error without exit.
+    child.once("error", () => {
+      if (child.pid === undefined) resolve();
+    });
+  });
 }
 
 export async function startSupervisedServiceProcess(options: {
@@ -46,89 +52,12 @@ export async function startSupervisedServiceProcess(options: {
   let closing = false;
   let outputBytes = 0;
   let stdout = "";
-
-  const startup = new Promise<void>((resolve, reject) => {
-    const fail = () => {
-      if (ready) return;
-      reject(new TypeError("supervised service failed to start"));
-    };
-    child.once("error", fail);
-    child.once("exit", fail);
-    child.stderr.on("data", (chunk: Buffer) => {
-      outputBytes += chunk.byteLength;
-      if (outputBytes > MAXIMUM_CONTROL_OUTPUT_BYTES || chunk.byteLength > 0) {
-        if (ready && !closing) child.kill();
-        fail();
-      }
-    });
-    child.stdout.on("data", (chunk: Buffer) => {
-      outputBytes += chunk.byteLength;
-      if (outputBytes > MAXIMUM_CONTROL_OUTPUT_BYTES) {
-        if (!closing) child.kill();
-        fail();
-        return;
-      }
-      stdout += chunk.toString("utf8");
-      const newline = stdout.indexOf("\n");
-      if (newline < 0) return;
-      const line = stdout.slice(0, newline).replace(/\r$/u, "");
-      const remainder = stdout.slice(newline + 1);
-      if (line !== options.readyLine || remainder.length !== 0 || ready) {
-        if (!closing) child.kill();
-        fail();
-        return;
-      }
-      ready = true;
-      stdout = "";
-      resolve();
-    });
-  });
-
-  try {
-    await new Promise<void>((resolveWrite, rejectWrite) => {
-      child.stdin.end(bootstrap, (error?: Error | null) =>
-        error === undefined || error === null ? resolveWrite() : rejectWrite(error),
-      );
-    });
-  } catch {
-    child.kill();
-    throw new TypeError("supervised service bootstrap failed");
-  } finally {
-    bootstrap.fill(0);
-  }
-
-  try {
-    let startupTimeout: NodeJS.Timeout | undefined;
-    await Promise.race([
-      startup,
-      new Promise<void>((_resolve, rejectTimeout) => {
-        startupTimeout = setTimeout(
-          () => rejectTimeout(new TypeError("supervised service startup timed out")),
-          STARTUP_TIMEOUT_MS,
-        );
-        startupTimeout.unref();
-      }),
-    ]).finally(() => {
-      if (startupTimeout !== undefined) clearTimeout(startupTimeout);
-    });
-  } catch {
-    if (!child.killed) child.kill();
-    await exited;
-    throw new TypeError("supervised service failed to start");
-  }
-  if (child.pid === undefined) {
-    child.kill();
-    await exited;
-    throw new TypeError("supervised service process is unavailable");
-  }
-
-  return {
-    processId: child.pid,
-    exited,
-    close: async () => {
-      if (closing) return await exited;
-      closing = true;
-      if (child.exitCode !== null || child.signalCode !== null) return;
+  let closePromise: Promise<void> | undefined;
+  const close = (): Promise<void> => {
+    if (closePromise !== undefined) return closePromise;
+    closing = true;
+    closePromise = (async () => {
+      if (child.pid === undefined || child.exitCode !== null || child.signalCode !== null) return;
       child.kill("SIGTERM");
       let timeout: NodeJS.Timeout | undefined;
       await Promise.race([
@@ -143,6 +72,87 @@ export async function startSupervisedServiceProcess(options: {
         child.kill("SIGKILL");
         await exited;
       }
-    },
+    })();
+    return closePromise;
+  };
+
+  const startup = new Promise<void>((resolve, reject) => {
+    const fail = () => {
+      if (ready) return;
+      reject(new TypeError("supervised service failed to start"));
+    };
+    child.once("error", fail);
+    child.once("exit", fail);
+    child.stderr.on("data", (chunk: Buffer) => {
+      outputBytes += chunk.byteLength;
+      if (outputBytes > MAXIMUM_CONTROL_OUTPUT_BYTES || chunk.byteLength > 0) {
+        if (ready && !closing) void close();
+        fail();
+      }
+    });
+    child.stdout.on("data", (chunk: Buffer) => {
+      if (ready) {
+        if (chunk.byteLength > 0 && !closing) void close();
+        return;
+      }
+      outputBytes += chunk.byteLength;
+      if (outputBytes > MAXIMUM_CONTROL_OUTPUT_BYTES) {
+        fail();
+        return;
+      }
+      stdout += chunk.toString("utf8");
+      const newline = stdout.indexOf("\n");
+      if (newline < 0) return;
+      const line = stdout.slice(0, newline).replace(/\r$/u, "");
+      const remainder = stdout.slice(newline + 1);
+      if (line !== options.readyLine || remainder.length !== 0 || ready) {
+        fail();
+        return;
+      }
+      ready = true;
+      stdout = "";
+      resolve();
+    });
+  });
+
+  const bootstrapWrite = new Promise<void>((resolveWrite, rejectWrite) => {
+    child.stdin.once("error", rejectWrite);
+    child.stdin.end(bootstrap, (error?: Error | null) =>
+      error === undefined || error === null ? resolveWrite() : rejectWrite(error),
+    );
+  }).finally(() => {
+    bootstrap.fill(0);
+  });
+
+  let startupTimedOut = false;
+  try {
+    let startupTimeout: NodeJS.Timeout | undefined;
+    await Promise.race([
+      Promise.all([bootstrapWrite, startup]),
+      new Promise<void>((_resolve, rejectTimeout) => {
+        startupTimeout = setTimeout(() => {
+          startupTimedOut = true;
+          rejectTimeout(new TypeError("supervised service startup timed out"));
+        }, STARTUP_TIMEOUT_MS);
+        startupTimeout.unref();
+      }),
+    ]).finally(() => {
+      if (startupTimeout !== undefined) clearTimeout(startupTimeout);
+    });
+  } catch {
+    await close();
+    throw new TypeError("supervised service failed to start", {
+      cause: startupTimedOut ? "startup_timeout" : "startup_rejected",
+    });
+  }
+  if (child.pid === undefined) {
+    await close();
+    throw new TypeError("supervised service process is unavailable");
+  }
+
+  return {
+    processId: child.pid,
+    exited,
+    close,
   };
 }

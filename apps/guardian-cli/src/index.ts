@@ -60,7 +60,7 @@ export interface GuardianCompetitionCliRunner {
     readonly unsafeRequest: unknown;
     readonly legitimateRequest: unknown;
     readonly githubClientId: unknown;
-    readonly confirmation: {
+    readonly confirmation?: {
       readonly principalId: unknown;
       readonly confirmedAt: unknown;
     };
@@ -203,6 +203,17 @@ function renderPreview(preview: SessionDraftPreview): string {
         ? `${preview.worker.modelId} via Nebius Token Factory`
         : "deterministic reference fixture"
     }`,
+    ...(preview.sessionPlan === undefined
+      ? []
+      : [
+          "Session authority: the targets below are authorized by this confirmation for the session duration.",
+          ...preview.sessionPlan.targets.map(
+            (t) =>
+              `${t.operation}: ${t.owner}/${t.repository}#${t.pullRequest}; head ${t.headCommit}; base ${t.baseBranch}${t.operation === "github.pull_request.merge" ? "; squash only" : ""}`,
+          ),
+          `Maximum plan actions: ${preview.sessionPlan.maxActions}; mutations: ${preview.sessionPlan.maxMutations}; mutation retries: 0`,
+          "In-bounds operations need no later approval. Expansion, expiry, revocation or risk escalation stops execution.",
+        ]),
     `Preview digest: ${preview.previewDigest}`,
     "",
     "This local prompt is lower-assurance development confirmation, not WebAuthn.",

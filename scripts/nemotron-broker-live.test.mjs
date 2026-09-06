@@ -119,6 +119,7 @@ test("live Nemotron evaluates an in-scope proposal through the broker without a 
       "session.get",
       "connection.list",
       "approval.get",
+      "plan.check",
       "approval.state",
       "budget.consume_tool",
       "approval.consume",

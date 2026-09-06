@@ -1,3 +1,10 @@
+import {
+  SessionPlanGrantSchema,
+  SessionPlanStateSchema,
+  PlanCheckRequestSchema,
+  PlanCheckResultSchema,
+  PendingPlanRequestSchema,
+} from "./session-plan.js";
 import { z } from "zod";
 
 import {
@@ -29,6 +36,11 @@ export const AuthorityIpcOperationSchema = z.enum([
   "connection.create",
   "session.create",
   "approval.store",
+  "plan.store",
+  "plan.get",
+  "plan.revoke",
+  "plan.check",
+  "plan.pending",
   "research.reserve",
   "research.settle",
   "context.append_exposures",
@@ -38,6 +50,8 @@ export const AuthorityIpcOperationSchema = z.enum([
   "approval.state",
   "budget.consume_tool",
   "budget.consume_worker_tool",
+  "worker.claim_external",
+  "worker.budget",
   "budget.consume_local_command",
   "worker.record_violation",
   "worker.interrupt",
@@ -66,6 +80,24 @@ const AuthorityRequestBindingShape = {
 } as const;
 
 export const AuthorityIpcRequestSchema = z.discriminatedUnion("operation", [
+  z.strictObject({
+    ...AuthorityRequestBindingShape,
+    operation: z.literal("plan.store"),
+    grant: SessionPlanGrantSchema,
+  }),
+  z.strictObject({ ...AuthorityRequestBindingShape, operation: z.literal("plan.get") }),
+  z.strictObject({
+    ...AuthorityRequestBindingShape,
+    operation: z.literal("plan.revoke"),
+    grantId: OpaqueIdSchema,
+  }),
+  z.strictObject({
+    ...AuthorityRequestBindingShape,
+    operation: z.literal("plan.check"),
+    check: PlanCheckRequestSchema,
+  }),
+  z.strictObject({ ...AuthorityRequestBindingShape, operation: z.literal("plan.pending") }),
+
   z.strictObject({
     ...AuthorityRequestBindingShape,
     operation: z.literal("connection.create"),
@@ -112,6 +144,13 @@ export const AuthorityIpcRequestSchema = z.discriminatedUnion("operation", [
     approvalId: OpaqueIdSchema,
   }),
   z.strictObject({ ...AuthorityRequestBindingShape, operation: z.literal("budget.consume_tool") }),
+  z.strictObject({
+    ...AuthorityRequestBindingShape,
+    operation: z.literal("worker.claim_external"),
+    executionId: OpaqueIdSchema,
+    executionDigest: z.string().regex(/^[a-f0-9]{64}$/u),
+  }),
+  z.strictObject({ ...AuthorityRequestBindingShape, operation: z.literal("worker.budget") }),
   z.strictObject({
     ...AuthorityRequestBindingShape,
     operation: z.literal("budget.consume_worker_tool"),
@@ -172,6 +211,37 @@ const ApprovalConsumptionResultSchema = z.enum([
 ]);
 
 export const AuthorityIpcSuccessResponseSchema = z.discriminatedUnion("operation", [
+  z.strictObject({
+    ...AuthorityResponseBindingShape,
+    ok: z.literal(true),
+    operation: z.literal("plan.store"),
+    result: z.literal("stored"),
+  }),
+  z.strictObject({
+    ...AuthorityResponseBindingShape,
+    ok: z.literal(true),
+    operation: z.literal("plan.get"),
+    result: SessionPlanStateSchema.nullable(),
+  }),
+  z.strictObject({
+    ...AuthorityResponseBindingShape,
+    ok: z.literal(true),
+    operation: z.literal("plan.revoke"),
+    result: z.boolean(),
+  }),
+  z.strictObject({
+    ...AuthorityResponseBindingShape,
+    ok: z.literal(true),
+    operation: z.literal("plan.check"),
+    result: PlanCheckResultSchema,
+  }),
+  z.strictObject({
+    ...AuthorityResponseBindingShape,
+    ok: z.literal(true),
+    operation: z.literal("plan.pending"),
+    result: z.array(PendingPlanRequestSchema).max(32),
+  }),
+
   z.strictObject({
     ...AuthorityResponseBindingShape,
     ok: z.literal(true),
@@ -243,6 +313,18 @@ export const AuthorityIpcSuccessResponseSchema = z.discriminatedUnion("operation
     ...AuthorityResponseBindingShape,
     ok: z.literal(true),
     operation: z.literal("budget.consume_tool"),
+    result: DurableSessionBudgetSchema.nullable(),
+  }),
+  z.strictObject({
+    ...AuthorityResponseBindingShape,
+    ok: z.literal(true),
+    operation: z.literal("worker.claim_external"),
+    result: WorkerExecutionAuthorizationSchema,
+  }),
+  z.strictObject({
+    ...AuthorityResponseBindingShape,
+    ok: z.literal(true),
+    operation: z.literal("worker.budget"),
     result: DurableSessionBudgetSchema.nullable(),
   }),
   z.strictObject({

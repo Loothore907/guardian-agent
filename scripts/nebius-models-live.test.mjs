@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import { assertLinuxKeyringReady } from "./linux-keyring-preflight.mjs";
 
 import {
   createMissionSetupRiskIpcCredentials,
@@ -20,9 +21,23 @@ const protectedTest =
     ? test
     : test.skip;
 
+const credentialStore = {
+  schemaVersion: 1,
+  custodyProfile: "byok",
+  location: {
+    schemaVersion: 1,
+    custodyProfile: "byok",
+    pool: "personal",
+    runtime: process.platform === "win32" ? "windows" : "linux",
+    storeTarget:
+      process.platform === "win32" ? "windows_credential_manager" : "linux_secret_service",
+  },
+};
+
 protectedTest(
   "supervised Qwen and Nemotron services use the credential-isolated live path",
   async () => {
+    assertLinuxKeyringReady();
     const now = new Date().toISOString();
     const interactionCredentials = createInteractionIpcCredentials();
     const interactionConfig = {
@@ -36,6 +51,7 @@ protectedTest(
       policyVersion: 1,
       startsAt: now,
       expiresAt: new Date(Date.parse(now) + 5 * 60_000).toISOString(),
+      credentialStore,
       context: {
         objective: "Review a pull request and report findings without modifying the repository.",
         constraints: ["The host agent performs the task; Guardian only mediates authority."],
@@ -98,6 +114,7 @@ protectedTest(
       ...guardianCredentials,
       startsAt: guardianStartsAt,
       expiresAt: guardianExpiresAt,
+      credentialStore,
       envelope,
     };
     const guardianProcess = await startSupervisedServiceProcess({

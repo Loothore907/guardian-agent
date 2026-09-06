@@ -2,6 +2,8 @@ import { canonicalDigest } from "@guardian/canonical";
 import {
   CanonicalRequestSchema,
   ExactApprovalSchema,
+  SessionPlanGrantSchema,
+  type SessionPlanGrant,
   GitHubMergeResultSchema,
   ResearchBudgetSnapshotSchema,
   ResearchJourneyResultSchema,
@@ -60,7 +62,8 @@ export interface ControlledCompetitionJourneyInput {
   readonly researchRequest: unknown;
   readonly unsafeRequest: unknown;
   readonly legitimateRequest: unknown;
-  readonly legitimateApproval: unknown;
+  readonly legitimateApproval?: unknown;
+  readonly legitimatePlanGrant?: unknown;
 }
 
 export type ControlledCompetitionJourneyResult =
@@ -96,7 +99,8 @@ interface ParsedJourneyInput {
   readonly researchRequest: ResearchRequest;
   readonly unsafeRequest: ReturnType<typeof CanonicalRequestSchema.parse>;
   readonly legitimateRequest: ReturnType<typeof CanonicalRequestSchema.parse>;
-  readonly legitimateApproval: ExactApproval;
+  readonly legitimateApproval?: ExactApproval;
+  readonly legitimatePlanGrant?: SessionPlanGrant;
 }
 
 function sameAuthorityBinding(
@@ -156,7 +160,43 @@ function parseJourneyInput(value: ControlledCompetitionJourneyInput): ParsedJour
   const researchRequest = ResearchRequestSchema.parse(value.researchRequest);
   const unsafeRequest = CanonicalRequestSchema.parse(value.unsafeRequest);
   const legitimateRequest = CanonicalRequestSchema.parse(value.legitimateRequest);
-  const legitimateApproval = ExactApprovalSchema.parse(value.legitimateApproval);
+  if ((value.legitimateApproval === undefined) === (value.legitimatePlanGrant === undefined))
+    throw new TypeError("journey requires exactly one authorization mechanism");
+  const legitimateApproval =
+    value.legitimateApproval === undefined
+      ? undefined
+      : ExactApprovalSchema.parse(value.legitimateApproval);
+  const legitimatePlanGrant =
+    value.legitimatePlanGrant === undefined
+      ? undefined
+      : SessionPlanGrantSchema.parse(value.legitimatePlanGrant);
+  if (legitimatePlanGrant !== undefined) {
+    const plan = legitimatePlanGrant.plan;
+    const keys = [
+      "sessionId",
+      "callerId",
+      "missionId",
+      "missionVersion",
+      "profileId",
+      "profileVersion",
+      "policyVersion",
+    ] as const;
+    if (
+      keys.some((key) => plan[key] !== legitimateRequest[key]) ||
+      legitimatePlanGrant.planDigest !== canonicalDigest("session_plan", 1, plan) ||
+      !plan.targets.some(
+        (t) =>
+          t.operation === legitimateRequest.proposal.operation &&
+          t.connectionId === legitimateRequest.connectionId &&
+          legitimateRequest.resourceVersion?.kind === "github_pull_request" &&
+          t.owner === legitimateRequest.resourceVersion.owner &&
+          t.repository === legitimateRequest.resourceVersion.repository &&
+          t.pullRequest === legitimateRequest.resourceVersion.pullRequest &&
+          t.headCommit === legitimateRequest.resourceVersion.headCommit,
+      )
+    )
+      throw new TypeError("journey plan does not cover the bound request");
+  }
   if (
     unsafeRequest.proposal.operation !== "github.pull_request.merge" ||
     legitimateRequest.proposal.operation !== "github.pull_request.merge" ||
@@ -164,7 +204,8 @@ function parseJourneyInput(value: ControlledCompetitionJourneyInput): ParsedJour
     legitimateRequest.connectionId === null ||
     !sameAuthorityBinding(unsafeRequest, legitimateRequest) ||
     sameRepositoryTarget(unsafeRequest, legitimateRequest) ||
-    !approvalMatchesLegitimateRequest(legitimateApproval, legitimateRequest)
+    (legitimateApproval !== undefined &&
+      !approvalMatchesLegitimateRequest(legitimateApproval, legitimateRequest))
   ) {
     throw new TypeError("controlled competition journey input is invalid");
   }
@@ -173,7 +214,9 @@ function parseJourneyInput(value: ControlledCompetitionJourneyInput): ParsedJour
     researchRequest,
     unsafeRequest,
     legitimateRequest,
-    legitimateApproval,
+    ...(legitimateApproval === undefined
+      ? { legitimatePlanGrant: legitimatePlanGrant! }
+      : { legitimateApproval }),
   };
 }
 
@@ -315,7 +358,7 @@ export class ControlledCompetitionJourney {
       legitimateResult = parseBrokerResult(
         await this.#broker.execute({
           request: input.legitimateRequest,
-          approval: input.legitimateApproval,
+          ...(input.legitimateApproval === undefined ? {} : { approval: input.legitimateApproval }),
           evidenceExposureIds,
         }),
       );

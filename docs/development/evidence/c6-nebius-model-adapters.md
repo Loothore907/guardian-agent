@@ -1,6 +1,6 @@
 # C6 Credential-Isolated Nebius Model Adapter Evidence
 
-- Date: 2026-09-01
+- Date: 2026-09-01; Windows/Linux BYOK reruns 2026-09-04
 - Scope: the implemented mission-dialogue mission-brief/draft-review adapter,
   deterministic formation contracts, and Nemotron guardian provider adapter
 - Status: deterministic, model-inventory, and protected live-inference evidence pass
@@ -43,9 +43,10 @@ assigns protocol `schemaVersion: 1` locally rather than asking a model to genera
 protocol metadata.
 
 The supervised interaction child now accepts an explicit `qwen` mode. It reads
-the Nebius credential directly from Windows Credential Manager; the supervisor
-does not place the key or a reusable secret handle in bootstrap, argv, or the
-environment. The existing fake mode remains the ordinary deterministic path.
+the Nebius credential directly from the platform-selected OS credential store;
+the supervisor does not place the key or a reusable secret handle in bootstrap,
+argv, or the environment. The existing fake mode remains the ordinary
+deterministic path.
 
 ## Reproducible checks
 
@@ -80,8 +81,8 @@ pnpm test:live:nebius-models
 ```
 
 It reads the locally enrolled `nebius/default` credential through Windows
-Credential Manager and does not accept `.env.local` or print the key or raw
-provider responses.
+Credential Manager or Linux Secret Service and does not accept `.env.local` or
+print the key or raw provider responses.
 
 The protected run passes. Qwen returned a strict mission brief. Super returned a
 structurally invalid authorization enum, which Guardian rejected and recorded as
@@ -91,16 +92,31 @@ successful end-to-end provider test completed in approximately 6.1 seconds. Only
 allowlisted diagnostic categories were exposed during diagnosis; provider prose,
 headers, credentials, and raw responses were not printed.
 
+After the Windows browser-enrollment flow replaced the former setup input path,
+the first 2026-09-04 rerun failed before readiness because this standalone live
+harness omitted the newly explicit non-secret credential-store configuration.
+The harness now supplies the personal BYOK Windows/Linux store descriptor to both
+supervised bootstraps. The corrected rerun passed in approximately 9.2 seconds
+using the newly enrolled `nebius/default` credential. No key or raw provider
+response was printed.
+
+After the user completed the normal-user Secret Service fixture lifecycle and
+accepted Linux browser enrollment, intended-host status returned
+`nebius: available`. The same protected harness then passed from the clean ext4
+WSL2 stage in approximately 3.9 seconds. This proves bounded Qwen/Nemotron
+provider consumption through Linux Secret Service; it does not by itself prove
+complete process containment.
+
 ## Claim boundary
 
 This evidence proves deterministic adapter behavior, current model inventory, and
-one protected live compatibility path. It does not establish general model quality,
+protected live compatibility on Windows and Linux. It does not establish general model quality,
 stable latency, or a task-level cost benchmark. A strict Guardian evaluator is now
 attached to the deterministic broker path and its minimized durable outcomes are
-tested; a protected model-through-broker execution has not been run. The CLI still
-selects the fake mission-brief process by default. Windows process identity/containment and Linux credential
-resolution remain incomplete, so this does not independently establish Enforced
-assurance.
+tested; W21 separately passes a protected model-through-broker execution. The CLI
+still selects the fake mission-brief process by default. Windows process identity
+and containment plus complete intended-Linux service containment remain
+incomplete, so this does not independently establish Enforced assurance.
 
 ADR-0012's strict draft-review contracts and deterministic formation coordinator
 now pass locally. The coordinator caps review turns, rejects model readiness for

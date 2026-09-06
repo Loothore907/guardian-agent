@@ -4,9 +4,11 @@ import {
   GuardianModelPolicySchema,
   MissionSetupRiskEnvelopeSchema,
   ProviderRequestIdSchema,
+  projectManagedDemoNebiusUsageObservation,
   registeredCredentialReference,
   type GuardianRecommendation,
   type GuardianModelPolicy,
+  type ManagedDemoNebiusUsageObservation,
   type MissionSetupRiskEnvelope,
   type MissionSetupRiskEvaluation,
 } from "@guardian/contracts";
@@ -110,6 +112,7 @@ export type NemotronGuardianFailureReason =
   | "recommendation_action"
   | "recommendation_certainty"
   | "recommendation_reason_codes"
+  | "usage"
   | "timeout"
   | "unavailable";
 
@@ -238,6 +241,9 @@ export class NemotronGuardianProvider {
   readonly #timeoutMs: number;
   readonly #diagnostic: (diagnostic: NemotronGuardianDiagnostic) => void;
   readonly #modelPolicy: GuardianModelPolicy;
+  readonly #onUsage:
+    ((usage: ManagedDemoNebiusUsageObservation) => void | Promise<void>) | undefined;
+  readonly #now: () => string;
 
   constructor(options: {
     readonly credentialStore: CredentialStore;
@@ -245,6 +251,8 @@ export class NemotronGuardianProvider {
     readonly timeoutMs?: number;
     readonly onDiagnostic?: (diagnostic: NemotronGuardianDiagnostic) => void;
     readonly modelPolicy?: GuardianModelPolicy;
+    readonly onUsage?: (usage: ManagedDemoNebiusUsageObservation) => void | Promise<void>;
+    readonly now?: () => string;
   }) {
     this.#store = options.credentialStore;
     this.#fetch = options.fetch ?? globalThis.fetch;
@@ -253,6 +261,8 @@ export class NemotronGuardianProvider {
     this.#modelPolicy = GuardianModelPolicySchema.parse(
       options.modelPolicy ?? DEFAULT_GUARDIAN_MODEL_POLICY,
     );
+    this.#onUsage = options.onUsage;
+    this.#now = options.now ?? (() => new Date().toISOString());
     if (!Number.isInteger(this.#timeoutMs) || this.#timeoutMs < 100 || this.#timeoutMs > 60_000) {
       throw new TypeError("guardian provider timeout is invalid");
     }
@@ -340,7 +350,25 @@ export class NemotronGuardianProvider {
             if (!response.ok) {
               throw new NemotronGuardianProviderError("http_rejected", response.status);
             }
-            return projectNemotronResponse(await boundedProviderJson(response));
+            const providerJson = await boundedProviderJson(response);
+            if (this.#onUsage !== undefined) {
+              const role =
+                model === this.#modelPolicy.contextualRiskPrimary.modelId
+                  ? "contextual_risk_primary"
+                  : "contextual_risk_escalation";
+              try {
+                await this.#onUsage(
+                  projectManagedDemoNebiusUsageObservation(providerJson, {
+                    role,
+                    modelId: model,
+                    observedAt: this.#now(),
+                  }),
+                );
+              } catch {
+                throw new NemotronGuardianProviderError("usage");
+              }
+            }
+            return projectNemotronResponse(providerJson);
           };
           try {
             return await evaluateWithModel(this.#modelPolicy.contextualRiskPrimary.modelId);

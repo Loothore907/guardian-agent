@@ -40,6 +40,8 @@ function providerResponse(recommendation: unknown, id = "nemotron_request_1"): R
   return new Response(
     JSON.stringify({
       id,
+      model: DEFAULT_GUARDIAN_MODEL_POLICY.contextualRiskPrimary.modelId,
+      usage: { prompt_tokens: 300, completion_tokens: 40, total_tokens: 340 },
       choices: [
         {
           finish_reason: "stop",
@@ -109,15 +111,55 @@ describe("Nemotron guardian provider", () => {
         }),
       );
     });
+    const onUsage = vi.fn();
     const provider = new NemotronGuardianProvider({
       credentialStore: store,
       fetch: fetchImplementation,
+      onUsage,
+      now: () => "2026-11-01T12:00:30.000Z",
     });
 
     await expect(provider.evaluateMissionSetup(setupEnvelope)).resolves.toMatchObject({
       status: "evaluated",
       authorizationLevel: "confirm",
     });
+    expect(onUsage).toHaveBeenCalledWith({
+      schemaVersion: 1,
+      provider: "nebius_token_factory",
+      providerRequestId: "nemotron_request_1",
+      role: "contextual_risk_primary",
+      modelId: DEFAULT_GUARDIAN_MODEL_POLICY.contextualRiskPrimary.modelId,
+      promptTokens: 300,
+      completionTokens: 40,
+      totalTokens: 340,
+      observedAt: "2026-11-01T12:00:30.000Z",
+    });
+  });
+
+  it("denies without escalation when durable usage recording fails", async () => {
+    const fetchImplementation = vi.fn<typeof fetch>(() =>
+      Promise.resolve(
+        providerResponse({
+          recommendation: "allow",
+          certainty: "certain",
+          reasonCodes: ["clean_context"],
+        }),
+      ),
+    );
+    const diagnostics = vi.fn();
+    const provider = new NemotronGuardianProvider({
+      credentialStore: await enrolledStore(),
+      fetch: fetchImplementation,
+      onUsage: async () => await Promise.reject(new Error("budget service unavailable")),
+      onDiagnostic: diagnostics,
+    });
+
+    await expect(provider.evaluate(envelope())).resolves.toEqual({
+      status: "unavailable",
+      authorizationLevel: "deny",
+    });
+    expect(fetchImplementation).toHaveBeenCalledOnce();
+    expect(diagnostics).toHaveBeenLastCalledWith({ outcome: "failed", reason: "usage" });
   });
 
   it.each([

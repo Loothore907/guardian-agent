@@ -9,11 +9,14 @@ import type { GitHubDeviceAuthorizer } from "@guardian/credential-verification";
 import {
   parseGuardianSetupArguments,
   runGitHubDeviceSetup,
+  runGuardianLocalCredentialEnrollment,
+  runGuardianLocalCredentialReview,
   runGuardianSetup,
   runGuardianSetupRevoke,
   runGuardianSetupStatus,
   type GuardianSetupIo,
   type GuardianSetupVerifier,
+  type GuardianLocalCredentialSurfaceFactory,
 } from "./setup.js";
 
 const SECRET = "setup-secret-fixture";
@@ -42,6 +45,42 @@ function verifier(provider: "nebius" | "tavily" | "github" = "nebius") {
   );
   const value: GuardianSetupVerifier = { verify };
   return { value, verify };
+}
+
+function localSurface(
+  outcome: "submitted" | "cancelled" | "failed" | "expired",
+  secretText = SECRET,
+) {
+  const close = vi.fn(() => Promise.resolve());
+  let input: Uint8Array | undefined;
+  const implementation: GuardianLocalCredentialSurfaceFactory = (options) => {
+    const completed = new Promise<typeof outcome>((resolve) => {
+      queueMicrotask(() => {
+        if (outcome !== "submitted") {
+          resolve(outcome);
+          return;
+        }
+        input = Uint8Array.from(Buffer.from(secretText));
+        void options.onSubmit(input).then(
+          () => {
+            input?.fill(0);
+            resolve("submitted");
+          },
+          () => {
+            input?.fill(0);
+            resolve("failed");
+          },
+        );
+      });
+    });
+    return Promise.resolve({
+      url: "http://127.0.0.1:43127/#fake-one-use-capability",
+      completed,
+      close,
+    });
+  };
+  const start = vi.fn(implementation);
+  return { start, close, input: () => input };
 }
 
 describe("guardian setup orchestration", () => {
@@ -256,8 +295,135 @@ describe("guardian setup orchestration", () => {
       operation: "revoke",
       provider: "github",
     });
+    expect(parseGuardianSetupArguments(["credentials", "review", "nebius"])).toEqual({
+      operation: "review",
+      provider: "nebius",
+    });
+    expect(parseGuardianSetupArguments(["credentials", "tavily"])).toEqual({
+      operation: "enroll",
+      provider: "tavily",
+    });
     expect(() => parseGuardianSetupArguments(["setup", "unknown"])).toThrow("usage");
     expect(() => parseGuardianSetupArguments(["setup", "nebius", SECRET])).toThrow("usage");
+  });
+
+  it("preflights, verifies, and stores through the one-use local surface", async () => {
+    const store = new InMemoryCredentialStore();
+    const check = verifier();
+    const surface = localSurface("submitted");
+    const output: string[] = [];
+
+    await expect(
+      runGuardianLocalCredentialEnrollment({
+        provider: "nebius",
+        destination: "windows_credential_manager",
+        store,
+        verifier: check.value,
+        startSurface: surface.start,
+        io: { interactive: true, write: (text) => output.push(text) },
+      }),
+    ).resolves.toMatchObject({ provider: "nebius", accountLabel: "development-account" });
+
+    expect(surface.start).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mode: "enroll",
+        provider: "nebius",
+        destination: "windows_credential_manager",
+      }),
+    );
+    expect(check.verify).toHaveBeenCalledOnce();
+    expect(surface.input()?.every((byte) => byte === 0)).toBe(true);
+    expect(surface.close).toHaveBeenCalledOnce();
+    expect(output.join("\n")).toContain("normal browser");
+    expect(output.join("\n")).not.toContain(SECRET);
+    await expect(
+      store.status(registeredCredentialReference("nebius", "default")),
+    ).resolves.toMatchObject({ state: "available" });
+  });
+
+  it("keeps review mode provider-free and store-read-only", async () => {
+    const status = vi.fn(() =>
+      Promise.resolve({
+        schemaVersion: 1 as const,
+        reference: registeredCredentialReference("tavily", "default"),
+        state: "missing" as const,
+      }),
+    );
+    const write = vi.fn();
+    const use = vi.fn();
+    const deleteCredential = vi.fn();
+    const store: CredentialStore = {
+      status,
+      write,
+      use,
+      delete: deleteCredential,
+    };
+    const surface = localSurface("submitted", "obvious-fake-review-value");
+    const output: string[] = [];
+
+    await expect(
+      runGuardianLocalCredentialReview({
+        provider: "tavily",
+        destination: "linux_secret_service",
+        store,
+        startSurface: surface.start,
+        io: { interactive: true, write: (text) => output.push(text) },
+      }),
+    ).resolves.toBe("submitted");
+
+    expect(status).toHaveBeenCalledOnce();
+    expect(write).not.toHaveBeenCalled();
+    expect(use).not.toHaveBeenCalled();
+    expect(deleteCredential).not.toHaveBeenCalled();
+    expect(surface.start).toHaveBeenCalledWith(
+      expect.objectContaining({ mode: "review", provider: "tavily" }),
+    );
+    expect(surface.input()?.every((byte) => byte === 0)).toBe(true);
+    expect(output.join("\n")).toContain("Nothing was stored or sent");
+    expect(output.join("\n")).not.toContain("obvious-fake-review-value");
+  });
+
+  it("does not start a local credential surface when preflight fails", async () => {
+    const store: CredentialStore = {
+      status: () => Promise.reject(new Error("fixture unavailable")),
+      write: vi.fn(),
+      use: vi.fn(),
+      delete: vi.fn(),
+    };
+    const surface = localSurface("submitted");
+
+    await expect(
+      runGuardianLocalCredentialEnrollment({
+        provider: "nebius",
+        destination: "linux_secret_service",
+        store,
+        verifier: verifier().value,
+        startSurface: surface.start,
+        io: { interactive: true, write: vi.fn() },
+      }),
+    ).rejects.toThrow("credential store is unavailable");
+    expect(surface.start).not.toHaveBeenCalled();
+  });
+
+  it("closes cancelled, failed, and expired local surfaces with sanitized errors", async () => {
+    for (const [outcome, message] of [
+      ["cancelled", "credential enrollment cancelled"],
+      ["failed", "credential enrollment failed"],
+      ["expired", "credential enrollment expired"],
+    ] as const) {
+      const surface = localSurface(outcome);
+      await expect(
+        runGuardianLocalCredentialEnrollment({
+          provider: "nebius",
+          destination: "windows_credential_manager",
+          store: new InMemoryCredentialStore(),
+          verifier: verifier().value,
+          startSurface: surface.start,
+          io: { interactive: true, write: vi.fn() },
+        }),
+      ).rejects.toThrow(message);
+      expect(surface.close).toHaveBeenCalledOnce();
+    }
   });
 
   it("reports only non-secret status and revokes only after exact confirmation", async () => {

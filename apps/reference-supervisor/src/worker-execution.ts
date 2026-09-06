@@ -1,3 +1,4 @@
+import type { WorkerExternalTools } from "./worker-external-tools.js";
 import { canonicalDigest } from "@guardian/canonical";
 import type { AuthorityWorkerClient } from "@guardian/authority-client";
 import {
@@ -29,6 +30,9 @@ export class WorkerToolExecutionError extends Error {
 
 export interface TrustedWorkerToolDispatcherOptions {
   readonly authority: AuthorityWorkerClient;
+  readonly workerMaxTurns?: number;
+  readonly remainingPrivilegedActions?: () => Promise<number>;
+  readonly externalTools?: Pick<WorkerExternalTools, "execute">;
   readonly runtime: BoundSessionRuntime;
   readonly workspace: SessionWorkspaceResult;
   readonly runLocalCommand: (request: unknown) => Promise<LocalCommandResult>;
@@ -75,6 +79,9 @@ function remainingBudget(budget: DurableSessionBudget, expiresAt: string, evalua
 
 export class TrustedWorkerToolDispatcher {
   readonly #authority: AuthorityWorkerClient;
+  readonly #privilegedBudget: TrustedWorkerToolDispatcherOptions["remainingPrivilegedActions"];
+  readonly #externalTools: TrustedWorkerToolDispatcherOptions["externalTools"];
+  readonly #workerMaxTurns: number | undefined;
   readonly #runtime: BoundSessionRuntime;
   readonly #workspace: SessionWorkspaceResult;
   readonly #runLocalCommand: (request: unknown) => Promise<LocalCommandResult>;
@@ -84,6 +91,9 @@ export class TrustedWorkerToolDispatcher {
 
   constructor(options: TrustedWorkerToolDispatcherOptions) {
     this.#authority = options.authority;
+    this.#privilegedBudget = options.remainingPrivilegedActions;
+    this.#externalTools = options.externalTools;
+    this.#workerMaxTurns = options.workerMaxTurns;
     this.#runtime = options.runtime;
     this.#workspace = SessionWorkspaceResultSchema.parse(options.workspace);
     this.#runLocalCommand = options.runLocalCommand;
@@ -113,7 +123,17 @@ export class TrustedWorkerToolDispatcher {
 
   async #result(value: unknown, execution: WorkerToolExecutionEnvelope): Promise<WorkerToolResult> {
     try {
-      return createWorkerToolResult(value);
+      const result = createWorkerToolResult(value);
+      if (this.#privilegedBudget === undefined) return result;
+      const body = { ...result };
+      Reflect.deleteProperty(body, "resultDigest");
+      return createWorkerToolResult({
+        ...body,
+        remainingBudget: {
+          ...body.remainingBudget,
+          remainingPrivilegedActions: await this.#privilegedBudget(),
+        },
+      });
     } catch {
       return await this.#interrupt(execution, "result_invalid", "tool_unavailable");
     }
@@ -202,7 +222,13 @@ export class TrustedWorkerToolDispatcher {
     }
     const status = this.#runtime.status(evaluatedAt);
     const commonResult = this.#commonResult(execution);
-    if (execution.sourceTurnNumber !== 1) {
+    if (
+      execution.continuation === undefined
+        ? execution.sourceTurnNumber !== 1
+        : this.#workerMaxTurns !== execution.continuation.maxTurns ||
+          execution.sourceTurnNumber >= execution.continuation.maxTurns ||
+          execution.continuation.deadline !== status.expiresAt
+    ) {
       return await this.#recordViolation(
         execution,
         "execution_binding_mismatch",
@@ -243,6 +269,82 @@ export class TrustedWorkerToolDispatcher {
     }
 
     switch (execution.request.name) {
+      case "guardian.research":
+      case "github.pull_request.read":
+      case "github.pull_request.merge": {
+        if (
+          !this.#externalTools ||
+          !this.#authority.claimExternalExecution ||
+          !this.#authority.getWorkerBudget
+        )
+          return await this.#interrupt(execution, "tool_unavailable", "tool_unavailable");
+        const permission = this.#runtime.authorizeToolCall(execution.request.name, evaluatedAt);
+        if (!permission.allowed) {
+          const denial = denialClassification(permission);
+          if (denial.kind === "failure") throw new WorkerToolExecutionError(denial.reason);
+          return await this.#recordViolation(
+            execution,
+            denial.code,
+            status.expiresAt,
+            commonResult,
+          );
+        }
+        let claim: WorkerExecutionAuthorization;
+        try {
+          claim = await this.#authority.claimExternalExecution(
+            execution.sessionId,
+            execution.executionId,
+            execution.executionDigest,
+          );
+        } catch {
+          return await this.#interrupt(execution, "authority_unavailable", "authority_unavailable");
+        }
+        if (claim.outcome !== "allowed")
+          return await this.#denialResult(execution, claim, status.expiresAt, commonResult);
+        let result: Awaited<ReturnType<WorkerExternalTools["execute"]>>;
+        try {
+          result = await this.#externalTools.execute(execution);
+        } catch {
+          return await this.#interrupt(execution, "tool_unavailable", "tool_unavailable");
+        }
+        if (result.outcome === "denied")
+          return await this.#recordViolation(
+            execution,
+            "tool_not_allowed",
+            status.expiresAt,
+            commonResult,
+          );
+        if (result.name !== execution.request.name)
+          return await this.#interrupt(execution, "result_invalid", "tool_unavailable");
+        let budget: DurableSessionBudget | null;
+        try {
+          budget = await this.#authority.getWorkerBudget(execution.sessionId);
+        } catch {
+          return await this.#interrupt(execution, "authority_unavailable", "authority_unavailable");
+        }
+        if (budget === null || budget.sessionId !== execution.sessionId)
+          return await this.#interrupt(execution, "authority_unavailable", "authority_unavailable");
+        const completedAt = TimestampSchema.parse(this.#now());
+        if (
+          Date.parse(completedAt) >= Date.parse(execution.expiresAt) ||
+          this.#runtime.status(completedAt).state !== "active"
+        )
+          return await this.#interrupt(execution, "tool_unavailable", "expired");
+        return await this.#result(
+          {
+            ...commonResult,
+            outcome: result.outcome,
+            name: result.name,
+            output: result.output,
+            completedAt,
+            remainingBudget: {
+              ...remainingBudget(budget, status.expiresAt, completedAt),
+              remainingPrivilegedActions: result.remainingPrivilegedActions,
+            },
+          },
+          execution,
+        );
+      }
       case "guardian.session_status": {
         const authorization = this.#runtime.authorizeSessionStatusCall(evaluatedAt);
         if (!authorization.allowed) {
@@ -341,6 +443,9 @@ export class TrustedWorkerToolDispatcher {
     return {
       schemaVersion: 1 as const,
       executionId: execution.executionId,
+      ...(execution.sessionPlanGrantId === undefined
+        ? {}
+        : { sessionPlanGrantId: execution.sessionPlanGrantId }),
       executionDigest: execution.executionDigest,
       sessionId: execution.sessionId,
       callerId: execution.callerId,

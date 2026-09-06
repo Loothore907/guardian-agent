@@ -46,6 +46,7 @@ function environment(overrides: Readonly<Record<string, string>> = {}) {
     GUARDIAN_COMPETITION_OWNER: "loothore907",
     GUARDIAN_COMPETITION_REPOSITORY: "guardian-agent-demo",
     GUARDIAN_COMPETITION_PULL_REQUEST: "2",
+    GUARDIAN_COMPETITION_BASE_BRANCH: "main",
     GUARDIAN_COMPETITION_EXPECTED_HEAD: "a".repeat(40),
     ...overrides,
   };
@@ -126,6 +127,7 @@ function activation(state: SessionBootstrapResult["state"] = "active"): SessionB
     tools: permissions.tools,
     workerTools: ["guardian.session_status", "guardian.local_command"],
     confirmationAssurance: "development_confirmation",
+    sessionPlanGrantId: IDS.evidence,
     worker: { schemaVersion: 1, kind: "deterministic_reference" },
     workspace: {
       schemaVersion: 1,
@@ -385,6 +387,14 @@ describe("Guardian executable competition command", () => {
         proposal: {
           arguments: { repository: "guardian-agent-demo" },
         },
+      },
+    });
+    expect(console.io.readConfirmation).toHaveBeenCalledOnce();
+    expect(runCompetitionJourney.mock.calls[0]?.[0]).not.toHaveProperty("confirmation");
+    expect(startSupervisor.mock.calls[0]?.[0]).toMatchObject({
+      sessionPlan: {
+        maxMutations: 1,
+        targets: [{ baseBranch: "main", headCommit: "a".repeat(40) }],
       },
     });
     expect(close).toHaveBeenCalledOnce();

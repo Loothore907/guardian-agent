@@ -17,7 +17,8 @@ cleanup() {
 trap cleanup EXIT
 
 case "$workspace_source" in
-  /mnt/[a-z]/*) ;;
+  /) exit 125 ;;
+  /*) ;;
   *) exit 125 ;;
 esac
 [ -d "$workspace_source" ] || exit 125

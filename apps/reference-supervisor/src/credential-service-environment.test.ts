@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { credentialServiceEnvironment } from "./credential-service-environment.js";
+import {
+  credentialServiceEnvironment,
+  credentialEnvironmentForStore,
+} from "./credential-service-environment.js";
 
 describe("credential service child environment", () => {
   it("forwards only the two Linux Secret Service session variables", () => {
@@ -100,4 +103,38 @@ describe("credential service child environment", () => {
       ).toThrow("Linux credential service environment is invalid");
     },
   );
+});
+
+it("starts a managed SecretStash service without desktop auth or inherited secrets", () => {
+  const config = {
+    schemaVersion: 1,
+    custodyProfile: "managed_demo",
+    pool: "judge",
+    resources: [
+      {
+        schemaVersion: 1,
+        location: {
+          schemaVersion: 1,
+          custodyProfile: "managed_demo",
+          pool: "judge",
+          runtime: "linux",
+          storeTarget: "nebius_secretstash",
+        },
+        reference: { schemaVersion: 1, provider: "nebius", slot: "default" },
+        secretId: "mbsec-judge123",
+        payloadKey: "nebius_api_key",
+      },
+    ],
+  };
+  expect(
+    credentialEnvironmentForStore(
+      config,
+      { GUARDIAN_PROVIDER: "fixed" },
+      {
+        platform: "linux",
+        hostEnvironment: { HOME: "/private", NEBIUS_IAM_TOKEN: "must-not-cross" },
+      },
+    ),
+  ).toEqual({ GUARDIAN_PROVIDER: "fixed" });
+  expect(() => credentialEnvironmentForStore({ ...config, pool: "public" })).toThrow();
 });

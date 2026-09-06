@@ -448,3 +448,25 @@ describe("central authority service", () => {
     }
   });
 });
+
+it.each(["broker_service", "worker_dispatcher", "research_service", "launcher"] as const)(
+  "rejects plan-control authority for %s even if a capability lists it",
+  async (role) => {
+    const { databasePath } = await location();
+    const endpoint = createAuthorityIpcEndpoint();
+    const forgedBinding = binding(randomUUID(), role, ["plan.revoke"]);
+    await expect(
+      startAuthorityService(
+        {
+          schemaVersion: 1,
+          serviceInstanceId: randomUUID(),
+          endpoint,
+          authorityStorePath: databasePath,
+          workspaceRoots: [],
+          capabilities: [forgedBinding],
+        },
+        { now: () => NOW },
+      ),
+    ).rejects.toThrow("outside its caller role");
+  },
+);

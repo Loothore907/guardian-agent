@@ -60,7 +60,7 @@ const SECRET_PATTERNS = [
 ] as const;
 const PRIVATE_PATTERNS = [
   /(?:^|\s)(?:[A-Za-z]:\\Users\\|\/(?:home|root)\/|\.env(?:\.|\s|$))/iu,
-  /\b(?:127\.0\.0\.1|10\.(?:\d{1,3}\.){2}\d{1,3}|192\.168\.(?:\d{1,3})\.\d{1,3})\b/u,
+  /\b(?:(?:127|10)\.(?:\d{1,3}\.){2}\d{1,3}|(?:172\.(?:1[6-9]|2\d|3[01])|192\.168|169\.254)\.\d{1,3}\.\d{1,3})\b/u,
 ] as const;
 
 function tokenEntropy(value: string): number {

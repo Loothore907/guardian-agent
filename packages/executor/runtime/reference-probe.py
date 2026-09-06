@@ -94,7 +94,7 @@ def runtime_identity_reduced():
 
 def main():
     result = {
-        "runtimeProfile": "windows_wsl2_ubuntu_22_04_namespace_v1",
+        "runtimeProfile": sys.argv[2],
         "observedAt": sys.argv[1],
         "checks": {
             "localCommandSucceeded": local_command_succeeded(),

@@ -1,3 +1,4 @@
+import { SessionPlanSchema, SessionPlanIntentSchema } from "@guardian/contracts";
 import { canonicalDigest } from "@guardian/canonical";
 import {
   CanonicalRequestSchema,
@@ -71,4 +72,12 @@ export function validateExactApproval(
     return { ok: false, reason: "not_active" };
   }
   return { ok: true, request: request.data, approval: approval.data };
+}
+
+export function digestSessionPlan(value: unknown): string {
+  return canonicalDigest("session_plan", 1, SessionPlanSchema.parse(value));
+}
+
+export function digestSessionPlanIntent(value: unknown): string {
+  return canonicalDigest("session_plan_intent", 1, SessionPlanIntentSchema.parse(value));
 }

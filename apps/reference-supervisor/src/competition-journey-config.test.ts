@@ -1,5 +1,9 @@
 import { createAuthorityIpcEndpoint } from "@guardian/authority-client";
 import { canonicalDigest } from "@guardian/canonical";
+import {
+  ManagedDemoJourneyUsageReportersSchema,
+  registeredCredentialReference,
+} from "@guardian/contracts";
 import { createResearchIpcCredentials } from "@guardian/research";
 import type { LaunchedReferenceSession } from "@guardian/session-host/launcher";
 import { describe, expect, it } from "vitest";
@@ -17,6 +21,9 @@ const IDS = {
   proposal: "88888888-8888-4888-8888-888888888888",
   brokerCapability: "99999999-9999-4999-8999-999999999999",
   researchCapability: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  deployment: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+  reservation: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+  journey: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
 } as const;
 
 const STARTS_AT = "2026-09-02T18:00:00.000Z";
@@ -117,6 +124,81 @@ function binding(
   } as const;
 }
 
+function managedDemoReporters() {
+  const capabilities = [
+    "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+    "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2",
+    "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee3",
+    "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee4",
+  ] as const;
+  const reporter = (
+    role: "interaction_service" | "guardian_service" | "worker_service" | "research_service",
+    capability: string,
+  ) => ({
+    schemaVersion: 1 as const,
+    budget: {
+      schemaVersion: 1 as const,
+      endpoint: "guardian-managed-demo-budget",
+      binding: {
+        schemaVersion: 1 as const,
+        capability,
+        callerRole: role,
+        callerId: IDS.caller,
+        deploymentId: IDS.deployment,
+        allowedOperations: ["usage.record" as const],
+        issuedAt: STARTS_AT,
+        expiresAt: AUTHORITY_EXPIRES_AT,
+      },
+    },
+    reservationId: IDS.reservation,
+    journeyId: IDS.journey,
+  });
+  return ManagedDemoJourneyUsageReportersSchema.parse({
+    interaction: reporter("interaction_service", capabilities[0]),
+    guardian: reporter("guardian_service", capabilities[1]),
+    worker: reporter("worker_service", capabilities[2]),
+    research: reporter("research_service", capabilities[3]),
+  });
+}
+
+function managedDemoCredentialStore() {
+  const location = {
+    schemaVersion: 1 as const,
+    custodyProfile: "managed_demo" as const,
+    pool: "judge" as const,
+    runtime: "linux" as const,
+    storeTarget: "nebius_secretstash" as const,
+  };
+  return {
+    schemaVersion: 1 as const,
+    custodyProfile: "managed_demo" as const,
+    pool: "judge" as const,
+    resources: [
+      {
+        schemaVersion: 1 as const,
+        location,
+        reference: registeredCredentialReference("nebius", "default"),
+        secretId: "mbsec-judgenebius123",
+        payloadKey: "nebius_api_key",
+      },
+      {
+        schemaVersion: 1 as const,
+        location,
+        reference: registeredCredentialReference("tavily", "default"),
+        secretId: "mbsec-judgetavily123",
+        payloadKey: "tavily_api_key",
+      },
+      {
+        schemaVersion: 1 as const,
+        location,
+        reference: registeredCredentialReference("github", "default"),
+        secretId: "mbsec-judgegithub123",
+        payloadKey: "github_access_token",
+      },
+    ],
+  };
+}
+
 function launched(options: { durable?: boolean; assurance?: "enforced" | "observed" } = {}) {
   const researchCredentials = createResearchIpcCredentials();
   return {
@@ -167,6 +249,7 @@ function input(
     request?: unknown;
     session?: ReturnType<typeof session>;
     connection?: ReturnType<typeof connection>;
+    managedDemo?: boolean;
   } = {},
 ) {
   const endpoint = createAuthorityIpcEndpoint();
@@ -179,6 +262,7 @@ function input(
         "session.get",
         "connection.list",
         "approval.get",
+        "plan.check",
         "approval.state",
         "budget.consume_tool",
         "approval.consume",
@@ -196,17 +280,28 @@ function input(
       },
     },
     githubClientId: "Iv23liP8Sq3ZEAyeIHju",
-    credentialStore: {
-      schemaVersion: 1,
-      custodyProfile: "byok",
-      location: {
-        schemaVersion: 1,
-        custodyProfile: "byok",
-        pool: "personal",
-        runtime: "windows",
-        storeTarget: "windows_credential_manager",
-      },
-    },
+    credentialStore:
+      options.managedDemo === true
+        ? managedDemoCredentialStore()
+        : {
+            schemaVersion: 1 as const,
+            custodyProfile: "byok" as const,
+            location: {
+              schemaVersion: 1 as const,
+              custodyProfile: "byok" as const,
+              pool: "personal" as const,
+              runtime: "windows" as const,
+              storeTarget: "windows_credential_manager" as const,
+            },
+          },
+    ...(options.managedDemo === true
+      ? {
+          managedDemoBudget: {
+            guardian: managedDemoReporters().guardian,
+            research: managedDemoReporters().research,
+          },
+        }
+      : {}),
     now: () => REQUESTED_AT,
   };
 }
@@ -245,6 +340,33 @@ describe("activated competition journey service configuration", () => {
       startsAt: STARTS_AT,
       expiresAt: EXPIRES_AT,
     });
+  });
+
+  it("projects exact managed-demo Guardian and research reporters", async () => {
+    const expected = managedDemoReporters();
+    const services = await buildActivatedCompetitionJourneyServices(input({ managedDemo: true }));
+
+    expect(services.broker.guardian.managedDemoBudget).toEqual(expected.guardian);
+    expect(services.research.managedDemoBudget).toEqual(expected.research);
+    expect(services.broker).not.toHaveProperty("ledgerPath");
+    expect(services.research).not.toHaveProperty("ledgerPath");
+  });
+
+  it("rejects cross-journey managed-demo reporter substitution", async () => {
+    const candidate = input({ managedDemo: true });
+    const expected = managedDemoReporters();
+    await expect(
+      buildActivatedCompetitionJourneyServices({
+        ...candidate,
+        managedDemoBudget: {
+          guardian: expected.guardian,
+          research: {
+            ...expected.research,
+            journeyId: "ffffffff-ffff-4fff-8fff-ffffffffffff",
+          },
+        },
+      }),
+    ).rejects.toThrow("inconsistent bindings");
   });
 
   it("rejects a request identity substitution", async () => {

@@ -130,12 +130,14 @@ test(
       await chmod(directory, 0o700);
 
       await writeFile(databasePath, "", { mode: 0o640 });
+      await chmod(databasePath, 0o640);
       assert.throws(
         () => new SqliteAuthorityStore(databasePath),
         /file permissions are too broad/u,
       );
       await chmod(databasePath, 0o600);
       await writeFile(`${databasePath}-wal`, "", { mode: 0o640 });
+      await chmod(`${databasePath}-wal`, 0o640);
       assert.throws(
         () => new SqliteAuthorityStore(databasePath),
         /file permissions are too broad/u,

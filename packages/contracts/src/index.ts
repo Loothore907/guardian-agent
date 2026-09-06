@@ -19,6 +19,9 @@ export * from "./interaction-ipc.js";
 export * from "./mission.js";
 export * from "./mission-formation.js";
 export * from "./mission-dialogue-ipc.js";
+export * from "./managed-demo-budget.js";
+export * from "./managed-demo-budget-ipc.js";
+export * from "./managed-demo-ingress.js";
 export * from "./model-policy.js";
 export * from "./worker.js";
 export * from "./worker-policy.js";
@@ -29,3 +32,5 @@ export * from "./research-service.js";
 export * from "./session-status.js";
 
 export { ResearchRequestSchema as ToolArgumentsSchema } from "./actions.js";
+export * from "./session-plan.js";
+export * from "./judge-portal.js";

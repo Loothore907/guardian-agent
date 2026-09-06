@@ -1,6 +1,10 @@
 import { LocalAuthorityIpcClient } from "@guardian/authority-client";
-import { CredentialStoreResearchServiceProcessConfigSchema } from "@guardian/contracts";
+import {
+  CredentialStoreResearchServiceProcessConfigSchema,
+  type ManagedDemoUsageObservation,
+} from "@guardian/contracts";
 import { createCredentialStore } from "@guardian/credential-store";
+import { LocalManagedDemoBudgetIpcClient } from "@guardian/managed-demo-budget-client";
 
 import { startCredentialStoreResearchIpcServer } from "./index.js";
 
@@ -39,12 +43,30 @@ async function main(): Promise<void> {
   const config = CredentialStoreResearchServiceProcessConfigSchema.parse(
     await readBootstrapFrame(),
   );
+  const managedDemoBudget = config.managedDemoBudget;
+  const budgetClient =
+    managedDemoBudget === undefined
+      ? undefined
+      : new LocalManagedDemoBudgetIpcClient({
+          endpoint: managedDemoBudget.budget.endpoint,
+          binding: managedDemoBudget.budget.binding,
+        });
   const server = await startCredentialStoreResearchIpcServer({
     config: config.research,
     credentialStore: createCredentialStore(config.credentialStore, {
       consumer: "research_service",
     }),
     authority: new LocalAuthorityIpcClient(config.authority),
+    ...(budgetClient === undefined || managedDemoBudget === undefined
+      ? {}
+      : {
+          onUsage: (usage: ManagedDemoUsageObservation) =>
+            budgetClient.recordUsage(
+              managedDemoBudget.reservationId,
+              managedDemoBudget.journeyId,
+              usage,
+            ),
+        }),
   });
   process.stdout.write("guardian research service ready\n");
 

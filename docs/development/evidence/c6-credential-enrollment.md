@@ -1,8 +1,8 @@
 # C6 Local Credential Enrollment Evidence
 
 - Status: Deterministic setup path implemented and tested locally; protected
-  GitHub App device enrollment and account verification pass
-- Date: 2026-08-31
+  GitHub device enrollment plus Windows and Linux Nebius browser enrollment pass
+- Date: 2026-08-31; Windows/Linux browser enrollment update 2026-09-04
 - Scope: provider-scoped contracts, deterministic store, Windows Credential
   Manager adapter, fixed-origin verification, GitHub App device flow, and
   executable setup orchestration
@@ -31,22 +31,25 @@ Credential Manager. Helper stderr is discarded and failures become the same
 sanitized `CredentialStoreError`.
 
 The Guardian setup orchestrator accepts exactly one supported provider, requires
-interactive input, obtains a hidden byte buffer, invokes a provider-bound verifier
-before storage, rejects a verifier result for a different provider, writes only
-after successful verification, emits only provider and bounded account-label
-metadata, and zeroes the input buffer on every path.
+interactive input, obtains a bounded byte buffer through a short-lived one-use
+loopback browser ceremony, invokes a provider-bound verifier before storage,
+rejects a verifier result for a different provider, writes only after successful
+verification, emits only provider and bounded account-label metadata, and zeroes
+transient buffers on every path. A provider-free/store-read-only fake review mode
+preflights and exercises the same interaction without accepting a real secret.
 
-`guardian setup <provider>` is now executable on Windows. Nebius and Tavily use
-the hidden-input reader and verify before writing the default provider slot.
-GitHub uses an App device flow bound to a configured numeric repository ID. It
+`guardian credentials <operation> <provider>` is the stable management command;
+`guardian setup` remains a compatibility alias. Nebius and Tavily browser
+enrollment is accepted on Windows and Linux. GitHub
+uses an App device flow bound to a configured numeric repository ID. It
 shows only GitHub's fixed verification URI and short-lived user code, honors the
 poll interval and `slow_down`, requires expiring access and refresh tokens,
 verifies the authenticated user, and stores the two values under isolated
 `github/default` and `github/refresh` targets. It writes non-secret expiry data to
 `github/metadata` as the final commit marker. Setup attempts cleanup of each
 completed new write, reports cleanup failure, and clears transient byte buffers.
-`guardian setup
-status <provider>` returns only `available` or `missing`. `guardian setup revoke
+`guardian credentials
+status <provider>` returns only `available` or `missing`. `guardian credentials revoke
 <provider>` requires the exact `REVOKE <provider>` confirmation; GitHub revocation
 deletes all three slots. All setup management commands reject non-interactive
 invocation.
@@ -72,6 +75,24 @@ The GitHub device-flow endpoints and response requirements follow GitHub's
 [user access token documentation](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-user-access-token-for-a-github-app).
 ADR-0009 records why this local public-client flow replaces ambient delegated
 authentication and project-private-key distribution.
+
+The accepted Windows Nebius ceremony now passes as a complete user-operated
+journey. The corrected page displayed its no-save warning without a browser
+generation or autofill attempt. Enrollment verified against the fixed provider
+endpoint before reporting the stored result. A sanitized user-context status
+check returned only `nebius: available`, while the sandboxed agent context saw
+only `nebius: missing`. The newly enrolled credential then passed the bounded
+supervised Qwen/Nemotron live-inference harness without printing credential or
+raw provider material.
+
+The accepted Linux ceremony now also passes as a complete user-operated journey.
+The normal-user fixture lifecycle covered write, resolve, rotation, zeroing, and
+delete. A stale revoked local entry was explicitly removed and status returned
+`missing` before enrollment. The user prepared and inspected the Guardian form
+before creating a new one-time-display provider key, then submitted only through
+that form. Guardian reported verified storage, intended-host status returned only
+`nebius: available`, and the protected Linux Qwen/Nemotron service test passed in
+approximately 3.9 seconds without printing credential or raw provider material.
 
 The protected GitHub ceremony passes against the App registered with client ID
 `Iv23liP8Sq3ZEAyeIHju` and installed only on repository ID `1352093544`. The CLI
@@ -168,18 +189,19 @@ TypeScript, dependency boundaries, and the production build pass.
 ## Limitations
 
 - The protected GitHub device-flow enrollment and authenticated-user verification
-  pass. The separate guarded `.env.local` provider test was not run, and live
-  Nebius/Tavily verification remains pending explicit credential-use
-  authorization; no broader provider compatibility is claimed.
+  pass. Windows and Linux Nebius browser enrollment, sanitized status, and bounded
+  credential-isolated Qwen/Nemotron consumption also pass. Tavily browser
+  enrollment and the separate guarded `.env.local` provider test were not run;
+  no broader provider compatibility is claimed.
 - The Windows helper necessarily handles credential-equivalent material inside
   the trusted setup/credential process. OS process placement and supervision must
   keep it outside the WSL command sandbox and interaction-agent environment.
 - The current tests use a bounded fixture corpus. Broader process, database, log,
   trace, audit, crash, and provider-error corpus inspection remains required.
-- macOS Keychain, Linux Secret Service, and the secured Linux fallback remain
-  goals. This evidence does not advance Linux parity or Enforced assurance.
-- Setup currently supports only Windows. The CLI has not yet been exercised as a
-  complete hidden-input-to-live-provider-to-Credential-Manager journey.
+- macOS Keychain and a separately designed secured headless-Linux fallback remain
+  goals. This evidence advances the normal-user Linux credential path but does not
+  establish complete Linux parity or Enforced assurance.
+- Browser enrollment is accepted on Windows and Linux; macOS enrollment is absent.
 - The App is registered and installed only on the public demo repository pinned
   to immutable GitHub ID `1352093544`. Deterministic fail-closed refresh and a
   protected exact-head broker read are implemented. A metadata-less live

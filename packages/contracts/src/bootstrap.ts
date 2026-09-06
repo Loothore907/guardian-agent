@@ -1,3 +1,4 @@
+import { SessionPlanIntentSchema } from "./session-plan.js";
 import { z } from "zod";
 
 import { AssuranceLevelSchema } from "./assurance.js";
@@ -60,6 +61,8 @@ export const SessionDraftPreviewSchema = z
     schemaVersion: ContractVersionSchema,
     draftId: OpaqueIdSchema,
     previewDigest: Sha256DigestSchema,
+    sessionPlan: SessionPlanIntentSchema.optional(),
+    workerMaxTurns: z.number().int().min(2).max(20).optional(),
     state: z.literal("awaiting_confirmation"),
     createdAt: TimestampSchema,
     expiresAt: TimestampSchema,
@@ -72,6 +75,26 @@ export const SessionDraftPreviewSchema = z
     workspace: SessionWorkspaceSelectionSchema,
   })
   .superRefine((preview, context) => {
+    const plan = preview.sessionPlan;
+    if (
+      plan !== undefined &&
+      (plan.maxActions > preview.permissions.volume.maxToolCalls ||
+        plan.maxMutations > preview.permissions.volume.maxPrivilegedActions ||
+        plan.targets.some(
+          (t) =>
+            !preview.permissions.tools.includes(t.operation) ||
+            !preview.permissions.network.destinations.some(
+              (d) =>
+                d.kind === "github_repository" &&
+                d.owner === t.owner &&
+                d.repository === t.repository,
+            ) ||
+            (t.operation === "github.pull_request.merge" &&
+              !preview.permissions.sideEffects.includes("merge_pull_request")),
+        ))
+    ) {
+      context.addIssue({ code: "custom", message: "session plan exceeds mission permissions" });
+    }
     addDuplicateIssue(preview.workerTools, context, ["workerTools"]);
     preview.workerTools.forEach((tool, index) => {
       if (!preview.permissions.tools.includes(tool)) {
@@ -85,14 +108,30 @@ export const SessionDraftPreviewSchema = z
   });
 export type SessionDraftPreview = DeepReadonly<z.infer<typeof SessionDraftPreviewSchema>>;
 
-export const DevelopmentSessionConfirmationSchema = z.strictObject({
+const LaunchConfirmationShape = {
   schemaVersion: ContractVersionSchema,
   draftId: OpaqueIdSchema,
   previewDigest: Sha256DigestSchema,
   confirmedBy: z.strictObject({ kind: z.literal("human"), principalId: OpaqueIdSchema }),
   confirmedAt: TimestampSchema,
+};
+export const DevelopmentSessionConfirmationSchema = z.strictObject({
+  ...LaunchConfirmationShape,
   assurance: z.literal("development_confirmation"),
 });
+export const DeploymentSessionConfirmationSchema = z.strictObject({
+  ...LaunchConfirmationShape,
+  assurance: z.literal("deployment_authorization"),
+  authorizationId: OpaqueIdSchema,
+  journeyId: OpaqueIdSchema,
+});
+export const SessionLaunchConfirmationSchema = z.union([
+  DevelopmentSessionConfirmationSchema,
+  DeploymentSessionConfirmationSchema,
+]);
+export type SessionLaunchConfirmation = DeepReadonly<
+  z.infer<typeof SessionLaunchConfirmationSchema>
+>;
 export type DevelopmentSessionConfirmation = DeepReadonly<
   z.infer<typeof DevelopmentSessionConfirmationSchema>
 >;
@@ -112,7 +151,8 @@ export const SessionBootstrapResultSchema = z
     expiresAt: TimestampSchema,
     tools: z.array(ToolCapabilitySchema).max(16),
     workerTools: z.array(ToolCapabilitySchema).max(16),
-    confirmationAssurance: z.literal("development_confirmation"),
+    confirmationAssurance: z.enum(["development_confirmation", "deployment_authorization"]),
+    sessionPlanGrantId: OpaqueIdSchema.optional(),
     worker: SessionWorkerSelectionSchema,
     workspace: SessionWorkspaceResultSchema,
     runner: InteractionRunnerStateSchema,

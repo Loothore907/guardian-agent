@@ -9,6 +9,7 @@ import {
 } from "./common.js";
 import { CredentialStoreConfigSchema } from "./credentials.js";
 import { GuardianEvaluationSchema, GuardianRiskEnvelopeSchema } from "./guardian-risk.js";
+import { ManagedDemoGuardianUsageReporterConfigSchema } from "./managed-demo-budget-ipc.js";
 
 const GuardianActionRiskIpcBindingShape = {
   schemaVersion: ContractVersionSchema,
@@ -53,6 +54,7 @@ export const GuardianActionRiskServiceProcessConfigSchema = z
     ...GuardianActionRiskIpcBindingShape,
     serviceKind: z.literal("action_risk"),
     credentialStore: CredentialStoreConfigSchema.optional(),
+    managedDemoBudget: ManagedDemoGuardianUsageReporterConfigSchema.optional(),
     endpoint: z.string().min(1).max(260),
     startsAt: TimestampSchema,
     expiresAt: TimestampSchema,
@@ -64,6 +66,18 @@ export const GuardianActionRiskServiceProcessConfigSchema = z
         code: "custom",
         message: "action risk service expiry must follow its start",
         path: ["expiresAt"],
+      });
+    }
+    const budgetBinding = config.managedDemoBudget?.budget.binding;
+    if (
+      budgetBinding !== undefined &&
+      (Date.parse(config.startsAt) < Date.parse(budgetBinding.issuedAt) ||
+        Date.parse(config.expiresAt) > Date.parse(budgetBinding.expiresAt))
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "action risk lifetime must fit its managed-demo budget capability",
+        path: ["managedDemoBudget", "budget", "binding"],
       });
     }
   });

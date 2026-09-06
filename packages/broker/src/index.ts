@@ -15,8 +15,11 @@ import {
   CanonicalRequestSchema,
   ExactApprovalSchema,
   GuardianEvaluationSchema,
+  GuardianRiskEnvelopeSchema,
+  Sha256DigestSchema,
   OpaqueIdSchema,
   type CanonicalRequest,
+  type PlanCheckResult,
   type AuthorizationLevel,
   type DurableConnectionRecord,
   type DurableSessionRecord,
@@ -94,6 +97,7 @@ function operation(request: CanonicalRequest): GitHubOperation | null {
       owner: proposal.arguments.owner,
       repository: proposal.arguments.repository,
       pullRequest: proposal.arguments.pullRequest,
+      ...(proposal.arguments.content === undefined ? {} : { content: proposal.arguments.content }),
     };
   }
   if (proposal.operation === "github.pull_request.merge") {
@@ -107,6 +111,28 @@ function operation(request: CanonicalRequest): GitHubOperation | null {
     };
   }
   return null;
+}
+
+class PlanExecutionBlocked extends Error {
+  constructor(readonly code: BrokerDenialCode) {
+    super("session authority unavailable");
+  }
+}
+function planDenial(result: Extract<PlanCheckResult, { status: "blocked" }>): BrokerDenialCode {
+  switch (result.reason) {
+    case "expired":
+      return "approval_expired";
+    case "revoked":
+      return "not_active";
+    case "exhausted":
+      return "volume_exhausted";
+    case "replayed":
+      return "approval_replayed";
+    case "resource_changed":
+      return "resource_changed";
+    default:
+      return "scope_mismatch";
+  }
 }
 
 function adapterFailure(error: unknown): BrokerDenialCode {
@@ -140,6 +166,7 @@ function decisionReason(code: BrokerDenialCode) {
 }
 
 export class GitHubBroker {
+  readonly #guardianContext: { requestDigest: string; envelope: GuardianRiskEnvelope } | undefined;
   readonly #authority: AuthorityClient;
   readonly #credentials: CredentialResolver;
   readonly #guardian: GuardianEvaluator;
@@ -151,6 +178,10 @@ export class GitHubBroker {
     credentials: CredentialResolver,
     options: {
       readonly guardian: GuardianEvaluator;
+      readonly guardianContext?: {
+        readonly requestDigest: string;
+        readonly envelope: GuardianRiskEnvelope;
+      };
       readonly fetch?: typeof fetch;
       readonly now?: () => string;
     },
@@ -158,6 +189,13 @@ export class GitHubBroker {
     this.#authority = authority;
     this.#credentials = credentials;
     this.#guardian = options.guardian;
+    this.#guardianContext =
+      options.guardianContext === undefined
+        ? undefined
+        : {
+            requestDigest: Sha256DigestSchema.parse(options.guardianContext.requestDigest),
+            envelope: GuardianRiskEnvelopeSchema.parse(options.guardianContext.envelope),
+          };
     this.#fetch = options.fetch ?? fetch;
     this.#now = options.now ?? (() => new Date().toISOString());
   }
@@ -239,8 +277,24 @@ export class GitHubBroker {
       "not_assessed";
     let authorizationFloor: AuthorizationLevel =
       requestedOperation.type === "github.pull_request.merge" ? "confirm" : "allow";
+    let planIsPresent = false;
     const deny = async (code: BrokerDenialCode): Promise<BrokerExecutionResult> => {
       try {
+        if (
+          planIsPresent &&
+          (code === "guardian_step_up" ||
+            code === "guardian_denied" ||
+            code === "guardian_unavailable" ||
+            code === "guardian_confirmation_required" ||
+            code === "resource_changed")
+        ) {
+          await this.#authority.checkSessionPlan({
+            request,
+            requestDigest: digestCanonicalRequest(request),
+            phase: "defer",
+            blockReason: code,
+          });
+        }
         await this.#authority.appendAuthorityDecision({
           schemaVersion: 1,
           decisionId: randomUUID(),
@@ -321,40 +375,93 @@ export class GitHubBroker {
       return await deny("scope_mismatch");
     }
 
+    const planRequestDigest = digestCanonicalRequest(request);
+    let planCheck: PlanCheckResult;
+    try {
+      planCheck = await this.#authority.checkSessionPlan({
+        request,
+        requestDigest: planRequestDigest,
+        phase: "inspect",
+      });
+    } catch {
+      return await deny("audit_unavailable");
+    }
+    if (planCheck.status === "blocked") return await deny(planDenial(planCheck));
+    const planGrant = planCheck.status === "allowed" ? planCheck : null;
+    planIsPresent = planGrant !== null;
+    // Called only after secret resolution and immediately before the adapter operation.
+    const validateExecutionAuthority = async (baseBranch?: string, consume = true) => {
+      const normalized = CanonicalRequestSchema.parse(request);
+      const digest = digestCanonicalRequest(normalized);
+      if (digest !== planRequestDigest) throw new PlanExecutionBlocked("approval_mismatch");
+      let current: PlanCheckResult;
+      try {
+        current = await this.#authority.checkSessionPlan({
+          request: normalized,
+          requestDigest: digest,
+          phase: planGrant === null || !consume ? "inspect" : "consume",
+          ...(planGrant === null ? {} : { expectedGrantId: planGrant.grantId }),
+          ...(baseBranch === undefined ? {} : { observedBaseBranch: baseBranch }),
+        });
+      } catch {
+        throw new PlanExecutionBlocked("audit_unavailable");
+      }
+      if (current.status === "blocked") throw new PlanExecutionBlocked(planDenial(current));
+      if (
+        planGrant === null
+          ? current.status !== "absent"
+          : current.status !== "allowed" ||
+            current.grantId !== planGrant.grantId ||
+            current.planDigest !== planGrant.planDigest
+      )
+        throw new PlanExecutionBlocked("approval_mismatch");
+      if (consume && planGrant !== null && requestedOperation.type === "github.pull_request.merge")
+        approvalConsumed = true;
+    };
+
     const deterministicFloor = authorizationFloor;
     let guardianEvaluation: GuardianEvaluation;
-    providerCrossed = true;
     try {
-      const evaluated = strictGuardianEvaluation(
-        await this.#guardian.evaluate({
-          proposal:
-            requestedOperation.type === "github.pull_request.read"
-              ? {
-                  tool: requestedOperation.type,
-                  arguments: {
-                    owner: requestedOperation.owner,
-                    repository: requestedOperation.repository,
-                    pullRequest: requestedOperation.pullRequest,
-                  },
-                }
-              : {
-                  tool: requestedOperation.type,
-                  arguments: {
-                    owner: requestedOperation.owner,
-                    repository: requestedOperation.repository,
-                    pullRequest: requestedOperation.pullRequest,
-                    expectedHeadCommit: requestedOperation.expectedHeadSha,
-                    method: requestedOperation.method,
-                  },
+      const envelope = GuardianRiskEnvelopeSchema.parse({
+        proposal:
+          requestedOperation.type === "github.pull_request.read"
+            ? {
+                tool: requestedOperation.type,
+                arguments: {
+                  owner: requestedOperation.owner,
+                  repository: requestedOperation.repository,
+                  pullRequest: requestedOperation.pullRequest,
                 },
-          deterministicFloor,
-          riskSignals:
-            requestedOperation.type === "github.pull_request.merge"
-              ? ["authority_expansion"]
-              : ["clean_context"],
-          untrustedExcerpts: [],
-          containsCredentials: false,
-        }),
+              }
+            : {
+                tool: requestedOperation.type,
+                arguments: {
+                  owner: requestedOperation.owner,
+                  repository: requestedOperation.repository,
+                  pullRequest: requestedOperation.pullRequest,
+                  expectedHeadCommit: requestedOperation.expectedHeadSha,
+                  method: requestedOperation.method,
+                },
+              },
+        deterministicFloor,
+        riskSignals:
+          requestedOperation.type === "github.pull_request.merge"
+            ? ["authority_expansion"]
+            : ["clean_context"],
+        untrustedExcerpts: [],
+        containsCredentials: false,
+      });
+      const context = this.#guardianContext;
+      if (
+        context !== undefined &&
+        (context.requestDigest !== digestCanonicalRequest(request) ||
+          context.envelope.deterministicFloor !== deterministicFloor ||
+          JSON.stringify(context.envelope.proposal) !== JSON.stringify(envelope.proposal))
+      )
+        throw new TypeError("Guardian context does not match final operation");
+      providerCrossed = true;
+      const evaluated = strictGuardianEvaluation(
+        await this.#guardian.evaluate(context?.envelope ?? envelope),
       );
       if (
         evaluated.status === "evaluated" &&
@@ -393,7 +500,7 @@ export class GitHubBroker {
 
     let mergeApproval: ReturnType<typeof ExactApprovalSchema.parse> | null = null;
     let initialDigest: string | null = null;
-    if (requestedOperation.type === "github.pull_request.merge") {
+    if (requestedOperation.type === "github.pull_request.merge" && planGrant === null) {
       const suppliedApproval = ExactApprovalSchema.safeParse(input.approval);
       if (!suppliedApproval.success) return await deny("approval_mismatch");
       let storedApproval: ExactApproval | null;
@@ -446,15 +553,24 @@ export class GitHubBroker {
     try {
       adapterCrossed = true;
       snapshot = await this.#credentials.use(connection.credentialStoreHandle, async (secret) => {
+        await validateExecutionAuthority(
+          undefined,
+          requestedOperation.type === "github.pull_request.read",
+        );
         const adapter = new GitHubPullRequestAdapter(secret, this.#fetch);
         return await adapter.read({
           type: "github.pull_request.read",
           owner: requestedOperation.owner,
           repository: requestedOperation.repository,
           pullRequest: requestedOperation.pullRequest,
+          ...(requestedOperation.type === "github.pull_request.read" &&
+          requestedOperation.content !== undefined
+            ? { content: requestedOperation.content }
+            : {}),
         });
       });
     } catch (error) {
+      if (error instanceof PlanExecutionBlocked) return await deny(error.code);
       if (!(error instanceof GitHubAdapterError)) return await deny("connection_unavailable");
       return await deny(adapterFailure(error));
     }
@@ -464,6 +580,8 @@ export class GitHubBroker {
     ) {
       return await deny("resource_changed");
     }
+    if (planGrant !== null && snapshot.baseBranch !== planGrant.baseBranch)
+      return await deny("resource_changed");
     if (requestedOperation.type === "github.pull_request.read") {
       return await allow(snapshot);
     }
@@ -471,46 +589,70 @@ export class GitHubBroker {
       return await deny("not_mergeable");
     }
 
-    const finalRequest = CanonicalRequestSchema.parse(request);
-    const finalDigest = digestCanonicalRequest(finalRequest);
-    if (
-      mergeApproval === null ||
-      initialDigest === null ||
-      initialDigest !== finalDigest ||
-      mergeApproval.requestDigest !== finalDigest
-    ) {
-      return await deny("approval_mismatch");
+    if (planGrant === null) {
+      const finalRequest = CanonicalRequestSchema.parse(request);
+      const finalDigest = digestCanonicalRequest(finalRequest);
+      if (
+        mergeApproval === null ||
+        initialDigest === null ||
+        initialDigest !== finalDigest ||
+        mergeApproval.requestDigest !== finalDigest
+      ) {
+        return await deny("approval_mismatch");
+      }
+      let consumption: Awaited<ReturnType<AuthorityClient["consumeApproval"]>>;
+      try {
+        consumption = await this.#authority.consumeApproval({
+          approvalId: mergeApproval.approvalId,
+          nonce: mergeApproval.nonce,
+          requestDigest: finalDigest,
+          sessionId: finalRequest.sessionId,
+          callerId: finalRequest.callerId,
+          connectionId: finalRequest.connectionId,
+          policyVersion: finalRequest.policyVersion,
+        });
+      } catch {
+        return await deny("audit_unavailable");
+      }
+      if (consumption !== "consumed") {
+        if (consumption === "replayed") return await deny("approval_replayed");
+        if (consumption === "expired") return await deny("approval_expired");
+        if (consumption === "not_active") return await deny("not_active");
+        return await deny("approval_mismatch");
+      }
+      approvalConsumed = true;
     }
-    let consumption: Awaited<ReturnType<AuthorityClient["consumeApproval"]>>;
-    try {
-      consumption = await this.#authority.consumeApproval({
-        approvalId: mergeApproval.approvalId,
-        nonce: mergeApproval.nonce,
-        requestDigest: finalDigest,
-        sessionId: finalRequest.sessionId,
-        callerId: finalRequest.callerId,
-        connectionId: finalRequest.connectionId,
-        policyVersion: finalRequest.policyVersion,
-      });
-    } catch {
-      return await deny("audit_unavailable");
-    }
-    if (consumption !== "consumed") {
-      if (consumption === "replayed") return await deny("approval_replayed");
-      if (consumption === "expired") return await deny("approval_expired");
-      if (consumption === "not_active") return await deny("not_active");
-      return await deny("approval_mismatch");
-    }
-    approvalConsumed = true;
 
     try {
       const result = await this.#credentials.use(
         connection.credentialStoreHandle,
-        async (secret) =>
-          await new GitHubPullRequestAdapter(secret, this.#fetch).merge(requestedOperation),
+        async (secret) => {
+          if (planGrant !== null) {
+            await validateExecutionAuthority(snapshot.baseBranch, false);
+            const refreshed = await new GitHubPullRequestAdapter(secret, this.#fetch).read({
+              type: "github.pull_request.read",
+              owner: requestedOperation.owner,
+              repository: requestedOperation.repository,
+              pullRequest: requestedOperation.pullRequest,
+            });
+            if (
+              refreshed.headCommit !== snapshot.headCommit ||
+              refreshed.baseBranch !== snapshot.baseBranch
+            )
+              throw new PlanExecutionBlocked("resource_changed");
+            if (refreshed.state !== "open" || refreshed.draft)
+              throw new PlanExecutionBlocked("not_mergeable");
+          }
+          await validateExecutionAuthority(snapshot.baseBranch);
+          const normalizedOperation = operation(CanonicalRequestSchema.parse(request));
+          if (normalizedOperation?.type !== "github.pull_request.merge")
+            throw new PlanExecutionBlocked("approval_mismatch");
+          return await new GitHubPullRequestAdapter(secret, this.#fetch).merge(normalizedOperation);
+        },
       );
       return await allow(result);
     } catch (error) {
+      if (error instanceof PlanExecutionBlocked) return await deny(error.code);
       if (!(error instanceof GitHubAdapterError)) return await deny("connection_unavailable");
       return await deny(adapterFailure(error));
     }

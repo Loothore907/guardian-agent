@@ -1,3 +1,10 @@
+import {
+  SessionPlanGrantSchema,
+  PlanCheckRequestSchema,
+  type SessionPlanState,
+  type PlanCheckResult,
+  type PendingPlanRequest,
+} from "@guardian/contracts";
 import { randomUUID } from "node:crypto";
 import { tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
@@ -117,6 +124,7 @@ export class AuthorityIpcError extends Error {
 }
 
 export interface AuthorityClient {
+  checkSessionPlan(value: unknown): Promise<PlanCheckResult>;
   getSession(sessionId: unknown): Promise<DurableSessionRecord | null>;
   getSessionConnections(sessionId: unknown): Promise<readonly DurableConnectionRecord[]>;
   getApproval(sessionId: unknown, approvalId: unknown): Promise<ExactApproval | null>;
@@ -130,6 +138,13 @@ export interface AuthorityClient {
   ): Promise<"consumed" | "replayed" | "not_found" | "request_mismatch" | "not_active" | "expired">;
   appendAuthorityAttempt(value: unknown): Promise<void>;
   appendAuthorityDecision(value: unknown): Promise<void>;
+}
+
+export interface AuthorityPlanControlClient {
+  storeSessionPlan(value: unknown): Promise<void>;
+  getSessionPlan(): Promise<SessionPlanState | null>;
+  revokeSessionPlan(grantId: unknown): Promise<boolean>;
+  getPendingPlanRequests(): Promise<readonly PendingPlanRequest[]>;
 }
 
 export interface AuthorityControlClient {
@@ -158,6 +173,12 @@ export interface AuthorityControlClient {
 }
 
 export interface AuthorityWorkerClient {
+  claimExternalExecution?(
+    sessionId: unknown,
+    executionId: unknown,
+    executionDigest: unknown,
+  ): Promise<WorkerExecutionAuthorization>;
+  getWorkerBudget?(sessionId: unknown): Promise<DurableSessionBudget | null>;
   consumeWorkerToolCall(
     sessionId: unknown,
     executionId: unknown,
@@ -183,7 +204,11 @@ export interface AuthorityWorkerClient {
 }
 
 export class LocalAuthorityIpcClient
-  implements AuthorityClient, AuthorityControlClient, AuthorityWorkerClient
+  implements
+    AuthorityClient,
+    AuthorityControlClient,
+    AuthorityPlanControlClient,
+    AuthorityWorkerClient
 {
   readonly #endpoint: string;
   readonly #binding: AuthorityCapabilityBinding;
@@ -271,6 +296,31 @@ export class LocalAuthorityIpcClient
     if (response.operation !== "session.create" || response.result !== "created") {
       throw new AuthorityIpcError("authority_unavailable");
     }
+  }
+
+  async storeSessionPlan(value: unknown) {
+    const response = await this.#call("plan.store", { grant: SessionPlanGrantSchema.parse(value) });
+    if (response.operation !== "plan.store") throw new AuthorityIpcError("authority_unavailable");
+  }
+  async getSessionPlan() {
+    const response = await this.#call("plan.get", {});
+    if (response.operation !== "plan.get") throw new AuthorityIpcError("authority_unavailable");
+    return response.result;
+  }
+  async revokeSessionPlan(grantId: unknown) {
+    const response = await this.#call("plan.revoke", { grantId: OpaqueIdSchema.parse(grantId) });
+    if (response.operation !== "plan.revoke") throw new AuthorityIpcError("authority_unavailable");
+    return response.result;
+  }
+  async checkSessionPlan(value: unknown) {
+    const response = await this.#call("plan.check", { check: PlanCheckRequestSchema.parse(value) });
+    if (response.operation !== "plan.check") throw new AuthorityIpcError("authority_unavailable");
+    return response.result;
+  }
+  async getPendingPlanRequests() {
+    const response = await this.#call("plan.pending", {});
+    if (response.operation !== "plan.pending") throw new AuthorityIpcError("authority_unavailable");
+    return response.result;
   }
 
   async storeApproval(value: unknown): Promise<void> {
@@ -367,6 +417,29 @@ export class LocalAuthorityIpcClient
     return response.result;
   }
 
+  async claimExternalExecution(
+    sessionId: unknown,
+    executionId: unknown,
+    executionDigest: unknown,
+  ): Promise<WorkerExecutionAuthorization> {
+    if (OpaqueIdSchema.parse(sessionId) !== this.#binding.sessionId)
+      throw new AuthorityIpcError("binding_mismatch");
+    const response = await this.#call("worker.claim_external", {
+      executionId: OpaqueIdSchema.parse(executionId),
+      executionDigest: Sha256DigestSchema.parse(executionDigest),
+    });
+    if (response.operation !== "worker.claim_external")
+      throw new AuthorityIpcError("authority_unavailable");
+    return response.result;
+  }
+  async getWorkerBudget(sessionId: unknown): Promise<DurableSessionBudget | null> {
+    if (OpaqueIdSchema.parse(sessionId) !== this.#binding.sessionId)
+      throw new AuthorityIpcError("binding_mismatch");
+    const response = await this.#call("worker.budget", {});
+    if (response.operation !== "worker.budget")
+      throw new AuthorityIpcError("authority_unavailable");
+    return response.result;
+  }
   async consumeWorkerToolCall(
     sessionIdValue: unknown,
     executionIdValue: unknown,
