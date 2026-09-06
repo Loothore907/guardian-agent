@@ -53,13 +53,13 @@ The installation, provider accounts, billing, credentials, policy, and audit dat
 belong to the user. The intended setup flow stores Nebius, optional Tavily, and
 operation-specific credentials through a trusted local ceremony into the host
 operating system's credential store. The runner and models receive typed results,
-never reusable keys. The first infrastructure slice now provides provider-scoped
-contracts, deterministic fakes, trusted setup orchestration, and a tested Windows
-Credential Manager adapter. The Windows CLI now supports provider enrollment,
+never reusable keys. The infrastructure now provides provider-scoped contracts,
+deterministic fakes, trusted setup orchestration, a tested Windows Credential
+Manager adapter, and a deterministic Linux Secret Service adapter. The CLI now supports provider enrollment,
 non-secret status, and exact-confirmation revocation. Enrollment verifies through
 one fixed read-only provider endpoint before storage. The protected Nebius mission-
 brief and Super-to-Ultra Guardian path passes; cross-platform credential-store
-evidence remains pending. `.env.local` remains development-only.
+live evidence remains pending. `.env.local` remains development-only.
 
 ## Current status
 
@@ -77,7 +77,7 @@ local tests. The broker no longer opens SQLite directly; the reference authority
 supervisor generates in-memory role capabilities, makes durable authority mandatory
 for sessions launched through it, and supplies a lower-assurance development
 approval issuer over the authorization role. The user-verifying WebAuthn issuer,
-Linux peer-identity evidence, successful protected GitHub automatic refresh,
+protected Linux credential and GitHub evidence, successful protected GitHub automatic refresh,
 review, and remote CI remain. A deterministic fake Guardian interaction provider now produces one
 bounded mission brief behind a short-lived authenticated local IPC service. It
 cannot propose tools. Model assignments now come from a trusted, versioned role
@@ -96,15 +96,17 @@ corresponding evidence.
 The first C6 credential slice adds strict Nebius, Tavily, and GitHub references,
 a deterministic store, verification-before-write setup orchestration, dependency
 rules preventing agent-side imports, fixed-origin read-only verification, an
-executable setup command, and a Windows Credential Manager adapter.
+executable setup command, a Windows Credential Manager adapter, and a Linux
+Secret Service adapter with no fallback.
 The protected Windows probe passes with a generated credential target that is
 deleted after the test. The deterministic application-visible credential corpus
 now covers process arguments/environment, model context, SQLite, authority
 records, current log/trace surfaces, and public read/merge results. Live Nebius
 verification and successful automatic GitHub token refresh remain open. The
 authority and one-turn interaction services now run as supervised child processes
-with bounded stdin bootstrap and fixed readiness; platform peer identity and
-containment remain open. Protected GitHub enrollment, read, and merge pass;
+with bounded stdin bootstrap and fixed readiness. Linux authority peer identity
+is actively verified; other service peer checks and containment remain open.
+Protected GitHub enrollment, read, and merge pass;
 automatic refresh currently reaches GitHub's documented endpoint but receives a
 provider `HTTP 500`, so fresh device enrollment is the bounded fallback.
 
@@ -250,8 +252,14 @@ The accepted implementation decision is [ADR-0003](docs/adr/0003-implementation-
 Prerequisites:
 
 - Node.js 24 LTS, version 24.19.0 or later but below 25;
-- pnpm 11.19.x; and
-- for the C1 isolation proof, Windows with WSL 2 and an Ubuntu 22.04 distribution.
+- pnpm 11.19.x;
+- on Linux, `/usr/bin/cc` for the narrow peer-credential helper; and
+- for Linux credential operations, `/usr/bin/secret-tool` from `libsecret-tools`
+  plus a running Secret Service in the same user session.
+
+The Windows/WSL development path additionally uses WSL 2 with an Ubuntu 22.04
+distribution for the C1 isolation proof. Linux builds fail closed if the native
+peer helper cannot be built or has unsafe ownership or mode.
 
 Install and run the complete ordinary verification suite:
 
@@ -300,7 +308,7 @@ excluding reserved `.guardian` state. Guardian works in a separate session copy;
 it does not write changes back to the source checkout and deletes the copy when
 the supervisor closes.
 
-On the supported Windows development host, credential setup is interactive:
+On supported Windows and Linux hosts, credential setup is interactive:
 
 ```powershell
 guardian setup nebius
@@ -309,8 +317,8 @@ guardian setup revoke nebius
 ```
 
 Enrollment sends the entered credential only to the provider's fixed read-only
-verification endpoint, then stores it in Windows Credential Manager if the
-response is valid. Tavily replaces `nebius` for its typed slot. GitHub enrollment
+verification endpoint, then stores it in Windows Credential Manager or the Linux
+Secret Service if the response is valid. Tavily replaces `nebius` for its typed slot. GitHub enrollment
 uses an expiring GitHub App device flow instead of pasted or ambient tokens:
 
 ```powershell
@@ -322,15 +330,18 @@ guardian setup github
 The GitHub App must be installed only on the intended repository with Contents
 write and Pull requests read. Guardian shows the fixed verification URL and user
 code, verifies the resulting account, and stores access and refresh tokens in
-separate Windows Credential Manager slots. Status returns only `available` or
+separate operating-system credential-store slots. Status returns only `available` or
 `missing`; revocation requires the exact provider-specific confirmation and
 deletes all three GitHub slots. Automatic refresh is implemented and passes
 deterministic failure/rotation tests, but GitHub currently returns `HTTP 500` to
 the protected device-flow refresh request. Until provider refresh succeeds, an
 operator must repeat `guardian setup github` after the roughly eight-hour access
 token lifetime; this prevents unattended long-running GitHub operation but does
-not block a freshly enrolled demo session. macOS and Linux setup remain
-unimplemented. See [ADR-0009](docs/adr/0009-github-app-device-enrollment.md).
+not block a freshly enrolled demo session. Linux deterministic coverage is
+implemented, but protected Linux credential lifecycle evidence remains pending;
+macOS setup remains unimplemented. See
+[ADR-0009](docs/adr/0009-github-app-device-enrollment.md) and
+[ADR-0038](docs/adr/0038-linux-peer-identity-and-secret-service.md).
 
 If GitHub requires a private key before enabling the initial installation,
 generate it only as a temporary bootstrap, install the App, then immediately

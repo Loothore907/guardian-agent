@@ -1,5 +1,5 @@
 import { WorkerServiceProcessConfigSchema } from "@guardian/contracts";
-import { WindowsCredentialStore } from "@guardian/credential-store";
+import { createPlatformCredentialStore } from "@guardian/credential-store";
 
 import {
   NebiusNativeWorkerProvider,
@@ -43,14 +43,11 @@ async function main(): Promise<void> {
   if (providerMode !== "fake" && providerMode !== "nebius") {
     throw new TypeError("worker provider selection is invalid");
   }
-  if (providerMode === "nebius" && process.platform !== "win32") {
-    throw new TypeError("Nebius native worker currently requires Windows Credential Manager");
-  }
   const bootstrap = WorkerServiceProcessConfigSchema.parse(await readBootstrapFrame());
   const provider =
     providerMode === "fake"
       ? createFakeWorkerProvider()
-      : new NebiusNativeWorkerProvider({ credentialStore: new WindowsCredentialStore() });
+      : new NebiusNativeWorkerProvider({ credentialStore: createPlatformCredentialStore() });
   const service = await startWorkerService(bootstrap, provider);
   process.stdout.write("guardian worker service ready\n");
 
