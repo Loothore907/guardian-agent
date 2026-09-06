@@ -22,11 +22,11 @@ capabilities to assignments and typed sanitized results to workers.
 
 ### Providers, slots, verification, and consumers
 
-| Provider | Current slots | Enrollment/verification | Credential-holding consumers |
-| --- | --- | --- | --- |
-| Nebius | `default` | Pasted credential; fixed Token Factory models endpoint | interaction, Guardian-risk, and native-worker services |
-| Tavily | `default` | Pasted credential; fixed usage endpoint | research service |
-| GitHub | `default`, `refresh`, `metadata` | Fixed GitHub App device flow; authenticated-user verification | GitHub broker |
+| Provider | Current slots                    | Enrollment/verification                                       | Credential-holding consumers                           |
+| -------- | -------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------ |
+| Nebius   | `default`                        | Pasted credential; fixed Token Factory models endpoint        | interaction, Guardian-risk, and native-worker services |
+| Tavily   | `default`                        | Pasted credential; fixed usage endpoint                       | research service                                       |
+| GitHub   | `default`, `refresh`, `metadata` | Fixed GitHub App device flow; authenticated-user verification | GitHub broker                                          |
 
 `metadata` is non-secret JSON but currently shares the credential-store
 abstraction. The future registry must identify it as credential-associated
@@ -35,20 +35,23 @@ and refresh material.
 
 ### Current stores
 
-| Store | Status | Important limits |
-| --- | --- | --- |
-| In-memory | deterministic tests | not persistent or a product store |
-| Windows Credential Manager | implemented and protected locally | Windows-only; replacement semantics need explicit evidence |
-| Linux Secret Service | deterministic adapter and disposable lifecycle pass | intended persistent user session and enrollment UX unproven |
-| macOS Keychain | absent | selected by ADR-0008 but not implemented |
-| Nebius SecretStash | deterministic fixed-resource adapter and consumer-bound bootstrap routing implemented | protected IAM, deployment, and retrieval evidence pending |
+| Store                      | Status                                                                                                                             | Important limits                                                       |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| In-memory                  | deterministic tests                                                                                                                | not persistent or a product store                                      |
+| Windows Credential Manager | implemented and protected locally                                                                                                  | Windows-only; replacement semantics need explicit evidence             |
+| Linux Secret Service       | disposable and normal-user persistent lifecycle, real Nebius enrollment, sanitized status, and protected provider consumption pass | complete service containment and broader secret-corpus evidence remain |
+| macOS Keychain             | absent                                                                                                                             | selected by ADR-0008 but not implemented                               |
+| Nebius SecretStash         | deterministic fixed-resource adapter and consumer-bound bootstrap routing implemented                                              | protected IAM, deployment, and retrieval evidence pending              |
 
 ### Current setup and protected paths
 
-- `guardian setup [enroll|status|revoke] <provider>` is the current management
-  surface.
-- Nebius and Tavily use a raw-terminal byte reader. The protected Linux paste
-  attempt failed and this reader is not accepted as the finished product.
+- `guardian credentials [enroll|review|status|revoke] <provider>` is the stable
+  management surface; `guardian setup` remains a compatibility alias.
+- Nebius and Tavily no longer use the failed raw-terminal reader. The one-use
+  browser composition is compiled and enabled on Windows and Linux after both
+  platform interaction reviews passed.
+- Review mode preflights the actual platform store, then accepts and discards an
+  obvious fake value without provider access or a store write.
 - GitHub uses a browser device flow and stores an access token, refresh token,
   and expiry metadata.
 - Protected scripts directly assume `nebius/default`, `tavily/default`, or the
@@ -92,12 +95,17 @@ evidence remain platform-specific.
 8. Do not request another real credential until the fake-secret setup surface,
    preflight, cancellation, replacement, and redaction gates pass and the user
    reviews the exact interaction.
+9. For providers that display a new key only once, prepare and inspect the exact
+   Guardian destination form before creating the key. Retain the provider modal
+   until Guardian reports storage and the sanitized status plus narrow protected
+   authentication gate pass.
 
 ## Worktree handling
 
-The existing branch contains uncommitted W27 containment work, ADR-0040, protected
-provider harness changes, and failed launcher prototypes. Preserve it while
-performing a changed-line review.
+The current branch contains checkpointed W27 containment, custody, budget, and
+judge-ingress work. The failed launcher prototypes are absent. Preserve those
+coherent commits while completing only the credential bridge needed to resume
+the roadmap.
 
 - Salvage only containment work that remains valid under ADR-0041.
 - Do not run or recommend either failed `run-linux-nebius-provider-live` launcher.
@@ -108,14 +116,26 @@ performing a changed-line review.
 
 ## Execution slices
 
-Progress through 2026-09-03: slices 0 and 1 are complete locally; the
+Progress through 2026-09-04: slices 0 and 1 are complete locally; the
 verify-before-commit and prior-value-preservation core of slice 2 is complete;
 slice 4 has deterministic contracts, a fixed CLI resolver, callback zeroing,
 read-only behavior, consumer projection, and strict service-bootstrap wiring.
 Protected IAM/retrieval evidence and the remaining slices are intentionally not
-claimed. Slice 3 now has a proposed one-time loopback browser-modal spike with
-deterministic fake-secret tests; user interaction review is still required before
-acceptance or real setup-command wiring.
+claimed. Slice 3 now has a hardened one-time loopback browser modal, stable CLI
+alias, actual-store preflight, a provider-free/store-read-only review mode, and a
+deterministically tested real enrollment composition. Windows submission,
+cancellation, and the corrected no-autofill interaction are accepted. The Linux
+fake review passed through the intended-host Secret Service preflight. The user
+then completed a persistent fixture lifecycle, real Linux Nebius enrollment,
+sanitized availability, and bounded protected Qwen/Nemotron consumption.
+
+The user subsequently completed Windows Nebius enrollment. A sanitized status
+check returned `available` in the user context and `missing` in the sandboxed
+agent context. After adding the explicit non-secret BYOK store descriptor to a
+stale protected harness, the supervised Qwen/Nemotron live sequence passed. This
+completes the Windows bridge. The subsequent Linux lifecycle, browser enrollment,
+and provider test complete the local Linux credential bridge. Hosted SecretStash
+assurance and broader intended-Linux service containment remain separate gates.
 
 ### Slice 0: Reconcile the contract and inventory
 

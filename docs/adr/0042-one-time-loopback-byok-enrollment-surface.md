@@ -1,7 +1,9 @@
 # ADR-0042: One-time loopback BYOK enrollment surface
 
-- Status: Proposed; pending user interaction review
+- Status: Accepted for Windows and Linux BYOK
 - Date: 2026-09-03
+- Windows interaction accepted: 2026-09-04
+- Linux interaction and provider consumption accepted: 2026-09-04
 - Extends: ADR-0007, ADR-0008, ADR-0009, and ADR-0041
 
 ## Context
@@ -38,17 +40,23 @@ Submission is accepted only when all of these checks hold:
 - unexpired five-minute lifetime and unused state.
 
 The page uses a nonce-bound Content Security Policy, disables all other resource
-types and framing, sends no CORS permission, stores no cache or referrer, disables
-credential autofill hints, clears the input immediately, and zeroes its encoded
-byte buffer after submission. The local Node boundary zeroes request chunks and
-the callback-scoped secret buffer. Provider diagnostics are replaced with a
-fixed failure message.
+types and framing, sends no CORS permission, stores no cache or referrer, requests
+autocomplete suppression, warns against browser-password-manager storage, clears
+the input immediately, and zeroes its encoded byte buffer after submission. The
+local Node boundary zeroes request chunks and the callback-scoped secret buffer.
+Provider diagnostics are replaced with a fixed failure message.
 
-The first implementation remains a fake-secret spike. It must not be connected
-to `guardian setup` or accept a real credential until the user reviews the exact
-interaction on the intended Linux host. Acceptance then requires replacement,
-provider-verification, cancellation, terminal-loss, browser-close, expiry,
-concurrency, and secret-corpus evidence.
+The CLI exposes the fake ceremony as
+`guardian credentials review <nebius|tavily>`. Review mode preflights the actual
+platform store, labels the page as fake-only, and has no provider or store-write
+callback. The real enrollment composition is compiled and deterministically
+tested. The first Windows review exposed an autofill hint that could encourage
+browser persistence; a corrected-field review then passed without a browser
+generation or autofill attempt. The subsequent Linux review passed against the
+real intended-host Secret Service preflight. Real enrollment is enabled on both
+platforms. `guardian setup` remains a compatibility alias. Each claimed host still
+requires replacement, provider-verification, cancellation, terminal-loss,
+browser-close, expiry, concurrency, and secret-corpus evidence.
 
 ## Security posture
 
@@ -62,6 +70,11 @@ outside any agent-controlled browser automation.
 
 Provider verification remains mandatory before commit. A successful local POST
 means only that input was received; it does not mean the credential was stored.
+For a provider that reveals a new key only once, the operator must start and
+inspect the exact destination form before creating the key and retain the
+provider modal until storage, sanitized status, and narrow authentication
+validation pass. This avoids creating an active key whose value is no longer
+available for its intended store.
 
 ## Alternatives not selected for the spike
 
@@ -86,3 +99,38 @@ means only that input was received; it does not mean the credential was stored.
 - verification-before-commit and prior-value preservation under every modeled
   failure;
 - a separate accepted ADR update before real credential entry is enabled.
+
+The Windows user-operated review passed on 2026-09-04. One first submission
+reached the generic failed outcome, exposing that the page did not state its
+ASCII/no-space constraint. A later browser-generated fake password submitted and
+was explicitly reported as discarded with nothing stored or sent. A separate run
+cancelled successfully. The page now states and checks the input constraint before
+submission. The user's browser also offered a generated password, revealing that
+`autocomplete="new-password"` encouraged unintended browser persistence. The
+field now requests autocomplete suppression, includes common password-manager
+ignore hints, omits a credential-like form name, and warns the user not to save
+the value in the browser. No submitted value or one-time URL was copied into the
+repository or agent conversation. The user then confirmed that the corrected page
+displayed the no-save warning and made no generation or autofill attempt. This
+accepts and enables the interaction for Windows only; it does not establish a real
+credential write, provider verification, or Linux/WSL usability by itself.
+
+The subsequent user-operated Windows enrollment verified one Nebius credential
+against the fixed provider endpoint and stored it in Windows Credential Manager.
+A sanitized host-context status check returned `nebius: available`; the sandboxed
+agent context returned only `nebius: missing`. After correcting a stale protected
+harness to supply the explicit non-secret BYOK store configuration, the bounded
+supervised Qwen/Nemotron live-inference test passed. No credential value, raw
+provider response, or one-time URL was printed or added to repository state.
+
+The Linux user then ran the same fake-only ceremony from the clean ext4 WSL2
+stage with the exact current-user `/run/user/1000/bus` route. The real Secret
+Service preflight returned `nebius: missing`, the page named Linux Secret Service,
+and the fake submission completed successfully without storage or provider use.
+The user subsequently completed the normal-user fixture lifecycle, reset one
+stale revoked local entry to `missing`, and prepared the Guardian form before
+creating a replacement provider key. Real enrollment reported verified storage,
+status returned `nebius: available`, and the protected Linux Qwen/Nemotron gate
+passed in approximately 3.9 seconds. No credential or raw model output was
+printed. This accepts the Linux enrollment interaction and bounded provider
+consumption; broader intended-host service containment remains separate evidence.

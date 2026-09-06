@@ -444,12 +444,17 @@ directory. Neither adapter puts secret material in argv or the helper
 environment. Status is non-secret, and temporary resolved byte copies are scoped
 to credential-holding callbacks and zeroed afterward. Linux has no fallback when
 Secret Service is unavailable. The setup orchestrator verifies the exact provider
-before writing and emits only bounded account metadata. Its current raw-terminal
-input is a diagnostic implementation, not an accepted cross-platform enrollment
-product: a protected Linux paste attempt failed before provider use. The supported
-local setup surface, verified replacement lifecycle, and preflight behavior are
-tracked in the
+before writing and emits only bounded account metadata. The failed raw-terminal
+reader has been removed from the production route. A preflighted one-use loopback
+browser surface is compiled with a provider-free, store-read-only fake review
+mode. The corrected Windows review displayed the no-save warning without a
+browser generation or autofill attempt. The Linux review passed against the real
+intended-host Secret Service preflight. Nebius/Tavily enrollment is enabled on
+both platforms. The supported local
+setup surface, verified replacement lifecycle, and preflight behavior are tracked in the
 [credential custody plan](development/credential-custody-plan.md).
+The deterministic bridge evidence is recorded in
+[local credential review bridge evidence](development/evidence/local-credential-review-bridge.md).
 
 An isolated disposable Linux user session passes a real Secret Service
 write/lookup/rotation/delete lifecycle. Protected provider-credential resolution,

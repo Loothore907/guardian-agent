@@ -2,7 +2,7 @@
 
 Last updated: 2026-09-04 (AKDT)
 
-## Current priority: managed-demo budget and capacity hardening
+## Current priority: resume C6 after protected Linux Nebius consumption
 
 The user explicitly superseded the September 3 emergency stop after confirming
 that the exposed Nebius key was revoked and replaced. They approved the bounded
@@ -10,8 +10,95 @@ local implementation plan for separate project-funded judge and public demo
 capacity. The historical incident record below remains important security
 context, but it is no longer the active work prohibition.
 
+The user has now directed the project back toward the primary C6-C7 roadmap. The
+managed-demo work is paused at a coherent local seam; SecretStash provisioning,
+hosted startup, Caddy, pricing, calibration, load, and deployment are not required
+before resuming BYOK live inference.
+
+The completed interaction gate was the user-operated fake review of
+`guardian credentials review <nebius|tavily>`. The command preflights the actual
+platform store and serves the five-minute one-use loopback ceremony, but its
+review callback can neither contact a provider nor write the store. The failed
+raw-terminal reader is no longer a production route. The real browser-to-fixed-
+verifier-to-transactional-store composition is compiled, tested, and enabled on
+Windows and Linux. The Windows review passed paste and cancellation, then a
+corrected-field recheck displayed the no-save warning without a browser generation
+or autofill attempt. The Linux fake review then passed through the real intended-
+host Secret Service preflight. Real credentials must only be entered through an
+accepted user-operated platform flow.
+
+The user completed Windows Nebius enrollment through that accepted flow. A
+sanitized check returned `nebius: available` in the approved Windows user context
+and only `nebius: missing` in the sandboxed agent context. The first protected
+live attempt then failed before service readiness because its standalone harness
+omitted the newly required non-secret custody descriptor. After the harness was
+corrected, the bounded supervised Qwen/Nemotron live-inference test passed in
+approximately 9.2 seconds without printing a credential or raw provider response.
+
+The return-to-roadmap bridge and Linux credential boundary are now complete. A
+normal-user fixture lifecycle first reached a graphical keyring prompt and failed
+closed when the agent-controlled test could not complete it. The user then ran the
+same isolated fixture lifecycle from their WSL terminal; write, resolve, rotate,
+zero, and delete passed. After the destination was reset to `missing`, the user
+completed the accepted browser enrollment into Linux Secret Service. Sanitized
+status returned `nebius: available`, and the protected Linux Qwen/Nemotron service
+test passed in approximately 3.9 seconds without printing a credential or raw
+provider response. Broader Linux service containment and the narrow GitHub path
+remain separate C6 gates.
+
+## Next-session pickup
+
+Start from these verified facts; do not repeat credential setup merely to regain
+context:
+
+- Branch: `codex/13-c6-linux-provider-containment`.
+- Previous credential-evidence checkpoint: `61d5926`.
+- Windows `nebius/default` reports `available` in the user's Windows context and
+  intentionally reports `missing` from the sandboxed agent context.
+- Linux `nebius/default` reports `available` through the normal WSL user Secret
+  Service at `/run/user/1000/bus`. The earlier stale local value was explicitly
+  deleted before the successful enrollment.
+- Windows and Linux use separate active provider keys and separate OS stores. Do
+  not export, copy between stores, revoke, rotate, or recreate either key unless
+  a verified failure or explicit user direction requires it.
+- The normal-user Linux fixture lifecycle passed one test in 126 ms. The protected
+  Linux Qwen/Nemotron service gate then passed one test in approximately 3.9
+  seconds. Neither path printed credential material or raw provider output.
+- For any future one-time-display provider key, first start and inspect the exact
+  Guardian destination form. Create the key only after the form is waiting, and
+  retain the provider modal until storage, sanitized status, and the narrow
+  authentication gate pass.
+
+Resume work in this order:
+
+1. Read this pickup section, ADR-0042, the credential-custody plan, W26 evidence,
+   the C6 review matrix, and the current security claims. Confirm the branch and
+   worktree before changing anything.
+2. Review the existing W27/intended-host service-containment implementation and
+   identify the smallest missing C6 evidence for the credential-holding Linux
+   Qwen/Nemotron processes: process ancestry and peer checks, minimal bootstrap,
+   environment and argv exclusion, fixed local Secret Service routing, shutdown,
+   and sanitized failure behavior.
+3. Run the narrow deterministic Linux checks first. Add code and near-miss tests
+   only for an evidenced gap, then run the protected intended-host containment
+   gate without re-enrolling Nebius.
+4. After that gate passes, design the separate narrow Linux GitHub read/merge
+   evidence ceremony against an exact disposable target. Define all operator,
+   enrollment, approval, mutation, rollback, and cleanup steps before execution;
+   do not infer provider or GitHub mutation authority from this handoff.
+5. Reconcile issue #13, the C6 review matrix, roadmap, claims, and evidence. Run
+   the complete required suite before requesting review. Only then decide whether
+   the remaining C6 work can close or must be split into named follow-up issues.
+6. Return to only the missing C7 evidence after the C6 residual is resolved. Do
+   not rebuild already proven Qwen/Nemotron adapter behavior.
+
+The managed-demo/hosting branch remains paused at its documented local seam.
+SecretStash provisioning, Caddy, pricing, calibration, load testing, IAM, funding,
+and deployment are not prerequisites for the next C6 step and are not authorized
+by this pickup section.
+
 The current branch is `codex/13-c6-linux-provider-containment`. Local commits
-`4fa4f42` through `fa1809b` implement:
+from `4fa4f42` through the current branch head implement:
 
 - strict public/judge policies, integer micro-USD price evidence, admission,
   sanitized usage, settlement, and operator-update contracts;
@@ -37,17 +124,22 @@ The current branch is `codex/13-c6-linux-provider-containment`. Local commits
 - an admission-before-execution coordinator that attempts one settlement for
   completion, failure, malformed output, exception, abort, and disconnect paths,
   plus the reference supervisor's projection of exact interaction, Guardian,
-  worker, and research reporters without exposing a ledger path.
+  worker, and research reporters without exposing a ledger path; and
+- the stable `guardian credentials` entry point, provider-free/store-read-only
+  fake review, hardened one-use loopback surface, and review-gated transactional
+  enrollment composition with no production raw-terminal path.
 
 ADRs 0043 through 0046 record these decisions. The complete ordinary gate passes:
-72 Vitest files / 518 tests with 4 protected files / 10 protected tests skipped,
+72 Vitest files / 524 tests with 4 protected files / 10 protected tests skipped,
 7/8 SQLite spike tests with the POSIX-only case skipped on Windows, 2/2 reset
-tests, 201 modules / 426 dependency edges, TypeScript, lint, formatting, Linux
+tests, 201 modules / 427 dependency edges, TypeScript, lint, formatting, Linux
 peer-helper build, and the production web build.
 
 This is locally implemented containment, not a deployed or calibrated budget
-guarantee. No credential, provider call, IAM change, deployment, push, pull
-request, merge, release, or other remote mutation occurred. Remaining gates are:
+guarantee. No managed-demo credential provisioning, IAM change, deployment,
+push, pull request, merge, release, or other remote mutation occurred. The
+separate protected BYOK Nebius calls are recorded above. Remaining hosted gates
+are:
 
 1. add the protected judge startup that resolves the access digest and source key
    from fixed SecretStash payloads, constructs the budget controller and concrete
@@ -117,13 +209,16 @@ approved local plan unless separately authorized.
   bootstrap. Managed-demo configurations are projected per consumer, and each
   instantiated store independently rejects providers outside that service's
   capability.
-- ADR-0042 proposes a five-minute, one-use `127.0.0.1` browser modal for pasted
-  BYOK credentials. Its fake-secret spike covers origin/capability binding,
-  replay, cancellation, bounded input, sanitized failure, CSP/no-store headers,
-  and zeroing. It is not connected to real setup pending user interaction review.
-- No credential, live provider, IAM, deployment, push, pull-request, merge,
-  release, or other remote mutation was used for this checkpoint. Protected
-  SecretStash retrieval and fake-secret BYOK surface review remain next gates.
+- ADR-0042 defines the five-minute, one-use `127.0.0.1` browser modal; hands-on
+  review now accepts it on Windows and Linux. Fake review covers origin/capability
+  binding, replay, cancellation, bounded input, sanitized failure, CSP/no-store
+  headers, and zeroing. Real Nebius enrollment, sanitized availability, and
+  bounded supervised Qwen/Nemotron consumption pass on both platforms. The Linux
+  normal-user fixture lifecycle also passes write, resolve, rotation, zeroing,
+  and deletion through the intended Secret Service route.
+- No IAM, deployment, push, pull-request, merge, release, or other remote mutation
+  was used for this checkpoint. Broader intended-Linux service containment and
+  the narrow protected Linux GitHub path remain next.
 
 This is the single rotating pickup page for a fresh development session. Treat it
 as context and sequencing guidance, not as the next session's goal by itself.
@@ -247,7 +342,7 @@ evidence passes may any older roadmap action below be reconsidered.
 - The broader W27 changes had passed focused and ordinary checks before the
   protected provider attempt, but no protected Linux provider credential result
   exists. The final user-launched attempt stopped at `credential input is
-  invalid`.
+invalid`.
 - The npm advisory investigation found repeatable bulk-endpoint timeouts while
   npm status reported operational. The npm support page was blocked by human
   verification and no report was submitted. This is paused.
@@ -1371,6 +1466,7 @@ wrapper when the frozen workspace is already usable.
 - [ADR-0045: Nebius judge hosting and domain ingress](../adr/0045-nebius-judge-hosting-and-domain-ingress.md)
 - [ADR-0046: Managed-demo judge ingress and source fingerprints](../adr/0046-managed-demo-judge-ingress-and-source-fingerprints.md)
 - [Managed-demo judge ingress evidence](evidence/managed-demo-judge-ingress.md)
+- [Local credential review bridge evidence](evidence/local-credential-review-bridge.md)
 - [W2 session workspace evidence](evidence/w2-session-workspace.md)
 - [W3 worker tool round-trip evidence](evidence/w3-worker-tool-round-trip.md)
 - [W4 denial containment evidence](evidence/w4-denial-containment.md)

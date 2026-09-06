@@ -67,11 +67,13 @@ results, never reusable keys.
 The infrastructure currently provides registered provider/slot contracts,
 deterministic fakes, setup orchestration, a tested Windows Credential Manager
 adapter, a deterministic Linux Secret Service adapter, and a passing disposable
-Secret Service lifecycle in an isolated Linux user session. The existing CLI can
-exercise enrollment, status, and revocation, but its raw-terminal input is not the
-finished enrollment product: the protected Linux paste journey failed before
-provider use. Protected Linux provider-credential evidence, a reviewed local
-setup surface, and macOS support remain pending. `.env.local` remains
+Secret Service lifecycle in an isolated Linux user session. The stable
+`guardian credentials` CLI now exercises fake browser review, status, and
+revocation. Its real loopback enrollment is accepted on Windows and Linux. A
+user-operated Windows Nebius enrollment, sanitized status check, and protected
+credential-isolated Qwen/Nemotron inference pass; the Linux fake interaction and
+real Secret Service preflight pass, while real Linux enrollment and provider
+consumption remain next. macOS support remains pending. `.env.local` remains
 development-only.
 
 ## Current status
@@ -322,26 +324,30 @@ excluding reserved `.guardian` state. Guardian works in a separate session copy;
 it does not write changes back to the source checkout and deletes the copy when
 the supervisor closes.
 
-The current development CLI shape is:
+The current credential-management CLI shape is:
 
 ```powershell
-guardian setup nebius
-guardian setup status nebius
-guardian setup revoke nebius
+guardian credentials review nebius
+guardian credentials status nebius
+guardian credentials revoke nebius
 ```
 
-Do not use this raw-terminal flow for a protected Linux credential yet. It is
-being replaced by the preflighted, user-owned setup surface in the
-[credential custody plan](docs/development/credential-custody-plan.md). Its
-deterministic orchestration verifies against a fixed read-only provider endpoint
-before writing to Windows Credential Manager or Linux Secret Service. Tavily uses
-the same registered `default` slot. GitHub uses an expiring GitHub App device flow
-instead of pasted or ambient tokens:
+`guardian setup` remains a compatibility alias. Nebius and Tavily no longer use
+the failed raw-terminal reader. The review command preflights the platform store,
+opens a five-minute one-use loopback ceremony, accepts only fake interaction
+testing, and neither contacts a provider nor writes the store. The Windows review
+passed submission, cancellation, and a corrected-field recheck after an unwanted
+generated-password prompt was removed. The Linux review then passed against the
+real intended-host Secret Service preflight. `guardian credentials enroll
+<provider>` is therefore enabled on Windows and Linux: it verifies against a fixed
+read-only provider endpoint before transactionally writing the selected OS store.
+Tavily uses the same registered `default` slot.
+GitHub retains its expiring App device flow instead of pasted or ambient tokens:
 
 ```powershell
 $env:GUARDIAN_GITHUB_APP_CLIENT_ID = "Iv23liP8Sq3ZEAyeIHju"
 $env:GUARDIAN_GITHUB_REPOSITORY_ID = "1352093544"
-guardian setup github
+guardian credentials github
 ```
 
 The GitHub App must be installed only on the intended repository with Contents
@@ -352,7 +358,7 @@ separate operating-system credential-store slots. Status returns only `available
 deletes all three GitHub slots. Automatic refresh is implemented and passes
 deterministic failure/rotation tests, but GitHub currently returns `HTTP 500` to
 the protected device-flow refresh request. Until provider refresh succeeds, an
-operator must repeat `guardian setup github` after the roughly eight-hour access
+operator must repeat `guardian credentials github` after the roughly eight-hour access
 token lifetime; this prevents unattended long-running GitHub operation but does
 not block a freshly enrolled demo session. Linux deterministic coverage and a
 real disposable Secret Service lifecycle pass in an isolated user session, but

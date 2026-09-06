@@ -1,10 +1,11 @@
 # W26 Linux Secret Service lifecycle evidence
 
-- Date: 2026-09-03 (AKDT)
+- Date: 2026-09-03; intended-host completion 2026-09-04 (AKDT)
 - Issue: [#13](https://github.com/Loothore907/guardian-agent/issues/13)
 - Parent branch: `codex/13-c6-linux-peer-credentials`
 - Branch: `codex/13-c6-linux-secret-service`
-- Status: Real disposable Secret Service lifecycle passed; protected provider credential and broader service containment remain
+- Status: Disposable and intended-host persistent lifecycles, real enrollment,
+  and protected Nebius provider consumption pass; broader containment remains
 
 ## Outcome
 
@@ -62,11 +63,64 @@ No enrolled credential was read or written, no provider was contacted, and no
 GitHub operation occurred. The temporary keyring directory and test daemon were
 absent after the run.
 
+On 2026-09-04 the intended WSL2 host was rechecked with systemd PID 1, the active
+current-user manager, installed `secret-tool`/GNOME Keyring tooling, and the exact
+ADR-0040 `/run/user/1000/bus` route. A clean tracked-source-only ext4 stage used
+the retained checksum-verified Node 24.19.0 runtime and lockfile-verified offline
+dependencies. Sanitized status returned `nebius: missing`, proving the normal user
+Secret Service was reachable without the disposable harness. The user then
+completed the fake-only browser review successfully. No real credential was
+entered, stored, or sent to a provider during that review.
+
+The Linux-activation source then passed the complete clean-stage gate: 72 Vitest
+files / 528 tests passed, with four files / six protected or other-platform tests
+skipped; all eight SQLite cases passed; both reset-planner tests passed; 201
+modules / 427 dependency edges had no violation; and formatting, lint, TypeScript,
+the Linux peer-helper build, and the production web build passed. The corresponding
+Windows gate passed 72 files / 524 tests with four files / ten protected or
+other-platform tests skipped.
+
+The first normal-user persistent lifecycle attempt was deliberately run with only
+generated fixture material. Secret Service activated and requested its graphical
+keyring prompt, but the agent-controlled test could not complete that human prompt.
+The helper timed out after 15 seconds and the lifecycle failed closed at its first
+write. No provider was contacted and no successful credential write was reported.
+This demonstrates that lookup/preflight readiness is not persistent-write
+readiness in the WSL login environment. A user-operated fake lifecycle must create
+or unlock the collection before any real Linux credential is entered.
+
+The user then ran the isolated integration lifecycle from their own WSL terminal
+in the normal user session. One test passed in 126 ms, covering write, resolve,
+rotation, temporary-buffer zeroing, and deletion through the fixed Secret Service
+adapter. No provider credential was involved in that fixture lifecycle.
+
+Before real enrollment, Guardian deleted one stale local `nebius/default` entry
+whose provider-side key had already been revoked. Sanitized status then returned
+`nebius: missing`. The user started the accepted Guardian browser surface and
+confirmed its Linux Secret Service destination before creating a replacement
+provider key. The displayed value traveled only from the provider modal to the
+Guardian browser form. Guardian verified the fixed Nebius endpoint and reported
+successful storage for the bounded account label. Sanitized intended-host status
+then returned `nebius: available`.
+
+With the provider modal retained until validation completed, the protected Linux
+gate ran:
+
+```sh
+GUARDIAN_TEST_NEBIUS_MODELS=1 pnpm test:live:nebius-models
+```
+
+The production build passed and the one protected test passed in approximately
+3.9 seconds. It proved that the supervised Qwen and Nemotron services resolved
+the enrolled credential through the Linux Secret Service path. The harness
+printed neither credential material nor raw model output and performed no
+privileged external effect beyond paid inference usage.
+
 ## Claim boundary and next step
 
-This is active compatibility evidence for a real Linux Secret Service lifecycle
-using disposable data. It does not prove that an operator's persistent desktop
-keyring is correctly configured, that credential-holding service processes are
-fully contained on the intended Linux host, or that a protected provider
-credential can be resolved without leakage. Those claims remain open, followed
-by the separately authorized narrow Linux GitHub read/merge evidence.
+This is active evidence for disposable and normal-user persistent Secret Service
+lifecycles, accepted real Linux enrollment, sanitized availability, and bounded
+protected Nebius consumption through supervised credential-holding services. It
+does not prove that every credential-holding service process is fully contained
+on the intended Linux host, complete artifact/process secret-corpus exclusion, or
+the narrow Linux GitHub read/merge path. Those C6 claims remain open.
