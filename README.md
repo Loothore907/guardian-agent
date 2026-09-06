@@ -55,11 +55,13 @@ operation-specific credentials through a trusted local ceremony into the host
 operating system's credential store. The runner and models receive typed results,
 never reusable keys. The infrastructure now provides provider-scoped contracts,
 deterministic fakes, trusted setup orchestration, a tested Windows Credential
-Manager adapter, and a deterministic Linux Secret Service adapter. The CLI now supports provider enrollment,
-non-secret status, and exact-confirmation revocation. Enrollment verifies through
-one fixed read-only provider endpoint before storage. The protected Nebius mission-
-brief and Super-to-Ultra Guardian path passes; cross-platform credential-store
-live evidence remains pending. `.env.local` remains development-only.
+Manager adapter, a deterministic Linux Secret Service adapter, and a passing real
+disposable Secret Service lifecycle in an isolated Linux user session. The CLI
+now supports provider enrollment, non-secret status, and exact-confirmation
+revocation. Enrollment verifies through one fixed read-only provider endpoint
+before storage. The protected Nebius mission-brief and Super-to-Ultra Guardian
+path passes; protected Linux provider-credential evidence and macOS support
+remain pending. `.env.local` remains development-only.
 
 ## Current status
 
@@ -77,9 +79,10 @@ local tests. The broker no longer opens SQLite directly; the reference authority
 supervisor generates in-memory role capabilities, makes durable authority mandatory
 for sessions launched through it, and supplies a lower-assurance development
 approval issuer over the authorization role. The user-verifying WebAuthn issuer,
-protected Linux credential and GitHub evidence, successful protected GitHub automatic refresh,
-review, and remote CI remain. A deterministic fake Guardian interaction provider now produces one
-bounded mission brief behind a short-lived authenticated local IPC service. It
+protected Linux provider-credential and GitHub evidence, successful protected
+GitHub automatic refresh, review, and remote CI remain. A deterministic fake
+Guardian interaction provider now produces one bounded mission brief behind a
+short-lived authenticated local IPC service. It
 cannot propose tools. Model assignments now come from a trusted, versioned role
 policy: the current competition policy pins Qwen for mission dialogue and
 Nemotron Super-to-Ultra for contextual risk, while permitting reviewed future
@@ -337,9 +340,10 @@ deterministic failure/rotation tests, but GitHub currently returns `HTTP 500` to
 the protected device-flow refresh request. Until provider refresh succeeds, an
 operator must repeat `guardian setup github` after the roughly eight-hour access
 token lifetime; this prevents unattended long-running GitHub operation but does
-not block a freshly enrolled demo session. Linux deterministic coverage is
-implemented, but protected Linux credential lifecycle evidence remains pending;
-macOS setup remains unimplemented. See
+not block a freshly enrolled demo session. Linux deterministic coverage and a
+real disposable Secret Service lifecycle pass in an isolated user session, but
+protected Linux provider-credential and GitHub evidence remain pending; macOS
+setup remains unimplemented. See
 [ADR-0009](docs/adr/0009-github-app-device-enrollment.md) and
 [ADR-0038](docs/adr/0038-linux-peer-identity-and-secret-service.md).
 
