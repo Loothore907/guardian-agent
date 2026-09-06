@@ -1,4 +1,5 @@
 import {
+  JUDGE_SCENARIOS,
   ManagedDemoJudgeJourneyPublicResultSchema,
   ManagedDemoJudgeJourneyRequestSchema,
   OpaqueIdSchema,
@@ -6,6 +7,7 @@ import {
 } from "@guardian/contracts";
 import Fastify, { LogController } from "fastify";
 import type { FastifyReply } from "fastify";
+import { JudgePortalError, type JudgePortal } from "./judge-portal.js";
 
 import {
   canonicalizeManagedDemoSourceAddress,
@@ -17,6 +19,7 @@ import {
 const JUDGE_JOURNEY_PATH = "/v1/judge/journeys";
 
 export interface ManagedDemoJudgeRouteOptions {
+  readonly portal?: JudgePortal;
   readonly deploymentId: unknown;
   readonly expectedHost: unknown;
   readonly secrets: ManagedDemoJudgeIngressSecretMaterial;
@@ -118,15 +121,27 @@ export function buildControlApi({
   app.get("/health", () =>
     SessionStatusSchema.parse({ status: "foundation", assurance: "unknown" }),
   );
+  app.setNotFoundHandler((_request, reply) => reply.status(404).send({ code: "not_found" }));
+
+  app.get("/v1/judge/catalog", (_request, reply) =>
+    reply.header("cache-control", "no-store").send(
+      judge?.portal?.catalog() ?? {
+        schemaVersion: 1,
+        pilotedAvailable: false,
+        scenarios: JUDGE_SCENARIOS.map((s) => ({ ...s, available: false })),
+      },
+    ),
+  );
 
   if (judge !== undefined) {
     const deploymentId = OpaqueIdSchema.parse(judge.deploymentId);
     const expectedHost = normalizeExpectedHost(judge.expectedHost);
     app.addHook("onClose", () => {
       judge.secrets.close();
+      return judge.portal?.close();
     });
     app.setErrorHandler((error, request, reply) => {
-      if (request.url.startsWith(JUDGE_JOURNEY_PATH)) {
+      if (request.url.startsWith("/v1/judge/")) {
         const result = ManagedDemoJudgeJourneyPublicResultSchema.parse({
           schemaVersion: 1,
           state: "stopped",
@@ -138,6 +153,54 @@ export function buildControlApi({
       request.log.error({ error }, "control API request failed");
       void reply.status(500).send({ error: "service_unavailable" });
     });
+    if (judge.portal !== undefined) {
+      const portal = judge.portal;
+      for (const action of ["draft", "confirm"] as const) {
+        app.post(`/v1/judge/${action}`, async (request, reply) => {
+          reply.header("cache-control", "no-store");
+          if (request.url !== `/v1/judge/${action}`)
+            return reply.status(400).send({ code: "invalid_request" });
+          const sourceAddress = trustedManagedDemoClientAddress(
+            request.raw.socket.remoteAddress,
+            request.headers,
+            expectedHost,
+          );
+          const credential = bearerCredential(request.headers.authorization);
+          if (
+            sourceAddress === null ||
+            credential === null ||
+            !judge.secrets.verifyBearerCredential(credential)
+          )
+            return reply.status(401).send({ code: "unauthorized" });
+          const abort = new AbortController();
+          const disconnect = () => {
+            if (!reply.raw.writableFinished) abort.abort();
+          };
+          reply.raw.once("close", disconnect);
+          try {
+            const source = judge.secrets.deriveSourceFingerprint(deploymentId, sourceAddress);
+            return await (action === "draft"
+              ? portal.draft(request.body, source)
+              : portal.confirm(request.body, source, abort.signal));
+          } catch (error) {
+            const code = error instanceof JudgePortalError ? error.code : "unavailable";
+            return reply
+              .status(
+                code === "invalid_request"
+                  ? 400
+                  : code === "preview_unavailable"
+                    ? 409
+                    : code === "capacity_unavailable"
+                      ? 429
+                      : 503,
+              )
+              .send({ code });
+          } finally {
+            reply.raw.removeListener("close", disconnect);
+          }
+        });
+      }
+    }
     app.post(JUDGE_JOURNEY_PATH, async (request, reply) => {
       const sourceAddress = trustedManagedDemoClientAddress(
         request.raw.socket.remoteAddress,
