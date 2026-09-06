@@ -74,6 +74,7 @@ export type GuardianRiskSignal = z.infer<typeof GuardianRiskSignalSchema>;
 export const GuardianRiskEnvelopeSchema = z
   .strictObject({
     proposal: ToolProposalSchema,
+    missionObjective: boundedCredentialSafeText(500).optional(),
     deterministicFloor: AuthorizationLevelSchema,
     riskSignals: z.array(GuardianRiskSignalSchema).min(1).max(8),
     untrustedExcerpts: z.array(boundedCredentialSafeText(500)).max(4),

@@ -43,7 +43,7 @@ function credential(value: unknown): string {
   if (
     typeof value !== "string" ||
     value.length < 8 ||
-    value.length > 1_024 ||
+    value.length > 8_192 ||
     Array.from(value).some((character) => {
       const codePoint = character.codePointAt(0);
       return (
@@ -155,7 +155,58 @@ export class GitHubPullRequestAdapter {
       );
       const head = record(payload.head);
       const base = record(payload.base);
-      return GitHubPullRequestSnapshotSchema.parse({
+      let review: unknown;
+      if (operation.content === "review") {
+        const files = await this.#request(
+          `/repos/${operation.owner}/${operation.repository}/pulls/${operation.pullRequest}/files?per_page=9`,
+          { method: "GET" },
+        );
+        if (
+          !Array.isArray(files) ||
+          files.length > 8 ||
+          !Number.isSafeInteger(payload.changed_files) ||
+          payload.changed_files !== files.length
+        )
+          throw new GitHubAdapterError("provider_response_invalid");
+        // Reject unsafe/oversized content rather than silently clipping a secret or patch.
+        const text = (v: unknown) =>
+          typeof v === "string"
+            ? v
+                .replace(/\r?\n|\t/gu, " ")
+                .normalize("NFC")
+                .trim()
+            : v;
+        review = {
+          contentTrust: "untrusted_public_content",
+          body: text(payload.body ?? ""),
+          baseCommit: base.sha,
+          files: files.map((v) => {
+            const f = record(v);
+            return {
+              path: f.filename,
+              status: f.status,
+              patch: f.patch == null ? null : text(f.patch),
+            };
+          }),
+          complete: files.every((v) => typeof record(v).patch === "string"),
+        };
+        const refreshed = record(
+          await this.#request(
+            `/repos/${operation.owner}/${operation.repository}/pulls/${operation.pullRequest}`,
+            { method: "GET" },
+          ),
+        );
+        if (
+          record(refreshed.head).sha !== head.sha ||
+          record(refreshed.base).sha !== base.sha ||
+          record(refreshed.base).ref !== base.ref ||
+          refreshed.body !== payload.body ||
+          refreshed.changed_files !== payload.changed_files ||
+          refreshed.state !== payload.state
+        )
+          throw new GitHubAdapterError("resource_changed");
+      }
+      const snapshot = GitHubPullRequestSnapshotSchema.parse({
         owner: operation.owner,
         repository: operation.repository,
         pullRequest: operation.pullRequest,
@@ -164,7 +215,11 @@ export class GitHubPullRequestAdapter {
         draft: payload.draft,
         title: payload.title,
         baseBranch: base.ref,
+        ...(review === undefined ? {} : { review }),
       });
+      if (JSON.stringify(snapshot).includes(this.#credential))
+        throw new GitHubAdapterError("provider_response_invalid");
+      return snapshot;
     } catch (error) {
       if (error instanceof GitHubAdapterError) throw error;
       throw new GitHubAdapterError("provider_response_invalid");

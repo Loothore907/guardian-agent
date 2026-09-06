@@ -91,7 +91,7 @@ function token(value: unknown, prefix: "ghu_" | "ghr_"): Uint8Array {
   return Uint8Array.from(Buffer.from(value, "utf8"));
 }
 
-async function boundedJson(response: Response): Promise<unknown> {
+export async function boundedGitHubCredentialJson(response: Response): Promise<unknown> {
   const contentType = response.headers.get("content-type");
   if (contentType === null || !contentType.toLowerCase().startsWith("application/json")) {
     throw new GitHubCredentialError();
@@ -316,7 +316,7 @@ export class GitHubStoredCredentialResolver {
     if (!response.ok) {
       let providerCode: GitHubCredentialRefreshProviderCode = "unknown";
       try {
-        providerCode = refreshProviderCode(await boundedJson(response));
+        providerCode = refreshProviderCode(await boundedGitHubCredentialJson(response));
       } catch {
         // The fixed unknown code is sufficient when a rejected body is not safely parseable.
       }
@@ -331,7 +331,7 @@ export class GitHubStoredCredentialResolver {
     }
     let rotated: ReturnType<typeof refreshResponse>;
     try {
-      rotated = refreshResponse(await boundedJson(response), now);
+      rotated = refreshResponse(await boundedGitHubCredentialJson(response), now);
     } catch {
       this.#report("provider_response", "failed");
       await this.#cleanup();

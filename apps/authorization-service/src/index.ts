@@ -1,7 +1,16 @@
+import { DeploymentAuthorizationSchema } from "@guardian/contracts";
+import { SessionPlanSchema, type SessionPlanGrant } from "@guardian/contracts";
 import { randomUUID } from "node:crypto";
 
-import type { AuthorityControlClient } from "@guardian/authority-client";
-import { digestCanonicalRequest } from "@guardian/authorization";
+import type {
+  AuthorityControlClient,
+  AuthorityPlanControlClient,
+} from "@guardian/authority-client";
+import {
+  digestCanonicalRequest,
+  digestSessionPlan,
+  digestSessionPlanIntent,
+} from "@guardian/authorization";
 import {
   AuthorityCapabilityBindingSchema,
   CanonicalRequestSchema,
@@ -32,12 +41,12 @@ export interface IssuedDevelopmentApproval {
 }
 
 export class DevelopmentAuthorizationIssuer {
-  readonly #authority: AuthorityControlClient;
+  readonly #authority: AuthorityControlClient & AuthorityPlanControlClient;
   readonly #binding: AuthorityCapabilityBinding;
   readonly #now: () => string;
 
   constructor(options: {
-    readonly authority: AuthorityControlClient;
+    readonly authority: AuthorityControlClient & AuthorityPlanControlClient;
     readonly binding: unknown;
     readonly now?: () => string;
   }) {
@@ -50,6 +59,85 @@ export class DevelopmentAuthorizationIssuer {
       throw new TypeError("authorization issuer requires approval storage authority");
     }
     this.#now = options.now ?? (() => new Date().toISOString());
+  }
+
+  async issueSessionPlan(options: {
+    readonly plan: unknown;
+    readonly confirmation: DevelopmentConfirmation;
+  }): Promise<SessionPlanGrant> {
+    const plan = SessionPlanSchema.parse(options.plan);
+    const confirmedBy = OpaqueIdSchema.parse(options.confirmation.principalId);
+    const confirmedAt = TimestampSchema.parse(options.confirmation.confirmedAt);
+    const now = Date.parse(TimestampSchema.parse(this.#now()));
+    if (
+      !this.#binding.allowedOperations.includes("plan.store") ||
+      plan.sessionId !== this.#binding.sessionId ||
+      plan.callerId !== this.#binding.callerId ||
+      Date.parse(plan.startsAt) < Date.parse(this.#binding.issuedAt) ||
+      Date.parse(plan.expiresAt) > Date.parse(this.#binding.expiresAt) ||
+      now < Date.parse(confirmedAt) ||
+      now - Date.parse(confirmedAt) > MAXIMUM_CONFIRMATION_AGE_MS
+    ) {
+      throw new TypeError("plan requires fresh session-bound confirmation");
+    }
+    const grant: SessionPlanGrant = {
+      grantId: randomUUID(),
+      plan,
+      planDigest: digestSessionPlan(plan),
+      confirmedBy,
+      confirmedAt,
+      assurance: "development_confirmation",
+    };
+    await this.#authority.storeSessionPlan(grant);
+    return grant;
+  }
+
+  async issueDeploymentSessionPlan(options: {
+    readonly plan: unknown;
+    readonly authorization: unknown;
+  }): Promise<SessionPlanGrant> {
+    const plan = SessionPlanSchema.parse(options.plan);
+    const authorization = DeploymentAuthorizationSchema.parse(options.authorization);
+    const now = Date.parse(TimestampSchema.parse(this.#now()));
+    const intent = {
+      maxActions: plan.maxActions,
+      maxMutations: plan.maxMutations,
+      mutationRetries: plan.mutationRetries,
+      targets: plan.targets,
+    };
+    if (
+      !this.#binding.allowedOperations.includes("plan.store") ||
+      plan.sessionId !== this.#binding.sessionId ||
+      plan.callerId !== this.#binding.callerId ||
+      Date.parse(plan.startsAt) < Date.parse(this.#binding.issuedAt) ||
+      Date.parse(plan.expiresAt) > Date.parse(this.#binding.expiresAt) ||
+      now < Date.parse(authorization.authorizedAt) ||
+      now >= Date.parse(authorization.expiresAt) ||
+      Date.parse(plan.expiresAt) > Date.parse(authorization.expiresAt) ||
+      authorization.sessionPlanIntentDigest !== digestSessionPlanIntent(intent)
+    )
+      throw new TypeError("deployment authorization does not cover session plan");
+    const grant: SessionPlanGrant = {
+      grantId: randomUUID(),
+      plan,
+      planDigest: digestSessionPlan(plan),
+      confirmedBy: authorization.principalId,
+      confirmedAt: authorization.authorizedAt,
+      assurance: "deployment_authorization",
+      deploymentAuthorization: authorization,
+    };
+    await this.#authority.storeSessionPlan(grant);
+    return grant;
+  }
+
+  async getSessionPlan() {
+    return await this.#authority.getSessionPlan();
+  }
+  async getPendingPlanRequests() {
+    return await this.#authority.getPendingPlanRequests();
+  }
+  async revokeSessionPlan(grantId: unknown) {
+    return await this.#authority.revokeSessionPlan(grantId);
   }
 
   async issueExactApproval(options: {

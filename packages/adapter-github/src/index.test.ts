@@ -170,3 +170,28 @@ describe("GitHub pull-request adapter", () => {
     expect(cancelled).toBe(true);
   });
 });
+
+it("accepts bounded variable-length installation tokens and rejects oversized credentials", async () => {
+  const token = "ghs_123_" + "a".repeat(1500);
+  const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+    jsonResponse({
+      head: { sha: HEAD },
+      base: { ref: "main" },
+      state: "open",
+      draft: false,
+      title: "Fixture",
+    }),
+  );
+  const adapter = new GitHubPullRequestAdapter(token, fetchMock);
+  await adapter.read({
+    type: "github.pull_request.read",
+    owner: "owner",
+    repository: "demo",
+    pullRequest: 1,
+  });
+  expect(new Headers(fetchMock.mock.calls[0]?.[1]?.headers).get("authorization")).toBe(
+    `Bearer ${token}`,
+  );
+  expect(() => new GitHubPullRequestAdapter("a".repeat(8193), fetchMock)).toThrow();
+  expect(fetchMock).toHaveBeenCalledOnce();
+});

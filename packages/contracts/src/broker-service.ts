@@ -11,6 +11,7 @@ const BROKER_AUTHORITY_OPERATIONS = new Set([
   "session.get",
   "connection.list",
   "approval.get",
+  "plan.check",
   "approval.state",
   "budget.consume_tool",
   "approval.consume",

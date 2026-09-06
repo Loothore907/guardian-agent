@@ -582,7 +582,7 @@ describe("SQLite authority store", () => {
     );
 
     const raw = new DatabaseSync(path);
-    raw.exec("PRAGMA user_version = 5;");
+    raw.exec("PRAGMA user_version = 999;");
     raw.close();
     if (process.platform !== "win32") await chmod(path, 0o600);
     const unsupported = new SqliteAuthorityStore(path);
@@ -607,6 +607,8 @@ describe("SQLite authority store", () => {
       await chmod(path, 0o600);
 
       await writeFile(`${path}-wal`, "", { mode: 0o640 });
+      // Set the rejection fixture explicitly; a restrictive host umask masks creation modes.
+      await chmod(`${path}-wal`, 0o640);
       expect(() => new SqliteAuthorityStore(path)).toThrow(/file permissions are too broad/u);
       await rm(`${path}-wal`);
 
@@ -626,4 +628,34 @@ describe("SQLite authority store", () => {
       expect(() => new SqliteAuthorityStore(path)).toThrow(/regular SQLite files/u);
     },
   );
+});
+
+describe("external worker claims", () => {
+  it("claims once without double charging and persists replay rejection", async () => {
+    const path = await databasePath();
+    let store = new SqliteAuthorityStore(path, { now: () => ACTIVE_AT });
+    store.initialize();
+    store.createSession(session(), {
+      sessionId: IDS.session,
+      remainingToolCalls: 5,
+      remainingLocalCommands: 0,
+      remainingResearchRequests: 2,
+      remainingResearchResults: 3,
+    });
+    const id = randomUUID();
+    expect(store.claimExternalExecution(IDS.session, id, REQUEST_DIGEST).outcome).toBe("allowed");
+    expect(store.getBudget(IDS.session)?.remainingToolCalls).toBe(5);
+    expect(store.consumeToolCall(IDS.session)?.remainingToolCalls).toBe(4);
+    store.close();
+    store = new SqliteAuthorityStore(path, { now: () => ACTIVE_AT });
+    store.initialize();
+    try {
+      expect(store.claimExternalExecution(IDS.session, id, REQUEST_DIGEST)).toMatchObject({
+        outcome: "denied",
+        disposition: "revoked",
+      });
+    } finally {
+      store.close();
+    }
+  });
 });

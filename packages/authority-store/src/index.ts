@@ -1,3 +1,4 @@
+import { SessionPlans, SESSION_PLANS_SQL } from "./session-plans.js";
 import { chmodSync, existsSync, lstatSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { dirname, extname, isAbsolute, relative, resolve } from "node:path";
@@ -36,7 +37,7 @@ import {
   type WorkerViolationCode,
 } from "@guardian/contracts";
 
-const AUTHORITY_SCHEMA_VERSION = 4;
+const AUTHORITY_SCHEMA_VERSION = 6;
 
 const WORKER_BOUNDARY_EVENTS_SQL = `
   CREATE TABLE worker_boundary_events (
@@ -156,6 +157,8 @@ export class SqliteAuthorityStore {
       version !== 1 &&
       version !== 2 &&
       version !== 3 &&
+      version !== 4 &&
+      version !== 5 &&
       version !== AUTHORITY_SCHEMA_VERSION
     ) {
       throw new TypeError("authority store schema version is unsupported");
@@ -341,6 +344,25 @@ export class SqliteAuthorityStore {
         this.#database.exec(`${WORKER_BOUNDARY_EVENTS_SQL} PRAGMA user_version = 4;`);
       });
     }
+    if (version < 5)
+      this.#immediate(() => this.#database.exec(`${SESSION_PLANS_SQL} PRAGMA user_version = 5;`));
+    if (version < 6)
+      this.#immediate(() =>
+        this.#database.exec(`
+      ALTER TABLE worker_tool_executions RENAME TO worker_tool_executions_v5;
+      CREATE TABLE worker_tool_executions (
+        execution_id TEXT PRIMARY KEY NOT NULL,
+        session_id TEXT NOT NULL REFERENCES sessions(session_id),
+        execution_digest TEXT NOT NULL,
+        tool TEXT NOT NULL CHECK (tool IN ('guardian.session_status', 'guardian.local_command', 'external')),
+        consumed_at TEXT NOT NULL,
+        UNIQUE(session_id, execution_digest)
+      ) STRICT;
+      INSERT INTO worker_tool_executions SELECT * FROM worker_tool_executions_v5;
+      DROP TABLE worker_tool_executions_v5;
+      PRAGMA user_version = 6;
+    `),
+      );
     if (process.platform !== "win32") {
       const owner = process.getuid?.();
       if (owner === undefined) {
@@ -623,11 +645,33 @@ export class SqliteAuthorityStore {
     );
   }
 
+  getActiveWorkerBudget(sessionId: unknown): DurableSessionBudget | null {
+    const id = OpaqueIdSchema.parse(sessionId);
+    const session = this.getSession(id);
+    const time = Date.parse(this.#now());
+    if (
+      session === null ||
+      session.status !== "active" ||
+      time < Date.parse(session.startsAt) ||
+      time >= Date.parse(session.expiresAt)
+    )
+      return null;
+    if (this.getSessionPlan(id)?.revoked) return null;
+    return this.getBudget(id);
+  }
+
+  claimExternalExecution(
+    sessionId: unknown,
+    executionId: unknown,
+    executionDigest: unknown,
+  ): WorkerExecutionAuthorization {
+    return this.#consumeWorkerExecution(sessionId, executionId, executionDigest, "external", false);
+  }
   #consumeWorkerExecution(
     sessionIdValue: unknown,
     executionIdValue: unknown,
     executionDigestValue: unknown,
-    tool: "guardian.session_status" | "guardian.local_command",
+    tool: "guardian.session_status" | "guardian.local_command" | "external",
     consumeLocalCommand: boolean,
   ): WorkerExecutionAuthorization {
     const sessionId = OpaqueIdSchema.parse(sessionIdValue);
@@ -656,7 +700,7 @@ export class SqliteAuthorityStore {
         .prepare(
           `
           UPDATE session_budgets
-          SET remaining_tool_calls = remaining_tool_calls - 1,
+          SET remaining_tool_calls = remaining_tool_calls - ?,
               remaining_local_commands = remaining_local_commands - ?
           WHERE session_id = ?
             AND remaining_tool_calls >= 1
@@ -671,6 +715,7 @@ export class SqliteAuthorityStore {
         `,
         )
         .run(
+          tool === "external" ? 0 : 1,
           consumeLocalCommand ? 1 : 0,
           sessionId,
           consumeLocalCommand ? 1 : 0,
@@ -1001,6 +1046,30 @@ export class SqliteAuthorityStore {
       if (budget === null) throw new TypeError("research budget disappeared after settlement");
       return budget;
     });
+  }
+
+  #plans() {
+    return new SessionPlans(
+      this.#database,
+      this.#now,
+      (id) => this.getSession(id),
+      (id) => this.getSessionConnections(id),
+    );
+  }
+  storeSessionPlan(value: unknown): void {
+    this.#immediate(() => this.#plans().store(value));
+  }
+  getSessionPlan(sessionId: unknown) {
+    return this.#plans().get(sessionId);
+  }
+  revokeSessionPlan(sessionId: unknown, grantId: unknown) {
+    return this.#immediate(() => this.#plans().revoke(sessionId, grantId));
+  }
+  checkSessionPlan(value: unknown) {
+    return this.#immediate(() => this.#plans().check(value));
+  }
+  getPendingPlanRequests(sessionId: unknown) {
+    return this.#plans().pending(sessionId);
   }
 
   storeApproval(value: unknown): void {

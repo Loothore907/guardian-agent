@@ -42,6 +42,16 @@ export type CredentialReference = z.infer<typeof CredentialReferenceSchema>;
 export const RegisteredCredentialReferenceSchema = z.union([
   z.strictObject({
     schemaVersion: z.literal(1),
+    provider: z.literal("github"),
+    slot: z.literal("app_private_key"),
+  }),
+  z.strictObject({
+    schemaVersion: z.literal(1),
+    provider: z.literal("github"),
+    slot: z.literal("installation"),
+  }),
+  z.strictObject({
+    schemaVersion: z.literal(1),
     provider: z.literal("nebius"),
     slot: z.literal("default"),
   }),
@@ -77,7 +87,8 @@ export function registeredCredentialReference(
 
 export function credentialMaterialKind(referenceValue: unknown): CredentialMaterialKind {
   const reference = RegisteredCredentialReferenceSchema.parse(referenceValue);
-  return reference.provider === "github" && reference.slot === "metadata"
+  return reference.provider === "github" &&
+    (reference.slot === "metadata" || reference.slot === "installation")
     ? "credential_metadata"
     : "secret";
 }
@@ -171,6 +182,8 @@ export const SecretStashPayloadKeySchema = z.enum([
   "github_access_token",
   "github_refresh_token",
   "github_metadata",
+  "github_app_private_key",
+  "github_installation_metadata",
 ]);
 export type SecretStashPayloadKey = z.infer<typeof SecretStashPayloadKeySchema>;
 
@@ -183,6 +196,8 @@ const expectedSecretStashPayloadKey: Readonly<
     default: "github_access_token",
     refresh: "github_refresh_token",
     metadata: "github_metadata",
+    app_private_key: "github_app_private_key",
+    installation: "github_installation_metadata",
   },
 };
 
@@ -310,3 +325,21 @@ export const GitHubCredentialMetadataSchema = z.strictObject({
   refreshExpiresAt: z.iso.datetime({ offset: false, precision: 3 }),
 });
 export type GitHubCredentialMetadata = z.infer<typeof GitHubCredentialMetadataSchema>;
+
+/** Non-secret installation scope; private key material stays in a separate broker-only slot. */
+export const GitHubInstallationMetadataSchema = z.strictObject({
+  schemaVersion: z.literal(1),
+  appId: z.string().regex(/^[1-9][0-9]{0,18}$/u),
+  installationId: z.string().regex(/^[1-9][0-9]{0,18}$/u),
+  repositoryId: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+  owner: z
+    .string()
+    .min(1)
+    .max(100)
+    .regex(/^[a-z0-9_.-]+$/u),
+  repository: z
+    .string()
+    .min(1)
+    .max(100)
+    .regex(/^[a-z0-9_.-]+$/u),
+});

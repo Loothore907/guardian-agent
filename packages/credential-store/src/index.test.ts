@@ -327,6 +327,12 @@ describe("Linux Secret Service adapter", () => {
 });
 
 describe("Nebius SecretStash managed-demo adapter", () => {
+  function payload(value = "managed-demo-secret-fixture", key = "nebius_api_key") {
+    return JSON.stringify({
+      version_id: "mbsecver-fixture123",
+      data: { key, string_value: value },
+    });
+  }
   function resource(
     provider: "nebius" | "tavily" | "github",
     slot: string,
@@ -355,7 +361,7 @@ describe("Nebius SecretStash managed-demo adapter", () => {
   }
 
   it("retrieves only one fixed payload key inside a zeroed callback", async () => {
-    const stdout = Uint8Array.from(Buffer.from("managed-demo-secret-fixture\n"));
+    const stdout = Uint8Array.from(Buffer.from(payload()));
     const stderr = new Uint8Array();
     const runner = vi.fn<SecretStashRunner>(() => Promise.resolve({ code: 0, stdout, stderr }));
     const store = new SecretStashCredentialStore({
@@ -383,7 +389,7 @@ describe("Nebius SecretStash managed-demo adapter", () => {
         "--secret-id",
         "mbsec-nebiuspublic123",
         "--format",
-        "text",
+        "json",
         "--no-browser",
         "--no-check-update",
         "--no-progress",
@@ -455,6 +461,27 @@ describe("Nebius SecretStash managed-demo adapter", () => {
     { code: 1, value: "provider failure" },
     { code: 0, value: "secret\nwith-extra-line\n" },
     { code: 0, value: "short\n" },
+    { code: 0, value: payload("short") },
+    { code: 0, value: payload("secret\nwith-extra-line") },
+    { code: 0, value: payload("secret\0with-nul") },
+    { code: 0, value: payload("valid-secret-fixture", "tavily_api_key") },
+    { code: 0, value: payload("a".repeat(4097)) },
+    {
+      code: 0,
+      value:
+        '{"version_id":"mbsecver-fixture123","data":{"key":"nebius_api_key","bytes_value":"c3ludGhldGlj"}}',
+    },
+    {
+      code: 0,
+      value:
+        '{"version_id":"mbsecver-fixture123","data":{"key":"nebius_api_key","string_value":"synthetic-one","string_value":"synthetic-two"}}',
+    },
+    {
+      code: 0,
+      value:
+        '{"version_id":"mbsecver-fixture123","data":{"key":"nebius_api_key","string_value":"synthetic-value","extra":true}}',
+    },
+    { code: 0, value: '{"data":{"key":"nebius_api_key","string_value":"synthetic-value"}}' },
   ])("sanitizes invalid SecretStash helper output", async ({ code, value }) => {
     const stdout = Uint8Array.from(Buffer.from(value));
     const stderr = Uint8Array.from(Buffer.from(code === 0 ? "" : "untrusted diagnostic"));
@@ -473,7 +500,9 @@ describe("Nebius SecretStash managed-demo adapter", () => {
   });
 
   it("selects managed-demo custody only from strict non-secret configuration", async () => {
-    const stdout = Uint8Array.from(Buffer.from("managed-demo-secret-fixture\n"));
+    const stdout = Uint8Array.from(
+      Buffer.from(payload("managed-demo-secret-fixture", "tavily_api_key")),
+    );
     const store = createCredentialStore(
       {
         schemaVersion: 1,
