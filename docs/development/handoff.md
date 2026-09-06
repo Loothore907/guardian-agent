@@ -1,6 +1,207 @@
 # Current development handoff
 
-Last updated: 2026-09-04 (AKDT)
+**Repository cleanup now takes priority:** see the
+[September 6 integration recovery](repo-hygiene-recovery-2026-09-06.md) for the
+preserved source, issue/PR dependency order, CI defects and Git-hygiene enforcement.
+Older statements that all later source is uncommitted are historical. Publication
+does not establish review, merge or C6/C7 completion. This session has no cloud
+execution; the hosted plan is preparation-only for a later execution session.
+
+Last reconciled: 2026-09-06 (AKDT)
+
+Current continuation: the user approved two hours from replacement startup,
+followed by cloud shutdown, within the existing scope and cumulative USD 25
+allowance. Both VMs were reverified stopped before restart preparation. Leave
+the original stopped. Finland's quota request was declined. Use the linked KC
+pickup for execution; older running-state and cutoff passages below are history.
+
+**Latest result, 19:56 UTC:** both VMs are cloud-confirmed STOPPED after an early
+shutdown. Current snapshot `2dcc7cd79e2e…` fixes the budget IPC clock race and passes
+679 tests/6 skips plus Linux platform, reference containment, build and audit.
+Synthetic secret revocation/restoration and production budget-child checks passed.
+Both static fixture domains were deployed and all eight HTTPS hashes passed from
+the host; operator-side reachability was intermittent. After shutdown the user
+explicitly approved the two named Nebius/Tavily transfers; cloud copies, exact
+operator comparisons and scoped runtime grants are complete. Runtime retrieval
+and live providers remain unverified; C7 and judge deployment remain incomplete. See
+[September 6 evidence](evidence/2026-09-06-kc-continuation.md) and the current pickup.
+The following cutoff and source-state passages are historical.
+
+Cutoff update (2026-09-06 00:20 AKDT): both KC VMs are confirmed **Stopped** in
+Nebius Console. Guest poweroff briefly recovered; cloud-level stops completed.
+Disks are preserved. Resume only the replacement in a new bounded work window.
+
+Latest continuation: [KC native Linux evidence](evidence/2026-09-05-kc-linux-acceptance.md).
+An explicit source snapshot is staged and checked on KC: final required suite
+677 passed/6 skipped, native platform/C4 reference containment, build and audit
+passed. Earlier intermittent authority-child startup failures remain unresolved;
+the supervisor now supplies fixed sanitized startup causes. KC SecretStash has
+one synthetic fixture with exact-resource payload-read access. A real CLI
+envelope decoding bug was fixed; the replacement's patched required suite passed
+677/6, exact synthetic retrieval and callback cleanup passed, and reference
+sandbox metadata/CLI bypass was blocked. Protected service deployment, actual ledger, ingress and real-provider
+acceptance remain pending. Three additional synthetic suites and 50 authority
+startup cycles passed; the earlier intermittent failure remains unresolved.
+Existing testing keys are authorized for private development. The original VM
+lacks the immutable service-account attachment; a same-size replacement with a
+runtime identity is created at `204.12.168.166`
+(`computeinstance-u00dkgrgnqdmy4vz67`). Shutdown
+remains September 6, 00:15 AKDT, with a cloud-stop follow-up for both KC VMs.
+
+**Current pickup:** [KC base host → Guardian hosted acceptance](c7-kc-hosted-acceptance-handoff.md).
+That checkpoint lists completed work, exact operational state and the ordered
+remaining gates. It supersedes historical pending-approval and empty-risk-context
+statements in older sections below.
+
+Latest hosting action: the user approved both KC and Finland as test targets,
+with KC first and Finland after quota approval. KC `guardian-c7-kc-dev` now runs
+in `us-central1` (`computeinstance-u00jbhqf6qg9jwag4g`). Base-host checks passed:
+first boot done, SSH restricted to operator IP, passwords/root SSH disabled,
+firewall active and rootless network namespace usable. Shutdown is scheduled
+for 2026-09-06 08:15 UTC / 00:15 AKDT. Local operator connection metadata,
+cost estimate and check evidence are in ignored `tmp/c7-acceptance/kc-host.json`,
+`kc-host-check.log` and `campaign-costs.json`. The live Guardian runtime is not
+yet deployed. Keep Finland quota request and compare both hosts before judging
+host selection; do not duplicate the USD 25 development allowance.
+
+Status clarification: the **local C7 runtime slice** is complete, not the roadmap's
+entire C7 milestone. See [remaining engineering, review and acceptance actions](c7-completion-and-acceptance-plan.md).
+The broker's previously empty retrieved-content risk envelope is now wired through
+the supervisor with exact-turn/request binding; see
+[ADR-0052](../adr/0052-c7-risk-context-and-cost-accounting.md) and
+[current acceptance checkpoint](evidence/2026-09-05-c7-acceptance-preparation.md).
+
+The user approved the [test zones and hosting plan](c7-test-zones-and-hosting-plan.md)
+and completed Nebius billing (USD 25 prepaid). Synthetic fixtures are published at
+`Loothore907/guardian-agent-injection-lab`, commit
+`bd63c72aa1e697e4192f53ba19f833724efb6475`. VM creation is blocked by a zero non-GPU
+vCPU quota in eu-north1; a request for two vCPUs was submitted and acknowledged.
+The subsequent user-requested US comparison selects Kansas City (`us-central1`)
+as the next target: account CPU quota 0/200, regular `cpu-d3` 4 vCPU/16 GiB,
+console estimate USD 0.12/hour with 32 GiB SSD before taxes. No US VM was created
+during comparison. Finland approval is no longer the CPU-quota prerequisite for
+the selected US target. See the updated hosting plan for sources and limits.
+No live runtime or fixture DNS is enabled. The latest Windows suite is 655 passed,
+18 skipped. Linux verification of these later changes, campaign/runtime cost
+configuration, hosted containment, real-provider pairs and source review remain
+pending. Source work in this main repository is still uncommitted.
+
+## Latest product direction: judge portal
+
+The user approved three repeatable seeded challenges plus custom piloted tasks
+initially limited to public research and bounded GitHub operations. The
+[judge portal action plan](judge-portal-action-plan.md) records scenarios,
+repeatability, evidence requirements and ordered delivery; see ADR-0050.
+The first local portal slice now includes source-baseline review, scenario
+specifications, contracts/UI, authenticated preview/confirmation lifecycle, budget
+adapter and persistent mutation fixture reservations. See
+[portal evidence](evidence/2026-09-05-judge-portal.md). The subsequent
+[C7 runtime evidence](evidence/2026-09-05-c7-runtime.md) covers typed external results,
+bounded continuation, real service-child composition and the supervisor adapter.
+Live execution remains disabled pending protected-provider and intended-host gates.
+The existing scripted headless merge must not be presented as model-generated
+attack behavior. The user has approved continuation of in-scope local work.
+The subsequent approved test-zone/hosting plan supplies bounded external resource
+and fixture-publication scope; source packaging and review remain unfinished.
+
+Historical local implementation plan: [C7 runtime integration session plan](session-plan-2026-09-05-c7-runtime-integration.md).
+The approved local plan is implemented; use its evidence record for verification
+outcomes and residuals. Next prepare exact external resources, budgets, fixture
+targets and host acceptance scope under the final gate of that plan. Preserve all
+accumulated uncommitted work. Older launch/headless instructions below describe a
+prior slice and do not supersede this C7 entry point.
+
+Final C7 checks: Windows 648 passed/18 skipped; Linux 660 passed/6 skipped;
+complete checks, platform/runtime/session probes and production audit passed.
+Windows child composition uses a shared synthetic clock; Linux retains real-clock
+coverage. Windows clock diagnosis and WSL user-session reliability remain open.
+
+## Existing implementation and host checkpoint
+
+Latest host follow-up: [WSL cgroup diagnosis](evidence/2026-09-04-wsl-cgroup-diagnosis.md)
+captured a warm-restart cgroup attachment failure with EBUSY. Three full-VM cold
+starts passed; a fourth cold start directly into a hold passed native unlock and
+sanitized GitHub/Nebius availability. Use the [recovery procedure](wsl-session-recovery.md).
+This is operational recovery, not a permanent WSL repair. Earlier samples were
+distribution restarts, not verified fresh VM boots.
+
+[Session execution](evidence/2026-09-04-session-readiness.md) records full
+Windows/Linux gates, runtime/bypass probes, a passing production audit and the
+approved W28 read/merge. Next: [C6 residual review](c6-residual-review.md).
+
+## Current launch/headless pickup
+
+The approved [launch/headless plan](session-plan-2026-09-05-launch-headless.md)
+implements the initial exact-action confirmation, grant-before-worker startup,
+noninteractive competition execution, trusted standing deployment consent and
+broker-only GitHub installation-token minting. The authenticated host factory is
+`scripts/headless-judge-host.mjs`; it does not automatically listen or deploy.
+See [current validation](evidence/2026-09-05-launch-headless.md) and
+[deployment preparation](headless-judge-setup.md). The earlier
+[session-grant evidence](evidence/2026-09-05-session-authority.md) is retained.
+
+Changes remain uncommitted alongside W27/W28. No real provider operation or external
+write was executed in this slice. The next gate is an exact Nebius/SecretStash/App
+installation/fixture deployment plan, followed by hosted cold-boot and unattended
+judging evidence. The demonstration mission is five minutes; production longevity
+needs a longer authorized profile and real-duration testing. WSL warm-restart EBUSY
+and broader C6 provider containment review remain open.
+
+## Next-session entry point
+
+This is a completed local implementation seam, not a hosted-readiness checkpoint.
+Read the current validation record and ADR-0049 first. Preserve the accumulated
+uncommitted work; review it against the existing branch baseline and arrange a
+bounded commit/review plan before external rollout. The completed local plan did
+not authorize commits, pushes or deployment.
+
+Next make the deployment checklist concrete: existing Nebius project/region/VM
+and spend bounds, dedicated judge App installation and SecretStash IAM, private
+state/snapshot configuration, ingress/budget composition and fixture lifecycle.
+The current fixed merge target is single-use: repeated judge sessions require
+fresh exact authorized fixtures or another explicitly bounded demonstration design.
+Do not reuse the already-merged PR 3 or assume automatic resets exist.
+
+Acceptance gates remain hosted cold-boot and unattended execution, failure and
+revocation evidence, provider containment review, plus the separate WSL repair
+track. A longer production mission needs its own duration profile and real-duration
+validation. No additional feature implementation is required to hand off this
+completed local slice.
+
+## Prior C6/W28 pickup
+
+Read the [state review and next steps](state-review-2026-09-04.md) first, then
+[W28 operator commands](w28-github-handoff.md). The
+[session closeout](session-closeout-2026-09-04.md) preserves the latest executed
+ceremonies and their evidence. The sections below the history divider are prior
+checkpoints, not current instructions or new authority.
+
+- Local branch: `codex/13-c6-linux-provider-containment`, HEAD `e5b1217`.
+  Discovery fixes, W27, W28, and session-helper changes remain uncommitted.
+- W27 peer authentication and the W28 synthetic supervised GitHub harness are
+  implemented and tested. Protected Linux Qwen/Nemotron consumption passed after
+  user-session repair. Broader Linux containment evidence remains incomplete.
+- Demo PR 3 was created and later squash-merged under separate exact approvals.
+  Historical approved head:
+  `b8e2e559fe60d182566909fec47d3cd5d1d48243`; base:
+  `7df353afe005b74811dfcd081ac98af5695a8170`. Revalidate before use.
+- Linux GitHub App enrollment and the exact-head PR 3 broker read now pass.
+  Earlier `connection_unavailable` / `github: missing` failures are historical.
+  Fixture creation must not be repeated. The separately approved merge passed
+  as `5d78d261e024d9e93e59c30368c7c9797c765a2c`; PR 3 is closed/merged.
+- WSL manager failure, unlock-display routing, and missing GitHub enrollment are
+  distinct problems. The bounded session helper is a mitigation, not a permanent
+  WSL repair. See the state review for diagnostic limits and recovery gates.
+- Parallel residual track: continue WSL reliability diagnosis and finish the C6
+  containment corpus and current-source review/CI before C7 dispatch/evaluation.
+- C6/C7 remain In progress. Hosted judge work remains paused. Existing Nebius
+  enrollments should be preserved; no assurance promotion is justified.
+
+## Historical checkpoints — superseded for pickup
+
+Preserved for provenance. Dates, test totals, remote status, and future-tense
+instructions below describe their original checkpoints. Use the current pickup
+above when they conflict.
 
 ## Current priority: resume C6 after protected Linux Nebius consumption
 
@@ -46,7 +247,53 @@ test passed in approximately 3.9 seconds without printing a credential or raw
 provider response. Broader Linux service containment and the narrow GitHub path
 remain separate C6 gates.
 
-## Next-session pickup
+## Latest protected attempt: passed after session repair
+
+Continued diagnosis found `user@1000.service` failed with `219/CGROUP`. Restarting
+only that service restored the bus; Secret Service metadata then identified a
+locked existing default keyring. The user completed its native unlock prompt.
+The bounded Qwen/Nemotron retry passed in 6.3 seconds, with no credential changes
+or raw provider output. Cleanup verification found no remaining test processes.
+A metadata-only Linux readiness preflight now runs before the protected test;
+six new cases and the complete Windows/Linux gates pass. See the
+[recovery record](protected-c6-ceremonies-2026-09-04.md). The underlying WSL cgroup
+failure may recur across boots; no permanent system configuration was changed.
+
+### Earlier failed attempt
+
+After approving the bounded W27 Linux Nebius run, the user-authorized single
+attempt built successfully but returned `provider_unavailable` during Qwen after
+about 15.2 seconds. Nemotron was not started. No retry or enrollment change was
+made. Cleanup completed and no test-related processes remained. WSL user-bus
+readiness varied across follow-up checks; the 15-second credential-helper timeout
+is consistent with the failure but its root cause is not proven. Establish stable
+normal-user Secret Service readiness before another protected attempt. Details:
+[ceremony record](protected-c6-ceremonies-2026-09-04.md). C6 stays In progress.
+
+## W27 local containment checkpoint
+
+The [September 4 session plan](session-plan-2026-09-04-c6-containment.md) is complete
+for local implementation and preparation. [W27 evidence](evidence/w27-linux-provider-ipc-containment.md)
+records shared Linux peer admission plus client listener verification across all
+seven provider/broker protocols. Final ordinary gates: Windows 534 passed / 18
+skipped; Linux 546 passed / 6 skipped, plus two native platform probes. Both pass
+207-module / 446-edge dependency checks and the remaining required suite.
+
+The [protected-gate scope](protected-c6-ceremonies-2026-09-04.md) bounds the next
+Linux Nebius rerun to at most three paid requests using existing enrollment.
+The existing live GitHub harness is Windows-specific and uses an in-process
+broker; a Linux supervised composition is required before the read/merge gate.
+No paid calls, credential changes, remote mutations, commits, or pushes occurred.
+C6/C7 remain In progress. Earlier counts and statements below describe their
+historical checkpoints; this W27 evidence supersedes the provider-IPC gap.
+
+## Historical pickup before W27 (superseded)
+
+The [September 4 discovery review](evidence/2026-09-04-discovery-review.md) adds
+local uncommitted fixes for supervisor lifecycle failures and private IPv4 data in
+research queries, with complete Windows/Linux verification. It also confirms
+issue #13 and PR #17 remain open; PR #17 is at `bca4313` and its latest audit still
+times out. The current local containment branch is separate from that PR head.
 
 Start from these verified facts; do not repeat credential setup merely to regain
 context:
@@ -74,8 +321,12 @@ Resume work in this order:
 1. Read this pickup section, ADR-0042, the credential-custody plan, W26 evidence,
    the C6 review matrix, and the current security claims. Confirm the branch and
    worktree before changing anything.
-2. Review the existing W27/intended-host service-containment implementation and
-   identify the smallest missing C6 evidence for the credential-holding Linux
+2. Review the existing local-routing and process-supervision controls and
+   implement the missing W27 provider-service containment slice. W27 is not a
+   completed evidence record in this checkout. Kernel peer verification currently
+   covers authority and budget IPC, not interaction, Guardian, worker, research,
+   or broker IPC. Identify the smallest missing C6 controls and evidence for the
+   credential-holding Linux
    Qwen/Nemotron processes: process ancestry and peer checks, minimal bootstrap,
    environment and argv exclusion, fixed local Secret Service routing, shutdown,
    and sanitized failure behavior.
@@ -130,9 +381,9 @@ from `4fa4f42` through the current branch head implement:
   enrollment composition with no production raw-terminal path.
 
 ADRs 0043 through 0046 record these decisions. The complete ordinary gate passes:
-72 Vitest files / 524 tests with 4 protected files / 10 protected tests skipped,
+72 Vitest files / 534 tests with 4 protected files / 10 protected tests skipped,
 7/8 SQLite spike tests with the POSIX-only case skipped on Windows, 2/2 reset
-tests, 201 modules / 427 dependency edges, TypeScript, lint, formatting, Linux
+tests, 202 modules / 428 dependency edges, TypeScript, lint, formatting, Linux
 peer-helper build, and the production web build.
 
 This is locally implemented containment, not a deployed or calibrated budget
@@ -1000,11 +1251,13 @@ supervised ancestry before parsing requests, and adds a fixed, fail-closed
 W26 installs the Linux client/service prerequisites in the WSL development image
 and passes missing/write/isolation/status/rotation/scoped-use/zeroing/delete against
 a real disposable GNOME Keyring Secret Service in an isolated user session. The
-existing WSL login session could not start its systemd user session and the first
-write timed out fail closed, so this is compatibility evidence rather than a claim
-about a persistent production desktop keyring. Intended-host credential-service
-containment, a protected provider credential, and narrow Linux GitHub read/merge
-remain. C6 remains In progress and no wider Enforced claim is made.
+first WSL login attempt could not start its systemd user session and timed out.
+W26 subsequently records a successful user-operated normal-session fixture
+lifecycle, accepted real Nebius enrollment, and protected Qwen/Nemotron consumption.
+Intended-host provider-service containment and narrow Linux GitHub read/merge
+remain. C6 remains In progress and no wider Enforced claim is made. See the
+[September 4 discovery review](evidence/2026-09-04-discovery-review.md) for the
+current source audit, local fixes, verification, and remaining flow gates.
 
 ## Completed W14-W23 execution history
 
@@ -1327,7 +1580,10 @@ user D-Bus session passed the lifecycle and complete Linux gate. See
   only when the npm advisory request timed out; the single bounded failed-job
   rerun passed in 6m16s without weakening the audit gate.
 
-## Verification at this transition
+## Historical verification at the PR #14 / W26 transition
+
+These counts and pending gates describe the earlier checkpoint. The pickup
+section and September 4 discovery review above supersede them for current work.
 
 The current ordinary component set passes on this Windows host:
 

@@ -56,5 +56,7 @@ host `/run` or `/tmp` namespaces.
 - `packages/executor/runtime/reference-probe.py`
 - `scripts/reference-runtime.test.mjs`
 - `scripts/linux-secret-service-live.test.sh`
-- `scripts/linux-nebius-provider-live.test.sh`
-- the W27 intended-host containment evidence
+- `scripts/nebius-models-live.test.mjs` (opt-in Windows/Linux provider harness)
+- `docs/development/evidence/w26-linux-secret-service-lifecycle.md` records the
+  successful intended-host Linux provider consumption. W27 broader service
+  containment remains a planned evidence gate, not an existing proof.

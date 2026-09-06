@@ -1,5 +1,21 @@
 # Architecture
 
+Managed-demo queued admission and settlement stamp requests with one trusted
+ledger-clock sample at execution. Client timestamps do not control availability,
+queue deadlines, reservation expiry, or settlement time. Direct ledger calls keep
+their exact-clock contract; see [ADR-0053](adr/0053-budget-queue-server-clock.md).
+
+The [judge portal](development/judge-portal-action-plan.md) adds a local UI and
+strict authenticated preview/confirmation API. A trusted budget adapter admits
+before runtime preparation and settles abandoned sessions conservatively. Mutation
+fixtures use persistent single-use reservations. The
+[C7 runtime adapter](adr/0051-bounded-worker-portal-runtime.md) connects supervisor
+confirmation to the existing loop, typed research/broker services and durable
+authority. The browser cannot supply credentials, standing grants or host settings.
+Local synthetic validation does not establish protected-provider or hosted readiness.
+
+Current 2026-09-05 update: [launch-bound authority and headless preparation](adr/0049-launch-and-headless-session-authority.md). The competition launch grants the exact action before worker execution; managed GitHub installation credentials are noninteractive. Hosted IAM, cold-boot judging and WSL repair remain unverified/open. Earlier descriptions of a required second competition prompt are historical.
+
 ## Purpose
 
 Agentic Guardian mediates between an untrusted worker, public information sources,
@@ -45,6 +61,16 @@ them.
 19. The broker sanitizes the result and emits audit evidence without credential material or unnecessary public content. Qwen may explain a sanitized denial or consequence, but its explanation is not the decision record.
 
 ## Control and data planes
+
+The diagram shows the target composition. The implemented W3 worker dispatcher
+exposes only session status and local command, followed by one mandatory final
+turn. Research and GitHub are exercised by the separate controlled journey;
+worker-generated research/GitHub dispatch, WebAuthn, and the complete protected
+coordinator remain open. Process supervision and local Secret Service routing
+are implemented. W27 extends Linux kernel peer verification beyond authority and
+budget IPC to all seven provider/broker service protocols, with listener checks
+before capability transmission. Broader intended-host containment remains a C6
+gate; see [W27 evidence](development/evidence/w27-linux-provider-ipc-containment.md).
 
 ```text
 Human control plane
@@ -194,6 +220,21 @@ limit; it does not create a persistent general loop. See
 [ADR-0019](adr/0019-contained-worker-denial-and-deterministic-revocation.md).
 
 ## Persistent plan-bound authority
+
+The first local slice is implemented in [ADR-0048](adr/0048-typed-session-plan-runtime.md):
+trusted development confirmation creates a versioned SQLite grant for exact
+GitHub PR read/squash targets. The broker checks it after credential resolution;
+atomic attempt accounting and current-grant checks prevent replay and fallback.
+The trusted issuer exposes grant/pending inspection and revocation.
+[ADR-0049](adr/0049-launch-and-headless-session-authority.md) connects the initial
+CLI preview to grant activation before worker execution and adds fixed headless
+judge composition under standing deployment consent. The broker can mint narrowly
+scoped installation tokens through read-only SecretStash callbacks. These paths
+have [local evidence](development/evidence/2026-09-05-launch-headless.md); actual
+hosted identity/secret isolation, a production identity ceremony and a generalized
+worker loop remain unverified or unimplemented.
+
+The broader contract remains:
 
 A directly confirmed normalized plan may authorize an enumerated sequence of
 bounded operations for the session, instead of forcing the operator to repeat an
@@ -410,6 +451,12 @@ uses fixed Nebius SecretStash resources with separate public and judge pools;
 the deterministic resolver is implemented locally, while its service-account IAM
 and protected hosted evidence remain implementation work.
 
+[Credential placement and plan approval](development/credential-placement-and-plan-approval.md)
+records the proposed production extension: provider/model choice, credential
+ownership and deployment location are independent selections. Hosted BYOK and
+generalized scope-bound secret provisioning require explicit adapters and tests;
+the current operator transfer script is not that shipped product capability.
+
 The managed-demo judge HTTP seam follows ADR-0046. Same-host Caddy is the only
 public listener and overwrites the HTTPS and single-client-address forwarding
 fields before proxying over loopback. The control API verifies a distinct private
@@ -483,8 +530,9 @@ and fail-closed no-respawn behavior. On Linux, the authority authenticates
 `SO_PEERCRED` PID/UID/GID through a narrow repository-owned helper before reading
 a request, then separately validates the exact session capability. Only the
 authority process, its supervisor, or a direct sibling child under that
-supervisor is accepted. Other service peer checks, broader containment, and the
-user-verifying WebAuthn issuer remain C6-C8 work.
+supervisor is accepted. ADR-0047 extends kernel peer admission and adds client
+listener verification to seven provider/broker protocols. Broader containment and
+the user-verifying WebAuthn issuer remain C6-C8 work.
 
 The credential-isolated model slice currently pins the post-confirmation Qwen
 mission-brief assistant and Nemotron guardian

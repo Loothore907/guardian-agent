@@ -1,12 +1,30 @@
 # Agentic Guardian
 
+The local [judge portal](docs/development/judge-portal-action-plan.md) now presents
+three seeded scenarios and a custom-task scope form. Live portal execution remains
+disabled pending protected-provider and hosted validation. The
+[C7 runtime](docs/development/evidence/2026-09-05-c7-runtime.md) connects typed
+research/GitHub results and bounded worker continuation in local tests. After building, run
+`pnpm start:control-api` and `pnpm dev:web` to inspect the local interface.
+
+The [KC continuation](docs/development/evidence/2026-09-06-kc-continuation.md)
+verified synthetic credential lifecycle, budget IPC and static fixtures, and fixed
+the budget admission clock race. Both cloud VMs are stopped. Approved testing keys
+are enrolled in SecretStash; runtime retrieval and live judge acceptance remain
+incomplete.
+
+Current local status: launch confirmation now binds the exact competition action,
+and a headless judge host factory uses standing deployment consent with broker-only
+installation tokens. [Validation and limits](docs/development/evidence/2026-09-05-launch-headless.md);
+[hosted setup still required](docs/development/headless-judge-setup.md).
+
 Agentic Guardian is an open-source, local-first capability firewall and task-scoped
 runtime for AI agents. It lets users bring their own providers and credentials
 while preventing agents and model vendors from receiving broader authority than
 the current task requires in the documented reference environment.
 
 **Mission:** keep credentials and privileged actions behind deterministic policy,
-exact-request approval, and auditable execution.
+bounded authorization, and auditable execution.
 
 The canonical domain is [`agentic-guardian.com`](https://agentic-guardian.com).
 Registration is complete; a public deployment is not yet claimed. The domain is
@@ -25,8 +43,10 @@ semantic gaps and formulate targeted questions, and deterministic Guardian code
 compiles and clamps the candidate policy. Nemotron may only preserve or increase
 scrutiny. Direct human confirmation activates the exact mission; Guardian then
 constrains the session and mediates public research and privileged proposals. The
-user authorizes later boundary crossings, and a broker executes only the exact
-approved operation.
+user authorizes later boundary crossings. A local development grant now covers
+exact GitHub PR read/squash targets without repeated approvals; broader workflow
+and live hosted validation remain open. See the
+[launch/headless evidence](docs/development/evidence/2026-09-05-launch-headless.md).
 
 The model is not the root of trust.
 
@@ -35,8 +55,10 @@ and trusted launcher start the native worker inside the constrained runtime. The
 judge configuration uses Nebius for application hosting and all model inference:
 the coding worker, Qwen mission dialogue, and NVIDIA Nemotron risk review. It
 requires no OpenAI API key. The roles remain separated by contracts, processes,
-context projections, and budgets. A user or worker may draft the task, but only direct human confirmation of Guardian's
-normalized mission can activate or expand authority. Routine setup, session
+context projections, and budgets. A user or worker may draft the task. A piloted session requires direct human
+confirmation of Guardian's normalized mission; a judge trigger requires standing
+operator authorization bound to the deployment's exact workflow. Neither a model
+nor an HTTP request can expand that authority. Routine setup, session
 control, and audit stay local. A narrow web handoff may be used later for a
 human-authentication ceremony that genuinely needs an HTTPS origin, then the user
 returns to the terminal. The local one-turn post-confirmation Guardian mission-
@@ -72,8 +94,8 @@ Secret Service lifecycle in an isolated Linux user session. The stable
 revocation. Its real loopback enrollment is accepted on Windows and Linux. A
 user-operated Windows Nebius enrollment, sanitized status check, and protected
 credential-isolated Qwen/Nemotron inference pass; the Linux fake interaction and
-real Secret Service preflight pass, while real Linux enrollment and provider
-consumption remain next. macOS support remains pending. `.env.local` remains
+real Secret Service preflight, accepted Linux enrollment, and protected supervised
+Qwen/Nemotron consumption also pass. macOS support remains pending. `.env.local` remains
 development-only.
 
 ## Current status
@@ -92,8 +114,14 @@ local tests. The broker no longer opens SQLite directly; the reference authority
 supervisor generates in-memory role capabilities, makes durable authority mandatory
 for sessions launched through it, and supplies a lower-assurance development
 approval issuer over the authorization role. The user-verifying WebAuthn issuer,
-protected Linux provider-credential and GitHub evidence, successful protected
-GitHub automatic refresh, review, and remote CI remain. A deterministic fake
+broader intended-Linux containment and successful GitHub evidence, successful
+protected GitHub automatic refresh, and current-head review/CI remain. W26 records
+successful Linux Nebius enrollment and supervised Qwen/Nemotron consumption.
+W27 adds Linux provider IPC peer authentication; W28 adds a tested supervised
+GitHub harness. Accepted Linux GitHub enrollment and the protected exact-head
+read and separately approved disposable squash merge now pass. Broader C6
+containment and source review remain. See the [current state and next steps](docs/development/state-review-2026-09-04.md).
+A deterministic fake
 Guardian interaction provider now produces one bounded mission brief behind a
 short-lived authenticated local IPC service. It
 cannot propose tools. Model assignments now come from a trusted, versioned role
@@ -121,7 +149,9 @@ records, current log/trace surfaces, and public read/merge results. Live Nebius
 verification and successful automatic GitHub token refresh remain open. The
 authority and one-turn interaction services now run as supervised child processes
 with bounded stdin bootstrap and fixed readiness. Linux authority peer identity
-is actively verified; other service peer checks and containment remain open.
+is actively verified. [W27](docs/development/evidence/w27-linux-provider-ipc-containment.md)
+adds tested Linux peer admission and client listener verification across seven
+provider/broker protocols; broader intended-host containment remains open.
 Protected GitHub enrollment, read, and merge pass;
 automatic refresh currently reaches GitHub's documented endpoint but receives a
 provider `HTTP 500`, so fresh device enrollment is the bounded fallback.
@@ -212,7 +242,7 @@ neither the credential nor fixture text was emitted. W20 then passed an assemble
 Nemotron-through-broker evaluation and stopped at `approval_mismatch` before
 approval, tool, adapter, credential, or GitHub effect. W22 combines those live
 research, deterministic-policy, model-risk, and audit boundaries in one enforced
-session, still without a GitHub effect. The disposable GitHub gate remains.
+session, still without a GitHub effect.
 W23 then refreshed the exact disposable target, failed closed on an unavailable
 expired credential lease, completed fresh GitHub device enrollment, passed the
 protected exact-head read, and used a separately confirmed one-use development
@@ -361,9 +391,12 @@ the protected device-flow refresh request. Until provider refresh succeeds, an
 operator must repeat `guardian credentials github` after the roughly eight-hour access
 token lifetime; this prevents unattended long-running GitHub operation but does
 not block a freshly enrolled demo session. Linux deterministic coverage and a
-real disposable Secret Service lifecycle pass in an isolated user session, but
-protected Linux provider-credential and GitHub evidence remain pending; macOS
-setup remains unimplemented. See
+real disposable and normal-user Secret Service lifecycles pass. W26 also records
+accepted Linux Nebius enrollment and protected Qwen/Nemotron consumption; broader
+Linux provider-service containment and the narrow Linux GitHub read/merge path
+remain pending. The [W28 supervised harness](docs/development/w28-github-handoff.md)
+now provides tested local composition and exact-target live commands; its real
+Linux GitHub effect gate has not run. macOS setup remains unimplemented. See
 [ADR-0009](docs/adr/0009-github-app-device-enrollment.md) and
 [ADR-0038](docs/adr/0038-linux-peer-identity-and-secret-service.md).
 

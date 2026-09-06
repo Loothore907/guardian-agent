@@ -7,10 +7,27 @@ CI is an enforcement layer. Agent instructions, review prompts, local hooks, and
 The C2 baseline workflow is `.github/workflows/ci.yml`. Its `build` job installs
 the frozen pnpm graph, runs `pnpm check`, and audits production dependencies. All
 external actions are pinned to immutable commit SHAs and checkout does not persist
-GitHub credentials. The first remote run remains pending until the branch is
-explicitly committed and pushed.
+GitHub credentials. Historical remote runs are recorded in the roadmap and
+handoff; their results do not establish CI status for a later branch head. The
+workflow also runs `pnpm test:linux-platform` on Ubuntu. Protected provider and
+Windows/WSL runtime checks remain separate from this ordinary gate.
 
-Once the implementation stack exists, every pull request should run:
+`pnpm check` also runs six credential-free Linux keyring-preflight regression
+cases. These verify fixed metadata calls and fail-closed errors using injected
+fixtures; they do not access CI credentials or establish live store readiness.
+
+The ordinary check also runs five `test:github-supervised` cases after compilation:
+real child-process composition with a test-only in-memory store and fixed synthetic
+GitHub transport. These require neither network nor enrollment. Linux uses real
+clocks; Windows uses controlled fixture clocks because of the W28 timestamp finding.
+The explicit `test:live:github-supervised` command is never part of ordinary CI.
+
+The full intended pull-request check set is below. This is a target policy, not
+an assertion that every item is configured: the current `ci.yml` runs the ordinary
+suite, Linux platform probes, and production dependency audit. Inspect the other
+workflows and protected evidence separately before claiming full coverage.
+
+Every pull request should ultimately run:
 
 - formatting and linting;
 - type checking;

@@ -5,6 +5,7 @@
 - Treat this repository as a security-sensitive public project.
 - Keep changes small, reviewable, and tied to a documented user or security outcome.
 - A user-approved session plan is explicit authority for the non-destructive actions it enumerates, including commits, feature-branch pushes, and pull-request creation or updates when the repository, destination, and ref constraints are bounded. Do not ask again for each in-scope action.
+- This includes credential copying/provisioning when the approved plan identifies the source credential slots, destination account/project/store/resources, intended runtime readers, copy versus move semantics, and applicable time/count limits. Bind the concrete operation to that approved scope using non-secret identifiers; never include key values in the approval record. Ask again only for missing material scope or a changed/expired grant, not merely because a named plan step is sensitive. Higher-priority tool/platform restrictions still apply; report their exact blocker without presenting it as a new repository requirement.
 - If an action is not covered by an approved plan, obtain an explicit request before committing, pushing, publishing, creating a release, or changing remote settings. Protected-branch writes, force pushes, merges, releases, deployments, destructive actions, and scope expansion require plan authority that names that action class or a fresh exact confirmation.
 - Preserve user-authored changes and unrelated worktree state.
 - Ask before adding a production dependency or materially widening project scope.

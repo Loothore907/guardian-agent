@@ -58,4 +58,18 @@ Architecture decision records document consequential choices, rejected alternati
 - [ADR-0045: Nebius judge hosting and domain ingress](0045-nebius-judge-hosting-and-domain-ingress.md)
 - [ADR-0046: Managed-demo judge ingress and source fingerprints](0046-managed-demo-judge-ingress-and-source-fingerprints.md)
 
+- [ADR-0047: Linux provider-service IPC containment](0047-linux-provider-service-ipc-containment.md)
+
+- [ADR-0048: Typed session-plan runtime](0048-typed-session-plan-runtime.md)
+
+- [ADR-0049: Launch and headless session authority](0049-launch-and-headless-session-authority.md)
+
+- [ADR-0050: Seeded scenarios and custom piloted judging](0050-seeded-and-piloted-judging.md)
+
+- [ADR-0051: Bounded worker runtime behind judge confirmation](0051-bounded-worker-portal-runtime.md)
+
+- [ADR-0052: C7 risk context and cost accounting](0052-c7-risk-context-and-cost-accounting.md)
+
+- [ADR-0053: Budget queue server clock](0053-budget-queue-server-clock.md)
+
 Use the next sequential four-digit number. Do not silently rewrite an accepted decision; add a superseding ADR.

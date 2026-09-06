@@ -48,6 +48,15 @@ isolation probe pass.
 
 ## Claim boundary
 
+The [September 4 discovery review](2026-09-04-discovery-review.md) adds regression
+coverage for unterminated stdout after readiness and rejected children that ignore
+SIGTERM. The shared supervisor now rejects the former immediately and uses one
+bounded shutdown path for startup failure and explicit close. Its two real-child
+regressions pass on Windows and Linux; the Linux test verifies five-second
+SIGKILL escalation. Bootstrap write and readiness share one startup deadline.
+This corrects the earlier blanket extra-output wording above without extending
+the claimed process or platform boundary.
+
 This proves process lifecycle and bootstrap isolation in the local composition.
 It does not establish an Enforced authority boundary on Windows or Linux. Windows
 named-pipe ACL and peer-token evidence, Linux peer credentials and restrictive
