@@ -45,7 +45,15 @@ export function checkRemote(state, pr) {
   const errors = validatePullRequest(pr);
   if (pr.headRefOid !== state.head) errors.push("remote_head_mismatch");
   if (pr.state !== "OPEN" && pr.state !== "MERGED") errors.push("pull_request_closed_unmerged");
-  const builds = (pr.statusCheckRollup ?? []).filter(check => check.name === "build");
+  let builds = (pr.statusCheckRollup ?? []).filter(check => check.name === "build");
+  if (builds.length > 1) {
+    const times = builds.map(check => Date.parse(check.startedAt));
+    // GitHub retains superseded runs when edited/ready events cancel a run at
+    // the same SHA. Never let an older success mask a newer pending/failing run.
+    builds = times.every(Number.isFinite)
+      ? builds.filter((_check, index) => times[index] === Math.max(...times))
+      : [];
+  }
   if (!builds.length || builds.some(check => check.status !== "COMPLETED" || check.conclusion !== "SUCCESS")) errors.push("build_not_green");
   return errors;
 }

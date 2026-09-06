@@ -38,3 +38,13 @@ test("reports unpublished, dirty and divergent work without changing it", () => 
     git("checkout","--detach");assert.ok(localBlockers(inspectLocal(root)).includes("detached_head"));
   } finally { rmSync(root,{recursive:true,force:true}); }
 });
+
+test("uses the latest same-head build without hiding pending/failing or ambiguous runs", () => {
+  const old = {name:"build",status:"COMPLETED",conclusion:"CANCELLED",startedAt:"2026-09-06T12:00:00Z"};
+  const latest = {...old,conclusion:"SUCCESS",startedAt:"2026-09-06T12:00:05Z"};
+  assert.deepEqual(checkRemote({head:pr.headRefOid},{...pr,statusCheckRollup:[old,latest]}),[]);
+  for (const run of [{...latest,status:"IN_PROGRESS",conclusion:""},{...latest,conclusion:"FAILURE"},{...latest,conclusion:"SKIPPED"},{...latest,startedAt:undefined}]) {
+    assert.ok(checkRemote({head:pr.headRefOid},{...pr,statusCheckRollup:[{...old,conclusion:"SUCCESS"},run]}).includes("build_not_green"));
+  }
+  assert.ok(checkRemote({head:pr.headRefOid},{...pr,statusCheckRollup:[latest,{...latest,conclusion:"FAILURE"}]}).includes("build_not_green"));
+});
