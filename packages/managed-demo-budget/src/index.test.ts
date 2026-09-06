@@ -692,6 +692,93 @@ describe("managed-demo SQLite budget ledger", () => {
     ledger.close();
   });
 
+  it("binds trusted-time operator proposals without accepting future or expired evidence", async () => {
+    const { ledger } = await openLedger();
+    const replacementPolicy = { ...INITIAL_PUBLIC_DEMO_BUDGET_POLICY, version: 2 } as const;
+    expect(
+      ledger.updatePolicyAtTrustedTime(
+        {
+          schemaVersion: 1,
+          deploymentId: IDS.deploymentPublic,
+          expectedPolicyId: INITIAL_PUBLIC_DEMO_BUDGET_POLICY.policyId,
+          expectedPolicyVersion: 1,
+          replacement: replacementPolicy,
+          reason: "Renew the bounded campaign through authenticated IPC.",
+          updatedAt: "2026-11-01T11:59:59.000Z",
+        },
+        "2026-11-01T12:00:00.000Z",
+      ),
+    ).toMatchObject({ policyVersion: 2, totalJourneyAdmissions: 0 });
+    expect(() =>
+      ledger.updatePolicyAtTrustedTime(
+        {
+          schemaVersion: 1,
+          deploymentId: IDS.deploymentPublic,
+          expectedPolicyId: INITIAL_PUBLIC_DEMO_BUDGET_POLICY.policyId,
+          expectedPolicyVersion: 2,
+          replacement: { ...replacementPolicy, version: 3 },
+          reason: "Attempt a proposal from the future.",
+          updatedAt: "2026-11-01T12:00:01.000Z",
+        },
+        "2026-11-01T12:00:00.000Z",
+      ),
+    ).toThrow(/cannot follow/u);
+    const replacementPrices = {
+      ...prices(),
+      version: 2,
+      evidence: {
+        capturedAt: "2026-11-01T11:59:58.000Z",
+        expiresAt: "2026-11-01T12:05:00.000Z",
+      },
+    } as const;
+    expect(
+      ledger.updatePricesAtTrustedTime(
+        {
+          schemaVersion: 1,
+          deploymentId: IDS.deploymentPublic,
+          expectedSnapshotId: IDS.snapshot,
+          expectedSnapshotVersion: 1,
+          replacement: replacementPrices,
+          reason: "Apply current provider evidence through authenticated IPC.",
+          updatedAt: "2026-11-01T11:59:59.000Z",
+        },
+        "2026-11-01T12:00:00.000Z",
+      ),
+    ).toMatchObject({ policyVersion: 2 });
+    for (const evidence of [
+      {
+        capturedAt: "2026-11-01T12:00:01.000Z",
+        expiresAt: "2026-11-01T12:05:00.000Z",
+      },
+      {
+        capturedAt: "2026-11-01T11:00:00.000Z",
+        expiresAt: "2026-11-01T11:59:59.000Z",
+      },
+    ]) {
+      expect(() =>
+        ledger.updatePricesAtTrustedTime(
+          {
+            schemaVersion: 1,
+            deploymentId: IDS.deploymentPublic,
+            expectedSnapshotId: IDS.snapshot,
+            expectedSnapshotVersion: 2,
+            replacement: { ...replacementPrices, version: 3, evidence },
+            reason: "Attempt to attach invalid provider evidence.",
+            updatedAt: "2026-11-01T12:00:00.000Z",
+          },
+          "2026-11-01T12:00:00.000Z",
+        ),
+      ).toThrow(/current evidence/u);
+    }
+    expect(ledger.snapshot()).toMatchObject({
+      policyVersion: 2,
+      totalJourneyAdmissions: 0,
+      totalReservedMicroUsd: 0,
+      totalSettledMicroUsd: 0,
+    });
+    ledger.close();
+  });
+
   it("denies new work when committed cost reaches the total limit", async () => {
     const policy = {
       ...INITIAL_PUBLIC_DEMO_BUDGET_POLICY,

@@ -348,18 +348,18 @@ export class ManagedDemoAdmissionQueue {
     return this.#ledger.snapshot();
   }
 
-  updatePolicy(value: unknown): ManagedDemoBudgetSnapshot {
+  updatePolicy(value: unknown, evaluatedAt: unknown): ManagedDemoBudgetSnapshot {
     if (this.#closed) throw new TypeError("managed-demo admission queue is closed");
     const update = ManagedDemoOperatorPolicyUpdateSchema.parse(value);
-    const snapshot = this.#ledger.updatePolicy(update);
+    const snapshot = this.#ledger.updatePolicyAtTrustedTime(update, evaluatedAt);
     this.#policy = update.replacement;
     this.#drain();
     return snapshot;
   }
 
-  updatePrices(value: unknown): ManagedDemoBudgetSnapshot {
+  updatePrices(value: unknown, evaluatedAt: unknown): ManagedDemoBudgetSnapshot {
     if (this.#closed) throw new TypeError("managed-demo admission queue is closed");
-    return this.#ledger.updatePrices(value);
+    return this.#ledger.updatePricesAtTrustedTime(value, evaluatedAt);
   }
 
   close(): void {
@@ -842,6 +842,21 @@ export class SqliteManagedDemoBudgetLedger {
     if (update.updatedAt !== now) {
       throw new TypeError("managed-demo policy update time must match the trusted ledger clock");
     }
+    return this.#updatePolicyAt(update, now);
+  }
+
+  /** Execute an authenticated IPC proposal at the service's already-sampled trusted time. */
+  updatePolicyAtTrustedTime(value: unknown, evaluatedAtValue: unknown): ManagedDemoBudgetSnapshot {
+    const update: ManagedDemoOperatorPolicyUpdate =
+      ManagedDemoOperatorPolicyUpdateSchema.parse(value);
+    const evaluatedAt = TimestampSchema.parse(evaluatedAtValue);
+    if (Date.parse(update.updatedAt) > Date.parse(evaluatedAt)) {
+      throw new TypeError("managed-demo policy proposal time cannot follow trusted execution time");
+    }
+    return this.#updatePolicyAt({ ...update, updatedAt: evaluatedAt }, evaluatedAt);
+  }
+
+  #updatePolicyAt(update: ManagedDemoOperatorPolicyUpdate, now: string): ManagedDemoBudgetSnapshot {
     return this.#immediate(() => {
       this.#expireInside(now);
       if (
@@ -911,6 +926,25 @@ export class SqliteManagedDemoBudgetLedger {
     if (update.updatedAt !== now) {
       throw new TypeError("managed-demo price update time must match the trusted ledger clock");
     }
+    return this.#updatePricesAt(update, now, true);
+  }
+
+  /** Preserve provider evidence time while executing at one authenticated service time. */
+  updatePricesAtTrustedTime(value: unknown, evaluatedAtValue: unknown): ManagedDemoBudgetSnapshot {
+    const update: ManagedDemoOperatorPriceUpdate =
+      ManagedDemoOperatorPriceUpdateSchema.parse(value);
+    const evaluatedAt = TimestampSchema.parse(evaluatedAtValue);
+    if (Date.parse(update.updatedAt) > Date.parse(evaluatedAt)) {
+      throw new TypeError("managed-demo price proposal time cannot follow trusted execution time");
+    }
+    return this.#updatePricesAt({ ...update, updatedAt: evaluatedAt }, evaluatedAt, false);
+  }
+
+  #updatePricesAt(
+    update: ManagedDemoOperatorPriceUpdate,
+    now: string,
+    requireEvidenceCapturedAtExecution: boolean,
+  ): ManagedDemoBudgetSnapshot {
     return this.#immediate(() => {
       if (
         update.deploymentId !== this.#deployment.deploymentId ||
@@ -922,7 +956,9 @@ export class SqliteManagedDemoBudgetLedger {
         throw new TypeError("managed-demo price update does not match durable deployment state");
       }
       if (
-        update.replacement.evidence.capturedAt !== now ||
+        (requireEvidenceCapturedAtExecution
+          ? update.replacement.evidence.capturedAt !== now
+          : Date.parse(update.replacement.evidence.capturedAt) > Date.parse(update.updatedAt)) ||
         Date.parse(update.replacement.evidence.expiresAt) <= Date.parse(now)
       ) {
         throw new TypeError("managed-demo replacement prices require current evidence");

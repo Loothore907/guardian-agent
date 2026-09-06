@@ -72,4 +72,6 @@ Architecture decision records document consequential choices, rejected alternati
 
 - [ADR-0053: Budget queue server clock](0053-budget-queue-server-clock.md)
 
+- [ADR-0054: Operator budget service clock](0054-operator-budget-service-clock.md)
+
 Use the next sequential four-digit number. Do not silently rewrite an accepted decision; add a superseding ADR.
