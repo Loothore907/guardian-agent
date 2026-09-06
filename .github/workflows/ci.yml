@@ -2,6 +2,7 @@ name: ci
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
   push:
     branches:
       - main
@@ -41,6 +42,13 @@ jobs:
 
       - name: Run required checks
         run: pnpm check
+
+      - name: Test session hygiene checks
+        run: node --test scripts/session-hygiene.test.mjs
+
+      - name: Validate pull request metadata
+        if: github.event_name == 'pull_request'
+        run: node scripts/session-hygiene.mjs pr
 
       - name: Run Linux platform boundary checks
         run: pnpm test:linux-platform
