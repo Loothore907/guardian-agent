@@ -4,6 +4,7 @@ import { CredentialStoreHandleSchema } from "./authority-context.js";
 import { AuthorityClientProcessConfigSchema } from "./authority-ipc.js";
 import { BrokerIpcServiceConfigSchema } from "./broker-ipc.js";
 import { ContractVersionSchema, type DeepReadonly } from "./common.js";
+import { CredentialStoreConfigSchema } from "./credentials.js";
 import { GuardianActionRiskServiceProcessConfigSchema } from "./guardian-action-ipc.js";
 
 const BROKER_AUTHORITY_OPERATIONS = new Set([
@@ -27,6 +28,7 @@ export const BrokerServiceProcessConfigSchema = z
   .strictObject({
     schemaVersion: ContractVersionSchema,
     serviceKind: z.literal("github_broker"),
+    credentialStore: CredentialStoreConfigSchema,
     broker: BrokerIpcServiceConfigSchema,
     authority: AuthorityClientProcessConfigSchema,
     guardian: GuardianActionRiskServiceProcessConfigSchema,

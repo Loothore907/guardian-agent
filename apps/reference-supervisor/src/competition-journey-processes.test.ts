@@ -5,7 +5,7 @@ import { createBrokerIpcCredentials } from "@guardian/broker";
 import { CompetitionJourneyServiceBundleSchema } from "@guardian/contracts";
 import { createGuardianActionRiskIpcCredentials } from "@guardian/guardian";
 import { createResearchIpcCredentials } from "@guardian/research";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { startSupervisedControlledCompetitionJourney } from "./competition-journey-processes.js";
 
@@ -14,6 +14,18 @@ const callerId = "22222222-2222-4222-8222-222222222222";
 const connectionId = "33333333-3333-4333-8333-333333333333";
 const missionId = "44444444-4444-4444-8444-444444444444";
 const profileId = "55555555-5555-4555-8555-555555555555";
+const credentialStore = {
+  schemaVersion: 1,
+  custodyProfile: "byok",
+  location: {
+    schemaVersion: 1,
+    custodyProfile: "byok",
+    pool: "personal",
+    runtime: process.platform === "win32" ? "windows" : "linux",
+    storeTarget:
+      process.platform === "win32" ? "windows_credential_manager" : "linux_secret_service",
+  },
+} as const;
 
 function authorityBinding(
   role: "broker_service" | "research_service",
@@ -91,6 +103,7 @@ function serviceBundle() {
     broker: {
       schemaVersion: 1,
       serviceKind: "github_broker",
+      credentialStore,
       broker: {
         schemaVersion: 1,
         ...createBrokerIpcCredentials(),
@@ -111,6 +124,7 @@ function serviceBundle() {
     research: {
       schemaVersion: 1,
       serviceKind: "tavily_research",
+      credentialStore,
       research: {
         schemaVersion: 1,
         ...createResearchIpcCredentials(),
@@ -141,6 +155,16 @@ function serviceBundle() {
 }
 
 describe("supervised controlled competition service composition", () => {
+  beforeEach(() => {
+    if (process.platform !== "linux") return;
+    // This startup-only fixture never resolves credentials. Give it a valid,
+    // deterministic desktop descriptor instead of inheriting the CI runner bus.
+    const runtime = `/run/user/${process.getuid!()}`;
+    vi.stubEnv("XDG_RUNTIME_DIR", runtime);
+    vi.stubEnv("DBUS_SESSION_BUS_ADDRESS", `unix:path=${runtime}/bus`);
+  });
+  afterEach(() => vi.unstubAllEnvs());
+
   it("starts the fixed Guardian, broker, and research children without exposing process IDs", async () => {
     const attachment = await startSupervisedControlledCompetitionJourney({
       services: serviceBundle(),

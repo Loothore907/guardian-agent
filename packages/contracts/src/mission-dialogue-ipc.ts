@@ -8,6 +8,7 @@ import {
   TimestampSchema,
   VersionNumberSchema,
 } from "./common.js";
+import { CredentialStoreConfigSchema } from "./credentials.js";
 import {
   MissionDraftReviewEnvelopeSchema,
   MissionDraftReviewOutcomeSchema,
@@ -61,6 +62,7 @@ export const MissionDraftReviewServiceProcessConfigSchema = z
     serviceKind: z.literal("mission_draft_review"),
     endpoint: z.string().min(1).max(260),
     capability: OpaqueIdSchema,
+    credentialStore: CredentialStoreConfigSchema.optional(),
     startsAt: TimestampSchema,
     expiresAt: TimestampSchema,
     envelope: MissionDraftReviewEnvelopeSchema,

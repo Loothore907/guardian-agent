@@ -61,7 +61,9 @@ The canonical `https://agentic-guardian.com` origin supplies documentation,
 downloads, release metadata, competition demonstration, and—only where a later
 threat model justifies it—a narrow independent human ceremony. Routine session
 creation, provider credential enrollment, agent work, policy, and audit remain in
-the user's self-hosted environment.
+the user's self-hosted environment. The separately funded judge and public demo
+use project-owned credentials in a managed deployment store; this demonstration
+profile is not the BYOK production custody model.
 
 The competition reference integration launches Guardian's provider-neutral native
 worker inside the controlled runtime and serves its versioned coding model through
@@ -91,13 +93,17 @@ OpenAI API key: Nebius serves the worker, Qwen dialogue, and Nemotron risk calls
 while their contracts and contexts stay separate. See ADR-0012, ADR-0013, and
 ADR-0015.
 
-`guardian setup` is a trusted local ceremony. It will place user-owned Nebius,
-optional Tavily, and operation-specific credentials directly into the operating
-system credential store or a documented secured local alternative. Secrets never
-enter mission text, model arguments, MCP requests, command arguments, browser
-URLs, the public domain, or the authority database. Credential-holding services
-resolve them only for fixed, typed provider operations and return sanitized
-results. `.env.local` is development-only, not an installation mechanism.
+Guardian credential setup is a trusted local ceremony. In BYOK mode it places
+user-owned Nebius, optional Tavily, and operation-specific credentials directly
+into the operating-system credential store or a documented secured local
+alternative. In managed-demo mode, an authenticated operator provisions
+project-owned credentials into Nebius SecretStash, and the deployed
+credential-holding service receives read access only to fixed configured
+resources. Secrets never enter mission text, model arguments, MCP requests,
+command arguments, browser URLs, the public application, or the authority
+database. Credential-holding services resolve them only for fixed, typed provider
+operations and return sanitized results. `.env.local` is development-only, not an
+installation mechanism. See ADR-0041.
 
 Cloud mode sends only selected minimized Guardian context to Nebius and, when research is enabled,
 bounded public-research queries to Tavily. The user owns those accounts and their
@@ -162,10 +168,9 @@ The mission permits bounded local analysis, tests, GitHub reads, and Tavily-medi
 - A privileged operation is re-normalized and its digest revalidated immediately before execution.
 - The showcased approval uses a user-verifying WebAuthn assertion whose challenge is bound to the exact request and authority context.
 - The showcased GitHub credential is short-lived or narrowly scoped, resolved by
-  the self-hosting user's local credential service, and unavailable to the agent,
-  models, authority database, logs, and public results. The final GitHub
-  enrollment mechanism remains to be reconciled with ADR-0008 before this is an
-  implementation claim.
+  the applicable BYOK or managed-demo credential service, and unavailable to the
+  agent, models, authority database, logs, and public results. Protected BYOK and
+  managed-demo evidence remain separate implementation claims.
 
 ### Guardian contribution
 

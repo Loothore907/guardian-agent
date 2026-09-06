@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { AuthorityClientProcessConfigSchema } from "./authority-ipc.js";
 import { ContractVersionSchema, type DeepReadonly } from "./common.js";
+import { CredentialStoreConfigSchema } from "./credentials.js";
 import { ResearchServiceProcessConfigSchema } from "./research-ipc.js";
 
 const RESEARCH_AUTHORITY_OPERATIONS = new Set([
@@ -14,6 +15,7 @@ export const CredentialStoreResearchServiceProcessConfigSchema = z
   .strictObject({
     schemaVersion: ContractVersionSchema,
     serviceKind: z.literal("tavily_research"),
+    credentialStore: CredentialStoreConfigSchema,
     research: ResearchServiceProcessConfigSchema,
     authority: AuthorityClientProcessConfigSchema,
   })

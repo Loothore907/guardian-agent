@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { BrokerServiceProcessConfigSchema } from "@guardian/contracts";
-import { createPlatformCredentialStore } from "@guardian/credential-store";
+import { createCredentialStore } from "@guardian/credential-store";
 
 import { startBrokerServiceIpcServer } from "./index.js";
 
@@ -40,7 +40,9 @@ async function main(): Promise<void> {
   const config = BrokerServiceProcessConfigSchema.parse(await readBootstrapFrame());
   const server = await startBrokerServiceIpcServer({
     config,
-    credentialStore: createPlatformCredentialStore(),
+    credentialStore: createCredentialStore(config.credentialStore, {
+      consumer: "broker_service",
+    }),
   });
   process.stdout.write("guardian broker service ready\n");
 

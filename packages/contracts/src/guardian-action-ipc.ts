@@ -7,6 +7,7 @@ import {
   Sha256DigestSchema,
   TimestampSchema,
 } from "./common.js";
+import { CredentialStoreConfigSchema } from "./credentials.js";
 import { GuardianEvaluationSchema, GuardianRiskEnvelopeSchema } from "./guardian-risk.js";
 
 const GuardianActionRiskIpcBindingShape = {
@@ -51,6 +52,7 @@ export const GuardianActionRiskServiceProcessConfigSchema = z
   .strictObject({
     ...GuardianActionRiskIpcBindingShape,
     serviceKind: z.literal("action_risk"),
+    credentialStore: CredentialStoreConfigSchema.optional(),
     endpoint: z.string().min(1).max(260),
     startsAt: TimestampSchema,
     expiresAt: TimestampSchema,

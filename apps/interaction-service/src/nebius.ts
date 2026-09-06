@@ -1,5 +1,4 @@
 import {
-  CredentialReferenceSchema,
   DEFAULT_GUARDIAN_MODEL_POLICY,
   GuardianModelPolicySchema,
   InteractionMissionContextSchema,
@@ -7,6 +6,7 @@ import {
   MissionDraftReviewEnvelopeSchema,
   MissionDraftReviewOutcomeSchema,
   ProviderRequestIdSchema,
+  registeredCredentialReference,
   type GuardianModelPolicy,
   type InteractionMissionContext,
   type MissionDraftReviewEnvelope,
@@ -155,7 +155,7 @@ export class NebiusMissionDialogueProvider {
     const context = InteractionMissionContextSchema.parse(contextValue);
     try {
       return await this.#store.use(
-        CredentialReferenceSchema.parse({ schemaVersion: 1, provider: "nebius", slot: "default" }),
+        registeredCredentialReference("nebius", "default"),
         async (credential) => {
           const apiKey = new TextDecoder("utf-8", { fatal: true }).decode(credential);
           const response = await this.#fetch(NEBIUS_CHAT_COMPLETIONS_ENDPOINT, {
@@ -216,7 +216,7 @@ export class NebiusMissionDialogueProvider {
     }
     try {
       return await this.#store.use(
-        CredentialReferenceSchema.parse({ schemaVersion: 1, provider: "nebius", slot: "default" }),
+        registeredCredentialReference("nebius", "default"),
         async (credential) => {
           const apiKey = new TextDecoder("utf-8", { fatal: true }).decode(credential);
           const response = await this.#fetch(NEBIUS_CHAT_COMPLETIONS_ENDPOINT, {
@@ -357,7 +357,7 @@ export const missionDialogueBoundary = {
   modelPolicyId: DEFAULT_GUARDIAN_MODEL_POLICY.policyId,
   modelPolicyVersion: DEFAULT_GUARDIAN_MODEL_POLICY.version,
   model: DEFAULT_GUARDIAN_MODEL_POLICY.missionDialogue.modelId,
-  credential: { schemaVersion: 1, provider: "nebius", slot: "default" },
+  credential: registeredCredentialReference("nebius", "default"),
 } as const;
 
 /** @deprecated Use missionDialogueBoundary; this alias preserves the C6 evidence API. */

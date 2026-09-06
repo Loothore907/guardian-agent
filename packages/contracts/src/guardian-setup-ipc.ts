@@ -8,6 +8,7 @@ import {
   TimestampSchema,
   VersionNumberSchema,
 } from "./common.js";
+import { CredentialStoreConfigSchema } from "./credentials.js";
 import {
   MissionSetupRiskEnvelopeSchema,
   MissionSetupRiskEvaluationSchema,
@@ -51,6 +52,7 @@ export const MissionSetupRiskServiceProcessConfigSchema = z
   .strictObject({
     schemaVersion: ContractVersionSchema,
     serviceKind: z.literal("mission_setup_risk"),
+    credentialStore: CredentialStoreConfigSchema.optional(),
     endpoint: z.string().min(1).max(260),
     capability: OpaqueIdSchema,
     startsAt: TimestampSchema,

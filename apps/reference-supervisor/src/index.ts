@@ -14,6 +14,8 @@ import {
   AuthorityCapabilityBindingSchema,
   CanonicalRequestSchema,
   ControlledContentScopeSchema,
+  CredentialStoreConfigSchema,
+  credentialStoreConfigForConsumer,
   CredentialStoreHandleSchema,
   DEFAULT_NEBIUS_WORKER_SELECTION,
   DEFAULT_REFERENCE_WORKER_SELECTION,
@@ -24,6 +26,8 @@ import {
   type AuthorityCapabilityBinding,
   type AuthorityCallerRole,
   type AuthorityIpcOperation,
+  type CredentialConsumer,
+  type CredentialStoreConfig,
   type MissionDraftReviewEnvelope,
   type MissionSetupRiskEnvelope,
   type WorkerTurnEnvelope,
@@ -108,6 +112,7 @@ export interface ReferenceAuthoritySupervisorConfig {
   readonly workspaceRoots: readonly unknown[];
   readonly issuedAt: unknown;
   readonly expiresAt: unknown;
+  readonly credentialStore?: unknown;
 }
 
 export interface ReferenceCompetitionSessionConfig {
@@ -165,6 +170,23 @@ function createBinding(options: {
   });
 }
 
+function localByokCredentialStoreConfig(): CredentialStoreConfig {
+  const runtime =
+    process.platform === "win32" ? "windows" : process.platform === "linux" ? "linux" : null;
+  if (runtime === null) throw new TypeError("local BYOK credential store is unavailable");
+  return CredentialStoreConfigSchema.parse({
+    schemaVersion: 1,
+    custodyProfile: "byok",
+    location: {
+      schemaVersion: 1,
+      custodyProfile: "byok",
+      pool: "personal",
+      runtime,
+      storeTarget: runtime === "windows" ? "windows_credential_manager" : "linux_secret_service",
+    },
+  });
+}
+
 function normalizeCompetitionSessionConfig(value: ReferenceCompetitionSessionConfig) {
   const connectionId = OpaqueIdSchema.parse(value.connectionId);
   const destination = GitHubRepositoryDestinationSchema.parse({
@@ -210,6 +232,11 @@ export async function startReferenceAuthoritySupervisor(
   const callerId = OpaqueIdSchema.parse(config.callerId);
   const issuedAt = TimestampSchema.parse(config.issuedAt);
   const expiresAt = TimestampSchema.parse(config.expiresAt);
+  const credentialStore = CredentialStoreConfigSchema.parse(
+    config.credentialStore ?? localByokCredentialStoreConfig(),
+  );
+  const credentialStoreFor = (consumer: CredentialConsumer) =>
+    credentialStoreConfigForConsumer(credentialStore, consumer);
   const competition =
     options.competition === undefined
       ? undefined
@@ -346,6 +373,7 @@ export async function startReferenceAuthoritySupervisor(
                 schemaVersion: 1,
                 ...input,
                 ...credentials,
+                credentialStore: credentialStoreFor("interaction_service"),
               },
               readyLine: "guardian interaction service ready",
               environment:
@@ -388,6 +416,7 @@ export async function startReferenceAuthoritySupervisor(
                 schemaVersion: 1,
                 serviceKind: "mission_draft_review",
                 ...credentials,
+                credentialStore: credentialStoreFor("interaction_service"),
                 startsAt,
                 expiresAt,
                 envelope,
@@ -429,6 +458,7 @@ export async function startReferenceAuthoritySupervisor(
                 schemaVersion: 1,
                 serviceKind: "mission_setup_risk",
                 ...credentials,
+                credentialStore: credentialStoreFor("guardian_service"),
                 startsAt,
                 expiresAt,
                 envelope,
@@ -460,6 +490,7 @@ export async function startReferenceAuthoritySupervisor(
           schemaVersion: 1,
           serviceKind: "worker_turn",
           ...credentials,
+          credentialStore: credentialStoreFor("worker_service"),
           turn,
         },
         readyLine: "guardian worker service ready",
@@ -512,6 +543,7 @@ export async function startReferenceAuthoritySupervisor(
               researchBinding,
               records: broker,
             },
+            credentialStore,
             ...(options.now === undefined ? {} : { now: options.now }),
           });
           competitionJourney = await startSupervisedControlledCompetitionJourney({

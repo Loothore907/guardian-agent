@@ -17,6 +17,18 @@ const connectionId = "33333333-3333-4333-8333-333333333333";
 const missionId = "44444444-4444-4444-8444-444444444444";
 const profileId = "55555555-5555-4555-8555-555555555555";
 const headCommit = "a".repeat(40);
+const credentialStore = {
+  schemaVersion: 1,
+  custodyProfile: "byok",
+  location: {
+    schemaVersion: 1,
+    custodyProfile: "byok",
+    pool: "personal",
+    runtime: process.platform === "win32" ? "windows" : "linux",
+    storeTarget:
+      process.platform === "win32" ? "windows_credential_manager" : "linux_secret_service",
+  },
+} as const;
 
 function processConfig() {
   const now = Date.now();
@@ -25,6 +37,7 @@ function processConfig() {
   return BrokerServiceProcessConfigSchema.parse({
     schemaVersion: 1,
     serviceKind: "github_broker",
+    credentialStore,
     broker: {
       schemaVersion: 1,
       ...createBrokerIpcCredentials(),

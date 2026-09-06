@@ -70,7 +70,15 @@ def host_filesystem_hidden():
 
 
 def provider_credentials_absent():
-    sensitive = ("GITHUB_TOKEN", "GH_TOKEN", "NEBIUS_API_KEY", "TAVILY_API_KEY")
+    sensitive = (
+        "DBUS_SESSION_BUS_ADDRESS",
+        "GITHUB_TOKEN",
+        "GH_TOKEN",
+        "GNOME_KEYRING_CONTROL",
+        "NEBIUS_API_KEY",
+        "TAVILY_API_KEY",
+        "XDG_RUNTIME_DIR",
+    )
     return all(name not in os.environ for name in sensitive)
 
 

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { registeredCredentialReference } from "@guardian/contracts";
 import { InMemoryCredentialStore } from "@guardian/credential-store";
 import type { CredentialStore } from "@guardian/credential-store";
 import { FixedOriginCredentialVerifier } from "@guardian/credential-verification";
@@ -129,6 +130,25 @@ describe("guardian setup orchestration", () => {
     expect(authorize).not.toHaveBeenCalled();
   });
 
+  it("preflights every GitHub slot before starting device authorization", async () => {
+    const authorize = vi.fn();
+    const store: CredentialStore = {
+      status: () => Promise.reject(new Error("fixture store unavailable")),
+      delete: vi.fn(),
+      use: vi.fn(),
+      write: vi.fn(),
+    };
+    await expect(
+      runGitHubDeviceSetup({
+        store,
+        authorizer: { authorize },
+        verifier: verifier("github").value,
+        io: { interactive: true, write: vi.fn() },
+      }),
+    ).rejects.toThrow("credential store is unavailable");
+    expect(authorize).not.toHaveBeenCalled();
+  });
+
   it("rolls back the GitHub refresh token when access-token storage fails", async () => {
     const backingStore = new InMemoryCredentialStore();
     const store: CredentialStore = {
@@ -163,6 +183,62 @@ describe("guardian setup orchestration", () => {
     await expect(
       backingStore.status({ schemaVersion: 1, provider: "github", slot: "refresh" }),
     ).resolves.toMatchObject({ state: "missing" });
+    expect(accessToken.every((byte) => byte === 0)).toBe(true);
+    expect(refreshToken.every((byte) => byte === 0)).toBe(true);
+  });
+
+  it("preserves every prior GitHub slot when replacement fails", async () => {
+    const backingStore = new InMemoryCredentialStore();
+    const previous = {
+      default: "ghu_previous_access_fixture",
+      refresh: "ghr_previous_refresh_fixture",
+      metadata:
+        '{"schemaVersion":1,"accessExpiresAt":"2026-09-01T08:00:00.000Z","refreshExpiresAt":"2027-03-04T00:00:00.000Z"}',
+    } as const;
+    for (const [slot, value] of Object.entries(previous)) {
+      await backingStore.write(registeredCredentialReference("github", slot), Buffer.from(value));
+    }
+    let rejectedNewAccess = false;
+    const store: CredentialStore = {
+      status: (reference) => backingStore.status(reference),
+      delete: (reference) => backingStore.delete(reference),
+      use: (reference, operation) => backingStore.use(reference, operation),
+      write: (reference, secret) => {
+        const value = Buffer.from(secret).toString();
+        if (!rejectedNewAccess && value === "ghu_device_access_token_fixture") {
+          rejectedNewAccess = true;
+          return Promise.reject(new Error("fixture replacement failure"));
+        }
+        return backingStore.write(reference, secret);
+      },
+    };
+    const accessToken = Uint8Array.from(Buffer.from("ghu_device_access_token_fixture"));
+    const refreshToken = Uint8Array.from(Buffer.from("ghr_device_refresh_token_fixture"));
+
+    await expect(
+      runGitHubDeviceSetup({
+        store,
+        authorizer: {
+          authorize: () =>
+            Promise.resolve({
+              accessToken,
+              refreshToken,
+              accessTokenExpiresInSeconds: 28_800,
+              refreshTokenExpiresInSeconds: 15_897_600,
+            }),
+        },
+        verifier: verifier("github").value,
+        io: { interactive: true, write: vi.fn() },
+      }),
+    ).rejects.toThrow("credential enrollment failed");
+
+    for (const [slot, value] of Object.entries(previous)) {
+      await expect(
+        backingStore.use(registeredCredentialReference("github", slot), (secret) =>
+          Promise.resolve(Buffer.from(secret).toString()),
+        ),
+      ).resolves.toBe(value);
+    }
     expect(accessToken.every((byte) => byte === 0)).toBe(true);
     expect(refreshToken.every((byte) => byte === 0)).toBe(true);
   });
@@ -287,6 +363,50 @@ describe("guardian setup orchestration", () => {
       }),
     ).rejects.toThrow("interactive credential enrollment is required");
     expect(terminal.io.readSecret).not.toHaveBeenCalled();
+  });
+
+  it("preflights the credential store before requesting secret input", async () => {
+    const terminal = setupIo();
+    const check = verifier();
+    const store: CredentialStore = {
+      status: () => Promise.reject(new Error("fixture store unavailable")),
+      delete: vi.fn(),
+      use: vi.fn(),
+      write: vi.fn(),
+    };
+    await expect(
+      runGuardianSetup({ provider: "nebius", store, verifier: check.value, io: terminal.io }),
+    ).rejects.toThrow("credential store is unavailable");
+    expect(terminal.io.readSecret).not.toHaveBeenCalled();
+    expect(check.verify).not.toHaveBeenCalled();
+  });
+
+  it("preserves a prior credential when replacement storage fails", async () => {
+    const backingStore = new InMemoryCredentialStore();
+    const reference = registeredCredentialReference("nebius", "default");
+    await backingStore.write(reference, Buffer.from("previous-secret-fixture"));
+    let rejectedReplacement = false;
+    const store: CredentialStore = {
+      status: (value) => backingStore.status(value),
+      delete: (value) => backingStore.delete(value),
+      use: (value, operation) => backingStore.use(value, operation),
+      write: (value, secret) => {
+        if (!rejectedReplacement && Buffer.from(secret).toString() === SECRET) {
+          rejectedReplacement = true;
+          return Promise.reject(new Error("fixture replacement failure"));
+        }
+        return backingStore.write(value, secret);
+      },
+    };
+    const terminal = setupIo();
+
+    await expect(
+      runGuardianSetup({ provider: "nebius", store, verifier: verifier().value, io: terminal.io }),
+    ).rejects.toThrow("credential replacement failed");
+    await expect(
+      backingStore.use(reference, (secret) => Promise.resolve(Buffer.from(secret).toString())),
+    ).resolves.toBe("previous-secret-fixture");
+    expect(terminal.input()?.every((byte) => byte === 0)).toBe(true);
   });
 
   it("rejects undersized credential input before verification", async () => {

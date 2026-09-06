@@ -110,6 +110,16 @@ test("the production reference executor enforces the C4 isolation boundary", asy
       timeoutSeconds: 5,
     });
     assert.equal(commandBoundary.exitCode, 0);
+    const credentialRouteBoundary = await launched.localCommand({
+      executable: "node",
+      arguments: [
+        "-e",
+        "const e=process.env,k=['DBUS_SESSION_BUS_ADDRESS','GNOME_KEYRING_CONTROL','XDG_RUNTIME_DIR'];process.exit(k.some(n=>n in e)?1:0)",
+      ],
+      workingDirectory: "/workspace",
+      timeoutSeconds: 5,
+    });
+    assert.equal(credentialRouteBoundary.exitCode, 0);
 
     const directNetwork = await launched.localCommand({
       executable: "node",

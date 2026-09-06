@@ -401,22 +401,31 @@ privileged adapter internals; only their credential-holding application services
 may resolve the narrow provider slot. Privileged adapters must not interpret
 prompts, public prose, or model output.
 
-The credential store supports only Nebius, Tavily, and GitHub references. Its
-Windows adapter uses fixed Credential Manager targets. Its Linux adapter invokes
-only `/usr/bin/secret-tool` with fixed attributes, sends secret input through
-stdin, and forwards only the user-session bus address and runtime directory.
-Neither adapter puts secret material in argv or the helper environment. Status is
-non-secret, and temporary resolved byte copies are scoped to credential-holding
-callbacks and zeroed afterward. Linux has no fallback when Secret Service is
-unavailable. The trusted setup
-orchestrator verifies the exact provider before writing and emits only bounded
-account metadata. The executable Windows/Linux CLI supports enroll, non-secret status,
-and exact-confirmation revoke. Enrollment calls only the fixed read-only Nebius
-Token Factory models, Tavily usage, or GitHub authenticated-user endpoint, rejects
-redirects and oversized or malformed responses, and sanitizes every failure.
+The credential system supports only registered Nebius, Tavily, and GitHub
+provider/slot pairs. ADR-0041 separates project-owned `managed_demo` custody from
+user-owned `byok` custody while sharing verification, lifecycle, status,
+redaction, broker, and assignment-capability contracts. The managed Linux demo
+uses fixed Nebius SecretStash resources with separate public and judge pools;
+that adapter and its IAM evidence remain implementation work.
+
+The BYOK Windows adapter uses fixed Credential Manager targets. Its Linux adapter
+invokes only `/usr/bin/secret-tool` with fixed attributes, sends secret input
+through stdin, and forwards only the user-session bus address and runtime
+directory. Neither adapter puts secret material in argv or the helper
+environment. Status is non-secret, and temporary resolved byte copies are scoped
+to credential-holding callbacks and zeroed afterward. Linux has no fallback when
+Secret Service is unavailable. The setup orchestrator verifies the exact provider
+before writing and emits only bounded account metadata. Its current raw-terminal
+input is a diagnostic implementation, not an accepted cross-platform enrollment
+product: a protected Linux paste attempt failed before provider use. The supported
+local setup surface, verified replacement lifecycle, and preflight behavior are
+tracked in the
+[credential custody plan](development/credential-custody-plan.md).
+
 An isolated disposable Linux user session passes a real Secret Service
 write/lookup/rotation/delete lifecycle. Protected provider-credential resolution,
-broader service containment, and a macOS adapter remain incomplete; see the
+persistent desktop enrollment usability, broader service containment, and a
+macOS adapter remain incomplete; see the
 [C6 credential-enrollment evidence](development/evidence/c6-credential-enrollment.md),
 [ADR-0038](adr/0038-linux-peer-identity-and-secret-service.md), and the
 [W26 lifecycle evidence](development/evidence/w26-linux-secret-service-lifecycle.md).

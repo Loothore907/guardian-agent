@@ -1,7 +1,7 @@
 import {
-  CredentialReferenceSchema,
   CredentialVerificationResultSchema,
   GitHubCredentialMetadataSchema,
+  registeredCredentialReference,
   type CredentialProvider,
   type CredentialReference,
   type CredentialVerificationResult,
@@ -107,32 +107,89 @@ export interface GuardianSetupManagementIo {
 }
 
 function referenceFor(providerValue: CredentialProvider): CredentialReference {
-  return CredentialReferenceSchema.parse({
-    schemaVersion: 1,
-    provider: providerValue,
-    slot: "default",
-  });
+  return registeredCredentialReference(providerValue, "default");
 }
 
 function githubRefreshReference(): CredentialReference {
-  return CredentialReferenceSchema.parse({
-    schemaVersion: 1,
-    provider: "github",
-    slot: "refresh",
-  });
+  return registeredCredentialReference("github", "refresh");
 }
 
 function githubMetadataReference(): CredentialReference {
-  return CredentialReferenceSchema.parse({
-    schemaVersion: 1,
-    provider: "github",
-    slot: "metadata",
-  });
+  return registeredCredentialReference("github", "metadata");
 }
 
 function includesSecret(label: string, secret: Uint8Array): boolean {
   if (secret.byteLength < 8) return false;
   return Buffer.from(label, "utf8").includes(Buffer.from(secret));
+}
+
+type CredentialSnapshot = {
+  readonly reference: CredentialReference;
+  readonly previous?: Uint8Array;
+};
+
+async function preflightCredentialStore(
+  store: CredentialStore,
+  references: readonly CredentialReference[],
+): Promise<void> {
+  try {
+    await Promise.all(references.map((reference) => store.status(reference)));
+  } catch {
+    throw new TypeError("credential store is unavailable");
+  }
+}
+
+async function snapshotCredential(
+  store: CredentialStore,
+  reference: CredentialReference,
+): Promise<CredentialSnapshot> {
+  let previous: Uint8Array | undefined;
+  try {
+    const status = await store.status(reference);
+    if (status.state === "available") {
+      previous = await store.use(reference, (secret) => Promise.resolve(Uint8Array.from(secret)));
+    }
+    return { reference, ...(previous === undefined ? {} : { previous }) };
+  } catch {
+    previous?.fill(0);
+    throw new TypeError("credential store is unavailable");
+  }
+}
+
+async function snapshotCredentials(
+  store: CredentialStore,
+  references: readonly CredentialReference[],
+): Promise<CredentialSnapshot[]> {
+  const snapshots: CredentialSnapshot[] = [];
+  try {
+    for (const reference of references) {
+      snapshots.push(await snapshotCredential(store, reference));
+    }
+    return snapshots;
+  } catch (error) {
+    clearCredentialSnapshots(snapshots);
+    throw error;
+  }
+}
+
+async function restoreCredentialSnapshots(
+  store: CredentialStore,
+  snapshots: readonly CredentialSnapshot[],
+): Promise<void> {
+  const results = await Promise.allSettled(
+    snapshots.map((snapshot) =>
+      snapshot.previous === undefined
+        ? store.delete(snapshot.reference)
+        : store.write(snapshot.reference, snapshot.previous),
+    ),
+  );
+  if (results.some((result) => result.status === "rejected")) {
+    throw new TypeError("credential replacement rollback failed");
+  }
+}
+
+function clearCredentialSnapshots(snapshots: readonly CredentialSnapshot[]): void {
+  for (const snapshot of snapshots) snapshot.previous?.fill(0);
 }
 
 export async function runGuardianSetup(options: {
@@ -143,6 +200,7 @@ export async function runGuardianSetup(options: {
 }): Promise<CredentialVerificationResult> {
   if (!options.io.interactive) throw new TypeError("interactive credential enrollment is required");
   const reference = referenceFor(options.provider);
+  await preflightCredentialStore(options.store, [reference]);
   const secret = await options.io.readSecret(`Enter ${options.provider} credential: `);
   try {
     if (secret.byteLength < 8 || secret.byteLength > 4_096) {
@@ -162,7 +220,17 @@ export async function runGuardianSetup(options: {
     if (includesSecret(verification.accountLabel, secret)) {
       throw new TypeError("credential verification returned unsafe metadata");
     }
-    await options.store.write(reference, secret);
+    const snapshot = await snapshotCredential(options.store, reference);
+    try {
+      try {
+        await options.store.write(reference, secret);
+      } catch {
+        await restoreCredentialSnapshots(options.store, [snapshot]);
+        throw new TypeError("credential replacement failed");
+      }
+    } finally {
+      clearCredentialSnapshots([snapshot]);
+    }
     options.io.write(
       `Stored ${reference.provider} credential for verified account ${verification.accountLabel}.\n`,
     );
@@ -183,14 +251,14 @@ export async function runGitHubDeviceSetup(options: {
   const reference = referenceFor("github");
   const refreshReference = githubRefreshReference();
   const metadataReference = githubMetadataReference();
+  const references = [reference, refreshReference, metadataReference];
+  await preflightCredentialStore(options.store, references);
   const credential = await options.authorizer.authorize((challenge) => {
     options.io.write(
       `Open ${challenge.verificationUri} and enter code ${challenge.userCode}.\nWaiting for GitHub authorization...\n`,
     );
   });
-  let wroteRefresh = false;
-  let wroteAccess = false;
-  let wroteMetadata = false;
+  let snapshots: CredentialSnapshot[] = [];
   try {
     let verification: CredentialVerificationResult;
     try {
@@ -206,10 +274,9 @@ export async function runGitHubDeviceSetup(options: {
     if (includesSecret(verification.accountLabel, credential.accessToken)) {
       throw new TypeError("credential verification returned unsafe metadata");
     }
+    snapshots = await snapshotCredentials(options.store, references);
     await options.store.write(refreshReference, credential.refreshToken);
-    wroteRefresh = true;
     await options.store.write(reference, credential.accessToken);
-    wroteAccess = true;
     const enrolledAt = options.now?.() ?? Date.now();
     const metadata = GitHubCredentialMetadataSchema.parse({
       schemaVersion: 1,
@@ -223,7 +290,6 @@ export async function runGitHubDeviceSetup(options: {
     const metadataBytes = Uint8Array.from(Buffer.from(JSON.stringify(metadata), "utf8"));
     try {
       await options.store.write(metadataReference, metadataBytes);
-      wroteMetadata = true;
     } finally {
       metadataBytes.fill(0);
     }
@@ -232,18 +298,12 @@ export async function runGitHubDeviceSetup(options: {
     );
     return verification;
   } catch {
-    const cleanup = await Promise.allSettled([
-      ...(wroteAccess ? [options.store.delete(reference)] : []),
-      ...(wroteRefresh ? [options.store.delete(refreshReference)] : []),
-      ...(wroteAccess || wroteRefresh || wroteMetadata
-        ? [options.store.delete(metadataReference)]
-        : []),
-    ]);
-    if (cleanup.some((result) => result.status === "rejected")) {
-      throw new TypeError("credential enrollment cleanup failed");
+    if (snapshots.length > 0) {
+      await restoreCredentialSnapshots(options.store, snapshots);
     }
     throw new TypeError("credential enrollment failed");
   } finally {
+    clearCredentialSnapshots(snapshots);
     credential.accessToken.fill(0);
     credential.refreshToken.fill(0);
   }

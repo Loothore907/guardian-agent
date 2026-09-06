@@ -1,5 +1,5 @@
 import { WorkerServiceProcessConfigSchema } from "@guardian/contracts";
-import { createPlatformCredentialStore } from "@guardian/credential-store";
+import { createCredentialStore } from "@guardian/credential-store";
 
 import {
   NebiusNativeWorkerProvider,
@@ -47,7 +47,11 @@ async function main(): Promise<void> {
   const provider =
     providerMode === "fake"
       ? createFakeWorkerProvider()
-      : new NebiusNativeWorkerProvider({ credentialStore: createPlatformCredentialStore() });
+      : new NebiusNativeWorkerProvider({
+          credentialStore: createCredentialStore(bootstrap.credentialStore, {
+            consumer: "worker_service",
+          }),
+        });
   const service = await startWorkerService(bootstrap, provider);
   process.stdout.write("guardian worker service ready\n");
 
