@@ -4,7 +4,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LocalAuthorityIpcClient, createAuthorityIpcEndpoint } from "@guardian/authority-client";
 import { DevelopmentAuthorizationIssuer } from "@guardian/authorization-service";
 import { BoundSessionRuntime } from "@guardian/session";
@@ -88,6 +88,16 @@ const workspace = {
 } as const;
 
 describe("C7 synthetic service-child integration (not live model evidence)", () => {
+  beforeEach(() => {
+    if (process.platform !== "linux") return;
+    // Synthetic provider children never contact Secret Service. Keep descriptor
+    // validation real without depending on the CI runner's desktop bus format.
+    const runtime = `/run/user/${process.getuid!()}`;
+    vi.stubEnv("XDG_RUNTIME_DIR", runtime);
+    vi.stubEnv("DBUS_SESSION_BUS_ADDRESS", `unix:path=${runtime}/bus`);
+  });
+  afterEach(() => vi.unstubAllEnvs());
+
   it.each([
     "research",
     "read",
