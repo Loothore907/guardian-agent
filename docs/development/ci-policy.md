@@ -1,5 +1,15 @@
 # Continuous Integration Policy
 
+September 6 enforcement correction: the active main ruleset now requires the
+up-to-date GitHub Actions `build` check in addition to its existing PR, resolved
+review-thread, squash and linear-history rules. No bypass actors were added.
+Previously the workflow ran but was not required by the ruleset.
+
+The build also tests `scripts/session-hygiene.mjs` and checks issue-linked branch
+and Conventional PR-title metadata on pull-request events (including edits).
+This syntax check does not establish semantic issue scope or human review. See
+[session Git hygiene](session-git-hygiene.md) for local start/close checks and limits.
+
 CI is an enforcement layer. Agent instructions, review prompts, local hooks, and model judgments do not replace required checks.
 
 ## Pull-request checks
