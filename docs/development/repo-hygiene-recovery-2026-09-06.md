@@ -54,9 +54,8 @@ Tracking: [18 recovery](https://github.com/Loothore907/guardian-agent/issues/18)
 [21 budgets](https://github.com/Loothore907/guardian-agent/issues/21), and existing
 [13 C6](https://github.com/Loothore907/guardian-agent/issues/13).
 
-All product slices (#17 and #22–#30) and the initial governance PR #31 are merged
-after their updated exact-head checks. The final checker refinement is #36 and
-the evidence/handoff closeout is #32. These merges do not establish milestone
+All product slices (#17 and #22–#30) and governance PRs #31/#36 are merged
+after their updated exact-head checks. The evidence/handoff closeout is #32. These merges do not establish milestone
 acceptance. Intermediate snapshots were separately checked by CI. Some recovery
 PRs were larger than the desired steady-state size: shared supervisor
 bootstrap methods bind launch authority and continuation, and the older budget
@@ -110,8 +109,8 @@ merged feature branch, while close permits the completed PR to be verified.
 
 ## Remaining work
 
-Finish the final checker/documentation PRs with fresh required CI, then verify
-remote closeout and leave the primary checkout on clean current main. Recovery
+This final documentation PR completes the recovery record. Its closeout requires
+fresh protected CI, merge, a passing remote close check and clean current main. Recovery
 issue #18 closes only after that verification. Custody source review #20 is closed;
 C6 #13, C7 #19 and budget/hosted #21 remain open for their evidence gates. Platform
 debt is explicit in #33 (Windows IPC clocks) and #34 (WSL restart); hosted BYOK

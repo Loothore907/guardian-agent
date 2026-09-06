@@ -19,10 +19,10 @@ execution/testing belongs to a later, explicitly bounded session.
 ## Source and workflow
 
 The former 38-commit backlog and accumulated worktree have been recovered into
-issue-linked PRs. All product slices (PR #17 and #22–#30) and governance PR #31
-are merged. The checker refinement is tracked in #36 and this documentation
-closeout in #32; consult live GitHub for their final state. Publication and local
-tests alone do not establish milestone completion.
+issue-linked PRs. All product slices (PR #17 and #22–#30), governance PR #31
+and the checker refinement #36 are merged. Recovery evidence and this handoff
+are published through #32; verify its closeout on GitHub before starting new work.
+Publication and local tests alone do not establish milestone completion.
 
 Main now requires an up-to-date GitHub Actions build alongside PRs, resolved
 review threads and squash/linear integration. No bypass actors were added.

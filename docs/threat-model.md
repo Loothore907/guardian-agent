@@ -15,8 +15,9 @@ Current 2026-09-05 update: [launch-bound authority and headless preparation](adr
 The [September 4 discovery review](development/evidence/2026-09-04-discovery-review.md)
 records two additional regression cases: unsolicited child stdout after readiness
 and non-public IPv4 data in outbound research. Local fixes and Windows/Linux
-tests cover those cases. Linux provider IPC peer/socket controls remain incomplete;
-the authority-service peer proof does not establish containment for every service.
+tests cover those cases. Linux provider IPC peer/socket controls were incomplete
+at that checkpoint; authority-service peer proof alone does not establish
+containment for every service.
 W27 adds tested peer admission and listener verification for seven provider/broker
 protocols ([evidence](development/evidence/w27-linux-provider-ipc-containment.md));
 broader intended-host credential/process/artifact containment remains unverified.
