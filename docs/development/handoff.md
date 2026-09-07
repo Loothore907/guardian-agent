@@ -6,6 +6,13 @@ The first bounded KC
 hosted-research attempt remains a failed-closed result before provider startup.
 Both VMs are stopped, and the spent run sheet does not authorize a retry.
 
+The user approved a second exact attempt in the September 7 continuation. The
+[new run sheet](c7-hosted-research-run-sheet-2026-09-07-retry.md) binds current
+main `95648b58a871664ef6e29c9713bb2e7dacaa4f05`, its generated manifest/archive,
+one admission, USD 0.34 maximum new exposure, the existing replacement VM and
+credential resources, public HTTPS gate and terminal cleanup. It must pass its
+protected source-integration gate before any VM is started.
+
 ## Start here
 
 1. Run `node scripts/session-hygiene.mjs start --remote` and inspect current
@@ -13,12 +20,11 @@ Both VMs are stopped, and the spent run sheet does not authorize a retry.
 2. Read [the failed hosted gate](evidence/2026-09-07-kc-hosted-gate.md), closed
    issue [#40](https://github.com/Loothore907/guardian-agent/issues/40), and
    [ADR-0056](../adr/0056-manifest-bound-gitless-session-sources.md).
-3. Treat merged main `e8aef7456a49c1a81894f00f45cde059ab5fc8fa` as the
-   reviewed source revision. PR CI runs 118 and 119 and post-merge main run 120
-   passed; Linux CI verified the complete generated repository archive.
-4. Prepare a new bounded run sheet before any hosted action. A second journey needs
-   explicit authority because the one admission in the current sheet was consumed
-   and conservatively forfeited.
+3. Treat current main `95648b58a871664ef6e29c9713bb2e7dacaa4f05` as the
+   reviewed source revision for the retry. Its exact-head main run 124 passed;
+   PR #42's Linux CI also verified the complete generated repository archive.
+4. Integrate and verify the approved retry run sheet before any hosted action.
+   Its single admission is consumed by any admitted outcome and cannot be retried.
 
 ## Source and workflow
 
