@@ -28,8 +28,12 @@ not started by 20:05 UTC.
 
 That startup gate expired without a VM start or other hosted effect. The
 [replacement retry-3 sheet](c7-hosted-research-run-sheet-2026-09-07-retry-3.md)
-preserves the 22:00 UTC hard stop and every non-time bound while permitting the
-replacement to start only from 20:15 through 20:20 UTC.
+was then executed once and is spent. It reached a built, disabled, loopback-only
+Guardian plus Caddy after the reviewed host gates passed, but the Codex operator
+dismantled the transient deployment after one Windows TLS failure instead of
+preserving it for independent corroboration. No credential activation, provider
+call, reservation or admission occurred. See the
+[retry-3 abort evidence](evidence/2026-09-07-kc-hosted-retry-3-abort.md).
 
 ## Start here
 
@@ -109,28 +113,29 @@ to regain context. Do not promote assurance from successful model cooperation.
 
 ## Last recorded cloud state
 
-Both KC VMs were most recently authenticated as `STOPPED` after the replacement's
-08:49:18–09:22:38 UTC retry interval. The retry judge host and Caddy were never
-started. Existing Nebius/Tavily and ingress resources remain exact-resource
-bound and unchanged. The live ledger still contains only the first attempt's
-failed, forfeited 100,000-microUSD reservation and empty usage report. The retry
-temporary bearer was never created and is verified absent. The cutoff automation
-retains its original configuration and is paused.
+Both KC VMs were authenticated as `STOPPED` at the September 7 retry-3 closeout.
+The replacement started at 20:15:29 UTC, later auto-recovered after guest
+shutdown, and was cloud-stopped at 21:28:09 UTC. The original remained stopped.
+Existing Nebius/Tavily and ingress resources remain exact-resource bound and
+unchanged. The live ledger still contains only the first attempt's failed,
+forfeited 100,000-microUSD reservation and empty usage report. The retry-3
+temporary bearer was never created. The cutoff automation is paused.
 
 Leave both VMs stopped. The retry archive and extracted root were removed from
 the VM; the exact ignored local bundle remains under
 `tmp/c7-acceptance/kc-retry-95648b5/`. Reuse the replacement, resources and
 fixtures only after a fresh bounded execution window, admission and cloud-stop
 fallback are approved. Preserve the shared USD 25 allowance; the conservative
-infrastructure estimate is USD 1.110945, the provider dashboard's last observed
-compute total was USD 1.01 at 06:47 UTC, and the failed USD 0.10 reservation
-awaits provider reconciliation.
+infrastructure estimate is USD 1.256279. The provider dashboard showed USD 1.13
+compute and USD 23.87 balance at its lagging 19:40 UTC snapshot. The failed USD
+0.10 reservation awaits provider reconciliation.
 
 ## Evidence and history
 
 - [Repository recovery and validation](repo-hygiene-recovery-2026-09-06.md)
 - [KC hosted-gate result](evidence/2026-09-07-kc-hosted-gate.md)
 - [KC hosted-retry abort](evidence/2026-09-07-kc-hosted-retry-abort.md)
+- [KC hosted retry-3 abort](evidence/2026-09-07-kc-hosted-retry-3-abort.md)
 - [Latest KC protected-enrollment evidence](evidence/2026-09-06-kc-continuation.md)
 - [Protected research-only startup evidence](evidence/2026-09-06-protected-judge-startup.md)
 - [C6 residuals](c6-residual-review.md)

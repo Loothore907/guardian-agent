@@ -1,6 +1,28 @@
 # C7 handoff: gitless source fixed offline; hosted gate remains closed
 
-## Current checkpoint — September 7
+## Current checkpoint — September 7 retry 3
+
+Both exact KC VMs are cloud-confirmed `STOPPED`; the replacement stop completed
+at 21:28:09 UTC after Nebius auto-recovered it from guest shutdown. The cutoff
+automation is paused. Retry 3 is spent and produced no credential activation,
+provider call, reservation, admission or journey.
+
+The exact reviewed archive built and the Linux, reference-runtime and standalone
+containment gates passed. Disabled Guardian and Caddy started, but the Codex
+operator aborted and removed the transient deployment after one Windows Schannel
+failure instead of preserving it for independent corroboration. Follow-up
+Windows, Chromium and OpenSSL probes all found a protocol-level TLS failure. The
+two `agentic-guardian.com` hostnames resolved to `18.204.152.241`, not the
+replacement VM's `204.12.168.166`; because corroboration occurred after teardown,
+the fault is not yet localized among DNS, upstream proxy, Caddy or Guardian. See
+the [retry-3 abort evidence](evidence/2026-09-07-kc-hosted-retry-3-abort.md).
+
+Nebius billing showed USD 1.13 compute usage and USD 23.87 balance at a lagging
+19:40 UTC snapshot. The conservative local infrastructure estimate is USD
+1.256279. Persistent disks, IPs, DNS, fixtures, SecretStash resources, IAM
+bindings and the private ledger remain preserved.
+
+## Earlier September 7 checkpoint
 
 Both KC VMs are cloud-confirmed `STOPPED`. The bounded run sheet was executed
 once and is spent. Intended-host containment, exact SecretStash/IAM bindings,
