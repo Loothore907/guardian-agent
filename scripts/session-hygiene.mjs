@@ -30,12 +30,13 @@ export function inspectLocal(cwd = process.cwd()) {
   return { branch, head, changed, upstream, ahead, behind };
 }
 
-export function localBlockers(state) {
+export function localBlockers(state, { allowMissingUpstream = false } = {}) {
   const errors = [];
   if (!state.branch) errors.push("detached_head");
   if (state.changed.length) errors.push("uncommitted_changes");
-  if (!state.upstream) errors.push("missing_upstream");
-  else if (state.upstream !== `origin/${state.branch}`) errors.push("unexpected_upstream");
+  if (!state.upstream) {
+    if (!allowMissingUpstream) errors.push("missing_upstream");
+  } else if (state.upstream !== `origin/${state.branch}`) errors.push("unexpected_upstream");
   if (state.ahead > 0) errors.push("unpushed_commits");
   if (state.behind > 0) errors.push("behind_upstream");
   return errors;
@@ -73,7 +74,7 @@ export function main(args = process.argv.slice(2)) {
     execFileSync("git", ["fetch", "origin"], { stdio: ["ignore", "pipe", "pipe"] });
   }
   const state = inspectLocal();
-  const errors = localBlockers(state);
+  let errors = localBlockers(state);
   let remote = "unknown", prUrl = null;
   if (flags.includes("--remote")) {
     if (state.branch === "main") {
@@ -83,6 +84,9 @@ export function main(args = process.argv.slice(2)) {
     } else {
       try {
         const pr = JSON.parse(execFileSync("gh", ["pr", "view", state.branch, "--json", "title,body,headRefName,headRefOid,state,statusCheckRollup,url"], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }));
+        if (mode === "close" && pr.state === "MERGED") {
+          errors = localBlockers(state, { allowMissingUpstream: true });
+        }
         errors.push(...checkRemote(state, pr, mode));
         const issue = branchPattern.exec(state.branch)?.[2];
         if (issue) execFileSync("gh", ["issue", "view", issue, "--json", "number,state"], { stdio: ["ignore", "pipe", "pipe"] });

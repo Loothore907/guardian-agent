@@ -52,6 +52,9 @@ test("uses the latest same-head build without hiding pending/failing or ambiguou
 test("allows merged-PR closeout but refuses to resume feature work on that branch", () => {
   const merged = {...pr,state:"MERGED"};
   assert.deepEqual(checkRemote({head:pr.headRefOid},merged,"close"),[]);
+  const deletedRemoteBranch = {branch:pr.headRefName,head:pr.headRefOid,changed:[],upstream:null,ahead:null,behind:null};
+  assert.deepEqual(localBlockers(deletedRemoteBranch,{allowMissingUpstream:true}),[]);
+  assert.ok(localBlockers(deletedRemoteBranch).includes("missing_upstream"));
   assert.ok(checkRemote({head:pr.headRefOid},merged,"start").includes("merged_branch_requires_new_work_branch"));
   assert.deepEqual(checkRemote({head:pr.headRefOid},pr,"start"),[]);
 });
