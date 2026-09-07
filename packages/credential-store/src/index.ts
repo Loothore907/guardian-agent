@@ -6,6 +6,7 @@ import {
   CredentialReferenceSchema,
   CredentialStoreConfigSchema,
   CredentialStatusSchema,
+  ManagedDemoJudgeIngressSecretStoreConfigSchema,
   ManagedDemoSecretResourceSchema,
   RegisteredCredentialReferenceSchema,
   type CredentialConsumer,
@@ -13,6 +14,7 @@ import {
   type CredentialPool,
   type CredentialReference,
   type CredentialStatus,
+  type ManagedDemoJudgeIngressSecretResource,
   type ManagedDemoSecretResource,
 } from "@guardian/contracts";
 
@@ -636,6 +638,114 @@ function secretFromSecretStashOutput(
   }
 }
 
+async function readSecretStashPayload(
+  resource: Pick<
+    ManagedDemoSecretResource | ManagedDemoJudgeIngressSecretResource,
+    "payloadKey" | "secretId"
+  >,
+  runner: SecretStashRunner,
+  privateKey = false,
+): Promise<Uint8Array> {
+  let result: LinuxSecretToolResult | undefined;
+  try {
+    result = await runner({
+      file: SECRETSTASH_CLI_PATH,
+      arguments: [
+        "mysterybox",
+        "payload",
+        "get-by-key",
+        "--key",
+        resource.payloadKey,
+        "--secret-id",
+        resource.secretId,
+        "--format",
+        "json",
+        "--no-browser",
+        "--no-check-update",
+        "--no-progress",
+        "--retries",
+        "1",
+        "--timeout",
+        "15s",
+        "--per-retry-timeout",
+        "15s",
+        "--auth-timeout",
+        "15s",
+      ],
+      stdin: new Uint8Array(),
+      environment: {},
+      timeoutMs: SECRETSTASH_HELPER_TIMEOUT_MS,
+    });
+    if (result.code !== 0 || !isEmpty(result.stderr)) throw new CredentialStoreError();
+    return secretFromSecretStashOutput(result.stdout, resource.payloadKey, privateKey);
+  } catch {
+    throw new CredentialStoreError();
+  } finally {
+    result?.stdout.fill(0);
+    result?.stderr.fill(0);
+  }
+}
+
+function decodeLowercaseHexSecret(value: Uint8Array, minimumBytes: number, maximumBytes: number) {
+  try {
+    const encoded = new TextDecoder("utf-8", { fatal: true }).decode(value);
+    if (
+      !/^[0-9a-f]+$/u.test(encoded) ||
+      encoded.length % 2 !== 0 ||
+      encoded.length < minimumBytes * 2 ||
+      encoded.length > maximumBytes * 2
+    ) {
+      throw new CredentialStoreError();
+    }
+    return Uint8Array.from(Buffer.from(encoded, "hex"));
+  } catch {
+    throw new CredentialStoreError();
+  } finally {
+    value.fill(0);
+  }
+}
+
+/** Privileged host-only callback for the two fixed judge ingress secrets. */
+export async function useManagedDemoJudgeIngressSecrets<T>(
+  configValue: unknown,
+  operation: (secrets: {
+    readonly expectedCredentialDigest: Uint8Array;
+    readonly sourceFingerprintKey: Uint8Array;
+  }) => Promise<T> | T,
+  runner: SecretStashRunner = runSecretStashCli,
+): Promise<T> {
+  const config = ManagedDemoJudgeIngressSecretStoreConfigSchema.parse(configValue);
+  if (process.platform !== "linux" && runner === runSecretStashCli) {
+    throw new CredentialStoreError();
+  }
+  const accessResource = config.resources.find(
+    (resource) => resource.slot === "access_credential_sha256",
+  )!;
+  const fingerprintResource = config.resources.find(
+    (resource) => resource.slot === "source_fingerprint_key",
+  )!;
+  let expectedCredentialDigest: Uint8Array | undefined;
+  let sourceFingerprintKey: Uint8Array | undefined;
+  try {
+    expectedCredentialDigest = decodeLowercaseHexSecret(
+      await readSecretStashPayload(accessResource, runner),
+      32,
+      32,
+    );
+    sourceFingerprintKey = decodeLowercaseHexSecret(
+      await readSecretStashPayload(fingerprintResource, runner),
+      32,
+      64,
+    );
+    return await operation({ expectedCredentialDigest, sourceFingerprintKey });
+  } catch {
+    throw new CredentialStoreError();
+  } finally {
+    expectedCredentialDigest?.fill(0);
+    sourceFingerprintKey?.fill(0);
+  }
+}
+
 export class SecretStashCredentialStore implements CredentialStore {
   readonly #resources = new Map<string, ManagedDemoSecretResource>();
   readonly #runner: SecretStashRunner;
@@ -668,48 +778,11 @@ export class SecretStashCredentialStore implements CredentialStore {
     const reference = RegisteredCredentialReferenceSchema.parse(referenceValue);
     const resource = this.#resources.get(managedResourceKey(reference));
     if (resource === undefined) return undefined;
-    let result: LinuxSecretToolResult | undefined;
-    try {
-      result = await this.#runner({
-        file: SECRETSTASH_CLI_PATH,
-        arguments: [
-          "mysterybox",
-          "payload",
-          "get-by-key",
-          "--key",
-          resource.payloadKey,
-          "--secret-id",
-          resource.secretId,
-          "--format",
-          "json",
-          "--no-browser",
-          "--no-check-update",
-          "--no-progress",
-          "--retries",
-          "1",
-          "--timeout",
-          "15s",
-          "--per-retry-timeout",
-          "15s",
-          "--auth-timeout",
-          "15s",
-        ],
-        stdin: new Uint8Array(),
-        environment: {},
-        timeoutMs: SECRETSTASH_HELPER_TIMEOUT_MS,
-      });
-      if (result.code !== 0 || !isEmpty(result.stderr)) throw new CredentialStoreError();
-      return secretFromSecretStashOutput(
-        result.stdout,
-        resource.payloadKey,
-        reference.provider === "github" && reference.slot === "app_private_key",
-      );
-    } catch {
-      throw new CredentialStoreError();
-    } finally {
-      result?.stdout.fill(0);
-      result?.stderr.fill(0);
-    }
+    return await readSecretStashPayload(
+      resource,
+      this.#runner,
+      reference.provider === "github" && reference.slot === "app_private_key",
+    );
   }
 
   async status(referenceValue: unknown): Promise<CredentialStatus> {

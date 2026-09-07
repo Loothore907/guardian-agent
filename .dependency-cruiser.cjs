@@ -43,7 +43,7 @@ module.exports = {
       name: "credential-store-is-not-agent-accessible",
       severity: "error",
       from: {
-        path: "^(?!packages/credential-store/|apps/(guardian-cli|interaction-service|worker-service|guardian-service|research-service|broker-service)/)",
+        path: "^(?!packages/credential-store/|apps/(guardian-cli|interaction-service|worker-service|guardian-service|research-service|broker-service|judge-host-service)/)",
       },
       to: { path: "^packages/credential-store/" },
     },

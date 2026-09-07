@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "tsBuildInfoFile": "dist/.tsbuildinfo"
+  },
+  "include": ["src/**/*.ts"],
+  "references": [
+    { "path": "../control-api" },
+    { "path": "../reference-supervisor" },
+    { "path": "../../packages/contracts" },
+    { "path": "../../packages/credential-store" },
+    { "path": "../../packages/managed-demo-budget-client" }
+  ]
+}

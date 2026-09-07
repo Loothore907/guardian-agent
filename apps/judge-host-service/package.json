@@ -1,0 +1,19 @@
+{
+  "name": "@guardian/judge-host-service",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "guardian-judge-host-service": "./dist/main.js"
+  },
+  "dependencies": {
+    "@guardian/control-api": "workspace:*",
+    "@guardian/contracts": "workspace:*",
+    "@guardian/credential-store": "workspace:*",
+    "@guardian/managed-demo-budget-client": "workspace:*",
+    "@guardian/reference-supervisor": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "4.1.11"
+  }
+}

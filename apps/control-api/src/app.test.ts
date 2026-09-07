@@ -62,6 +62,32 @@ describe("control API", () => {
     });
   }
 
+  it("does not register the legacy journey route for portal-only composition", async () => {
+    const app = buildControlApi({
+      logger: false,
+      judge: {
+        deploymentId,
+        expectedHost: headers.host,
+        secrets: new InMemoryManagedDemoJudgeIngressSecrets({
+          expectedCredentialDigest: createHash("sha256").update(credential).digest(),
+          sourceFingerprintKey: Buffer.alloc(32, 9),
+        }),
+      },
+    });
+    openApps.push(app);
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/judge/journeys",
+      remoteAddress: "127.0.0.1",
+      headers,
+      payload: { schemaVersion: 1, objective: "Review the bounded repository" },
+    });
+
+    expect(response.statusCode).toBe(404);
+    expect(response.json()).toEqual({ code: "not_found" });
+  });
+
   it("authenticates one same-host proxy request and passes only objective plus fingerprint", async () => {
     const run = completedRun();
     const app = judgeApp({ run });
