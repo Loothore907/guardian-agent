@@ -1,7 +1,38 @@
-# C7 handoff: KC source checked; protected deployment pending
+# C7 handoff: KC hosted gate blocked on gitless source
+
+## Current checkpoint — September 7
+
+Both KC VMs are cloud-confirmed `STOPPED`. The bounded run sheet was executed
+once and is spent. Intended-host containment, exact SecretStash/IAM bindings,
+protected runtime retrieval, authenticated model/pricing inventory, operator-clock
+policy activation, DNS-only TLS, negative routes and admission-before-preparation
+passed. The temporary judge bearer was deleted and the cutoff automation paused.
+
+The first exact draft was admitted at 02:55:49.768 UTC, then returned 503 and
+settled failed 21 ms later with `usage: []`. No confirmation, provider call or
+retry occurred. The USD 0.10 reservation is conservatively forfeited. Tavily
+remained 4/1500 after the attempt. The public TLS path also became unreliable
+after the negative-test burst; it remains a separate availability gate.
+
+Root cause: reviewed deployment uses a credential-free `git archive`, while
+`ManagedSessionWorkspace.plan` requires `.git` through `git rev-parse` and
+`git ls-files`. Issue [#40](https://github.com/Loothore907/guardian-agent/issues/40)
+owns a strict manifest-bound gitless-source contract. Implement and integrate it
+offline with an actual gitless production-child test. Do not restart a VM or run
+a second journey until exact-head CI passes and a new bounded run sheet explicitly
+authorizes another admission. See
+[the hosted-gate evidence](evidence/2026-09-07-kc-hosted-gate.md).
+
+Conservative cumulative infrastructure estimate: USD 1.044294. The last posted
+infrastructure bill is USD 0.86 and may lag. The failed USD 0.10 reservation awaits
+provider reconciliation. The USD 25 allowance and USD 5 infrastructure reserve
+were not changed. Disks, static addresses, DNS and exact SecretStash resources
+remain retained.
+
+## Superseded September 6 checkpoint
 
 Checkpoint: 2026-09-06, after stopped-host protected enrollment.
-This is the current pickup document; historical plans do not supersede it.
+This was the current pickup before the September 7 checkpoint above.
 
 **Current state: both KC VMs are cloud-confirmed STOPPED.** The replacement ran
 approximately 19:07–19:56:52 UTC and was stopped early while exact real-key transfer
@@ -61,7 +92,10 @@ in [September 5 KC evidence](evidence/2026-09-05-kc-linux-acceptance.md) and
 override the current state or next-session instructions below. Earlier intermittent
 authority-child startup failures remain unresolved despite later passing runs.
 
-## First actions in the next session
+## Superseded first actions from September 6
+
+The section below is retained for provenance and must not be executed as a current
+plan. The current actions are the September 7 checkpoint above.
 
 Primary milestone: one authenticated hosted research-only journey using protected
 Nebius/Tavily credentials, with admission before provider calls and durable usage
@@ -190,9 +224,10 @@ operator CLI is `/home/loothore907/.local/lib/guardian-c7-operator/nebius`, prof
 metadata only. Cloudflare browser sign-in may persist; this CLI does not manage DNS.
 
 Private runtime state remains `/home/guardianops/guardian-c7-private/`, with
-`campaign-budget.sqlite` and `budget-configuration.json`. The ledger has zero
-admissions and remains disabled. Cumulative compute estimate is USD 0.912327;
-retained storage/IP and provider billing reconciliation remain pending.
+`campaign-budget.sqlite` and `budget-configuration.json`. The live ledger has one
+failed admission: a 100,000-microUSD forfeiture with `usage: []`. The policy window
+is expired and must not be reused. Cumulative infrastructure estimate is USD
+1.044294; retained storage/IP and provider billing reconciliation remain pending.
 Fixture commit is `bd63c72aa1e697e4192f53ba19f833724efb6475`; Caddy serves its
 eight fixed paths from `/srv/guardian-fixtures/bd63c72aa1e6`. DNS records persist,
 but URLs are offline with the host stopped. Do not republish or recreate fixtures.
@@ -205,6 +240,7 @@ the exact source rule without widening SSH to the public internet.
 ## References
 
 - [Approved test zones and hosting plan](c7-test-zones-and-hosting-plan.md)
+- [September 7 hosted-gate result](evidence/2026-09-07-kc-hosted-gate.md)
 - [Current KC acceptance evidence](evidence/2026-09-06-kc-continuation.md)
 - [Credential placement product discussion](credential-placement-and-plan-approval.md)
 - [Budget clock decision](../adr/0053-budget-queue-server-clock.md)
