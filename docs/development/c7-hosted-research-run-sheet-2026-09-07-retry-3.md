@@ -1,6 +1,7 @@
 # C7 protected hosted research retry 3 — September 7, 2026
 
-- Status: approved for one execution in the active September 7 Codex session
+- Status: executed once and spent; see the
+  [retry-3 abort evidence](evidence/2026-09-07-kc-hosted-retry-3-abort.md)
 - Tracking: issue #19
 - Repository base: `main` at `8de529ff329d78488fd0faff126abb841f46fe09`
 - Hosted source: `95648b58a871664ef6e29c9713bb2e7dacaa4f05`
