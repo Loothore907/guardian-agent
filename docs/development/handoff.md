@@ -2,16 +2,18 @@
 
 Last reconciled: September 7, 2026. PR #42 integrates the issue #40
 manifest-bound gitless-source contract, and exact-head plus post-merge CI passed.
-The first bounded KC
-hosted-research attempt remains a failed-closed result before provider startup.
-Both VMs are stopped, and the spent run sheet does not authorize a retry.
+PR #44 integrated the second bounded KC run sheet. That window ended without an
+admission, credential activation or provider request because the Codex operator session
+misclassified expected missing-fixture failures from an inapplicable VM-side
+`pnpm check`, cleaned up and stopped the replacement, and did not successfully
+resume before the sheet's absolute clock expired. Read the
+[retry abort evidence](evidence/2026-09-07-kc-hosted-retry-abort.md).
 
-The user approved a second exact attempt in the September 7 continuation. The
-[new run sheet](c7-hosted-research-run-sheet-2026-09-07-retry.md) binds current
-main `95648b58a871664ef6e29c9713bb2e7dacaa4f05`, its generated manifest/archive,
-one admission, USD 0.34 maximum new exposure, the existing replacement VM and
-credential resources, public HTTPS gate and terminal cleanup. It must pass its
-protected source-integration gate before any VM is started.
+Both VMs are stopped. The original retry sheet no longer authorizes execution:
+its absolute admission and shutdown times expired even though its one admission
+was not consumed. A later session must integrate a fresh bounded clock and stop
+fallback. No product-code repair is required for the intentional fixture
+exclusions described below.
 
 ## Start here
 
@@ -20,11 +22,16 @@ protected source-integration gate before any VM is started.
 2. Read [the failed hosted gate](evidence/2026-09-07-kc-hosted-gate.md), closed
    issue [#40](https://github.com/Loothore907/guardian-agent/issues/40), and
    [ADR-0056](../adr/0056-manifest-bound-gitless-session-sources.md).
-3. Treat current main `95648b58a871664ef6e29c9713bb2e7dacaa4f05` as the
-   reviewed source revision for the retry. Its exact-head main run 124 passed;
-   PR #42's Linux CI also verified the complete generated repository archive.
-4. Integrate and verify the approved retry run sheet before any hosted action.
-   Its single admission is consumed by any admitted outcome and cannot be retried.
+3. Treat `95648b58a871664ef6e29c9713bb2e7dacaa4f05` as the last reviewed
+   hosted-source revision. Its exact-head main run 124 passed; PR #42's Linux CI
+   also verified the complete generated repository archive. Reconfirm source
+   identity if current `main` changes before a new run.
+4. Create and integrate a new bounded run sheet before any hosted action. Bind
+   fresh absolute admission/guest/cloud-stop times and the remaining compute
+   allowance; the PR #44 timestamps are expired.
+5. Run the complete `pnpm check` in the full repository, not in the reduced
+   deployment archive. On the VM, use the deployment-safe Linux/reference gates
+   and the reviewed standalone containment probes.
 
 ## Source and workflow
 
@@ -51,8 +58,17 @@ The issue #40 source milestone is integrated through PR #42: protected
 research startup requires the full credential-free source manifest, and workspace
 planning authorizes only its exact ordered path/size/digest/executable entries
 without requiring mutable `.git` metadata. It remains an offline claim until
-the fixed path is exercised again in the hosted environment; integration and
-post-merge CI are complete.
+the fixed path completes a hosted journey; integration and post-merge CI are
+complete. The second window verified the exact archive, offline install, Linux
+permissions and production manifest-bound reference runtime on the replacement,
+but it did not start the judge host or providers.
+
+The production manifest intentionally excludes
+`apps/reference-supervisor/test-fixtures/`,
+`packages/linux-peer-identity/test-fixtures/` and `scripts/test-fixtures/`.
+Some repository test files consequently cannot run inside the reduced archive.
+This is asserted by the manifest test and is not an authorization failure. Do
+not add the fixtures to a live bundle merely to make the development suite run.
 The operator policy/price real-clock contract is implemented and tested offline
 through the production service child; see
 [ADR-0054](../adr/0054-operator-budget-service-clock.md). The protected
@@ -77,23 +93,28 @@ to regain context. Do not promote assurance from successful model cooperation.
 
 ## Last recorded cloud state
 
-Both KC VMs were cloud-confirmed `STOPPED` at 03:00:42 UTC September 7. The
-replacement's live host and Caddy were stopped first. Existing Nebius/Tavily and
-ingress resources remain exact-resource bound; protected runtime retrieval passed.
-The live ledger contains one failed, forfeited 100,000-microUSD reservation and an
-empty usage report. Tavily usage remained unchanged at 4/1500. The temporary judge
-bearer was deleted. The cutoff automation is paused.
+Both KC VMs were most recently authenticated as `STOPPED` after the replacement's
+08:49:18–09:22:38 UTC retry interval. The retry judge host and Caddy were never
+started. Existing Nebius/Tavily and ingress resources remain exact-resource
+bound and unchanged. The live ledger still contains only the first attempt's
+failed, forfeited 100,000-microUSD reservation and empty usage report. The retry
+temporary bearer was never created and is verified absent. The cutoff automation
+retains its original configuration and is paused.
 
-Leave both VMs stopped. Reuse the replacement, resources and fixtures only after
-this source revision is integrated and a fresh bounded execution window,
-admission and cloud-stop fallback are approved. Preserve the shared USD 25
-allowance; the conservative infrastructure estimate is USD 1.044294 and the
-failed USD 0.10 reservation awaits provider reconciliation.
+Leave both VMs stopped. The retry archive and extracted root were removed from
+the VM; the exact ignored local bundle remains under
+`tmp/c7-acceptance/kc-retry-95648b5/`. Reuse the replacement, resources and
+fixtures only after a fresh bounded execution window, admission and cloud-stop
+fallback are approved. Preserve the shared USD 25 allowance; the conservative
+infrastructure estimate is USD 1.110945, the provider dashboard's last observed
+compute total was USD 1.01 at 06:47 UTC, and the failed USD 0.10 reservation
+awaits provider reconciliation.
 
 ## Evidence and history
 
 - [Repository recovery and validation](repo-hygiene-recovery-2026-09-06.md)
 - [KC hosted-gate result](evidence/2026-09-07-kc-hosted-gate.md)
+- [KC hosted-retry abort](evidence/2026-09-07-kc-hosted-retry-abort.md)
 - [Latest KC protected-enrollment evidence](evidence/2026-09-06-kc-continuation.md)
 - [Protected research-only startup evidence](evidence/2026-09-06-protected-judge-startup.md)
 - [C6 residuals](c6-residual-review.md)
