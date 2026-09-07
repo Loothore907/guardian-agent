@@ -44,9 +44,13 @@ fail-closed settlement. The first exact draft was admitted but failed before any
 provider call because the required credential-free `git archive` was not an exact
 Git working tree. The ledger forfeited USD 0.10 with `usage: []`; no confirmation
 or retry was sent. Public TLS also became unreliable after the negative-test burst.
-Issue #40 owns the manifest-bound gitless-source fix. These results do not promote
-hosted availability, live provider behavior, the successful-journey gate or any
-Enforced claim.
+Issue #40 now has an offline implementation: protected research-only startup
+requires a canonical archive entry manifest, workspace planning treats only its
+paths as authorized, and a production-supervisor child test prepares a real
+gitless archive root. ADR-0056 records the allowed and near-miss evidence. This
+removes the reproduced source-contract defect locally; it does not retroactively
+change the failed hosted result or promote hosted availability, live provider
+behavior, the successful-journey gate or any Enforced claim.
 
 After explicit transfer approval, the stopped-host operator helper copied the
 existing Nebius/Tavily testing keys into two exact KC resources and verified each

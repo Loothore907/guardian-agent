@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { execFile } from "node:child_process";
 import { createReadStream } from "node:fs";
-import { lstat, mkdir, readFile, writeFile } from "node:fs/promises";
+import { lstat, mkdir, writeFile } from "node:fs/promises";
 import { basename, isAbsolute, join, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
@@ -9,11 +9,83 @@ import { promisify } from "node:util";
 import { ProtectedJudgeSourceManifestSchema } from "../packages/contracts/dist/index.js";
 
 const execFileAsync = promisify(execFile);
+const MAX_FILES = 4_096;
+const MAX_BYTES = 64 * 1_024 * 1_024;
+const MAX_FILE_BYTES = 4 * 1_024 * 1_024;
 
 async function sha256(path) {
   const hash = createHash("sha256");
   for await (const chunk of createReadStream(path)) hash.update(chunk);
   return hash.digest("hex");
+}
+
+function sha256Buffer(content) {
+  return createHash("sha256").update(content).digest("hex");
+}
+
+async function immutableEntries(repositoryRoot, gitCommit) {
+  const { stdout } = await execFileAsync(
+    "git",
+    ["ls-tree", "-r", "--full-tree", "--long", "-z", gitCommit],
+    { cwd: repositoryRoot, encoding: null, maxBuffer: 4 * 1_024 * 1_024, windowsHide: true },
+  );
+  const records = Buffer.from(stdout)
+    .toString("utf8")
+    .split("\0")
+    .filter(Boolean);
+  if (records.length < 1 || records.length > MAX_FILES) {
+    throw new TypeError("protected judge source file count is invalid");
+  }
+  const objects = records.map((record) => {
+    const parsed = /^(100644|100755) blob ([0-9a-f]{40}) +([0-9]+)\t(.+)$/u.exec(record);
+    if (parsed === null) throw new TypeError("protected judge source contains unsupported entries");
+    const [, mode, objectId, sizeText, path] = parsed;
+    const size = Number(sizeText);
+    if (
+      objectId === undefined ||
+      path === undefined ||
+      !Number.isSafeInteger(size) ||
+      size < 0 ||
+      size > MAX_FILE_BYTES
+    ) {
+      throw new TypeError("protected judge source entry is invalid");
+    }
+    return { mode, objectId, path, size };
+  });
+  if (objects.reduce((total, entry) => total + entry.size, 0) > MAX_BYTES) {
+    throw new TypeError("protected judge source exceeds its byte limit");
+  }
+  const entries = new Array(objects.length);
+  let next = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(8, objects.length) }, async () => {
+      while (next < objects.length) {
+        const index = next++;
+        const object = objects[index];
+        const result = await execFileAsync("git", ["cat-file", "blob", object.objectId], {
+          cwd: repositoryRoot,
+          encoding: null,
+          maxBuffer: Math.max(64 * 1_024, object.size + 1_024),
+          windowsHide: true,
+        });
+        const content = Buffer.from(result.stdout);
+        try {
+          if (content.byteLength !== object.size) {
+            throw new TypeError("protected judge source changed during packaging");
+          }
+          entries[index] = {
+            path: object.path,
+            digest: sha256Buffer(content),
+            size: object.size,
+            executable: object.mode === "100755",
+          };
+        } finally {
+          content.fill(0);
+        }
+      }
+    }),
+  );
+  return entries.sort((left, right) => left.path.localeCompare(right.path, "en"));
 }
 
 function assertOutputRoot(repositoryRoot, outputRoot) {
@@ -52,14 +124,31 @@ export async function createProtectedJudgeSourceBundle(repositoryRootValue, outp
   if (!metadata.isFile() || metadata.isSymbolicLink() || metadata.size < 1) {
     throw new TypeError("source archive is invalid");
   }
-  const packageManifest = JSON.parse(await readFile(join(repositoryRoot, "package.json"), "utf8"));
-  const pnpmVersion = /^pnpm@(.+)$/u.exec(packageManifest.packageManager)?.[1];
+  const packageResult = await execFileAsync("git", ["cat-file", "blob", `${gitCommit}:package.json`], {
+    cwd: repositoryRoot,
+    encoding: null,
+    maxBuffer: 64 * 1_024,
+    windowsHide: true,
+  });
+  const packageContent = Buffer.from(packageResult.stdout);
+  let pnpmVersion;
+  try {
+    const packageManifest = JSON.parse(packageContent.toString("utf8"));
+    pnpmVersion = /^pnpm@(.+)$/u.exec(packageManifest.packageManager)?.[1];
+  } finally {
+    packageContent.fill(0);
+  }
+  const entries = await immutableEntries(repositoryRoot, gitCommit);
+  const lockfile = entries.find((entry) => entry.path === "pnpm-lock.yaml");
+  if (lockfile === undefined) throw new TypeError("protected judge source lockfile is missing");
   const manifest = ProtectedJudgeSourceManifestSchema.parse({
     schemaVersion: 1,
+    kind: "immutable_file_manifest",
     executionMode: "disabled",
     gitCommit,
-    lockfileSha256: await sha256(join(repositoryRoot, "pnpm-lock.yaml")),
+    lockfileSha256: lockfile.digest,
     sourceArchiveSha256: await sha256(archivePath),
+    entries,
     nodeVersion: process.version,
     pnpmVersion,
     listenHost: "127.0.0.1",

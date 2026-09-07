@@ -1,4 +1,4 @@
-# C7 handoff: KC hosted gate blocked on gitless source
+# C7 handoff: gitless source fixed offline; hosted gate remains closed
 
 ## Current checkpoint — September 7
 
@@ -14,13 +14,14 @@ retry occurred. The USD 0.10 reservation is conservatively forfeited. Tavily
 remained 4/1500 after the attempt. The public TLS path also became unreliable
 after the negative-test burst; it remains a separate availability gate.
 
-Root cause: reviewed deployment uses a credential-free `git archive`, while
-`ManagedSessionWorkspace.plan` requires `.git` through `git rev-parse` and
-`git ls-files`. Issue [#40](https://github.com/Loothore907/guardian-agent/issues/40)
-owns a strict manifest-bound gitless-source contract. Implement and integrate it
-offline with an actual gitless production-child test. Do not restart a VM or run
-a second journey until exact-head CI passes and a new bounded run sheet explicitly
-authorizes another admission. See
+Root cause: the reviewed deployment used a credential-free `git archive`, while
+the prior `ManagedSessionWorkspace.plan` required `.git` through `git rev-parse`
+and `git ls-files`. The current issue
+[#40](https://github.com/Loothore907/guardian-agent/issues/40) revision adds the
+strict manifest-bound gitless-source contract and an actual gitless
+production-child test. Integrate it through exact-head CI. Do not restart a VM or
+run a second journey until that integration passes and a new bounded run sheet
+explicitly authorizes another admission. See
 [the hosted-gate evidence](evidence/2026-09-07-kc-hosted-gate.md).
 
 Conservative cumulative infrastructure estimate: USD 1.044294. The last posted

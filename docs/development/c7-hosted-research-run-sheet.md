@@ -23,6 +23,13 @@ stopped. See [the run evidence](evidence/2026-09-07-kc-hosted-gate.md) and issue
 [#40](https://github.com/Loothore907/guardian-agent/issues/40). This run sheet is
 spent and does not authorize another admission.
 
+The offline successor contract in ADR-0056 adds an exact ordered file manifest
+to newly generated source bundles and requires it in protected research startup.
+A production-supervisor child test prepares a real extracted gitless archive.
+Any future run sheet must bind a newly reviewed post-integration commit, archive,
+manifest and lockfile; the historical values below remain evidence for the spent
+attempt and must not be reused as the new source identity.
+
 ## Fixed identities
 
 | Item                    | Bound value                                                                     |

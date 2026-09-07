@@ -1,20 +1,23 @@
 # Current development handoff
 
-Last reconciled: September 7, 2026. The first bounded KC hosted-research attempt
-failed closed before provider startup. Both VMs are stopped. Issue #40 is the
-next source prerequisite; the spent run sheet does not authorize a retry.
+Last reconciled: September 7, 2026. The current revision implements and tests the
+issue #40 manifest-bound gitless-source contract offline. The first bounded KC
+hosted-research attempt remains a failed-closed result before provider startup.
+Both VMs are stopped, and the spent run sheet does not authorize a retry.
 
 ## Start here
 
 1. Run `node scripts/session-hygiene.mjs start --remote` and inspect current
    issues, PRs, exact-head CI and dirty/unpublished work.
-2. Read [the failed hosted gate](evidence/2026-09-07-kc-hosted-gate.md) and issue
-   [#40](https://github.com/Loothore907/guardian-agent/issues/40).
-3. Implement and integrate the manifest-bound gitless-source contract offline,
-   including an actual production-child test against a gitless archive root.
-4. Only after exact-head CI, prepare a new bounded run sheet. A second journey
-   needs explicit authority because the one admission in the current sheet was
-   consumed and conservatively forfeited.
+2. Read [the failed hosted gate](evidence/2026-09-07-kc-hosted-gate.md), issue
+   [#40](https://github.com/Loothore907/guardian-agent/issues/40), and
+   [ADR-0056](../adr/0056-manifest-bound-gitless-session-sources.md).
+3. Verify this revision's exact-head CI and protected integration. Its production
+   supervisor test uses a real extracted archive root with no `.git`; Linux CI
+   additionally verifies the complete generated repository archive.
+4. Prepare a new bounded run sheet only after integration. A second journey needs
+   explicit authority because the one admission in the current sheet was consumed
+   and conservatively forfeited.
 
 ## Source and workflow
 
@@ -37,8 +40,11 @@ continuation, exact-bound risk context, portal contracts/UI and synthetic servic
 composition exist. Default live portal execution remains disabled. Review
 [security claims](../security-claims.md) before describing any control as verified.
 
-The next source milestone is issue #40: support the reviewed credential-free
-deployment archive without requiring mutable `.git` metadata.
+The issue #40 source milestone is implemented in this revision: protected
+research startup requires the full credential-free source manifest, and workspace
+planning authorizes only its exact ordered path/size/digest/executable entries
+without requiring mutable `.git` metadata. It remains an offline claim until
+exact-head CI and protected integration complete.
 The operator policy/price real-clock contract is implemented and tested offline
 through the production service child; see
 [ADR-0054](../adr/0054-operator-budget-service-clock.md). The protected
@@ -71,10 +77,10 @@ empty usage report. Tavily usage remained unchanged at 4/1500. The temporary jud
 bearer was deleted. The cutoff automation is paused.
 
 Leave both VMs stopped. Reuse the replacement, resources and fixtures only after
-issue #40 is integrated and a fresh bounded execution window, admission and
-cloud-stop fallback are approved. Preserve the shared USD 25 allowance; the
-conservative infrastructure estimate is USD 1.044294 and the failed USD 0.10
-reservation awaits provider reconciliation.
+this source revision is integrated and a fresh bounded execution window,
+admission and cloud-stop fallback are approved. Preserve the shared USD 25
+allowance; the conservative infrastructure estimate is USD 1.044294 and the
+failed USD 0.10 reservation awaits provider reconciliation.
 
 ## Evidence and history
 

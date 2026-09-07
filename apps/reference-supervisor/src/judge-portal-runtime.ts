@@ -24,6 +24,7 @@ export class SupervisorJudgePortalRuntime {
   readonly #options;
   constructor(options: {
     projectRoot: string;
+    sourceManifest?: unknown;
     stateRoot: string;
     credentialStore: unknown;
     principalId: string;
@@ -120,6 +121,9 @@ export class SupervisorJudgePortalRuntime {
         sessionId: journeyId,
         callerId: randomUUID(),
         projectRoot: this.#options.projectRoot,
+        ...(this.#options.sourceManifest === undefined
+          ? {}
+          : { sourceManifest: this.#options.sourceManifest }),
         authorityStorePath: join(root, "authority.sqlite"),
         workspaceRoots: [join(root, "workspaces")],
         issuedAt,

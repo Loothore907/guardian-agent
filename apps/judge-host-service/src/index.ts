@@ -59,8 +59,10 @@ const defaultDependencies: ProtectedJudgeHostDependencies = {
   startBudget: async (config) => await startManagedDemoBudgetChild(config.budgetService),
   createBudget: (config) => new ManagedDemoJourneyBudgetController(config.budgetClients),
   createPortal: (config, budget) => {
+    const { schemaVersion, kind, sourceArchiveSha256, entries } = config.sourceManifest;
     const runtime = new SupervisorJudgePortalRuntime({
       projectRoot: config.projectRoot,
+      sourceManifest: { schemaVersion, kind, sourceArchiveSha256, entries },
       stateRoot: config.stateRoot,
       credentialStore: config.credentialStore,
       principalId: config.principalId,

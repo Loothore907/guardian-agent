@@ -50,8 +50,11 @@ ingress material, and child in reverse ownership order.
 
 The executable accepts one bounded strict JSON bootstrap frame on stdin. It does
 not accept secret values. A separate source-bundle generator archives an exact
-tracked Git revision and emits only its commit and hashes, fixed toolchain
-versions, loopback binding, disabled initial mode, and logical secret-slot names.
+tracked Git revision and emits its commit and archive/lockfile hashes, a
+canonically ordered path/size/content-digest/executable manifest derived from that
+same commit, fixed toolchain versions, loopback binding, disabled initial mode,
+and logical secret-slot names. ADR-0056 requires that manifest for research-only
+startup and workspace preparation.
 Concrete secret resource IDs, credential values, private state, host identity,
 live policy windows, and spending authority remain deployment inputs rather than
 source-manifest content.

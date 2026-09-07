@@ -1,15 +1,86 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { access, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { access, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { launchReferenceSession } from "../apps/session-host/dist/launcher.js";
 import { startReferenceAuthoritySupervisor } from "../apps/reference-supervisor/dist/index.js";
 import { ManagedSessionWorkspace } from "../packages/workspace/dist/index.js";
+
+test("the production supervisor accepts an exact manifest-bound gitless archive root", async () => {
+  const temporaryRoot = await mkdtemp(join(tmpdir(), "guardian-gitless-production-child-"));
+  const repositoryRoot = join(temporaryRoot, "repository");
+  const archiveRoot = join(temporaryRoot, "archive-root");
+  const archivePath = join(temporaryRoot, "source.tar");
+  await mkdir(repositoryRoot);
+  await mkdir(archiveRoot);
+  await writeFile(join(repositoryRoot, "README.md"), "# Gitless production child\n", "utf8");
+  execFileSync("git", ["init", "--quiet", "--initial-branch", "main"], {
+    cwd: repositoryRoot,
+    windowsHide: true,
+  });
+  execFileSync("git", ["add", "README.md"], { cwd: repositoryRoot, windowsHide: true });
+  execFileSync(
+    "git",
+    [
+      "-c",
+      "user.name=Guardian Test",
+      "-c",
+      "user.email=guardian@invalid.local",
+      "commit",
+      "--quiet",
+      "-m",
+      "test fixture",
+    ],
+    { cwd: repositoryRoot, windowsHide: true },
+  );
+  execFileSync("git", ["archive", "--format=tar", `--output=${archivePath}`, "HEAD"], {
+    cwd: repositoryRoot,
+    windowsHide: true,
+  });
+  execFileSync("tar", ["-xf", archivePath, "-C", archiveRoot], { windowsHide: true });
+  await assert.rejects(access(join(archiveRoot, ".git")));
+  const source = await readFile(join(archiveRoot, "README.md"));
+  const archive = await readFile(archivePath);
+  const sourceManifest = {
+    schemaVersion: 1,
+    kind: "immutable_file_manifest",
+    sourceArchiveSha256: createHash("sha256").update(archive).digest("hex"),
+    entries: [
+      {
+        path: "README.md",
+        digest: createHash("sha256").update(source).digest("hex"),
+        size: source.byteLength,
+        executable: false,
+      },
+    ],
+  };
+  source.fill(0);
+  archive.fill(0);
+  const startedAt = new Date();
+  let supervisor;
+  try {
+    supervisor = await startReferenceAuthoritySupervisor({
+      sessionId: randomUUID(),
+      callerId: randomUUID(),
+      authorityStorePath: join(temporaryRoot, "authority.sqlite"),
+      projectRoot: archiveRoot,
+      sourceManifest,
+      workspaceRoots: [join(temporaryRoot, "sessions")],
+      issuedAt: startedAt.toISOString(),
+      expiresAt: new Date(startedAt.getTime() + 10 * 60_000).toISOString(),
+    });
+    assert.notEqual(supervisor.authorityProcessId, process.pid);
+    assert.equal(supervisor.workspaceSelection.projectName, "archive-root");
+  } finally {
+    await supervisor?.close();
+    await rm(temporaryRoot, { recursive: true, force: true });
+  }
+});
 
 test("the production reference executor enforces the C4 isolation boundary", async () => {
   const missionId = randomUUID();

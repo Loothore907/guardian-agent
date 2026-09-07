@@ -5,6 +5,7 @@ import {
   lstat,
   mkdir,
   open,
+  readdir,
   realpath,
   rm,
   stat,
@@ -16,6 +17,7 @@ import { spawn } from "node:child_process";
 import { canonicalDigest } from "@guardian/canonical";
 import {
   OpaqueIdSchema,
+  ImmutableWorkspaceSourceManifestSchema,
   SessionWorkspaceLimitsSchema,
   SessionWorkspaceResultSchema,
   SessionWorkspaceSelectionSchema,
@@ -337,6 +339,76 @@ async function listGitVisiblePaths(
   return paths;
 }
 
+async function listImmutableSourcePaths(
+  sourceRoot: string,
+  manifest: ReturnType<typeof ImmutableWorkspaceSourceManifestSchema.parse>,
+  limits: SessionWorkspaceLimits,
+): Promise<readonly string[]> {
+  if (manifest.entries.length > limits.maxFiles) {
+    throw new TypeError("workspace source has too many files");
+  }
+  let declaredBytes = 0;
+  const expectedFiles = new Set<string>();
+  const expectedDirectories = new Set<string>();
+  for (const entry of manifest.entries) {
+    const path = validateRelativePath(entry.path);
+    if (path.split("/").some((segment) => segment.toLowerCase() === ".guardian")) {
+      throw new TypeError("workspace source contains protected Guardian state");
+    }
+    if (entry.size > limits.maxFileBytes) {
+      throw new TypeError("workspace source file exceeds the size limit");
+    }
+    declaredBytes += entry.size;
+    if (declaredBytes > limits.maxBytes) {
+      throw new TypeError("workspace source exceeds its byte limit");
+    }
+    expectedFiles.add(path);
+    const segments = path.split("/");
+    for (let index = 1; index < segments.length; index++) {
+      expectedDirectories.add(segments.slice(0, index).join("/"));
+    }
+  }
+
+  const actualFiles: string[] = [];
+  const visit = async (directory: string, relativeDirectory: string): Promise<void> => {
+    const children = await readdir(directory, { withFileTypes: true });
+    for (const child of children) {
+      const relativePath = validateRelativePath(
+        relativeDirectory === "" ? child.name : `${relativeDirectory}/${child.name}`,
+      );
+      if (child.isSymbolicLink()) {
+        throw new TypeError("workspace source contains an unsupported file type");
+      }
+      if (child.isDirectory()) {
+        if (!expectedDirectories.has(relativePath)) {
+          throw new TypeError("workspace source paths differ from immutable manifest");
+        }
+        await visit(join(directory, child.name), relativePath);
+      } else if (child.isFile()) {
+        if (!expectedFiles.has(relativePath)) {
+          throw new TypeError("workspace source paths differ from immutable manifest");
+        }
+        actualFiles.push(relativePath);
+        if (actualFiles.length > manifest.entries.length) {
+          throw new TypeError("workspace source paths differ from immutable manifest");
+        }
+      } else {
+        throw new TypeError("workspace source contains an unsupported file type");
+      }
+    }
+  };
+  await visit(sourceRoot, "");
+  actualFiles.sort((left, right) => left.localeCompare(right, "en"));
+  const expectedPaths = manifest.entries.map((entry) => entry.path);
+  if (
+    actualFiles.length !== expectedPaths.length ||
+    actualFiles.some((path, index) => path !== expectedPaths[index])
+  ) {
+    throw new TypeError("workspace source paths differ from immutable manifest");
+  }
+  return actualFiles;
+}
+
 async function initializeSanitizedGitRepository(workspacePath: string, storageRoot: string) {
   const commands = [
     ["init", "--quiet", "--initial-branch", "guardian-session", workspacePath],
@@ -375,6 +447,8 @@ export class ManagedSessionWorkspace {
   readonly #sessionId: string;
   readonly #manifest: readonly ManifestEntry[];
   readonly #sourceIdentity: { readonly device: number; readonly inode: number };
+  readonly #sourceManifest:
+    ReturnType<typeof ImmutableWorkspaceSourceManifestSchema.parse> | undefined;
   #prepared: PreparedSessionWorkspace | undefined;
   #closed = false;
   #ownsSessionRoot = false;
@@ -386,6 +460,8 @@ export class ManagedSessionWorkspace {
     readonly selection: SessionWorkspaceSelection;
     readonly manifest: readonly ManifestEntry[];
     readonly sourceIdentity: { readonly device: number; readonly inode: number };
+    readonly sourceManifest:
+      ReturnType<typeof ImmutableWorkspaceSourceManifestSchema.parse> | undefined;
   }) {
     this.#sourceRoot = options.sourceRoot;
     this.#storageRoot = options.storageRoot;
@@ -401,6 +477,7 @@ export class ManagedSessionWorkspace {
     this.selection = options.selection;
     this.#manifest = options.manifest;
     this.#sourceIdentity = options.sourceIdentity;
+    this.#sourceManifest = options.sourceManifest;
   }
 
   static async plan(options: {
@@ -408,6 +485,7 @@ export class ManagedSessionWorkspace {
     readonly storageRoot: unknown;
     readonly sessionId: unknown;
     readonly limits?: unknown;
+    readonly sourceManifest?: unknown;
   }): Promise<ManagedSessionWorkspace> {
     if (typeof options.sourceRoot !== "string" || typeof options.storageRoot !== "string") {
       throw new TypeError("workspace source and storage roots are required");
@@ -416,6 +494,9 @@ export class ManagedSessionWorkspace {
     const limits = SessionWorkspaceLimitsSchema.parse(options.limits ?? DEFAULT_LIMITS);
     const unresolvedSource = resolve(options.sourceRoot);
     const unresolvedStorage = resolve(options.storageRoot);
+    if (options.sourceManifest !== undefined && (await lstat(unresolvedSource)).isSymbolicLink()) {
+      throw new TypeError("immutable workspace source root cannot be a symlink");
+    }
     const sourceMetadata = await stat(unresolvedSource);
     if (!sourceMetadata.isDirectory()) throw new TypeError("workspace source must be a directory");
     await mkdir(unresolvedStorage, { recursive: true, mode: 0o700 });
@@ -425,21 +506,46 @@ export class ManagedSessionWorkspace {
     if (canonicalHostPath(sourceRoot) === canonicalHostPath(storageRoot)) {
       throw new TypeError("workspace storage cannot replace the source project");
     }
-    const paths = await listGitVisiblePaths(sourceRoot, storageRoot, limits);
+    const sourceManifest =
+      options.sourceManifest === undefined
+        ? undefined
+        : ImmutableWorkspaceSourceManifestSchema.parse(options.sourceManifest);
+    const paths =
+      sourceManifest === undefined
+        ? await listGitVisiblePaths(sourceRoot, storageRoot, limits)
+        : await listImmutableSourcePaths(sourceRoot, sourceManifest, limits);
     const manifest: ManifestEntry[] = [];
     let totalBytes = 0;
     for (const relativePath of paths) {
       const inspected = await readManifestEntry(sourceRoot, relativePath, limits);
-      totalBytes += inspected.entry.size;
-      inspected.content.fill(0);
-      if (totalBytes > limits.maxBytes)
-        throw new TypeError("workspace source exceeds its byte limit");
-      manifest.push(inspected.entry);
+      try {
+        const expected = sourceManifest?.entries[manifest.length];
+        if (
+          expected !== undefined &&
+          (inspected.entry.path !== expected.path ||
+            inspected.entry.digest !== expected.digest ||
+            inspected.entry.size !== expected.size ||
+            inspected.entry.executable !== expected.executable)
+        ) {
+          throw new TypeError("workspace source differs from immutable manifest");
+        }
+        totalBytes += inspected.entry.size;
+        if (totalBytes > limits.maxBytes)
+          throw new TypeError("workspace source exceeds its byte limit");
+        manifest.push(inspected.entry);
+      } finally {
+        inspected.content.fill(0);
+      }
     }
     const projectName = boundedCredentialSafeText(120).parse(basename(sourceRoot));
-    const sourceRootDigest = canonicalDigest("workspace.source_root", 1, {
-      path: canonicalHostPath(sourceRoot),
-    });
+    const sourceRootDigest =
+      sourceManifest === undefined
+        ? canonicalDigest("workspace.source_root", 1, {
+            path: canonicalHostPath(sourceRoot),
+          })
+        : canonicalDigest("workspace.immutable_source", 1, {
+            sourceArchiveSha256: sourceManifest.sourceArchiveSha256,
+          });
     const sourceSnapshotDigest = canonicalDigest("workspace.source_snapshot", 1, {
       entries: manifest,
     });
@@ -465,6 +571,7 @@ export class ManagedSessionWorkspace {
         device: sourceIdentityMetadata.dev,
         inode: sourceIdentityMetadata.ino,
       },
+      sourceManifest,
     });
   }
 
@@ -485,11 +592,14 @@ export class ManagedSessionWorkspace {
       ) {
         throw new TypeError("workspace source root changed after confirmation preview");
       }
-      const currentPaths = await listGitVisiblePaths(
-        this.#sourceRoot,
-        this.#storageRoot,
-        this.selection.limits,
-      );
+      const currentPaths =
+        this.#sourceManifest !== undefined
+          ? await listImmutableSourcePaths(
+              this.#sourceRoot,
+              this.#sourceManifest,
+              this.selection.limits,
+            )
+          : await listGitVisiblePaths(this.#sourceRoot, this.#storageRoot, this.selection.limits);
       if (
         currentPaths.length !== this.#manifest.length ||
         currentPaths.some((path, index) => path !== this.#manifest[index]?.path)
