@@ -26,6 +26,11 @@ binds the separately approved September 7 20:00–22:00 UTC window. It authorize
 one execution only after its protected merge and expires if the replacement is
 not started by 20:05 UTC.
 
+That startup gate expired without a VM start or other hosted effect. The
+[replacement retry-3 sheet](c7-hosted-research-run-sheet-2026-09-07-retry-3.md)
+preserves the 22:00 UTC hard stop and every non-time bound while permitting the
+replacement to start only from 20:15 through 20:20 UTC.
+
 ## Start here
 
 1. Run `node scripts/session-hygiene.mjs start --remote` and inspect current
