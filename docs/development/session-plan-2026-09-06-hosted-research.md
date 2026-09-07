@@ -1,7 +1,7 @@
 # Session plan: hosted research acceptance
 
-Date: 2026-09-06. Status: offline startup slice approved and implemented;
-hosted execution still requires the concrete decision in step 4.
+Date: 2026-09-06. Status: offline startup and bounded run-sheet slices approved;
+hosted execution remains disabled until the go/no-go gates in step 4 pass.
 
 User scope correction: this session prepares the candidate and run sheet only.
 Cloud execution/testing belongs to the next session. Source-integration recovery
@@ -68,14 +68,17 @@ test results. Rebuild the manifest from the reviewed revision selected for the r
    preparation, an inert production child, and credential-free source packaging.
    No cloud, credential, ingress, provider, budget-window or spending state changed.
 
-4. **Prepare the concrete hosted run sheet.** Name replacement VM, exact source,
+4. **Prepared offline: concrete hosted run sheet.** The approved
+   [run sheet](c7-hosted-research-run-sheet.md) names replacement VM, exact source,
    approved credential resources/readers, ingress-secret provisioning scope,
    domain/routes, fixture URLs, model versions, request limits, journey count,
    spend ceiling, admission close, shutdown time and cleanup. Reconcile available
    budget against actual usage and retained-resource charges. Reuse existing
    enrollments, DNS, Caddy, dependencies and fixture files.
-   Done when every remote effect is bound to existing authority or clearly listed
-   for a new decision. A fresh compute window is required; the old window ended.
+   Every remote effect is bound to the approved one-journey/two-hour scope or a
+   fail-closed go/no-go fact. The companion
+   [cost baselines](c7-cost-baselines.md) keep expected ranges separate from
+   authority. No cloud or credential state was changed while preparing them.
 
 5. **Next session only: run bounded KC acceptance after the run sheet is approved.** Recheck both
    cloud states; restart only the replacement with guest shutdown and cloud-stop

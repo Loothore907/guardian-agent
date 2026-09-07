@@ -45,8 +45,11 @@ through the production service child; see
 research-only startup and fixed two-resource ingress loader are now implemented
 and tested offline under
 [ADR-0055](../adr/0055-protected-research-judge-startup.md). They remain disabled
-by default and do not require or expose the GitHub mutation path. The next gate is
-a reviewed credential-free source manifest and concrete hosted run sheet. Hosted
+by default and do not require or expose the GitHub mutation path. The reviewed
+credential-free source manifest exists. The concrete
+[hosted run sheet](c7-hosted-research-run-sheet.md) and versioned
+[mission cost baselines](c7-cost-baselines.md) bind the next one-journey/two-hour
+scope without enabling it. Hosted
 gates include full credential/service containment, runtime retrieval/redaction,
 reliable external HTTPS, live settlement, and later clean/seeded evaluations.
 Missing GitHub App setup and exact disposable targets gate mutations. Never reuse

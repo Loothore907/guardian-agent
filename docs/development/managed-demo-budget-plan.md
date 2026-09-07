@@ -29,6 +29,11 @@ traffic.
 
 ## Cost model
 
+The versioned mission ranges, host profiles and validation rules are in
+[`c7-cost-baselines.md`](c7-cost-baselines.md) and
+[`c7-mission-cost-baselines.v1.json`](c7-mission-cost-baselines.v1.json). They
+separate expected cost from admission authority and are included in `pnpm check`.
+
 A completed full journey may use:
 
 - one bounded mission-dialogue call;
@@ -87,6 +92,12 @@ Initial planning reserve:
 | Completed judge journeys | 250 at $0.10 admission envelope | $25 |
 | Operational contingency | price drift, retries, and brief overlap | $15 |
 | **Guaranteed judge envelope** |  | **$100** |
+
+At current published component prices, the rounded-up 2-vCPU/8-GiB plus 32-GiB
+disk planning rate is USD 0.052713/hour, or USD 58.353291 for 1,107 hours. The
+existing 4-vCPU/16-GiB KC acceptance VM is retained for the protected run, but its
+USD 0.12/hour console estimate would be USD 132.84 for the same period and is not
+the assumed always-on judge host.
 
 The VM quantity is a sizing hypothesis and requires a load test. If 2 vCPU and
 8 GiB is insufficient, the operator updates the host-cost reserve before

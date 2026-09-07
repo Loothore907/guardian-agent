@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 1,
+  "status": "planning_only",
+  "currency": "USD",
+  "capturedAt": "2026-09-06T00:00:00.000Z",
+  "controls": {
+    "expectedCostMayIncreaseRuntimeAuthority": false,
+    "authenticatedPriceEvidenceRequiredBeforeLiveAdmission": true,
+    "freeCreditsIncreaseApprovedAllowance": false,
+    "unknownOrStalePriceEvidenceFailsClosed": true
+  },
+  "hostProfiles": [
+    {
+      "id": "nebius-kc-current-4x16",
+      "kind": "current_acceptance",
+      "vcpu": 4,
+      "memoryGiB": 16,
+      "diskGiB": 32,
+      "planningMicroUsdPerHour": 120000,
+      "evidence": "operator_recorded_console_estimate"
+    },
+    {
+      "id": "nebius-2x8-sizing-candidate",
+      "kind": "sizing_candidate",
+      "vcpu": 2,
+      "memoryGiB": 8,
+      "diskGiB": 32,
+      "planningMicroUsdPerHour": 52713,
+      "evidence": "public_component_prices_rounded_up"
+    }
+  ],
+  "providerPriceEvidence": [
+    {
+      "provider": "tavily",
+      "kind": "public_list_price_only",
+      "source": "https://docs.tavily.com/documentation/api-credits",
+      "capturedAt": "2026-09-06T00:00:00.000Z",
+      "usableForLiveAdmission": false,
+      "planningMicroUsdPerCredit": 8000
+    },
+    {
+      "provider": "nebius_token_factory",
+      "kind": "authenticated_snapshot_required",
+      "source": "https://nebius.com/token-factory/prices",
+      "capturedAt": "2026-09-06T00:00:00.000Z",
+      "usableForLiveAdmission": false,
+      "planningMicroUsdPerCredit": null
+    }
+  ],
+  "tokenCeilingsPerCall": {
+    "missionDialoguePrompt": 4000,
+    "missionDialogueOutput": 1024,
+    "guardianRiskPrompt": 4000,
+    "guardianRiskOutput": 512,
+    "workerPrompt": 8000,
+    "workerOutput": 2048
+  },
+  "baselines": [
+    {
+      "class": "R0",
+      "name": "startup_health_and_cancellation",
+      "authorityScope": "current_development",
+      "journeyCount": 0,
+      "hostProfileId": "nebius-kc-current-4x16",
+      "hostWindowMinutes": { "minimum": 15, "maximum": 15 },
+      "callCapsPerJourney": {
+        "missionDialogue": 0,
+        "guardianRisk": 0,
+        "worker": 0,
+        "tavilySearch": 0,
+        "tavilyExtract": 0
+      },
+      "expectedProviderCostMicroUsd": { "minimum": 0, "maximum": 0 },
+      "perJourneyAdmissionEnvelopeMicroUsd": 0,
+      "totalPreauthorizationMicroUsd": 0
+    },
+    {
+      "class": "R1",
+      "name": "research_smoke",
+      "authorityScope": "current_development",
+      "journeyCount": 1,
+      "hostProfileId": "nebius-kc-current-4x16",
+      "hostWindowMinutes": { "minimum": 30, "maximum": 30 },
+      "callCapsPerJourney": {
+        "missionDialogue": 1,
+        "guardianRisk": 1,
+        "worker": 1,
+        "tavilySearch": 1,
+        "tavilyExtract": 1
+      },
+      "expectedProviderCostMicroUsd": { "minimum": 20000, "maximum": 50000 },
+      "perJourneyAdmissionEnvelopeMicroUsd": 100000,
+      "totalPreauthorizationMicroUsd": 100000
+    },
+    {
+      "class": "R2",
+      "name": "standard_full_journey",
+      "authorityScope": "current_development",
+      "journeyCount": 1,
+      "hostProfileId": "nebius-kc-current-4x16",
+      "hostWindowMinutes": { "minimum": 60, "maximum": 60 },
+      "callCapsPerJourney": {
+        "missionDialogue": 1,
+        "guardianRisk": 1,
+        "worker": 2,
+        "tavilySearch": 1,
+        "tavilyExtract": 1
+      },
+      "expectedProviderCostMicroUsd": { "minimum": 40000, "maximum": 60000 },
+      "perJourneyAdmissionEnvelopeMicroUsd": 100000,
+      "totalPreauthorizationMicroUsd": 100000
+    },
+    {
+      "class": "R3",
+      "name": "adversarial_or_escalated_journey",
+      "authorityScope": "current_development",
+      "journeyCount": 1,
+      "hostProfileId": "nebius-kc-current-4x16",
+      "hostWindowMinutes": { "minimum": 60, "maximum": 60 },
+      "callCapsPerJourney": {
+        "missionDialogue": 1,
+        "guardianRisk": 2,
+        "worker": 2,
+        "tavilySearch": 1,
+        "tavilyExtract": 1
+      },
+      "expectedProviderCostMicroUsd": { "minimum": 60000, "maximum": 100000 },
+      "perJourneyAdmissionEnvelopeMicroUsd": 100000,
+      "totalPreauthorizationMicroUsd": 100000
+    },
+    {
+      "class": "R4",
+      "name": "twenty_journey_calibration",
+      "authorityScope": "current_development",
+      "journeyCount": 20,
+      "hostProfileId": "nebius-kc-current-4x16",
+      "hostWindowMinutes": { "minimum": 120, "maximum": 240 },
+      "callCapsPerJourney": {
+        "missionDialogue": 1,
+        "guardianRisk": 2,
+        "worker": 2,
+        "tavilySearch": 1,
+        "tavilyExtract": 1
+      },
+      "expectedProviderCostMicroUsd": { "minimum": 800000, "maximum": 1200000 },
+      "perJourneyAdmissionEnvelopeMicroUsd": 100000,
+      "totalPreauthorizationMicroUsd": 2000000
+    },
+    {
+      "class": "R5",
+      "name": "two_hundred_fifty_journey_judging_reserve",
+      "authorityScope": "future_separately_funded_judge",
+      "journeyCount": 250,
+      "hostProfileId": "nebius-2x8-sizing-candidate",
+      "hostWindowMinutes": { "minimum": 66420, "maximum": 66420 },
+      "callCapsPerJourney": {
+        "missionDialogue": 1,
+        "guardianRisk": 2,
+        "worker": 2,
+        "tavilySearch": 1,
+        "tavilyExtract": 1
+      },
+      "expectedProviderCostMicroUsd": { "minimum": 10000000, "maximum": 15000000 },
+      "perJourneyAdmissionEnvelopeMicroUsd": 100000,
+      "totalPreauthorizationMicroUsd": 25000000
+    }
+  ]
+}
