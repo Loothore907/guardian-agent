@@ -2,7 +2,10 @@ import { ProtectedJudgeHostConfigSchema } from "@guardian/contracts";
 
 import { startProtectedJudgeHost } from "./index.js";
 
-const MAXIMUM_BOOTSTRAP_BYTES = 128 * 1_024;
+// The reviewed immutable source manifest can contain up to 4,096 bounded file
+// entries. Keep the transport bounded while leaving room for the fixed runtime
+// configuration that accompanies the manifest.
+const MAXIMUM_BOOTSTRAP_BYTES = 4 * 1_024 * 1_024;
 
 async function readBootstrapFrame(): Promise<unknown> {
   const chunks: Buffer[] = [];

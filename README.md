@@ -186,7 +186,8 @@ provider. The provider receives only normalized mission context and cannot propo
 or execute tools. A separate W1 native-worker boundary now accepts an exact-bound,
 one-use turn and returns either a bounded final response or a pending typed request
 through deterministic fake and fixed-origin Nebius adapters. W2 binds a
-credential-screened, Git-visible snapshot into a Guardian-owned session copy. The
+credential-screened Git-visible or reviewed immutable-manifest snapshot into a
+Guardian-owned session copy. The
 copy persists across isolated local commands, never writes back automatically,
 and is deleted on session close. W3 now independently binds one pending status or
 local-command request, reauthorizes it, atomically consumes durable authority,

@@ -56,6 +56,31 @@ function researchConfig() {
     deploymentId,
     principalId: randomUUID(),
     projectRoot: "/srv/guardian/source",
+    sourceManifest: {
+      schemaVersion: 1 as const,
+      kind: "immutable_file_manifest" as const,
+      executionMode: "disabled" as const,
+      gitCommit: "a".repeat(40),
+      lockfileSha256: "b".repeat(64),
+      sourceArchiveSha256: "a".repeat(64),
+      entries: [
+        {
+          path: "pnpm-lock.yaml",
+          digest: "b".repeat(64),
+          size: 10,
+          executable: false,
+        },
+      ],
+      nodeVersion: "v24.19.0",
+      pnpmVersion: "11.19.0",
+      listenHost: "127.0.0.1" as const,
+      requiredSecretSlots: [
+        "access_credential_sha256" as const,
+        "source_fingerprint_key" as const,
+        "nebius/default" as const,
+        "tavily/default" as const,
+      ],
+    },
     stateRoot: "/var/lib/guardian/judge",
     credentialStore: {
       schemaVersion: 1 as const,

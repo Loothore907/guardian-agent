@@ -26,6 +26,31 @@ const IDS = {
     "66666666-6666-4666-8666-666666666664",
   ],
 } as const;
+const SOURCE_MANIFEST = {
+  schemaVersion: 1 as const,
+  kind: "immutable_file_manifest" as const,
+  executionMode: "disabled" as const,
+  gitCommit: "a".repeat(40),
+  lockfileSha256: "b".repeat(64),
+  sourceArchiveSha256: "c".repeat(64),
+  entries: [
+    {
+      path: "pnpm-lock.yaml",
+      digest: "b".repeat(64),
+      size: 10,
+      executable: false,
+    },
+  ],
+  nodeVersion: "v24.19.0",
+  pnpmVersion: "11.19.0",
+  listenHost: "127.0.0.1" as const,
+  requiredSecretSlots: [
+    "access_credential_sha256",
+    "source_fingerprint_key",
+    "nebius/default",
+    "tavily/default",
+  ] as const,
+};
 
 function researchConfig() {
   const roles = [
@@ -84,6 +109,7 @@ function researchConfig() {
     deploymentId: IDS.deployment,
     principalId: IDS.principal,
     projectRoot: "/srv/guardian/source",
+    sourceManifest: SOURCE_MANIFEST,
     stateRoot: "/var/lib/guardian/judge",
     credentialStore: {
       schemaVersion: 1 as const,
@@ -213,20 +239,7 @@ describe("protected judge host contracts", () => {
 
   it("keeps the public source manifest credential-free and disabled", () => {
     const manifest = {
-      schemaVersion: 1,
-      executionMode: "disabled",
-      gitCommit: "a".repeat(40),
-      lockfileSha256: "b".repeat(64),
-      sourceArchiveSha256: "c".repeat(64),
-      nodeVersion: "v24.19.0",
-      pnpmVersion: "11.19.0",
-      listenHost: "127.0.0.1",
-      requiredSecretSlots: [
-        "access_credential_sha256",
-        "source_fingerprint_key",
-        "nebius/default",
-        "tavily/default",
-      ],
+      ...SOURCE_MANIFEST,
     } as const;
     expect(ProtectedJudgeSourceManifestSchema.parse(manifest)).toEqual(manifest);
     expect(() =>
@@ -235,5 +248,23 @@ describe("protected judge host contracts", () => {
     expect(() =>
       ProtectedJudgeSourceManifestSchema.parse({ ...manifest, executionMode: "research_only" }),
     ).toThrow();
+    expect(() =>
+      ProtectedJudgeSourceManifestSchema.parse({
+        ...manifest,
+        entries: [...manifest.entries, manifest.entries[0]],
+      }),
+    ).toThrow(/duplicate/u);
+    expect(() =>
+      ProtectedJudgeSourceManifestSchema.parse({
+        ...manifest,
+        lockfileSha256: "e".repeat(64),
+      }),
+    ).toThrow(/lockfile digest/u);
+    expect(() =>
+      ProtectedJudgeSourceManifestSchema.parse({
+        ...manifest,
+        entries: [manifest.entries[0], { ...manifest.entries[0], path: "PNPM-LOCK.YAML" }],
+      }),
+    ).toThrow(/case-colliding/u);
   });
 });

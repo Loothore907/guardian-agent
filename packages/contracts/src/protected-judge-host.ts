@@ -12,6 +12,10 @@ import {
   ManagedDemoJourneyBudgetClientBundleSchema,
 } from "./managed-demo-budget-ipc.js";
 import { ManagedDemoJudgeIngressSecretStoreConfigSchema } from "./managed-demo-ingress.js";
+import {
+  ImmutableWorkspaceManifestEntrySchema,
+  ImmutableWorkspaceSourceManifestSchema,
+} from "./workspace.js";
 
 const HostnameSchema = z
   .string()
@@ -24,6 +28,54 @@ const ProtectedJudgeListenSchema = z.strictObject({
   host: z.literal("127.0.0.1"),
   port: z.number().int().min(1_024).max(65_535),
 });
+
+export const ProtectedJudgeSourceManifestSchema = ImmutableWorkspaceSourceManifestSchema.safeExtend(
+  {
+    entries: z.array(ImmutableWorkspaceManifestEntrySchema).min(1).max(4_096),
+    executionMode: z.literal("disabled"),
+    gitCommit: z.string().regex(/^[0-9a-f]{40}$/u),
+    lockfileSha256: Sha256DigestSchema,
+    nodeVersion: z.string().regex(/^v24\.[0-9]+\.[0-9]+$/u),
+    pnpmVersion: z.string().regex(/^11\.[0-9]+\.[0-9]+$/u),
+    listenHost: z.literal("127.0.0.1"),
+    requiredSecretSlots: z.tuple([
+      z.literal("access_credential_sha256"),
+      z.literal("source_fingerprint_key"),
+      z.literal("nebius/default"),
+      z.literal("tavily/default"),
+    ]),
+  },
+).superRefine((manifest, context) => {
+  const lockfile = manifest.entries.find((entry) => entry.path === "pnpm-lock.yaml");
+  if (lockfile === undefined || lockfile.digest !== manifest.lockfileSha256) {
+    context.addIssue({
+      code: "custom",
+      path: ["lockfileSha256"],
+      message: "protected source lockfile digest must match its immutable entry",
+    });
+  }
+  let totalBytes = 0;
+  for (const [index, entry] of manifest.entries.entries()) {
+    totalBytes += entry.size;
+    if (entry.size > 4 * 1_024 * 1_024) {
+      context.addIssue({
+        code: "custom",
+        path: ["entries", index, "size"],
+        message: "protected source entry exceeds its file limit",
+      });
+    }
+  }
+  if (totalBytes > 64 * 1_024 * 1_024) {
+    context.addIssue({
+      code: "custom",
+      path: ["entries"],
+      message: "protected source entries exceed their total-byte limit",
+    });
+  }
+});
+export type ProtectedJudgeSourceManifest = DeepReadonly<
+  z.infer<typeof ProtectedJudgeSourceManifestSchema>
+>;
 
 function sameBudgetBinding(
   left: z.infer<typeof ManagedDemoBudgetServiceProcessConfigSchema>["capabilities"][number],
@@ -57,6 +109,7 @@ export const ResearchOnlyProtectedJudgeHostConfigSchema = z
     deploymentId: OpaqueIdSchema,
     principalId: OpaqueIdSchema,
     projectRoot: z.string().min(1).max(4_096),
+    sourceManifest: ProtectedJudgeSourceManifestSchema,
     stateRoot: z.string().min(1).max(4_096),
     credentialStore: ManagedDemoCredentialStoreConfigSchema,
     ingressSecrets: ManagedDemoJudgeIngressSecretStoreConfigSchema,
@@ -126,23 +179,3 @@ export const ProtectedJudgeHostConfigSchema = z.discriminatedUnion("executionMod
   ResearchOnlyProtectedJudgeHostConfigSchema,
 ]);
 export type ProtectedJudgeHostConfig = DeepReadonly<z.infer<typeof ProtectedJudgeHostConfigSchema>>;
-
-export const ProtectedJudgeSourceManifestSchema = z.strictObject({
-  schemaVersion: ContractVersionSchema,
-  executionMode: z.literal("disabled"),
-  gitCommit: z.string().regex(/^[0-9a-f]{40}$/u),
-  lockfileSha256: Sha256DigestSchema,
-  sourceArchiveSha256: Sha256DigestSchema,
-  nodeVersion: z.string().regex(/^v24\.[0-9]+\.[0-9]+$/u),
-  pnpmVersion: z.string().regex(/^11\.[0-9]+\.[0-9]+$/u),
-  listenHost: z.literal("127.0.0.1"),
-  requiredSecretSlots: z.tuple([
-    z.literal("access_credential_sha256"),
-    z.literal("source_fingerprint_key"),
-    z.literal("nebius/default"),
-    z.literal("tavily/default"),
-  ]),
-});
-export type ProtectedJudgeSourceManifest = DeepReadonly<
-  z.infer<typeof ProtectedJudgeSourceManifestSchema>
->;

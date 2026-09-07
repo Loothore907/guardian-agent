@@ -76,4 +76,6 @@ Architecture decision records document consequential choices, rejected alternati
 
 - [ADR-0055: Protected research-only judge startup](0055-protected-research-judge-startup.md)
 
+- [ADR-0056: Manifest-bound gitless session sources](0056-manifest-bound-gitless-session-sources.md)
+
 Use the next sequential four-digit number. Do not silently rewrite an accepted decision; add a superseding ADR.

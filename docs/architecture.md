@@ -250,16 +250,20 @@ class or a fresh step-up. See
 ## Session workspace boundary
 
 The trusted supervisor now plans one credential-screened, Guardian-managed copy
-from an explicit Git project root before it creates a confirmable preview. The
+from either an explicit exact Git project root or a trusted immutable deployment
+manifest before it creates a confirmable preview. The
 public selection contains only a project label, opaque source and snapshot
 digests, bounded limits, the fixed `/workspace` mount, session persistence,
 delete-on-close cleanup, and no-host-writeback policy. This selection is part of
 the exact preview digest; the raw host path is never public.
 
 After confirmation, the materializer independently revalidates the source-root
-identity and complete Git-visible manifest, copies only tracked and non-ignored
-untracked regular files outside the reserved `.guardian` state subtree, and
-creates a fresh no-remote Git baseline with no
+identity and complete authorized manifest. Local Git mode copies only tracked
+and non-ignored untracked regular files outside the reserved `.guardian` state
+subtree. Hosted immutable mode rejects any missing, extra or mismatched archive
+entry and copies only the canonically ordered paths whose size, executable bit and
+SHA-256 digest match the reviewed archive manifest. Both modes create a fresh
+no-remote Git baseline with no
 inherited credential helper. Unsafe paths, symlinks or junction ancestors,
 credential-bearing filenames or high-confidence content, mutations, collisions,
 limits, and target reuse fail closed.
@@ -269,7 +273,8 @@ the chroot remains disposable and network-disabled. Source changes never write
 back automatically. Supervisor close removes only the exact session root that
 Guardian created. W3 can invoke this exact prepared closure but cannot supply or
 replace its host path. See
-[ADR-0017](adr/0017-credential-safe-session-workspaces.md) and
+[ADR-0017](adr/0017-credential-safe-session-workspaces.md),
+[ADR-0056](adr/0056-manifest-bound-gitless-session-sources.md), and
 [ADR-0018](adr/0018-exact-one-round-trip-worker-tool-execution.md).
 
 Model IDs are selected by a trusted versioned role policy under

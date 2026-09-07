@@ -140,6 +140,7 @@ export interface ReferenceAuthoritySupervisorConfig {
   readonly callerId: unknown;
   readonly authorityStorePath: unknown;
   readonly projectRoot: unknown;
+  readonly sourceManifest?: unknown;
   readonly workspaceRoots: readonly unknown[];
   readonly issuedAt: unknown;
   readonly expiresAt: unknown;
@@ -311,6 +312,7 @@ export async function startReferenceAuthoritySupervisor(
   }
   const managedWorkspace = await ManagedSessionWorkspace.plan({
     sourceRoot: config.projectRoot,
+    ...(config.sourceManifest === undefined ? {} : { sourceManifest: config.sourceManifest }),
     storageRoot: workspaceRoots[0],
     sessionId,
   });

@@ -1,6 +1,7 @@
 import { execFile } from "node:child_process";
+import { createHash } from "node:crypto";
 import { promisify } from "node:util";
-import { access, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { access, lstat, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -54,7 +55,177 @@ async function repository() {
   return { root, source, storage };
 }
 
+async function immutableManifest(source: string, paths: readonly string[]) {
+  const entries = [];
+  for (const path of [...paths].sort((left, right) => left.localeCompare(right, "en"))) {
+    const content = await readFile(join(source, ...path.split("/")));
+    const metadata = await lstat(join(source, ...path.split("/")));
+    entries.push({
+      path,
+      digest: createHash("sha256").update(content).digest("hex"),
+      size: content.byteLength,
+      executable: (metadata.mode & 0o111) !== 0,
+    });
+    content.fill(0);
+  }
+  return {
+    schemaVersion: 1 as const,
+    kind: "immutable_file_manifest" as const,
+    sourceArchiveSha256: "a".repeat(64),
+    entries,
+  };
+}
+
 describe("managed session workspace", () => {
+  it("copies an exact manifest-bound gitless source without inferring file authority", async () => {
+    const root = await mkdtemp(join(tmpdir(), "guardian-gitless-workspace-test-"));
+    temporaryDirectories.push(root);
+    const source = join(root, "source-archive");
+    const storage = join(root, "sessions");
+    await mkdir(join(source, "src"), { recursive: true });
+    await writeFile(join(source, "README.md"), "# Gitless source\n", "utf8");
+    await writeFile(join(source, "src", "index.ts"), "export const value = 1;\n", "utf8");
+    const sourceManifest = await immutableManifest(source, ["README.md", "src/index.ts"]);
+    const workspace = await ManagedSessionWorkspace.plan({
+      sourceRoot: source,
+      sourceManifest,
+      storageRoot: storage,
+      sessionId: SESSION_ID,
+    });
+    const prepared = await workspace.prepare();
+    expect(await readFile(join(prepared.hostPath, "README.md"), "utf8")).toContain("Gitless");
+    expect(await git(prepared.hostPath, "status", "--porcelain")).toBe("");
+    await workspace.close();
+
+    await writeFile(join(source, "unlisted.txt"), "not authorized\n", "utf8");
+    await expect(
+      ManagedSessionWorkspace.plan({
+        sourceRoot: source,
+        sourceManifest,
+        storageRoot: storage,
+        sessionId: SESSION_ID,
+      }),
+    ).rejects.toThrow(/paths differ/u);
+  });
+
+  it("rejects mismatched, secret-like, and post-preview-mutated gitless sources", async () => {
+    const root = await mkdtemp(join(tmpdir(), "guardian-gitless-rejection-test-"));
+    temporaryDirectories.push(root);
+    const source = join(root, "source-archive");
+    const storage = join(root, "sessions");
+    await mkdir(source);
+    await writeFile(join(source, "README.md"), "# Exact source\n", "utf8");
+    const sourceManifest = await immutableManifest(source, ["README.md"]);
+    await expect(
+      ManagedSessionWorkspace.plan({
+        sourceRoot: source,
+        sourceManifest: {
+          ...sourceManifest,
+          entries: [{ ...sourceManifest.entries[0]!, digest: "b".repeat(64) }],
+        },
+        storageRoot: storage,
+        sessionId: SESSION_ID,
+      }),
+    ).rejects.toThrow(/differs from immutable manifest/u);
+
+    await writeFile(join(source, "README.md"), "token=ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890\n");
+    const secretManifest = await immutableManifest(source, ["README.md"]);
+    await expect(
+      ManagedSessionWorkspace.plan({
+        sourceRoot: source,
+        sourceManifest: secretManifest,
+        storageRoot: storage,
+        sessionId: SESSION_ID,
+      }),
+    ).rejects.toThrow(/credential-like material/u);
+
+    await writeFile(join(source, "README.md"), "# Exact source\n", "utf8");
+    const mutableManifest = await immutableManifest(source, ["README.md"]);
+    const workspace = await ManagedSessionWorkspace.plan({
+      sourceRoot: source,
+      sourceManifest: mutableManifest,
+      storageRoot: storage,
+      sessionId: SESSION_ID,
+    });
+    await writeFile(join(source, "README.md"), "# Mutated source\n", "utf8");
+    await expect(workspace.prepare()).rejects.toThrow(/changed after confirmation preview/u);
+    await workspace.close();
+  });
+
+  it("rejects malformed, missing, symlinked, and oversized immutable entries", async () => {
+    const root = await mkdtemp(join(tmpdir(), "guardian-gitless-near-miss-test-"));
+    temporaryDirectories.push(root);
+    const source = join(root, "source-archive");
+    const storage = join(root, "sessions");
+    await mkdir(source);
+    await writeFile(join(source, "README.md"), "exact\n", "utf8");
+    const sourceManifest = await immutableManifest(source, ["README.md"]);
+    await expect(
+      ManagedSessionWorkspace.plan({
+        sourceRoot: source,
+        sourceManifest: {
+          ...sourceManifest,
+          entries: [...sourceManifest.entries, sourceManifest.entries[0]],
+        },
+        storageRoot: storage,
+        sessionId: SESSION_ID,
+      }),
+    ).rejects.toThrow(/duplicate/u);
+    await expect(
+      ManagedSessionWorkspace.plan({
+        sourceRoot: source,
+        sourceManifest: {
+          ...sourceManifest,
+          entries: [{ ...sourceManifest.entries[0]!, path: "../README.md" }],
+        },
+        storageRoot: storage,
+        sessionId: SESSION_ID,
+      }),
+    ).rejects.toThrow(/canonical relative paths/u);
+
+    await rm(join(source, "README.md"));
+    await expect(
+      ManagedSessionWorkspace.plan({
+        sourceRoot: source,
+        sourceManifest,
+        storageRoot: storage,
+        sessionId: SESSION_ID,
+      }),
+    ).rejects.toThrow(/paths differ/u);
+
+    const outside = join(root, "outside");
+    await mkdir(outside);
+    await writeFile(join(outside, "escape.txt"), "outside\n", "utf8");
+    await symlink(
+      outside,
+      join(source, "linked"),
+      process.platform === "win32" ? "junction" : "dir",
+    );
+    await expect(
+      ManagedSessionWorkspace.plan({
+        sourceRoot: source,
+        sourceManifest: {
+          ...sourceManifest,
+          entries: [{ ...sourceManifest.entries[0]!, path: "linked/escape.txt", size: 8 }],
+        },
+        storageRoot: storage,
+        sessionId: SESSION_ID,
+      }),
+    ).rejects.toThrow(/unsupported file type/u);
+
+    await rm(join(source, "linked"));
+    await writeFile(join(source, "large.txt"), "12345", "utf8");
+    const largeManifest = await immutableManifest(source, ["large.txt"]);
+    await expect(
+      ManagedSessionWorkspace.plan({
+        sourceRoot: source,
+        sourceManifest: largeManifest,
+        storageRoot: storage,
+        sessionId: SESSION_ID,
+        limits: { maxFiles: 2, maxBytes: 8, maxFileBytes: 4 },
+      }),
+    ).rejects.toThrow(/size limit/u);
+  });
   it("copies the exact Git-visible snapshot into a sanitized no-remote baseline", async () => {
     const fixture = await repository();
     const workspace = await ManagedSessionWorkspace.plan({

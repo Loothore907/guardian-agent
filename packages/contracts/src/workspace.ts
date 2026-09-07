@@ -32,6 +32,66 @@ export const SessionWorkspaceLimitsSchema = z
   });
 export type SessionWorkspaceLimits = DeepReadonly<z.infer<typeof SessionWorkspaceLimitsSchema>>;
 
+const ImmutableWorkspacePathSchema = boundedCredentialSafeText(512).refine(
+  (value) =>
+    value === value.normalize("NFC") &&
+    !value.includes("\\") &&
+    !value.startsWith("/") &&
+    !value.endsWith("/") &&
+    value.split("/").every((segment) => segment !== "" && segment !== "." && segment !== ".."),
+  "immutable workspace paths must be canonical relative paths",
+);
+
+export const ImmutableWorkspaceManifestEntrySchema = z.strictObject({
+  path: ImmutableWorkspacePathSchema,
+  digest: Sha256DigestSchema,
+  size: z
+    .number()
+    .int()
+    .min(0)
+    .max(64 * 1_024 * 1_024),
+  executable: z.boolean(),
+});
+export type ImmutableWorkspaceManifestEntry = DeepReadonly<
+  z.infer<typeof ImmutableWorkspaceManifestEntrySchema>
+>;
+
+export const ImmutableWorkspaceSourceManifestSchema = z
+  .strictObject({
+    schemaVersion: ContractVersionSchema,
+    kind: z.literal("immutable_file_manifest"),
+    sourceArchiveSha256: Sha256DigestSchema,
+    entries: z.array(ImmutableWorkspaceManifestEntrySchema).min(1).max(20_000),
+  })
+  .superRefine((manifest, context) => {
+    const paths = manifest.entries.map((entry) => entry.path);
+    if (new Set(paths).size !== paths.length) {
+      context.addIssue({
+        code: "custom",
+        path: ["entries"],
+        message: "immutable workspace manifest contains duplicate paths",
+      });
+    }
+    if (new Set(paths.map((path) => path.toLowerCase())).size !== paths.length) {
+      context.addIssue({
+        code: "custom",
+        path: ["entries"],
+        message: "immutable workspace manifest contains case-colliding paths",
+      });
+    }
+    const sorted = [...paths].sort((left, right) => left.localeCompare(right, "en"));
+    if (paths.some((path, index) => path !== sorted[index])) {
+      context.addIssue({
+        code: "custom",
+        path: ["entries"],
+        message: "immutable workspace manifest paths must use canonical order",
+      });
+    }
+  });
+export type ImmutableWorkspaceSourceManifest = DeepReadonly<
+  z.infer<typeof ImmutableWorkspaceSourceManifestSchema>
+>;
+
 export const SessionWorkspaceSelectionSchema = z.strictObject({
   schemaVersion: ContractVersionSchema,
   kind: z.literal("guardian_managed_copy"),
