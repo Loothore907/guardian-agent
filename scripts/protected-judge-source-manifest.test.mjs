@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import test from "node:test";
 
@@ -8,7 +8,9 @@ import { createProtectedJudgeSourceBundle } from "./protected-judge-source-manif
 
 test("creates a credential-free disabled manifest for an exact tracked archive", async () => {
   const repositoryRoot = resolve(".");
-  const outputRoot = await mkdtemp(join(repositoryRoot, "tmp", "protected-judge-manifest-test-"));
+  const temporaryRoot = join(repositoryRoot, "tmp");
+  await mkdir(temporaryRoot, { recursive: true });
+  const outputRoot = await mkdtemp(join(temporaryRoot, "protected-judge-manifest-test-"));
   await rm(outputRoot, { recursive: true });
   try {
     const result = await createProtectedJudgeSourceBundle(repositoryRoot, outputRoot);
