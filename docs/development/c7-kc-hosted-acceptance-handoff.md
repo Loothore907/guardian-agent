@@ -23,9 +23,13 @@ The older source snapshot and results below remain historical evidence.
 
 The fixed two-resource ingress loader and disabled-by-default research-only
 startup are now implemented and tested offline under
-[ADR-0055](../adr/0055-protected-research-judge-startup.md). Next gates are a
-reviewed exact source manifest and run sheet, then protected runtime
-retrieval/redaction and provider checks for the enrolled Nebius/Tavily secrets;
+[ADR-0055](../adr/0055-protected-research-judge-startup.md). The reviewed source
+manifest is bound to `0bee21f50cec47db1d015e34fdbd408d5db499d5`, and the
+[approved run sheet](c7-hosted-research-run-sheet.md) plus
+[mission cost baselines](c7-cost-baselines.md) define the one-journey/two-hour
+scope. Next gates are the run sheet's current-state and price go/no-go checks,
+then protected runtime retrieval/redaction and provider checks for the enrolled
+Nebius/Tavily secrets;
 authenticated ingress, live provider/budget settlement, intended-host verification
 of the offline-tested
 [ADR-0054](../adr/0054-operator-budget-service-clock.md) operator-update path, and
@@ -156,12 +160,11 @@ created. Both KC VMs remained Stopped at today's initial Console check.
 
 ## Operational state to preserve
 
-Main repository: `codex/13-c6-linux-provider-containment`, HEAD `e5b1217`.
-The large uncommitted worktree includes earlier prerequisite work; preserve it
-and inventory with `git status --short`. No new main-repository commit, push or
-merge was performed. All 337 code files in the tested snapshot still match its
-manifest; subsequent edits are documentation/working-guidance and ignored
-operator helpers, not additional tested runtime behavior.
+Selected reviewed runtime source: merged main revision
+`0bee21f50cec47db1d015e34fdbd408d5db499d5`, with credential-free source archive
+SHA-256 `e5dadf164bf00c9056ec72417191e4408efb2c58e7390be56c3ffae9960a47ee`.
+Use the exact archive and manifest named in the run sheet. The older deployed
+snapshot remains historical evidence, not the next deployment source.
 
 Project: `project-u00h7t9mkc007dezqchqwv`.
 Replacement: `computeinstance-u00dkgrgnqdmy4vz67`, `204.12.168.166`, STOPPED.
