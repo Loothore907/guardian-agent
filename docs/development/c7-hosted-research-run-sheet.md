@@ -30,6 +30,11 @@ Any future run sheet must bind a newly reviewed post-integration commit, archive
 manifest and lockfile; the historical values below remain evidence for the spent
 attempt and must not be reused as the new source identity.
 
+The approved successor is the
+[September 7 retry sheet](c7-hosted-research-run-sheet-2026-09-07-retry.md).
+Its authority is limited to its one exact execution and does not alter this
+historical record.
+
 ## Fixed identities
 
 | Item                    | Bound value                                                                     |
