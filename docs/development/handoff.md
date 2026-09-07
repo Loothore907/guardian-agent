@@ -21,6 +21,11 @@ VM start, credential operation, provider call, journey admission or spend. A
 fresh run sheet with absolute times must be separately approved and integrated
 before hosted execution.
 
+The [fresh retry-2 run sheet](c7-hosted-research-run-sheet-2026-09-07-retry-2.md)
+binds the separately approved September 7 20:00–22:00 UTC window. It authorizes
+one execution only after its protected merge and expires if the replacement is
+not started by 20:05 UTC.
+
 ## Start here
 
 1. Run `node scripts/session-hygiene.mjs start --remote` and inspect current
