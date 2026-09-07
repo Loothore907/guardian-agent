@@ -1,0 +1,11 @@
+[features]
+hooks = true
+memories = true
+
+[memories]
+generate_memories = true
+use_memories = true
+disable_on_external_context = true
+
+[agents]
+max_concurrent_threads_per_session = 4
