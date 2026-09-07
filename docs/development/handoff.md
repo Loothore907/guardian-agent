@@ -15,6 +15,12 @@ was not consumed. A later session must integrate a fresh bounded clock and stop
 fallback. No product-code repair is required for the intentional fixture
 exclusions described below.
 
+The [next-session plan](session-plan-2026-09-07-kc-hosted-retry-2.md) is approved
+for documentation and protected Git integration only. It does not authorize a
+VM start, credential operation, provider call, journey admission or spend. A
+fresh run sheet with absolute times must be separately approved and integrated
+before hosted execution.
+
 ## Start here
 
 1. Run `node scripts/session-hygiene.mjs start --remote` and inspect current
