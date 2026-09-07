@@ -21,6 +21,11 @@ prepare a concrete proposal early instead of accumulating another unreviewed sli
 
 - Use one issue-linked branch per coherent change; open a draft PR once a useful
   checkpoint exists. Commit tested behavior with its tests and documentation.
+- Treat factual documentation-only reconciliation of the current change's checks,
+  merge state and handoff as closeout for the originating issue, including when it
+  follows the merge. Reuse that issue reference without creating a new tracker or
+  requesting separate authority. A correction becomes separate scope only when it
+  introduces new requirements, behavior, claims, authority or operational bounds.
 - Start independent work from current main. Use stacked PRs only for real
   dependencies; record the predecessor and review order. Do not use one milestone
   branch for unrelated completed features.
@@ -42,6 +47,11 @@ missing issue/PR, mismatched head or a build that is not green. Offline inspecti
 is available by omitting `--remote`, but returns failure because remote state is
 unknown. These commands fetch origin and inspect GitHub; they do not commit,
 push, merge, delete or change settings.
+
+A merged PR whose exact head and build verify may close successfully after GitHub
+deletes its remote feature branch. In that specific case, a missing upstream is
+expected integration state rather than unpublished work; open PRs and unmerged
+branches still require their exact upstream.
 
 Report branch/head, commit/push status, issue/PR links, exact-head checks, review
 and merge state, and remaining changed paths. A blocked draft is a legitimate

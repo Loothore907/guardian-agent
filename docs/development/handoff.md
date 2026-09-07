@@ -1,7 +1,8 @@
 # Current development handoff
 
-Last reconciled: September 7, 2026. The current revision implements and tests the
-issue #40 manifest-bound gitless-source contract offline. The first bounded KC
+Last reconciled: September 7, 2026. PR #42 integrates the issue #40
+manifest-bound gitless-source contract, and exact-head plus post-merge CI passed.
+The first bounded KC
 hosted-research attempt remains a failed-closed result before provider startup.
 Both VMs are stopped, and the spent run sheet does not authorize a retry.
 
@@ -9,13 +10,13 @@ Both VMs are stopped, and the spent run sheet does not authorize a retry.
 
 1. Run `node scripts/session-hygiene.mjs start --remote` and inspect current
    issues, PRs, exact-head CI and dirty/unpublished work.
-2. Read [the failed hosted gate](evidence/2026-09-07-kc-hosted-gate.md), issue
-   [#40](https://github.com/Loothore907/guardian-agent/issues/40), and
+2. Read [the failed hosted gate](evidence/2026-09-07-kc-hosted-gate.md), closed
+   issue [#40](https://github.com/Loothore907/guardian-agent/issues/40), and
    [ADR-0056](../adr/0056-manifest-bound-gitless-session-sources.md).
-3. Verify this revision's exact-head CI and protected integration. Its production
-   supervisor test uses a real extracted archive root with no `.git`; Linux CI
-   additionally verifies the complete generated repository archive.
-4. Prepare a new bounded run sheet only after integration. A second journey needs
+3. Treat merged main `e8aef7456a49c1a81894f00f45cde059ab5fc8fa` as the
+   reviewed source revision. PR CI runs 118 and 119 and post-merge main run 120
+   passed; Linux CI verified the complete generated repository archive.
+4. Prepare a new bounded run sheet before any hosted action. A second journey needs
    explicit authority because the one admission in the current sheet was consumed
    and conservatively forfeited.
 
@@ -40,11 +41,12 @@ continuation, exact-bound risk context, portal contracts/UI and synthetic servic
 composition exist. Default live portal execution remains disabled. Review
 [security claims](../security-claims.md) before describing any control as verified.
 
-The issue #40 source milestone is implemented in this revision: protected
+The issue #40 source milestone is integrated through PR #42: protected
 research startup requires the full credential-free source manifest, and workspace
 planning authorizes only its exact ordered path/size/digest/executable entries
 without requiring mutable `.git` metadata. It remains an offline claim until
-exact-head CI and protected integration complete.
+the fixed path is exercised again in the hosted environment; integration and
+post-merge CI are complete.
 The operator policy/price real-clock contract is implemented and tested offline
 through the production service child; see
 [ADR-0054](../adr/0054-operator-budget-service-clock.md). The protected

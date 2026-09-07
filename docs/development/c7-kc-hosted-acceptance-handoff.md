@@ -16,12 +16,11 @@ after the negative-test burst; it remains a separate availability gate.
 
 Root cause: the reviewed deployment used a credential-free `git archive`, while
 the prior `ManagedSessionWorkspace.plan` required `.git` through `git rev-parse`
-and `git ls-files`. The current issue
-[#40](https://github.com/Loothore907/guardian-agent/issues/40) revision adds the
-strict manifest-bound gitless-source contract and an actual gitless
-production-child test. Integrate it through exact-head CI. Do not restart a VM or
-run a second journey until that integration passes and a new bounded run sheet
-explicitly authorizes another admission. See
+and `git ls-files`. Merged
+[PR #42](https://github.com/Loothore907/guardian-agent/pull/42) adds the strict
+manifest-bound gitless-source contract and an actual gitless production-child
+test. Exact-head and post-merge CI passed. Do not restart a VM or run a second
+journey until a new bounded run sheet explicitly authorizes another admission. See
 [the hosted-gate evidence](evidence/2026-09-07-kc-hosted-gate.md).
 
 Conservative cumulative infrastructure estimate: USD 1.044294. The last posted
@@ -196,10 +195,10 @@ created. Both KC VMs remained Stopped at today's initial Console check.
 ## Operational state to preserve
 
 Selected reviewed runtime source: merged main revision
-`0bee21f50cec47db1d015e34fdbd408d5db499d5`, with credential-free source archive
-SHA-256 `e5dadf164bf00c9056ec72417191e4408efb2c58e7390be56c3ffae9960a47ee`.
-Use the exact archive and manifest named in the run sheet. The older deployed
-snapshot remains historical evidence, not the next deployment source.
+`e8aef7456a49c1a81894f00f45cde059ab5fc8fa`. Generate and record its exact
+credential-free archive and manifest in a newly authorized run sheet before any
+hosted action. The prior `0bee21f…` archive and older deployed snapshot remain
+historical evidence, not the next deployment source.
 
 Project: `project-u00h7t9mkc007dezqchqwv`.
 Replacement: `computeinstance-u00dkgrgnqdmy4vz67`, `204.12.168.166`, STOPPED.
