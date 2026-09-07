@@ -1,6 +1,7 @@
 # C7 protected hosted research retry 2 — September 7, 2026
 
-- Status: approved for one execution in the active September 7 Codex session
+- Status: expired without VM startup or other hosted effects; superseded by
+  [retry 3](c7-hosted-research-run-sheet-2026-09-07-retry-3.md)
 - Tracking: issue #19
 - Repository base: `main` at `a85477888a44d8d9f0b520b661d103af7f406f7d`
 - Hosted source: `95648b58a871664ef6e29c9713bb2e7dacaa4f05`
@@ -28,6 +29,9 @@ If this sheet is not merged or the replacement is not started by 20:05 UTC, the
 window expires without execution. Starting earlier than 20:00 UTC or extending
 any deadline is not authorized. Cleanup begins immediately after any terminal
 settlement or earlier abort.
+
+The startup confirmation was not executed before 20:05 UTC. Both VMs remained
+stopped, and no credential, provider, budget or admission state changed.
 
 ## Exact reviewed source
 
