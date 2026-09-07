@@ -26,11 +26,13 @@ relative path, SHA-256 content digest, byte size and executable bit. Duplicate,
 case-colliding, absolute, escaping, non-canonical or oversized entries fail
 schema or workspace validation.
 
-The protected source-bundle generator derives every entry from the exact Git
-commit used by `git archive`, rather than from the mutable working tree. It reads
-the lockfile digest from that same entry set. The public manifest remains in
-disabled mode and contains no credential values, resource IDs, runtime authority,
-private state or spending permission.
+The protected source-bundle generator derives the path and executable mode of
+every entry from the exact Git commit used by `git archive`, rather than from the
+mutable working tree. It derives size and content digest from a private extraction
+of that exact archive so declared bytes match deterministic Git archive attribute
+conversion. It reads the lockfile digest from that same entry set. The public
+manifest remains in disabled mode and contains no credential values, resource IDs,
+runtime authority, private state or spending permission.
 
 Protected `research_only` startup requires this manifest. Trusted host
 configuration passes it through the portal runtime to the reference supervisor;
@@ -71,7 +73,7 @@ Contract tests cover canonical ordering, duplicates and strict protected-host
 binding. Workspace tests cover the allowed gitless path plus missing, extra,
 mismatched, escaping, case-colliding, symlinked, oversized, secret-like and
 post-preview-mutated near misses while retaining the existing Git path. The
-protected source-manifest test derives entries and the lockfile digest from the
-exact archived commit. A production-supervisor child test extracts a real
-`git archive`, proves `.git` is absent, starts the real authority child and plans
-the manifest-bound workspace successfully.
+protected source-manifest test derives paths and modes from the exact commit and
+content digests from the exact archive. A production-supervisor child test extracts
+a real `git archive`, proves `.git` is absent, starts the real authority child and
+plans the manifest-bound workspace successfully.

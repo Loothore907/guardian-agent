@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { access, mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import test from "node:test";
@@ -34,6 +35,14 @@ test("creates a credential-free disabled manifest for an exact tracked archive",
     await mkdir(archiveRoot);
     execFileSync("tar", ["-xf", result.archivePath, "-C", archiveRoot], { windowsHide: true });
     await assert.rejects(access(join(archiveRoot, ".git")));
+    const transformedFixture = await readFile(join(archiveRoot, "scripts", "pnpm.ps1"));
+    const transformedEntry = manifest.entries.find((entry) => entry.path === "scripts/pnpm.ps1");
+    assert.equal(transformedEntry?.size, transformedFixture.byteLength);
+    assert.equal(
+      transformedEntry?.digest,
+      createHash("sha256").update(transformedFixture).digest("hex"),
+    );
+    transformedFixture.fill(0);
     // NTFS does not expose the POSIX executable bits recorded by git archive.
     // The protected runtime is Linux; CI performs this complete archive check.
     if (process.platform !== "win32") {
