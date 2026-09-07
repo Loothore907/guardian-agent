@@ -479,10 +479,15 @@ Internet judge
 The local coordinator generates the journey ID, admits before invoking its
 supervisor executor, passes one exact four-role reporter set, and requires a
 matching settlement before returning success. The control API imports neither
-the SQLite ledger nor provider credential resolution. The default executable
-does not enable this route until a protected SecretStash ingress-secret loader
-and fixed judge startup composition exist. Local tests therefore establish the
-contract and ordering, not hosted enforcement, proxy correctness, or custody.
+the SQLite ledger nor provider credential resolution. ADR-0055 adds a separate
+protected judge composition root. Its disabled mode resolves no secrets and
+registers no judge route. Its `research_only` mode reads exactly two ingress
+values through fixed SecretStash operations, starts the fixed budget child,
+constructs a Nebius/Tavily-only budgeted portal without GitHub mutation state,
+and listens on loopback only after every dependency is ready. The ordinary
+control-API executable remains judge-disabled. Local tests establish this startup,
+cleanup, authentication and ordering contract, not hosted enforcement, proxy
+correctness, target-host custody or provider execution.
 
 The BYOK Windows adapter uses fixed Credential Manager targets. Its Linux adapter
 invokes only `/usr/bin/secret-tool` with fixed attributes, sends secret input

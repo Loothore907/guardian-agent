@@ -78,12 +78,14 @@ and supervisor reporter projection.
 
 ## Residual limitations and next evidence
 
-- The default control-API executable does not activate the judge route because no
-  protected SecretStash ingress-secret loader or hosted deployment bootstrap is
-  configured yet.
-- The route-to-supervisor executor is a narrow injected boundary. Protected
-  startup must construct it with the fixed judge configuration and show that no
-  paid provider child can start outside an admitted journey.
+- The ordinary control-API executable still does not activate the judge route.
+  ADR-0055 now adds a separate disabled-by-default research-only production
+  composition and fixed SecretStash ingress loader; its local evidence is recorded
+  in `2026-09-06-protected-judge-startup.md`.
+- The budgeted portal and supervisor remain narrow injected boundaries. Local
+  tests establish admission before runtime/provider preparation, but target-host
+  process inspection must still show that no paid provider child can start outside
+  an admitted journey.
 - Caddy header overwrite, access-log suppression, loopback binding, firewall,
   SecretStash payload access, process identity, Linux socket/database ownership,
   client disconnect, and expiry forfeiture require inspection on the target VM.

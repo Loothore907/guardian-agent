@@ -74,4 +74,6 @@ Architecture decision records document consequential choices, rejected alternati
 
 - [ADR-0054: Operator budget service clock](0054-operator-budget-service-clock.md)
 
+- [ADR-0055: Protected research-only judge startup](0055-protected-research-judge-startup.md)
+
 Use the next sequential four-digit number. Do not silently rewrite an accepted decision; add a superseding ADR.

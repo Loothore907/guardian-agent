@@ -21,12 +21,16 @@ credential lifecycle, production budget-child preflight and eight host-side HTTP
 fixture hash checks passed. See [run evidence](evidence/2026-09-06-kc-continuation.md).
 The older source snapshot and results below remain historical evidence.
 
-Next gates: protected runtime retrieval/redaction and provider checks for the
-enrolled Nebius/Tavily secrets; GitHub App private key
-and installation setup; authenticated ingress, live provider/budget settlement,
-intended-host verification of the offline-tested
+The fixed two-resource ingress loader and disabled-by-default research-only
+startup are now implemented and tested offline under
+[ADR-0055](../adr/0055-protected-research-judge-startup.md). Next gates are a
+reviewed exact source manifest and run sheet, then protected runtime
+retrieval/redaction and provider checks for the enrolled Nebius/Tavily secrets;
+authenticated ingress, live provider/budget settlement, intended-host verification
+of the offline-tested
 [ADR-0054](../adr/0054-operator-budget-service-clock.md) operator-update path, and
-external fixture reachability.
+external fixture reachability. GitHub App private-key and installation setup
+remain deferred to the mutation gate.
 Resume only within an explicitly bounded window and establish cloud shutdown
 before restarting; leave the original stopped. Do not treat the old cutoff as a
 new uptime allowance. C7 remains incomplete.
@@ -66,8 +70,9 @@ every C7 gate in one window. Do preparation while the VMs remain stopped:
   KC use remains unverified. The campaign policy closed at September 6 21:01 UTC
   and its price evidence expired at 21:06 UTC. Do not reset the durable campaign
   ledger or increase the shared allowance while replacing them.
-- Prepare the protected ingress-secret loader and fixed hosted startup composition.
-  The default executable currently leaves live judge execution disabled.
+- Review the exact source manifest and concrete hosted run sheet. The protected
+  ingress loader and research-only service composition are implemented offline;
+  the default mode and ordinary control API still leave judge execution disabled.
 - Inventory missing GitHub App installation/private-key setup and exact disposable
   targets. Keep GitHub mutation tests gated; the user OAuth slot is not a substitute.
 
@@ -79,17 +84,19 @@ Then execute the bounded hosted sequence:
    Do not create another KC VM. Verify cost and time
    bounds for the new development window. Re-establish a bounded shutdown on
    restart: the initial `shutdown` schedule is not a recurring boot policy.
-2. Inventory the current source and preserve all uncommitted work. Reuse the
-   verified `2dcc7cd79e2e…` snapshot if code matches; otherwise prepare an explicit
-   deployment manifest/source snapshot. Exclude `.env`, private state,
-   `.git`, credentials and unrelated ignored files. Do not copy the whole workspace
-   or stage all changes. Verify source identity on the host.
+2. Use the reviewed credential-free `git archive` source bundle and manifest from
+   the integrated protected-startup revision; do not reuse `2dcc7cd79e2e…` as the
+   deployment source. Exclude `.env`, private state, `.git`, credentials and
+   unrelated ignored files. Do not copy the whole workspace or stage all changes.
+   Verify the archive and lockfile hashes on the host.
 3. Reuse the installed pinned runtime dependencies and deploy the separated Guardian
    services with live execution disabled. The current snapshot's required Linux
    checks passed; rerun when code or runtime changes justify it. Complete the
    intended-host process/filesystem/credential/network probes, including direct
    network, credential-path, alternate-tool and Git-push bypass cases. Retain
-   sanitized evidence. A successful `unshare` probe is insufficient.
+   sanitized evidence. Start `pnpm start:judge-host` in disabled mode before the
+   reviewed research-only descriptor is supplied. A successful `unshare` probe is
+   insufficient.
 4. Reuse the approved, verified copies in KC SecretStash:
    `guardian-c7-kc-dev-nebius` (`mbsec-u00vj1q4t557yq8zk4`) and
    `guardian-c7-kc-dev-tavily` (`mbsec-u00cabt74nah2z9rp4`), project
