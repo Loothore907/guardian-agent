@@ -8,7 +8,9 @@ state before new runtime scope. C6/C7 remain open for their own acceptance gates
 September 6 operational pickup: [KC handoff](c7-kc-hosted-acceptance-handoff.md).
 Both VMs are stopped; Nebius/Tavily copies and scoped grants are verified. The
 next milestone is one authenticated, budgeted hosted research-only journey.
-Runtime credential use, ingress composition and live settlement remain open.
+ADR-0055 implements the fixed ingress-secret loader and protected research-only
+composition offline; target-host credential use, external ingress and live
+settlement remain open.
 Generalized hosted BYOK and credential-copy plan grants are a separate
 [product-design follow-up](credential-placement-and-plan-approval.md), not a C7
 implementation claim. Earlier dated pickup sections below are historical.
@@ -87,8 +89,8 @@ ADR-0046 now adds a locally tested fixed judge HTTP route, private access-
 credential verification, deployment-keyed source fingerprinting, admission-
 before-execution ordering, exact four-role supervisor reporter projection, and
 conservative terminal settlement. This checkpoint is not deployed or calibrated.
-Protected SecretStash ingress-secret resolution, concrete hosted startup, Caddy
-and Linux inspection, authenticated provider-price evidence, 20 protected
+Protected intended-host SecretStash retrieval, concrete hosted startup, Caddy and
+Linux inspection, authenticated provider-price evidence, 20 protected
 calibration journeys, load/containment evidence, separate IAM/provider-cap
 provisioning, judge-window funding, and deployment remain on the critical path.
 Public traffic must not start before the judge reserve is funded and isolated.

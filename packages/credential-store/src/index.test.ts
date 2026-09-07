@@ -10,6 +10,7 @@ import {
   linuxSecretServiceEnvironment,
   runLinuxSecretTool,
   SecretStashCredentialStore,
+  useManagedDemoJudgeIngressSecrets,
   WindowsCredentialStore,
   type CredentialHelperInvocation,
   type LinuxSecretToolInvocation,
@@ -359,6 +360,109 @@ describe("Nebius SecretStash managed-demo adapter", () => {
       payloadKey: payloadKeys[`${provider}/${slot}` as keyof typeof payloadKeys],
     } as const;
   }
+
+  function ingressSecrets() {
+    const location = {
+      schemaVersion: 1,
+      custodyProfile: "managed_demo",
+      pool: "judge",
+      runtime: "linux",
+      storeTarget: "nebius_secretstash",
+    } as const;
+    return {
+      schemaVersion: 1,
+      custodyProfile: "managed_demo",
+      pool: "judge",
+      resources: [
+        {
+          schemaVersion: 1,
+          location,
+          slot: "access_credential_sha256",
+          secretId: "mbsec-judgeaccess123",
+          payloadKey: "judge_access_credential_sha256",
+        },
+        {
+          schemaVersion: 1,
+          location,
+          slot: "source_fingerprint_key",
+          secretId: "mbsec-judgefingerprint123",
+          payloadKey: "judge_source_fingerprint_key",
+        },
+      ],
+    } as const;
+  }
+
+  it("loads only the two fixed judge ingress secrets and zeroes callback copies", async () => {
+    const outputs = [
+      Uint8Array.from(Buffer.from(payload("ab".repeat(32), "judge_access_credential_sha256"))),
+      Uint8Array.from(Buffer.from(payload("cd".repeat(48), "judge_source_fingerprint_key"))),
+    ];
+    const runner = vi.fn<SecretStashRunner>(() =>
+      Promise.resolve({ code: 0, stdout: outputs.shift()!, stderr: new Uint8Array() }),
+    );
+    let digest: Uint8Array | undefined;
+    let key: Uint8Array | undefined;
+
+    await expect(
+      useManagedDemoJudgeIngressSecrets(
+        ingressSecrets(),
+        (secrets) => {
+          digest = secrets.expectedCredentialDigest;
+          key = secrets.sourceFingerprintKey;
+          expect(Buffer.from(digest).toString("hex")).toBe("ab".repeat(32));
+          expect(Buffer.from(key).toString("hex")).toBe("cd".repeat(48));
+          return "loaded";
+        },
+        runner,
+      ),
+    ).resolves.toBe("loaded");
+
+    expect(runner).toHaveBeenCalledTimes(2);
+    expect(runner.mock.calls.map(([invocation]) => invocation.arguments.slice(0, 7))).toEqual([
+      [
+        "mysterybox",
+        "payload",
+        "get-by-key",
+        "--key",
+        "judge_access_credential_sha256",
+        "--secret-id",
+        "mbsec-judgeaccess123",
+      ],
+      [
+        "mysterybox",
+        "payload",
+        "get-by-key",
+        "--key",
+        "judge_source_fingerprint_key",
+        "--secret-id",
+        "mbsec-judgefingerprint123",
+      ],
+    ]);
+    expect(digest?.every((byte) => byte === 0)).toBe(true);
+    expect(key?.every((byte) => byte === 0)).toBe(true);
+  });
+
+  it.each([
+    ["AA".repeat(32), "cd".repeat(32)],
+    ["ab".repeat(31), "cd".repeat(32)],
+    ["ab".repeat(32), "cd".repeat(31)],
+    ["ab".repeat(32), "cd".repeat(65)],
+  ])("rejects malformed fixed judge ingress secret encodings", async (digest, key) => {
+    const outputs = [
+      Uint8Array.from(Buffer.from(payload(digest, "judge_access_credential_sha256"))),
+      Uint8Array.from(Buffer.from(payload(key, "judge_source_fingerprint_key"))),
+    ];
+    await expect(
+      useManagedDemoJudgeIngressSecrets(
+        ingressSecrets(),
+        () => "unexpected",
+        () => Promise.resolve({ code: 0, stdout: outputs.shift()!, stderr: new Uint8Array() }),
+      ),
+    ).rejects.toMatchObject({
+      name: "CredentialStoreError",
+      message: "credential store operation failed",
+    });
+  });
 
   it("retrieves only one fixed payload key inside a zeroed callback", async () => {
     const stdout = Uint8Array.from(Buffer.from(payload()));

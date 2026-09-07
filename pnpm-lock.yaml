@@ -185,6 +185,28 @@ importers:
         specifier: 4.1.11
         version: 4.1.11(@types/node@24.13.3)(vite@8.2.2(@types/node@24.13.3))
 
+  apps/judge-host-service:
+    dependencies:
+      '@guardian/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@guardian/control-api':
+        specifier: workspace:*
+        version: link:../control-api
+      '@guardian/credential-store':
+        specifier: workspace:*
+        version: link:../../packages/credential-store
+      '@guardian/managed-demo-budget-client':
+        specifier: workspace:*
+        version: link:../../packages/managed-demo-budget-client
+      '@guardian/reference-supervisor':
+        specifier: workspace:*
+        version: link:../reference-supervisor
+    devDependencies:
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.13.3)(vite@8.2.2(@types/node@24.13.3))
+
   apps/managed-demo-budget-service:
     dependencies:
       '@guardian/contracts':

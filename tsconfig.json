@@ -24,6 +24,7 @@
     { "path": "packages/broker" },
     { "path": "packages/test-support" },
     { "path": "apps/control-api" },
+    { "path": "apps/judge-host-service" },
     { "path": "apps/guardian-cli" },
     { "path": "apps/interaction-service" },
     { "path": "apps/worker-service" },

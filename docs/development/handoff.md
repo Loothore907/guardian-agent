@@ -41,11 +41,16 @@ The next hosted milestone is one authenticated research-only journey with
 protected Nebius/Tavily use, admission before paid calls and durable settlement.
 The operator policy/price real-clock contract is implemented and tested offline
 through the production service child; see
-[ADR-0054](../adr/0054-operator-budget-service-clock.md). Protected startup/ingress
-composition remains the next offline blocker. Hosted gates include full credential/service
-containment, runtime retrieval/redaction, reliable external HTTPS, live settlement,
-and later clean/seeded evaluations. Missing GitHub App setup and exact disposable
-targets gate mutations. Never reuse merged PR 3.
+[ADR-0054](../adr/0054-operator-budget-service-clock.md). The protected
+research-only startup and fixed two-resource ingress loader are now implemented
+and tested offline under
+[ADR-0055](../adr/0055-protected-research-judge-startup.md). They remain disabled
+by default and do not require or expose the GitHub mutation path. The next gate is
+a reviewed credential-free source manifest and concrete hosted run sheet. Hosted
+gates include full credential/service containment, runtime retrieval/redaction,
+reliable external HTTPS, live settlement, and later clean/seeded evaluations.
+Missing GitHub App setup and exact disposable targets gate mutations. Never reuse
+merged PR 3.
 
 Separate debt: intermittent authority-child startup, Windows real-clock IPC,
 WSL warm-restart cgroup failures, billing reconciliation, and generalized hosted
@@ -70,6 +75,7 @@ Use the KC pickup and ignored local metadata for exact operational descriptors.
 
 - [Repository recovery and validation](repo-hygiene-recovery-2026-09-06.md)
 - [Latest KC protected-enrollment evidence](evidence/2026-09-06-kc-continuation.md)
+- [Protected research-only startup evidence](evidence/2026-09-06-protected-judge-startup.md)
 - [C6 residuals](c6-residual-review.md)
 - [C7 completion criteria](c7-completion-and-acceptance-plan.md)
 - [WSL recovery procedure](wsl-session-recovery.md)

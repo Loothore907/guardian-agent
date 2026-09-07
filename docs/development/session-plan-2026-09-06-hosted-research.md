@@ -1,6 +1,7 @@
-# Proposed session plan: hosted research acceptance
+# Session plan: hosted research acceptance
 
-Date: 2026-09-06. Status: draft for discussion, not execution authority.
+Date: 2026-09-06. Status: offline startup slice approved and implemented;
+hosted execution still requires the concrete decision in step 4.
 
 User scope correction: this session prepares the candidate and run sheet only.
 Cloud execution/testing belongs to the next session. Source-integration recovery
@@ -57,14 +58,15 @@ test results. Rebuild the manifest from the reviewed revision selected for the r
    durable restart state are covered. The production-child real-clock test is in
    `pnpm check`. No campaign window, allowance or cloud resource was changed.
 
-3. **Prepare protected startup and ingress offline.** Implement the fixed secret
-   loader and service composition required by the existing headless host. Test
-   missing/wrong credentials, caller/peer rejection, service startup failure,
-   cancellation and cleanup, unauthorized ingress, and admission-before-provider
-   ordering. Keep live execution disabled by default. Prepare exact deployment
-   descriptors and source manifest without credentials or private state.
-   Done when the synthetic end-to-end composition and relevant rejection tests
-   pass, followed by the required suite and review of the changed boundaries.
+3. **Completed offline: protected startup and ingress.**
+   [ADR-0055](../adr/0055-protected-research-judge-startup.md) adds a dedicated
+   disabled-by-default production service, fixed two-resource SecretStash ingress
+   loader, exact budget child, and research-only Nebius/Tavily portal without a
+   GitHub mutation dependency. Tests cover malformed and wrong resource bindings,
+   helper failures, zeroing, unauthorized ingress, dependency order, startup and
+   listener failure, cleanup, unexpected child exit, admission before runtime
+   preparation, an inert production child, and credential-free source packaging.
+   No cloud, credential, ingress, provider, budget-window or spending state changed.
 
 4. **Prepare the concrete hosted run sheet.** Name replacement VM, exact source,
    approved credential resources/readers, ingress-secret provisioning scope,
@@ -109,29 +111,29 @@ test results. Rebuild the manifest from the reviewed revision selected for the r
 
 ## Technical debt and disposition
 
-| Debt or evidence gap                                                            | Disposition                                                                                                                                                                       |
-| ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Exact-clock operator policy/price updates                                       | Implemented and tested offline under [ADR-0054](../adr/0054-operator-budget-service-clock.md); verify the reviewed source on the intended host before renewing live configuration |
-| Intermittent authority-child startup failure despite later passing cycles       | Capture sanitized startup causes and cold-boot/restart evidence; a recurring failure blocks unattended acceptance                                                                 |
-| Incomplete protected startup/ingress wiring                                     | Blocking for the proposed authenticated journey                                                                                                                                   |
-| Incomplete intended-host credential/service containment and retained live audit | Blocking for corresponding security claims; successful model calls alone cannot close it                                                                                          |
-| External HTTPS intermittent timeouts                                            | Blocking for externally usable acceptance; diagnose without broadening SSH access                                                                                                 |
-| Provider settlement, billing reconciliation, retained disk/IP costs             | Reconcile before spending and at closeout; recorded compute estimate is not a bill                                                                                                |
-| Recovered prerequisite/C7 stack                                                 | Follow the recovery record and live PR state; resolve any remaining integration gate before feature work                                                                          |
-| Historical instructions mixed into current handoff/roadmap                      | Current handoff now links an archived chronology; dated sections are evidence, not current execution instructions                                                                 |
-| Ignored operational helpers/state/evidence absent from a clone                  | Identify which sanitized procedures/helpers must ship for reproducibility; preserve private state outside source                                                                  |
-| Windows clock drift and WSL warm-restart cgroup failures                        | Separate platform track with documented recovery; no permanent fix claimed                                                                                                        |
-| Missing GitHub App installation/private-key slots and disposable exact targets  | Next acceptance slice; never substitute OAuth or reuse merged PR 3                                                                                                                |
-| C7 clean/seeded repeats and failure/uncertainty evaluation report               | Required milestone follow-up after first journey; one run is not evaluation closure                                                                                               |
-| Generalized hosted BYOK, typed credential-copy grants and recovery receipts     | Future product design; current ignored operator transfer is not a shipped feature                                                                                                 |
-| WebAuthn, longer missions, calibration/load and continuous judging availability | Later roadmap/rollout work; preserve explicit scope and funding gates                                                                                                             |
+| Debt or evidence gap                                                            | Disposition                                                                                                                                                                               |
+| ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Exact-clock operator policy/price updates                                       | Implemented and tested offline under [ADR-0054](../adr/0054-operator-budget-service-clock.md); verify the reviewed source on the intended host before renewing live configuration         |
+| Intermittent authority-child startup failure despite later passing cycles       | Capture sanitized startup causes and cold-boot/restart evidence; a recurring failure blocks unattended acceptance                                                                         |
+| Protected startup/ingress wiring                                                | Implemented and tested offline under [ADR-0055](../adr/0055-protected-research-judge-startup.md); intended-host retrieval, identity, containment and external ingress remain hosted gates |
+| Incomplete intended-host credential/service containment and retained live audit | Blocking for corresponding security claims; successful model calls alone cannot close it                                                                                                  |
+| External HTTPS intermittent timeouts                                            | Blocking for externally usable acceptance; diagnose without broadening SSH access                                                                                                         |
+| Provider settlement, billing reconciliation, retained disk/IP costs             | Reconcile before spending and at closeout; recorded compute estimate is not a bill                                                                                                        |
+| Recovered prerequisite/C7 stack                                                 | Follow the recovery record and live PR state; resolve any remaining integration gate before feature work                                                                                  |
+| Historical instructions mixed into current handoff/roadmap                      | Current handoff now links an archived chronology; dated sections are evidence, not current execution instructions                                                                         |
+| Ignored operational helpers/state/evidence absent from a clone                  | Identify which sanitized procedures/helpers must ship for reproducibility; preserve private state outside source                                                                          |
+| Windows clock drift and WSL warm-restart cgroup failures                        | Separate platform track with documented recovery; no permanent fix claimed                                                                                                                |
+| Missing GitHub App installation/private-key slots and disposable exact targets  | Next acceptance slice; never substitute OAuth or reuse merged PR 3                                                                                                                        |
+| C7 clean/seeded repeats and failure/uncertainty evaluation report               | Required milestone follow-up after first journey; one run is not evaluation closure                                                                                                       |
+| Generalized hosted BYOK, typed credential-copy grants and recovery receipts     | Future product design; current ignored operator transfer is not a shipped feature                                                                                                         |
+| WebAuthn, longer missions, calibration/load and continuous judging availability | Later roadmap/rollout work; preserve explicit scope and funding gates                                                                                                                     |
 
 ## Plan boundaries
 
-This hosted plan remains a draft. It does not start compute, call paid providers,
-change credentials or authorize hosted effects. The separately requested repository
-cleanup covers its bounded source integration and Git-hygiene settings; do not
-interpret this draft as revoking that scope or extending it to deployment.
+The completed offline steps do not start compute, call paid providers, change
+credentials or authorize hosted effects. Do not interpret their source-integration
+authority as extending to deployment. Step 4 must bind and approve the concrete
+hosted effects before step 5 begins.
 Existing approved resource/credential scope remains reusable; only expired or missing
 material scope requires a new decision. Budget remains USD 20 API allocation plus
 USD 5 infrastructure reserve within the shared USD 25 allowance, subject to actual

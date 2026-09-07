@@ -10,6 +10,16 @@ history, durable replay/accounting, grant revocation, service failure and deadli
 Live provider behavior and hosted proof are pending. See the
 [portal integration boundary](development/c7-judge-portal-integration.md).
 
+ADR-0055 narrows the first hosted candidate to a dedicated research-only
+composition. A strict credential-free stdin frame selects disabled or
+research-only execution; only the latter may perform two fixed SecretStash reads,
+start the fixed budget child, construct the Nebius/Tavily portal and then listen
+on loopback. It has no GitHub connection or mutation coordinator. Startup and
+unexpected-child failures close owned resources, while the ordinary control API
+remains judge-disabled. These local controls reduce partial-startup, secret-path,
+capability-width and mutation-confusion threats; target-host IAM, Caddy, service
+identity, containment and live-provider behavior remain unverified.
+
 Current 2026-09-05 update: [launch-bound authority and headless preparation](adr/0049-launch-and-headless-session-authority.md). The competition launch grants the exact action before worker execution; managed GitHub installation credentials are noninteractive. Hosted IAM, cold-boot judging and WSL repair remain unverified/open. Earlier descriptions of a required second competition prompt are historical.
 
 The [September 4 discovery review](development/evidence/2026-09-04-discovery-review.md)

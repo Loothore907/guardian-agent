@@ -23,7 +23,7 @@ export interface ManagedDemoJudgeRouteOptions {
   readonly deploymentId: unknown;
   readonly expectedHost: unknown;
   readonly secrets: ManagedDemoJudgeIngressSecretMaterial;
-  readonly coordinator: ManagedDemoJudgeJourneyCoordinator;
+  readonly coordinator?: ManagedDemoJudgeJourneyCoordinator;
 }
 
 function normalizeExpectedHost(value: unknown): string {
@@ -136,9 +136,19 @@ export function buildControlApi({
   if (judge !== undefined) {
     const deploymentId = OpaqueIdSchema.parse(judge.deploymentId);
     const expectedHost = normalizeExpectedHost(judge.expectedHost);
-    app.addHook("onClose", () => {
-      judge.secrets.close();
-      return judge.portal?.close();
+    app.addHook("onClose", async () => {
+      let failed = false;
+      try {
+        await judge.portal?.close();
+      } catch {
+        failed = true;
+      }
+      try {
+        judge.secrets.close();
+      } catch {
+        failed = true;
+      }
+      if (failed) throw new Error("control API failed to close");
     });
     app.setErrorHandler((error, request, reply) => {
       if (request.url.startsWith("/v1/judge/")) {
@@ -201,56 +211,58 @@ export function buildControlApi({
         });
       }
     }
-    app.post(JUDGE_JOURNEY_PATH, async (request, reply) => {
-      const sourceAddress = trustedManagedDemoClientAddress(
-        request.raw.socket.remoteAddress,
-        request.headers,
-        expectedHost,
-      );
-      const credential = bearerCredential(request.headers.authorization);
-      if (
-        sourceAddress === null ||
-        credential === null ||
-        !judge.secrets.verifyBearerCredential(credential)
-      ) {
-        const result = ManagedDemoJudgeJourneyPublicResultSchema.parse({
-          schemaVersion: 1,
-          state: "stopped",
-          code: "unauthorized",
-        });
-        return await sendJudgeResult(reply, result);
-      }
-
-      const parsed = ManagedDemoJudgeJourneyRequestSchema.safeParse(request.body);
-      if (!parsed.success) {
-        const result = ManagedDemoJudgeJourneyPublicResultSchema.parse({
-          schemaVersion: 1,
-          state: "stopped",
-          code: "invalid_request",
-        });
-        return await sendJudgeResult(reply, result);
-      }
-
-      const abort = new AbortController();
-      request.raw.once("aborted", () => abort.abort());
-      let result: ReturnType<typeof ManagedDemoJudgeJourneyPublicResultSchema.parse>;
-      try {
-        const sourceFingerprint = judge.secrets.deriveSourceFingerprint(
-          deploymentId,
-          sourceAddress,
+    const coordinator = judge.coordinator;
+    if (coordinator !== undefined)
+      app.post(JUDGE_JOURNEY_PATH, async (request, reply) => {
+        const sourceAddress = trustedManagedDemoClientAddress(
+          request.raw.socket.remoteAddress,
+          request.headers,
+          expectedHost,
         );
-        result = ManagedDemoJudgeJourneyPublicResultSchema.parse(
-          await judge.coordinator.run(parsed.data.objective, sourceFingerprint, abort.signal),
-        );
-      } catch {
-        result = ManagedDemoJudgeJourneyPublicResultSchema.parse({
-          schemaVersion: 1,
-          state: "stopped",
-          code: "service_unavailable",
-        });
-      }
-      return await sendJudgeResult(reply, result);
-    });
+        const credential = bearerCredential(request.headers.authorization);
+        if (
+          sourceAddress === null ||
+          credential === null ||
+          !judge.secrets.verifyBearerCredential(credential)
+        ) {
+          const result = ManagedDemoJudgeJourneyPublicResultSchema.parse({
+            schemaVersion: 1,
+            state: "stopped",
+            code: "unauthorized",
+          });
+          return await sendJudgeResult(reply, result);
+        }
+
+        const parsed = ManagedDemoJudgeJourneyRequestSchema.safeParse(request.body);
+        if (!parsed.success) {
+          const result = ManagedDemoJudgeJourneyPublicResultSchema.parse({
+            schemaVersion: 1,
+            state: "stopped",
+            code: "invalid_request",
+          });
+          return await sendJudgeResult(reply, result);
+        }
+
+        const abort = new AbortController();
+        request.raw.once("aborted", () => abort.abort());
+        let result: ReturnType<typeof ManagedDemoJudgeJourneyPublicResultSchema.parse>;
+        try {
+          const sourceFingerprint = judge.secrets.deriveSourceFingerprint(
+            deploymentId,
+            sourceAddress,
+          );
+          result = ManagedDemoJudgeJourneyPublicResultSchema.parse(
+            await coordinator.run(parsed.data.objective, sourceFingerprint, abort.signal),
+          );
+        } catch {
+          result = ManagedDemoJudgeJourneyPublicResultSchema.parse({
+            schemaVersion: 1,
+            state: "stopped",
+            code: "service_unavailable",
+          });
+        }
+        return await sendJudgeResult(reply, result);
+      });
   }
 
   return app;
