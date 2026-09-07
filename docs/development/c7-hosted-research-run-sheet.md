@@ -1,7 +1,7 @@
 # C7 protected hosted research run sheet
 
-- Status: source and operational scope approved; execution disabled pending the
-  go/no-go gates below
+- Status: executed once; failed closed during gitless workspace preparation;
+  no retry or second journey authorized
 - Date: 2026-09-06
 - Tracking: issue #19
 - Cost class: R2, with R3 limits only if the documented Guardian invalid-output
@@ -13,6 +13,15 @@ This run sheet authorizes preparation for and one bounded research-only acceptan
 journey. It does not authorize GitHub access or mutation, a second journey,
 automatic retries, a second VM, a model-policy substitution, a public pilot,
 judging-period uptime, a spending increase or a security-claim promotion.
+
+The authorized attempt ran on September 7. Gates through authenticated ingress
+and budget admission passed, but the exact draft returned 503 because the
+credential-free `git archive` lacks the Git metadata required by
+`ManagedSessionWorkspace.plan`. The ledger forfeited its USD 0.10 reservation
+with `usage: []`; no confirmation, provider call or retry followed. Both VMs are
+stopped. See [the run evidence](evidence/2026-09-07-kc-hosted-gate.md) and issue
+[#40](https://github.com/Loothore907/guardian-agent/issues/40). This run sheet is
+spent and does not authorize another admission.
 
 ## Fixed identities
 

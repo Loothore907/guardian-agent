@@ -34,6 +34,20 @@ deployment, live provider custody, judge ingress or complete C7 acceptance.
 External fixture reachability from the operator machine was intermittent;
 host-side checks passed.
 
+## KC hosted gate (2026-09-07)
+
+[The bounded hosted gate](development/evidence/2026-09-07-kc-hosted-gate.md)
+adds intended-host disabled startup, process/filesystem/network probes, exact IAM
+and protected SecretStash reads, authenticated model-price inventory, service-clock
+policy update, DNS-only TLS, negative-route authentication and a durable
+fail-closed settlement. The first exact draft was admitted but failed before any
+provider call because the required credential-free `git archive` was not an exact
+Git working tree. The ledger forfeited USD 0.10 with `usage: []`; no confirmation
+or retry was sent. Public TLS also became unreliable after the negative-test burst.
+Issue #40 owns the manifest-bound gitless-source fix. These results do not promote
+hosted availability, live provider behavior, the successful-journey gate or any
+Enforced claim.
+
 After explicit transfer approval, the stopped-host operator helper copied the
 existing Nebius/Tavily testing keys into two exact KC resources and verified each
 primary payload against its retained Windows original without printing values.

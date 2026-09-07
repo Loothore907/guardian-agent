@@ -1,20 +1,20 @@
 # Current development handoff
 
-Last reconciled: September 6, 2026. Source integration and session Git hygiene are
-the current priority. The hosted-research plan is preparation-only; cloud
-execution/testing belongs to a later, explicitly bounded session.
+Last reconciled: September 7, 2026. The first bounded KC hosted-research attempt
+failed closed before provider startup. Both VMs are stopped. Issue #40 is the
+next source prerequisite; the spent run sheet does not authorize a retry.
 
 ## Start here
 
 1. Run `node scripts/session-hygiene.mjs start --remote` and inspect current
-   issues, PRs, exact-head CI and dirty/unpublished work before new feature scope.
-2. Read [repository recovery](repo-hygiene-recovery-2026-09-06.md) for the source
-   preservation evidence and PR dependency order. Resolve outstanding integration
-   gates before continuing runtime implementation.
-3. Once integration has a verified disposition, resume the
-   [offline preparation plan](session-plan-2026-09-06-hosted-research.md).
-4. Use [the KC acceptance pickup](c7-kc-hosted-acceptance-handoff.md) only for
-   operational preparation and the next bounded execution session.
+   issues, PRs, exact-head CI and dirty/unpublished work.
+2. Read [the failed hosted gate](evidence/2026-09-07-kc-hosted-gate.md) and issue
+   [#40](https://github.com/Loothore907/guardian-agent/issues/40).
+3. Implement and integrate the manifest-bound gitless-source contract offline,
+   including an actual production-child test against a gitless archive root.
+4. Only after exact-head CI, prepare a new bounded run sheet. A second journey
+   needs explicit authority because the one admission in the current sheet was
+   consumed and conservatively forfeited.
 
 ## Source and workflow
 
@@ -37,8 +37,8 @@ continuation, exact-bound risk context, portal contracts/UI and synthetic servic
 composition exist. Default live portal execution remains disabled. Review
 [security claims](../security-claims.md) before describing any control as verified.
 
-The next hosted milestone is one authenticated research-only journey with
-protected Nebius/Tavily use, admission before paid calls and durable settlement.
+The next source milestone is issue #40: support the reviewed credential-free
+deployment archive without requiring mutable `.git` metadata.
 The operator policy/price real-clock contract is implemented and tested offline
 through the production service child; see
 [ADR-0054](../adr/0054-operator-budget-service-clock.md). The protected
@@ -47,11 +47,12 @@ and tested offline under
 [ADR-0055](../adr/0055-protected-research-judge-startup.md). They remain disabled
 by default and do not require or expose the GitHub mutation path. The reviewed
 credential-free source manifest exists. The concrete
-[hosted run sheet](c7-hosted-research-run-sheet.md) and versioned
-[mission cost baselines](c7-cost-baselines.md) bind the next one-journey/two-hour
-scope without enabling it. Hosted
-gates include full credential/service containment, runtime retrieval/redaction,
-reliable external HTTPS, live settlement, and later clean/seeded evaluations.
+[hosted run sheet](c7-hosted-research-run-sheet.md) was executed once and is now
+spent. Its pre-provider gates established intended-host containment, protected
+runtime retrieval, exact price/policy installation, authenticated ingress and
+admission-before-preparation. The draft then failed because workspace planning
+requires a Git worktree. Reliable external HTTPS, live provider settlement, and
+later clean/seeded evaluations remain open.
 Missing GitHub App setup and exact disposable targets gate mutations. Never reuse
 merged PR 3.
 
@@ -62,21 +63,23 @@ to regain context. Do not promote assurance from successful model cooperation.
 
 ## Last recorded cloud state
 
-Both KC VMs were cloud-confirmed stopped at the prior closeout. No cloud query or
-state change occurred in this repository-cleanup session. Existing Nebius/Tavily
-copies and exact-resource grants were verified by the operator, but runtime use
-remains unverified. The durable campaign ledger was disabled with zero admissions.
-Old policy/price windows and the old two-hour uptime grant have ended. The offline
-clock correction does not renew either one or change the durable allowance.
+Both KC VMs were cloud-confirmed `STOPPED` at 03:00:42 UTC September 7. The
+replacement's live host and Caddy were stopped first. Existing Nebius/Tavily and
+ingress resources remain exact-resource bound; protected runtime retrieval passed.
+The live ledger contains one failed, forfeited 100,000-microUSD reservation and an
+empty usage report. Tavily usage remained unchanged at 4/1500. The temporary judge
+bearer was deleted. The cutoff automation is paused.
 
-Leave the original VM stopped. Reuse the replacement, resources and fixtures only
-under a fresh bounded execution window with cloud-stop fallback. Preserve the
-shared USD 25 allowance; reconcile actual remaining costs before spending.
-Use the KC pickup and ignored local metadata for exact operational descriptors.
+Leave both VMs stopped. Reuse the replacement, resources and fixtures only after
+issue #40 is integrated and a fresh bounded execution window, admission and
+cloud-stop fallback are approved. Preserve the shared USD 25 allowance; the
+conservative infrastructure estimate is USD 1.044294 and the failed USD 0.10
+reservation awaits provider reconciliation.
 
 ## Evidence and history
 
 - [Repository recovery and validation](repo-hygiene-recovery-2026-09-06.md)
+- [KC hosted-gate result](evidence/2026-09-07-kc-hosted-gate.md)
 - [Latest KC protected-enrollment evidence](evidence/2026-09-06-kc-continuation.md)
 - [Protected research-only startup evidence](evidence/2026-09-06-protected-judge-startup.md)
 - [C6 residuals](c6-residual-review.md)
