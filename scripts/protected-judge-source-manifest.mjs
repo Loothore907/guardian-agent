@@ -12,6 +12,19 @@ const execFileAsync = promisify(execFile);
 const MAX_FILES = 4_096;
 const MAX_BYTES = 64 * 1_024 * 1_024;
 const MAX_FILE_BYTES = 4 * 1_024 * 1_024;
+const EXCLUDED_SOURCE_PATHS = new Set([".env.example"]);
+const EXCLUDED_SOURCE_PREFIXES = [
+  "apps/reference-supervisor/test-fixtures/",
+  "packages/linux-peer-identity/test-fixtures/",
+  "scripts/test-fixtures/",
+];
+
+function isExcludedSourcePath(path) {
+  return (
+    EXCLUDED_SOURCE_PATHS.has(path) ||
+    EXCLUDED_SOURCE_PREFIXES.some((prefix) => path.startsWith(prefix))
+  );
+}
 
 async function sha256(path) {
   const hash = createHash("sha256");
@@ -36,22 +49,25 @@ async function immutableEntries(repositoryRoot, gitCommit, archivePath, inspecti
   if (records.length < 1 || records.length > MAX_FILES) {
     throw new TypeError("protected judge source file count is invalid");
   }
-  const objects = records.map((record) => {
-    const parsed = /^(100644|100755) blob ([0-9a-f]{40}) +([0-9]+)\t(.+)$/u.exec(record);
-    if (parsed === null) throw new TypeError("protected judge source contains unsupported entries");
-    const [, mode, objectId, sizeText, path] = parsed;
-    const size = Number(sizeText);
-    if (
-      objectId === undefined ||
-      path === undefined ||
-      !Number.isSafeInteger(size) ||
-      size < 0 ||
-      size > MAX_FILE_BYTES
-    ) {
-      throw new TypeError("protected judge source entry is invalid");
-    }
-    return { mode, objectId, path, size };
-  });
+  const objects = records
+    .map((record) => {
+      const parsed = /^(100644|100755) blob ([0-9a-f]{40}) +([0-9]+)\t(.+)$/u.exec(record);
+      if (parsed === null) throw new TypeError("protected judge source contains unsupported entries");
+      const [, mode, objectId, sizeText, path] = parsed;
+      const size = Number(sizeText);
+      if (
+        objectId === undefined ||
+        path === undefined ||
+        !Number.isSafeInteger(size) ||
+        size < 0 ||
+        size > MAX_FILE_BYTES
+      ) {
+        throw new TypeError("protected judge source entry is invalid");
+      }
+      return { mode, objectId, path, size };
+    })
+    .filter((object) => !isExcludedSourcePath(object.path));
+  if (objects.length < 1) throw new TypeError("protected judge source has no deployable files");
   if (objects.reduce((total, entry) => total + entry.size, 0) > MAX_BYTES) {
     throw new TypeError("protected judge source exceeds its byte limit");
   }
@@ -124,10 +140,25 @@ export async function createProtectedJudgeSourceBundle(repositoryRootValue, outp
   if (!/^[0-9a-f]{40}$/u.test(gitCommit)) throw new TypeError("source revision is invalid");
   const archivePath = join(outputRoot, `guardian-source-${gitCommit}.tar`);
   const manifestPath = join(outputRoot, `guardian-source-${gitCommit}.manifest.json`);
-  await execFileAsync("git", ["archive", "--format=tar", `--output=${archivePath}`, gitCommit], {
-    cwd: repositoryRoot,
-    windowsHide: true,
-  });
+  await execFileAsync(
+    "git",
+    [
+      "archive",
+      "--format=tar",
+      `--output=${archivePath}`,
+      gitCommit,
+      "--",
+      ".",
+      ":(exclude).env.example",
+      ":(exclude)apps/reference-supervisor/test-fixtures/**",
+      ":(exclude)packages/linux-peer-identity/test-fixtures/**",
+      ":(exclude)scripts/test-fixtures/**",
+    ],
+    {
+      cwd: repositoryRoot,
+      windowsHide: true,
+    },
+  );
   const metadata = await lstat(archivePath);
   if (!metadata.isFile() || metadata.isSymbolicLink() || metadata.size < 1) {
     throw new TypeError("source archive is invalid");

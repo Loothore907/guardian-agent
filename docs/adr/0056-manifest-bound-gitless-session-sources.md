@@ -34,6 +34,12 @@ conversion. It reads the lockfile digest from that same entry set. The public
 manifest remains in disabled mode and contains no credential values, resource IDs,
 runtime authority, private state or spending permission.
 
+The deployment archive explicitly excludes the tracked `.env.example` and
+credential-shaped development fixture directories. Guardian's credential rules
+correctly reject both placeholder credential paths and intentionally secret-like
+test material, so the protected artifact omits those non-runtime development files
+rather than weakening the workspace scanner.
+
 Protected `research_only` startup requires this manifest. Trusted host
 configuration passes it through the portal runtime to the reference supervisor;
 HTTP, agent, model and retrieved content cannot supply or replace it. Other

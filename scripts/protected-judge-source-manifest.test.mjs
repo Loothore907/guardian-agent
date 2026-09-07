@@ -35,6 +35,14 @@ test("creates a credential-free disabled manifest for an exact tracked archive",
     await mkdir(archiveRoot);
     execFileSync("tar", ["-xf", result.archivePath, "-C", archiveRoot], { windowsHide: true });
     await assert.rejects(access(join(archiveRoot, ".git")));
+    await assert.rejects(access(join(archiveRoot, ".env.example")));
+    for (const fixturePath of [
+      ["apps", "reference-supervisor", "test-fixtures", "supervised-child.mjs"],
+      ["packages", "linux-peer-identity", "test-fixtures", "service-peer.mjs"],
+      ["scripts", "test-fixtures", "c7-broker.mjs"],
+    ]) {
+      await assert.rejects(access(join(archiveRoot, ...fixturePath)));
+    }
     const transformedFixture = await readFile(join(archiveRoot, "scripts", "pnpm.ps1"));
     const transformedEntry = manifest.entries.find((entry) => entry.path === "scripts/pnpm.ps1");
     assert.equal(transformedEntry?.size, transformedFixture.byteLength);
@@ -45,7 +53,7 @@ test("creates a credential-free disabled manifest for an exact tracked archive",
     transformedFixture.fill(0);
     // NTFS does not expose the POSIX executable bits recorded by git archive.
     // The protected runtime is Linux; CI performs this complete archive check.
-    if (process.platform !== "win32") {
+    if (process.platform !== "win32" || manifest.entries.every((entry) => !entry.executable)) {
       workspace = await ManagedSessionWorkspace.plan({
         sourceRoot: archiveRoot,
         sourceManifest: {
