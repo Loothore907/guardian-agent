@@ -1,4 +1,7 @@
-# C7 handoff: gitless source fixed offline; hosted gate remains closed
+# C7 hosted acceptance chronology
+
+The [September 8 clean research journey succeeded](evidence/2026-09-08-clean-research-success.md).
+Use the [current handoff](handoff.md) for pickup. The checkpoints below are historical.
 
 ## Current checkpoint — September 7 retry 3
 
