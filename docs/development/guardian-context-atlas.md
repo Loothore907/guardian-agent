@@ -18,7 +18,12 @@ Use sources in this order for consequential work:
 | Runtime or remote state  | Reproducible fresh checks                      | Reports `Unknown`; the atlas has no live authority |
 
 Every invocation resolves the branch, exact head, upstream divergence, and dirty
-paths. Search reads only `git ls-files` entries. Dated evidence remains evidence;
+paths (at most 12, with a total count). Content is read from regular-file Git
+blobs at a single pinned HEAD, never from checkout paths. Staged and unstaged
+edits are excluded; re-read those separately before acting. Symlinks and gitlinks
+are excluded, and worktree junctions or replacements cannot redirect blob reads.
+The tree listing is capped at 2 MB, each source at 1 MiB, and binary sources fail
+closed. Search results include the source head and repository state. Dated evidence remains evidence;
 dated plans and run sheets remain historical unless the current handoff activates
 them. Accepted ADRs are decisions, not implementation proof.
 
@@ -40,6 +45,11 @@ URLs, absolute paths, traversal, control characters, or oversized queries fail
 closed. `impact` is a bounded lexical reference search; use `pnpm boundaries` and
 targeted source inspection before asserting dependency or runtime impact.
 
+Known credential patterns are redacted before splitting into source lines; line
+numbers are preserved. This is best-effort redaction of a reviewed public source
+tree, not a general secret scanner. Never commit credentials. CLI failures return
+a fixed code without raw subprocess diagnostics or local paths.
+
 ## Codex integration
 
 Project config under `.codex/` enables local memories and hooks only when the project
@@ -54,7 +64,11 @@ for the exact hook definition and re-prompts after it changes.
 
 The `guardian_explorer` role is intended only for delegated read-heavy mapping. It
 uses a read-only filesystem sandbox, cannot request approvals, disables web search,
-and disables app connectors. Model instructions are still guidance; do not attach an
+and disables app connectors. These are profile defaults; parent runtime permission
+overrides and inherited MCP servers still require inspection. The Atlas CLI blob
+reader does not restrict other shell commands available to an explorer. See the
+[official subagent configuration documentation](https://learn.chatgpt.com/docs/agent-configuration/subagents).
+Model instructions are still guidance; do not attach an
 authenticated MCP server or treat the profile as an enforcement boundary.
 
 ## One-time local setup after integration

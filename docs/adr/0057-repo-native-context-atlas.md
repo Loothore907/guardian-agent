@@ -21,7 +21,8 @@ required queries and output bounds have been measured.
 ## Decision
 
 Add a deterministic, read-only repository context atlas implemented with Node.js and
-Git. It searches only tracked files, resolves the exact repository head and dirty
+Git. It reads regular-file blobs from one pinned HEAD, excluding staged/unstaged
+edits, symlinks and gitlinks. Checkout links cannot redirect reads. It resolves the exact repository head and dirty
 state at invocation time, returns repository-relative source locations, classifies
 current authority, accepted/superseded decisions, evidence, and historical records,
 and caps all outputs.
@@ -62,5 +63,7 @@ tool isolation, so callers must not attach authenticated MCP tools to the role.
 
 The context test corpus covers query rejection, secret and private-path redaction,
 source classification, scope isolation, provenance, dirty-state reporting, bounded
-hook output, and path-aware lexical impact. Repository hygiene, the context tests,
+hook output, path-aware lexical impact, staged/deleted source isolation, non-regular
+Git entries, checkout junctions, oversized/binary sources, multiline redaction with
+line provenance, fixed public errors, and bounded dirty-state metadata. Repository hygiene, the context tests,
 dependency boundaries, and the complete required suite remain the integration gates.

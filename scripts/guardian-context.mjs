@@ -1,6 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
-import { basename, extname, relative, resolve, sep } from "node:path";
+import { basename, extname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 const MAX_QUERY_CHARS = 120;
@@ -53,7 +52,11 @@ export function resolveRepoRoot(cwd = process.cwd()) {
 
 export function sanitizeText(value) {
   let text = String(value ?? "");
-  for (const pattern of secretPatterns) text = text.replace(pattern, "[REDACTED_SECRET]");
+  for (const pattern of secretPatterns)
+    text = text.replace(
+      pattern,
+      (match) => "[REDACTED_SECRET]" + "\n".repeat((match.match(/\n/gu) ?? []).length),
+    );
   text = text.replace(
     /\b[A-Za-z]:\\Users\\[^\\\s]+\\(?:\.ssh|\.aws|\.config)\\[^\s`"']+/giu,
     "[REDACTED_LOCAL_PATH]",
@@ -66,13 +69,17 @@ export function sanitizeText(value) {
 }
 
 export function validateQuery(raw, { allowPath = false } = {}) {
-  const query = String(raw ?? "").trim();
+  const input = String(raw ?? "");
+  if (input.length > MAX_QUERY_CHARS || /[\u0000-\u001f\u007f]/u.test(input))
+    throw new Error("invalid_query");
+  const query = input.trim();
   if (!query || query.length > MAX_QUERY_CHARS || /[\u0000-\u001f\u007f]/u.test(query))
     throw new Error("invalid_query");
   if (
-    /^[A-Za-z][A-Za-z0-9+.-]*:\/\//u.test(query) ||
+    /[A-Za-z][A-Za-z0-9+.-]*:\/\//u.test(query) ||
     /^[A-Za-z]:[\\/]/u.test(query) ||
-    query.startsWith("/")
+    query.startsWith("/") ||
+    query.startsWith("\\")
   )
     throw new Error("external_or_absolute_query");
   if (query.startsWith("-") || /(?:^|[\\/])\.\.(?:[\\/]|$)/u.test(query))
@@ -92,23 +99,44 @@ export function validateQuery(raw, { allowPath = false } = {}) {
   return query.replaceAll("\\", "/");
 }
 
-export function trackedFiles(root) {
-  const output = execFileSync("git", ["ls-files", "-z"], {
+function sourceSnapshot(root) {
+  const head = git(root, "rev-parse", "HEAD");
+  const entries = execFileSync("git", ["ls-tree", "-rz", "--full-tree", head], {
     cwd: root,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
+    maxBuffer: 2_000_000,
   });
-  return output
-    .split("\0")
-    .filter(Boolean)
-    .map((path) => path.replaceAll("\\", "/"));
+  const sources = new Map();
+  for (const entry of entries.split("\0").filter(Boolean)) {
+    const match = /^(100644|100755) blob ([a-f0-9]{40,64})\t([^\0]+)$/u.exec(entry);
+    if (!match) continue; // Never follow symlinks, gitlinks, or worktree paths.
+    const [, , oid, path] = match;
+    if (path.length > 240 || /[\u0000-\u001f\u007f\\]/u.test(path)) continue;
+    sources.set(path, oid);
+  }
+  return { head, sources };
 }
 
-function readTracked(root, path) {
-  const absolute = resolve(root, ...path.split("/"));
-  const rootPrefix = `${resolve(root)}${sep}`.toLowerCase();
-  if (!absolute.toLowerCase().startsWith(rootPrefix)) throw new Error("path_outside_repository");
-  return readFileSync(absolute, "utf8");
+export function trackedFiles(root) {
+  return [...sourceSnapshot(root).sources.keys()];
+}
+
+function readTracked(root, path, snapshot) {
+  const oid = snapshot.sources.get(path);
+  if (!oid) throw new Error("unavailable_source");
+  try {
+    const content = execFileSync("git", ["cat-file", "blob", oid], {
+      cwd: root,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+      maxBuffer: 1_048_576,
+    });
+    if (content.includes("\0")) throw new Error("binary_source");
+    return sanitizeText(content);
+  } catch {
+    throw new Error("unavailable_source");
+  }
 }
 
 function classifyAdr(content) {
@@ -172,13 +200,18 @@ function snippet(line) {
   return clean.length <= MAX_SNIPPET_CHARS ? clean : `${clean.slice(0, MAX_SNIPPET_CHARS - 1)}…`;
 }
 
-export function searchTrackedMarkdown(root, scope, rawQuery, { limit = MAX_RESULTS } = {}) {
+export function searchTrackedMarkdown(
+  root,
+  scope,
+  rawQuery,
+  { limit = MAX_RESULTS, snapshot = sourceSnapshot(root) } = {},
+) {
   const query = validateQuery(rawQuery);
   const tokens = queryTokens(query);
   if (!tokens.length) throw new Error("invalid_query");
   const results = [];
-  for (const path of markdownScope(trackedFiles(root), scope)) {
-    const content = readTracked(root, path);
+  for (const path of markdownScope([...snapshot.sources.keys()], scope)) {
+    const content = readTracked(root, path, snapshot);
     let fileMatches = 0;
     for (const [index, line] of content.split(/\r?\n/u).entries()) {
       const score = matchScore(line, query, tokens);
@@ -198,9 +231,9 @@ export function searchTrackedMarkdown(root, scope, rawQuery, { limit = MAX_RESUL
     .slice(0, Math.max(1, Math.min(limit, MAX_RESULTS)));
 }
 
-function inspectGit(root) {
+function inspectGit(root, sourceHead) {
   const branch = git(root, "branch", "--show-current");
-  const head = git(root, "rev-parse", "HEAD");
+  const head = sourceHead ?? git(root, "rev-parse", "HEAD");
   const changed = git(root, "status", "--porcelain=v1", "--untracked-files=all")
     .split("\n")
     .filter(Boolean);
@@ -221,8 +254,10 @@ function inspectGit(root) {
     upstream,
     ahead,
     behind,
-    changed,
+    changed: changed.slice(0, 12).map(snippet),
+    changedCount: changed.length,
     sourceState: changed.length ? "working-tree" : "exact-head",
+    contentSource: "HEAD regular-file Git blobs; staged and unstaged edits excluded",
   };
 }
 
@@ -252,15 +287,15 @@ function openingLines(markdown, limit) {
     .map(snippet);
 }
 
-export function buildCurrentContext(root = resolveRepoRoot()) {
-  const files = new Set(trackedFiles(root));
+export function buildCurrentContext(root = resolveRepoRoot(), snapshot = sourceSnapshot(root)) {
+  const files = new Set(snapshot.sources.keys());
   const missing = authoritySources.map(([path]) => path).filter((path) => !files.has(path));
   if (missing.length) throw new Error("missing_authority_sources");
-  const handoff = readTracked(root, "docs/development/handoff.md");
+  const handoff = readTracked(root, "docs/development/handoff.md", snapshot);
   return {
     notice:
       "Advisory context only. Re-read exact sources before security claims, privileged operations, or integration decisions.",
-    repository: inspectGit(root),
+    repository: inspectGit(root, snapshot.head),
     authoritySources: authoritySources.map(([path, purpose]) => ({ path, purpose })),
     handoff: {
       opening: openingLines(handoff, 6),
@@ -281,9 +316,13 @@ function searchableCodeFiles(files) {
   );
 }
 
-export function impactReferences(root, rawTarget, { limit = MAX_RESULTS } = {}) {
+export function impactReferences(
+  root,
+  rawTarget,
+  { limit = MAX_RESULTS, snapshot = sourceSnapshot(root) } = {},
+) {
   const target = validateQuery(rawTarget, { allowPath: true });
-  const files = trackedFiles(root);
+  const files = [...snapshot.sources.keys()];
   const canonical = files.find((path) => path.toLowerCase() === target.toLowerCase());
   const extension = canonical ? extname(canonical) : "";
   const stem = canonical ? basename(canonical, extension).toLowerCase() : "";
@@ -296,7 +335,7 @@ export function impactReferences(root, rawTarget, { limit = MAX_RESULTS } = {}) 
     : [target.toLowerCase()];
   const results = [];
   for (const path of searchableCodeFiles(files)) {
-    const content = readTracked(root, path);
+    const content = readTracked(root, path, snapshot);
     let fileMatches = 0;
     for (const [index, line] of content.split(/\r?\n/u).entries()) {
       const lower = line.toLowerCase();
@@ -326,6 +365,7 @@ function formatCurrent(context) {
   const lines = [
     "GUARDIAN CONTEXT ATLAS — ADVISORY, NOT AUTHORITY",
     context.notice,
+    repo.contentSource,
     `Repository: ${repo.branch || "detached"} @ ${repo.head.slice(0, 12)} (${repo.sourceState}; upstream ${repo.upstream ?? "none"}; ahead ${repo.ahead ?? "unknown"}, behind ${repo.behind ?? "unknown"})`,
   ];
   if (repo.changed.length)
@@ -346,8 +386,11 @@ function formatCurrent(context) {
   return output.length <= MAX_CONTEXT_CHARS ? output : `${output.slice(0, MAX_CONTEXT_CHARS - 1)}…`;
 }
 
-function formatSearch(scope, query, results) {
-  const lines = [`Guardian ${scope} search: ${sanitizeText(query)}`];
+function formatSearch(scope, query, results, repository) {
+  const lines = [
+    `Guardian ${scope} search: ${sanitizeText(query)}`,
+    `Source: ${repository.head} (${repository.sourceState}); ${repository.contentSource}`,
+  ];
   if (!results.length)
     lines.push(
       "No tracked-source matches. Do not infer absence of behavior or authority from this search alone.",
@@ -376,8 +419,9 @@ export function main(args = process.argv.slice(2), cwd = process.cwd()) {
     );
     return 0;
   }
+  const snapshot = sourceSnapshot(root);
   if ((command === "current" || command === "bootstrap") && !query) {
-    const context = buildCurrentContext(root);
+    const context = buildCurrentContext(root, snapshot);
     if (hook) {
       if (command !== "bootstrap" || json) throw new Error("invalid_arguments");
       console.log(
@@ -389,27 +433,43 @@ export function main(args = process.argv.slice(2), cwd = process.cwd()) {
           },
         }),
       );
-    } else console.log(json ? JSON.stringify(context, null, 2) : formatCurrent(context));
+    } else
+      console.log(json ? sanitizeText(JSON.stringify(context, null, 2)) : formatCurrent(context));
     return 0;
   }
   if (hook || !query) throw new Error("invalid_arguments");
   if (["search-docs", "claim", "decision"].includes(command)) {
     const scope = command === "claim" ? "claims" : command === "decision" ? "decisions" : "docs";
     const normalized = validateQuery(query);
-    const results = searchTrackedMarkdown(root, scope, normalized);
+    const results = searchTrackedMarkdown(root, scope, normalized, { snapshot });
     console.log(
       json
-        ? JSON.stringify({ scope, query: normalized, results }, null, 2)
-        : formatSearch(scope, normalized, results),
+        ? sanitizeText(
+            JSON.stringify(
+              { repository: inspectGit(root, snapshot.head), scope, query: normalized, results },
+              null,
+              2,
+            ),
+          )
+        : sanitizeText(formatSearch(scope, normalized, results, inspectGit(root, snapshot.head))),
     );
     return results.length ? 0 : 1;
   }
   if (command === "impact") {
-    const result = impactReferences(root, query);
+    const result = impactReferences(root, query, { snapshot });
     console.log(
       json
-        ? JSON.stringify(result, null, 2)
-        : formatSearch("impact", result.target, result.references),
+        ? sanitizeText(
+            JSON.stringify({ repository: inspectGit(root, snapshot.head), ...result }, null, 2),
+          )
+        : sanitizeText(
+            formatSearch(
+              "impact",
+              result.target,
+              result.references,
+              inspectGit(root, snapshot.head),
+            ),
+          ),
     );
     return result.references.length ? 0 : 1;
   }
@@ -422,7 +482,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   } catch (error) {
     console.error(
       JSON.stringify({
-        error: sanitizeText(error instanceof Error ? error.message : "context_unavailable"),
+        error: "context_unavailable",
       }),
     );
     process.exitCode = 2;

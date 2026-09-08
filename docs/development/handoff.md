@@ -1,147 +1,59 @@
 # Current development handoff
 
-Last reconciled: September 7, 2026. PR #42 integrates the issue #40
-manifest-bound gitless-source contract, and exact-head plus post-merge CI passed.
-PR #44 integrated the second bounded KC run sheet. That window ended without an
-admission, credential activation or provider request because the Codex operator session
-misclassified expected missing-fixture failures from an inapplicable VM-side
-`pnpm check`, cleaned up and stopped the replacement, and did not successfully
-resume before the sheet's absolute clock expired. Read the
-[retry abort evidence](evidence/2026-09-07-kc-hosted-retry-abort.md).
+Last reconciled: September 8, 2026 UTC. The hosted clean research journey succeeded
+under [issue #55](https://github.com/Loothore907/guardian-agent/issues/55) and the
+[approved session plan](session-plan-2026-09-08-research-journey.md).
 
-Both VMs are stopped. The original retry sheet no longer authorizes execution:
-its absolute admission and shutdown times expired even though its one admission
-was not consumed. A later session must integrate a fresh bounded clock and stop
-fallback. No product-code repair is required for the intentional fixture
-exclusions described below.
-
-The [next-session plan](session-plan-2026-09-07-kc-hosted-retry-2.md) is approved
-for documentation and protected Git integration only. It does not authorize a
-VM start, credential operation, provider call, journey admission or spend. A
-fresh run sheet with absolute times must be separately approved and integrated
-before hosted execution.
-
-The [fresh retry-2 run sheet](c7-hosted-research-run-sheet-2026-09-07-retry-2.md)
-binds the separately approved September 7 20:00–22:00 UTC window. It authorizes
-one execution only after its protected merge and expires if the replacement is
-not started by 20:05 UTC.
-
-That startup gate expired without a VM start or other hosted effect. The
-[replacement retry-3 sheet](c7-hosted-research-run-sheet-2026-09-07-retry-3.md)
-was then executed once and is spent. It reached a built, disabled, loopback-only
-Guardian plus Caddy after the reviewed host gates passed, but the Codex operator
-dismantled the transient deployment after one Windows TLS failure instead of
-preserving it for independent corroboration. No credential activation, provider
-call, reservation or admission occurred. See the
-[retry-3 abort evidence](evidence/2026-09-07-kc-hosted-retry-3-abort.md).
-
-## Start here
-
-1. Run `node scripts/session-hygiene.mjs start --remote` and inspect current
-   issues, PRs, exact-head CI and dirty/unpublished work.
-2. Read [the failed hosted gate](evidence/2026-09-07-kc-hosted-gate.md), closed
-   issue [#40](https://github.com/Loothore907/guardian-agent/issues/40), and
-   [ADR-0056](../adr/0056-manifest-bound-gitless-session-sources.md).
-3. Treat `95648b58a871664ef6e29c9713bb2e7dacaa4f05` as the last reviewed
-   hosted-source revision. Its exact-head main run 124 passed; PR #42's Linux CI
-   also verified the complete generated repository archive. Reconfirm source
-   identity if current `main` changes before a new run.
-4. Create and integrate a new bounded run sheet before any hosted action. Bind
-   fresh absolute admission/guest/cloud-stop times and the remaining compute
-   allowance; the PR #44 timestamps are expired.
-5. Run the complete `pnpm check` in the full repository, not in the reduced
-   deployment archive. On the VM, use the deployment-safe Linux/reference gates
-   and the reviewed standalone containment probes.
-
-## Source and workflow
-
-The former 38-commit backlog and accumulated worktree have been recovered into
-issue-linked PRs. All product slices (PR #17 and #22–#30), governance PR #31
-and the checker refinement #36 are merged. Recovery evidence and this handoff
-are published through #32; verify its closeout on GitHub before starting new work.
-Publication and local tests alone do not establish milestone completion.
-
-Main now requires an up-to-date GitHub Actions build alongside PRs, resolved
-review threads and squash/linear integration. No bypass actors were added.
-Follow [session Git hygiene](session-git-hygiene.md) and run the close check before
-handoff. Global Codex guidance is installed separately; it is not an automatic
-hook or proof of future agent compliance.
+Guardian returned the correct October 1 release date and prerequisite upgrade to
+2.4, with a source citation, using real Nebius worker calls and Tavily extraction.
+The second of two admissions completed and settled. Aggregate model/research usage
+was an estimated USD 0.019114. See the
+[consolidated result and limitations](evidence/2026-09-08-clean-research-success.md)
+and [successful request fixture](evidence/2026-09-08-clean-research-request.json).
 
 ## Product and security state
 
-C6/C7 remain in progress. Typed durable session authority, bounded worker
-continuation, exact-bound risk context, portal contracts/UI and synthetic service
-composition exist. Default live portal execution remains disabled. Review
-[security claims](../security-claims.md) before describing any control as verified.
+- Tested runtime source: `5efb67578e1da646ea5f83a17fac6cbbf454d5a5`; exact-head CI
+  passed. The plan was integrated by PR #56 on main `774c82611a2595cf8056d6ff623d68276ee8bf9d`.
+  This result update changes evidence and pickup guidance only.
+- Both KC VMs were cloud-confirmed STOPPED at 05:00:15 UTC. Guardian/Caddy are
+  stopped; the temporary bearer is deleted. The issue-55 heartbeat is paused and
+  its watchdog exited. Admission is disabled by durable budget policy version 7.
+- Ledger: 6 lifetime admissions, 1 completed, 0 active/reserved, USD 0.419114
+  settled including USD 0.40 inherited forfeitures. Billing reconciliation remains
+  open; estimates and forfeitures are not proof of provider-billed spend.
+- Result assurance is `observed`. The successful authority row still says active
+  after teardown; budget settlement is terminal. General audit-event tables are
+  empty for this path. No broader enforcement or C7-completion claim is made.
+- Persistent disks, addresses, DNS, credential resources/readers, ledger, deployment,
+  and private diagnostics remain retained. The window ended on success; its unused
+  third admission does not authorize a later run.
+- PR #52 / issue #51 now reconciles this main lineage and hardens the Context
+  Atlas source reader to pinned regular-file HEAD blobs. Integration remains
+  pending exact-head checks and explicit merge authority; inspect live PR state.
+  Local research evaluation preparation remains under #19, with no hosted grant.
 
-The issue #40 source milestone is integrated through PR #42: protected
-research startup requires the full credential-free source manifest, and workspace
-planning authorizes only its exact ordered path/size/digest/executable entries
-without requiring mutable `.git` metadata. It remains an offline claim until
-the fixed path completes a hosted journey; integration and post-merge CI are
-complete. The second window verified the exact archive, offline install, Linux
-permissions and production manifest-bound reference runtime on the replacement,
-but it did not start the judge host or providers.
+## Start here
 
-The production manifest intentionally excludes
-`apps/reference-supervisor/test-fixtures/`,
-`packages/linux-peer-identity/test-fixtures/` and `scripts/test-fixtures/`.
-Some repository test files consequently cannot run inside the reduced archive.
-This is asserted by the manifest test and is not an authorization failure. Do
-not add the fixtures to a live bundle merely to make the development suite run.
-The operator policy/price real-clock contract is implemented and tested offline
-through the production service child; see
-[ADR-0054](../adr/0054-operator-budget-service-clock.md). The protected
-research-only startup and fixed two-resource ingress loader are now implemented
-and tested offline under
-[ADR-0055](../adr/0055-protected-research-judge-startup.md). They remain disabled
-by default and do not require or expose the GitHub mutation path. The reviewed
-credential-free source manifest exists. The concrete
-[hosted run sheet](c7-hosted-research-run-sheet.md) was executed once and is now
-spent. Its pre-provider gates established intended-host containment, protected
-runtime retrieval, exact price/policy installation, authenticated ingress and
-admission-before-preparation. The draft then failed because workspace planning
-requires a Git worktree. Reliable external HTTPS, live provider settlement, and
-later clean/seeded evaluations remain open.
-Missing GitHub App setup and exact disposable targets gate mutations. Never reuse
-merged PR 3.
+1. Run repository hygiene on fresh main and inspect current issues, PRs and CI.
+   Review this result before historical failure handoffs. Leave both VMs stopped
+   during preparation. Use the [development loop](development-loop.md) and the
+   context atlas when integrated; these headings preserve its bounded pickup.
+2. Within a new bounded hosted grant, use the successful clean request as a
+   control for the seeded research acceptance slice owned by #19. Preserve source,
+   scope, time, spend, admission and shutdown bounds. C6/C7 remain incomplete.
+3. Preflight setup payload formats and the requested output against the actual
+   contracts. The current worker contract rejects URL links in final responses;
+   a title/domain/path source citation works without weakening it.
+4. Diagnose a recoverable failure, make the relevant repair, and retry within the
+   existing grant. Stop at useful success or an actual boundary; collect one
+   consolidated evidence report. Do not require a new approval or docs PR per error.
+5. Keep external judge-browser TLS, sanitized provider failure visibility,
+   authority-session terminal state, and delayed billing reconciliation explicit
+   in #19 before broadening acceptance claims. Later GitHub mutation cases require
+   their separate exact-target and credential gates.
 
-Separate debt: intermittent authority-child startup, Windows real-clock IPC,
-WSL warm-restart cgroup failures, billing reconciliation, and generalized hosted
-BYOK/typed credential-copy grants. Do not repeat enrollment or recreate fixtures
-to regain context. Do not promote assurance from successful model cooperation.
-
-## Last recorded cloud state
-
-Both KC VMs were authenticated as `STOPPED` at the September 7 retry-3 closeout.
-The replacement started at 20:15:29 UTC, later auto-recovered after guest
-shutdown, and was cloud-stopped at 21:28:09 UTC. The original remained stopped.
-Existing Nebius/Tavily and ingress resources remain exact-resource bound and
-unchanged. The live ledger still contains only the first attempt's failed,
-forfeited 100,000-microUSD reservation and empty usage report. The retry-3
-temporary bearer was never created. The cutoff automation is paused.
-
-Leave both VMs stopped. The retry archive and extracted root were removed from
-the VM; the exact ignored local bundle remains under
-`tmp/c7-acceptance/kc-retry-95648b5/`. Reuse the replacement, resources and
-fixtures only after a fresh bounded execution window, admission and cloud-stop
-fallback are approved. Preserve the shared USD 25 allowance; the conservative
-infrastructure estimate is USD 1.256279. The provider dashboard showed USD 1.13
-compute and USD 23.87 balance at its lagging 19:40 UTC snapshot. The failed USD
-0.10 reservation awaits provider reconciliation.
-
-## Evidence and history
-
-- [Repository recovery and validation](repo-hygiene-recovery-2026-09-06.md)
-- [KC hosted-gate result](evidence/2026-09-07-kc-hosted-gate.md)
-- [KC hosted-retry abort](evidence/2026-09-07-kc-hosted-retry-abort.md)
-- [KC hosted retry-3 abort](evidence/2026-09-07-kc-hosted-retry-3-abort.md)
-- [Latest KC protected-enrollment evidence](evidence/2026-09-06-kc-continuation.md)
-- [Protected research-only startup evidence](evidence/2026-09-06-protected-judge-startup.md)
-- [C6 residuals](c6-residual-review.md)
-- [C7 completion criteria](c7-completion-and-acceptance-plan.md)
-- [WSL recovery procedure](wsl-session-recovery.md)
-- [Archived handoff chronology](handoff-history-2026-09-06.md)
-
-Historical dates, counts and future-tense instructions remain in the archive for
-provenance. They do not supersede this pickup or create new execution authority.
+Private evidence is retained in `tmp/c7-acceptance/prep-5efb675/` and the existing
+remote private state directories. Preserve it without indiscriminate staging.
+Earlier failures remain in the [hosted chronology](c7-kc-hosted-acceptance-handoff.md)
+and linked evidence. Historical pickup instructions do not supersede this handoff.

@@ -11,6 +11,19 @@ This file is the authority for public security language. A design description do
 - **Implemented and tested** - supported by reproducible tests identified here.
 - **Not claimed** - deliberately excluded or unsupported.
 
+## Development context reader (issue #51)
+
+**Implemented and tested locally:** `scripts/guardian-context.test.mjs` covers
+regular-file HEAD blob reads, exclusion of staged/unstaged/untracked content,
+symlink/gitlink and checkout-junction isolation, per-source size/binary rejection,
+known-pattern redaction, source-line provenance, fixed CLI errors, and bounded
+result metadata. Run `node --test scripts/guardian-context.test.mjs`.
+
+This advisory developer CLI does not enforce an explorer agent's other tools,
+scan all possible secrets, read live cloud state, or establish runtime assurance.
+Source edits are deliberately excluded until committed. See the
+[Atlas boundary documentation](development/guardian-context-atlas.md).
+
 ## C7 local runtime slice (2026-09-05)
 
 [September 6 KC continuation](development/evidence/2026-09-06-kc-continuation.md)
