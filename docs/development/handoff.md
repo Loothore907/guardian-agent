@@ -29,8 +29,10 @@ and [successful request fixture](evidence/2026-09-08-clean-research-request.json
   and private diagnostics remain retained. The window ended on success; its unused
   third admission does not authorize a later run.
 - PR #52 / issue #51 now reconciles this main lineage and hardens the Context
-  Atlas source reader to pinned regular-file HEAD blobs. Integration remains
-  pending exact-head checks and explicit merge authority; inspect live PR state.
+  Atlas source reader to pinned regular-file HEAD blobs. The
+  [daily development patterns](guardian-context-atlas.md#daily-development-patterns)
+  cover pickup, focused queries, dirty edits and recovery. Inspect live PR state
+  for integration status; the CLI works in checkouts containing this slice.
   Local research evaluation preparation remains under #19, with no hosted grant.
 
 ## Start here
@@ -38,7 +40,7 @@ and [successful request fixture](evidence/2026-09-08-clean-research-request.json
 1. Run repository hygiene on fresh main and inspect current issues, PRs and CI.
    Review this result before historical failure handoffs. Leave both VMs stopped
    during preparation. Use the [development loop](development-loop.md) and the
-   context atlas when integrated; these headings preserve its bounded pickup.
+   context atlas for committed-source pickup; inspect working edits separately.
 2. Within a new bounded hosted grant, use the successful clean request as a
    control for the seeded research acceptance slice owned by #19. Preserve source,
    scope, time, spend, admission and shutdown bounds. C6/C7 remain incomplete.

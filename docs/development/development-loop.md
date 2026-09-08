@@ -11,13 +11,15 @@ allowed action classes and destinations, time/spend/admission limits, integratio
 scope, and real stop conditions. Keep this in the existing session plan or concise
 conversation agreement; do not require another form, issue or commit per attempt.
 
-When the atlas from PR #52 is integrated, run
-`node scripts/guardian-context.mjs current`, then a targeted `search-docs`, `claim`,
-`decision` or `impact` query. Check the reported head and read the relevant cited
-sources and tests. Until it is available, use targeted tracked-file searches and
-the current handoff. No atlas cache, memory, hook packet or old run sheet grants
-authority or proves live remote state. Its optional hooks are not required for
-the CLI or this workflow. PR #52 remains a separate integration slice.
+Run `node scripts/guardian-context.mjs current`, then a targeted `search-docs`,
+`claim`, `decision` or `impact` query when it resolves the current question.
+Check the reported head and read the relevant cited sources and tests. Atlas reads
+committed HEAD; inspect the working diff separately while editing. Use the
+[practical Atlas patterns](guardian-context-atlas.md#daily-development-patterns)
+for query choice, bounded fallback and source freshness. If the CLI is unavailable
+in an older checkout or reduced archive, use targeted tracked-file searches and
+the current handoff. No atlas packet, memory or old run sheet grants authority or
+proves live remote state. Optional hooks are not required for this workflow.
 
 Before paid or external execution, validate the actual setup payload and expected
 output against the production contracts. Use the intended fixture and launch path.

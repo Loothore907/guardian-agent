@@ -50,6 +50,101 @@ numbers are preserved. This is best-effort redaction of a reviewed public source
 tree, not a general secret scanner. Never commit credentials. CLI failures return
 a fixed code without raw subprocess diagnostics or local paths.
 
+## Daily development patterns
+
+Start with the CLI. Hooks, memory and delegated explorers are optional conveniences;
+they are not prerequisites for useful retrieval. No model call, network index or
+cache rebuild is needed. Run commands in the checkout or worktree you are actually
+changing. An Atlas command in a different worktree describes that worktree's HEAD.
+
+### Orient once, then follow evidence
+
+1. Run `node scripts/guardian-context.mjs current` at pickup. Confirm branch,
+   full head (use `--json` if needed), content source and dirty state. Read the
+   current handoff and repository guidance, then state the outcome and action bounds.
+2. Choose one question from the table below. Start with one to three distinctive
+   words, a symbol, or a repository-relative tracked path. Read the returned source
+   passage and its nearby context before making a decision.
+3. Identify the relevant implementation and allowed/near-miss tests, make the
+   bounded repair, run the narrow checks, and retry toward the useful outcome.
+4. Classify the final diff and complete the required validation and integration
+   gates in the [development loop](development-loop.md). Atlas does not replace
+   hygiene, review, current CI, or operation authority.
+
+| Development question | First query | Next evidence to read |
+| --- | --- | --- |
+| Where do I resume? | `current` | Current handoff, active issue and fresh PR state |
+| Where is this workflow described? | `search-docs "development loop"` | The cited section and the current handoff |
+| What can we claim about this control? | `claim "credential"` | Claim status, linked evidence, implementation and named tests |
+| Why was this design chosen? | `decision "context atlas"` | ADR status, decision and consequences; then current code |
+| What references this file? | `impact "scripts/guardian-context.mjs"` | Call sites, entry points, tests and package boundaries |
+
+Prefix each query with `node scripts/guardian-context.mjs`. Search is lexical:
+all query tokens must occur on the same line unless the literal phrase matches.
+There are at most three matching lines per file and twelve results. Long natural
+language questions often hide useful matches; short repository vocabulary works
+better. Result order and an empty result are not proof of completeness or absence.
+
+### Keep committed context and work in progress distinct
+
+Atlas reads regular-file blobs at HEAD even when it reports a dirty working tree.
+Use its result to locate the committed baseline. For an exact cited passage, read
+`git show HEAD:docs/development/handoff.md` (substitute the cited tracked path).
+After switching branches or committing, rerun the query before relying on old line
+numbers. A citation from an earlier head belongs to that revision, not necessarily
+the current checkout.
+
+During editing, inspect the actual diff and relevant changed files:
+
+```powershell
+git diff -- scripts/guardian-context.mjs
+git diff --cached -- scripts/guardian-context.mjs
+```
+
+The first command shows unstaged changes; the second shows staged changes. An
+untracked new file needs a direct, intentional read. Do not commit merely to make
+Atlas see unfinished edits, and do not treat a stale baseline as a failed edit.
+Known-path fixes can go directly to source and tests after orientation; another
+search is useful only if it resolves a specific uncertainty.
+
+### Recover from misses without broadening authority
+
+An exit code of `1` means no matching result. Try a shorter term or a narrower
+command once, then inspect the known source or use a focused tracked-file search,
+for example `git grep -n -F -- "WorkerOutcomeSchema" -- packages/contracts/src`.
+That command searches tracked checkout content, so inspect dirty state and keep
+its findings separate from HEAD citations. Prefer this targeted fallback to
+repeatedly dumping the full corpus or repeatedly changing the same query.
+
+An exit code of `2` means the request or source could not be handled safely.
+Inspect query shape and repository state: credential-shaped input, absolute or
+traversal paths, unsupported source types and source size limits are deliberate
+boundaries. Missing authority files may indicate the wrong checkout or an
+incomplete archive. Repair the actual setup within the existing grant and retry;
+never bypass the guard to read excluded content. If a necessary source remains
+outside the allowed boundary, report the exact missing evidence and next action.
+
+### Use small retrieval budgets and honest measurements
+
+Normally use one current packet and one targeted query before the first source
+read or test. This is a working heuristic, not a runtime limit. A second query
+should answer a new uncertainty or refine a miss. Rerun after a head/worktree
+change, compaction when provenance was lost, or a relevant commit; there is no
+benefit in printing the same packet before every tool call.
+
+For optional delegated exploration, assign one concrete question, the relevant
+checkout/head, and a small requested result: cited paths, findings, uncertainties
+and suggested tests. Keep authorization and integration decisions in the owning
+session, and follow the session's delegation rules. Do not delegate merely because
+an explorer profile exists.
+
+Keep one brief observation per real task in the existing issue or session notes:
+question, head, queries, whether the first results located the needed source,
+fallback reads, and time to the first useful source-backed answer or test. Record
+tokens only when measured; otherwise say unavailable. No token-saving or retrieval
+quality claim follows from tests alone. Use the ten-task evaluation below before
+considering an indexing expansion.
+
 ## Codex integration
 
 Project config under `.codex/` enables local memories and hooks only when the project
