@@ -53,4 +53,3 @@ Complete one authenticated hosted research journey whose answer correctly says v
 - Console Payments currently shows USD 23.59 balance and USD 1.41 consumption; the generic Usage route failed to load. The existing local cost file is stale, so reconcile current provider billing and the host's preserved ledger before admitting work.
 - WSL user-manager warm-start warnings persist. This rehearsal uses no user keyring or real providers. Do not restart all WSL or reenroll credentials to run this hosted test.
 - No source changes, Git commits, cloud starts, provider calls, or credential mutations occurred during preparation. Ignored scripts and evidence are retained beside this plan.
-
