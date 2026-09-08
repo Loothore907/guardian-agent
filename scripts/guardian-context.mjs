@@ -112,7 +112,8 @@ function sourceSnapshot(root) {
     const match = /^(100644|100755) blob ([a-f0-9]{40,64})\t([^\0]+)$/u.exec(entry);
     if (!match) continue; // Never follow symlinks, gitlinks, or worktree paths.
     const [, , oid, path] = match;
-    if (path.length > 240 || /[\u0000-\u001f\u007f\\]/u.test(path)) continue;
+    if (path.length > 240 || /[\u0000-\u001f\u007f\\]/u.test(path) || sanitizeText(path) !== path)
+      continue;
     sources.set(path, oid);
   }
   return { head, sources };
@@ -249,9 +250,9 @@ function inspectGit(root, sourceHead) {
     // Missing upstream is represented in the result rather than guessed.
   }
   return {
-    branch,
+    branch: snippet(branch),
     head,
-    upstream,
+    upstream: upstream === null ? null : snippet(upstream),
     ahead,
     behind,
     changed: changed.slice(0, 12).map(snippet),

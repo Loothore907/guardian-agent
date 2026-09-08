@@ -321,3 +321,18 @@ test("a worktree directory junction cannot redirect source reads", () => {
     rmSync(external, { recursive: true, force: true });
   }
 });
+
+test("credential-shaped refs and source names are not exposed by the API", () => {
+  const root = fixture();
+  try {
+    const marker = "ghp_abcdefghijklmnop";
+    fixtureGit(root, "branch", "-m", "codex/51-" + marker);
+    writeFileSync(join(root, "docs", marker + ".md"), "named source marker");
+    fixtureGit(root, "add", "docs");
+    fixtureGit(root, "commit", "-m", "test: synthetic metadata redaction");
+    assert.ok(!JSON.stringify(buildCurrentContext(root)).includes(marker));
+    assert.deepEqual(searchTrackedMarkdown(root, "docs", "named source marker"), []);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
