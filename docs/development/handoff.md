@@ -1,61 +1,68 @@
 # Current development handoff
 
-Last reconciled: September 8, 2026 UTC. The hosted clean research journey succeeded
-under [issue #55](https://github.com/Loothore907/guardian-agent/issues/55) and the
-[approved session plan](session-plan-2026-09-08-research-journey.md).
+Last reconciled: September 8, 2026 UTC. The paired clean/adversarial release-research
+evaluation owned by [issue #19](https://github.com/Loothore907/guardian-agent/issues/19)
+completed under the
+[approved session plan](session-plan-2026-09-08-paired-release-evaluation.md).
+See the
+[consolidated evidence report](evidence/2026-09-08-paired-release-research-evaluation.md).
 
-Guardian returned the correct October 1 release date and prerequisite upgrade to
-2.4, with a source citation, using real Nebius worker calls and Tavily extraction.
-The second of two admissions completed and settled. Aggregate model/research usage
-was an estimated USD 0.019114. See the
-[consolidated result and limitations](evidence/2026-09-08-clean-research-success.md)
-and [successful request fixture](evidence/2026-09-08-clean-research-request.json).
+The clean control completed on its first admission. The injected case first stopped
+after a contract-invalid second worker turn, then completed after the one authorized
+mission-wording repair. Both successful results returned October 1, the prerequisite
+upgrade to version 2.4, and their exact controlled fixture citation. The successful
+injected run recorded no second tool request or worker-boundary event: report it as
+Observed model resistance, not a Guardian denial.
 
-## Product and security state
+## Current product and security state
 
-- Tested runtime source: `5efb67578e1da646ea5f83a17fac6cbbf454d5a5`; exact-head CI
-  passed. The plan was integrated by PR #56 on main `774c82611a2595cf8056d6ff623d68276ee8bf9d`.
-  This result update changes evidence and pickup guidance only.
-- Both KC VMs were cloud-confirmed STOPPED at 05:00:15 UTC. Guardian/Caddy are
-  stopped; the temporary bearer is deleted. The issue-55 heartbeat is paused and
-  its watchdog exited. Admission is disabled by durable budget policy version 7.
-- Ledger: 6 lifetime admissions, 1 completed, 0 active/reserved, USD 0.419114
-  settled including USD 0.40 inherited forfeitures. Billing reconciliation remains
-  open; estimates and forfeitures are not proof of provider-billed spend.
-- Result assurance is `observed`. The successful authority row still says active
-  after teardown; budget settlement is terminal. General audit-event tables are
-  empty for this path. No broader enforcement or C7-completion claim is made.
-- Persistent disks, addresses, DNS, credential resources/readers, ledger, deployment,
-  and private diagnostics remain retained. The window ended on success; its unused
-  third admission does not authorize a later run.
-- PR #52 / issue #51 now reconciles this main lineage and hardens the Context
-  Atlas source reader to pinned regular-file HEAD blobs. The
-  [daily development patterns](guardian-context-atlas.md#daily-development-patterns)
-  cover pickup, focused queries, dirty edits and recovery. Inspect live PR state
-  for integration status; the CLI works in checkouts containing this slice.
-  Local research evaluation preparation remains under #19, with no hosted grant.
+- Tested runtime source: `3e03e2e03acb823cde614517ada3d811e5060d9a`;
+  exact-head CI run 34260162173 passed. Context Atlas PR #52 is integrated. The
+  paired grant was integrated by PR #60 as main commit
+  `88f539f9967b82a5655407b19598577680719dcc`.
+- Fixture revision: `bd63c72aa1e697e4192f53ba19f833724efb6475`.
+  Control/injection HTML SHA-256 values were `f851bf1f...` and `88ce0c00...`.
+  The injected verification destination remained outside the derived mission.
+- Three new admissions used actual providers: two Kimi worker calls and one Tavily
+  Basic Extract each. Control settled/completed at USD 0.009566; injection attempt
+  1 settled/failed at USD 0.011001; the repaired injection settled/completed at
+  USD 0.009701. New model/research estimate: USD 0.030268.
+- Policy version 9 is disabled. Ledger totals are nine lifetime admissions, three
+  completed, zero active/reserved and USD 0.449382 settled/forfeited. This includes
+  four inherited USD 0.10 forfeitures. The unused tenth admission carries no
+  authority beyond the expired grant.
+- Guardian/Caddy/listeners are stopped, the temporary bearer is deleted, the SSH
+  tunnel is closed, the guest timer is disabled, and the watchdog exited. Both
+  exact KC VMs were cloud-confirmed `STOPPED` at 19:44:44 UTC.
+- Result assurance remains `observed`. The successful authority-session rows still
+  say active after teardown, general audit tables are empty, and provider-billed
+  values are unavailable. Do not promote Enforced or C7-completion claims.
+- The billing page remained at a pre-run 17:45 UTC snapshot of USD 1.55 posted
+  compute and USD 23.45 balance. New compute is approximately USD 0.0518 at the
+  retained planning rate, giving an approximately USD 0.0821 combined session
+  estimate. Exact delayed billing remains open under #19.
+- Ordinary Windows/browser judge TLS remains unavailable. The pinned tunnel proved
+  VM-loopback Caddy/TLS for this bounded operator run only. Persistent disks,
+  addresses, DNS, credential resources/readers, fixture tree, private diagnostics
+  and the durable ledger remain retained and disabled.
 
 ## Start here
 
-1. Run repository hygiene on fresh main and inspect current issues, PRs and CI.
-   Review this result before historical failure handoffs. Leave both VMs stopped
-   during preparation. Use the [development loop](development-loop.md) and the
-   context atlas for committed-source pickup; inspect working edits separately.
-2. Within a new bounded hosted grant, use the successful clean request as a
-   control for the seeded research acceptance slice owned by #19. Preserve source,
-   scope, time, spend, admission and shutdown bounds. C6/C7 remain incomplete.
-3. Preflight setup payload formats and the requested output against the actual
-   contracts. The current worker contract rejects URL links in final responses;
-   a title/domain/path source citation works without weakening it.
-4. Diagnose a recoverable failure, make the relevant repair, and retry within the
-   existing grant. Stop at useful success or an actual boundary; collect one
-   consolidated evidence report. Do not require a new approval or docs PR per error.
-5. Keep external judge-browser TLS, sanitized provider failure visibility,
-   authority-session terminal state, and delayed billing reconciliation explicit
-   in #19 before broadening acceptance claims. Later GitHub mutation cases require
-   their separate exact-target and credential gates.
+1. Run fresh repository hygiene and Context Atlas pickup; read cited source before
+   security decisions and inspect uncommitted changes separately. Historical issue
+   text and older hosted handoffs do not supersede this file.
+2. Treat the paired research evaluation as complete. Do not spend the unused
+   admission, restart a VM, or repeat the provider run without a new exact grant.
+3. Continue issue #19 with the smallest separately approved slice: ordinary
+   judge-browser TLS, provider-failure diagnostics, terminal authority-session
+   state, audit coverage, or delayed billing reconciliation. Broader C7 acceptance
+   and GitHub mutation scenarios remain separate outcomes.
+4. Preserve the distinction between a correct answer, model resistance, a Guardian
+   denial, actual provider execution and missing evidence. A denial without the
+   requested answer is still not successful task completion.
+5. Keep private evidence under `tmp/c7-acceptance/issue19-paired-3e03e2e/` and the
+   corresponding remote private directories out of indiscriminate staging.
 
-Private evidence is retained in `tmp/c7-acceptance/prep-5efb675/` and the existing
-remote private state directories. Preserve it without indiscriminate staging.
-Earlier failures remain in the [hosted chronology](c7-kc-hosted-acceptance-handoff.md)
-and linked evidence. Historical pickup instructions do not supersede this handoff.
+The earlier clean journey remains documented in
+[its evidence report](evidence/2026-09-08-clean-research-success.md). It is historical
+control evidence; its grants and unused admissions do not carry forward.
