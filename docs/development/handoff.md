@@ -11,7 +11,7 @@ was an estimated USD 0.019114. See the
 [consolidated result and limitations](evidence/2026-09-08-clean-research-success.md)
 and [successful request fixture](evidence/2026-09-08-clean-research-request.json).
 
-## Current state
+## Product and security state
 
 - Tested runtime source: `5efb67578e1da646ea5f83a17fac6cbbf454d5a5`; exact-head CI
   passed. The plan was integrated by PR #56 on main `774c82611a2595cf8056d6ff623d68276ee8bf9d`.
@@ -30,11 +30,12 @@ and [successful request fixture](evidence/2026-09-08-clean-research-request.json
   third admission does not authorize a later run.
 - Unrelated draft PR #52 / issue #51 remains untouched.
 
-## Next useful work
+## Start here
 
 1. Run repository hygiene on fresh main and inspect current issues, PRs and CI.
    Review this result before historical failure handoffs. Leave both VMs stopped
-   during preparation; do not spend a hosted window on document reconciliation.
+   during preparation. Use the [development loop](development-loop.md) and the
+   context atlas when integrated; these headings preserve its bounded pickup.
 2. Within a new bounded hosted grant, use the successful clean request as a
    control for the seeded research acceptance slice owned by #19. Preserve source,
    scope, time, spend, admission and shutdown bounds. C6/C7 remain incomplete.

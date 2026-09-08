@@ -24,34 +24,60 @@ jobs:
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           persist-credentials: false
+          fetch-depth: 0
+
+      - name: Install Node.js
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+
+      - name: Classify and validate changed documents
+        id: changes
+        run: node scripts/change-validation.mjs --ci --check
+
+      - name: Test validation routing and session hygiene
+        run: node --test scripts/change-validation.test.mjs scripts/session-hygiene.test.mjs
+
+      - name: Validate pull request metadata
+        if: github.event_name == 'pull_request'
+        run: node scripts/session-hygiene.mjs pr
 
       - name: Install pnpm
+        if: steps.changes.outputs.lane == 'full'
         uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
         with:
           run_install: false
           version: 11.19.0
 
-      - name: Install Node.js
+      - name: Configure dependency cache
+        if: steps.changes.outputs.lane == 'full'
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           cache: pnpm
           node-version-file: .node-version
 
       - name: Install locked dependencies
+        if: steps.changes.outputs.lane == 'full'
         run: pnpm install --frozen-lockfile
 
       - name: Run required checks
+        if: steps.changes.outputs.lane == 'full'
         run: pnpm check
 
-      - name: Test session hygiene checks
-        run: node --test scripts/session-hygiene.test.mjs
-
-      - name: Validate pull request metadata
-        if: github.event_name == 'pull_request'
-        run: node scripts/session-hygiene.mjs pr
-
       - name: Run Linux platform boundary checks
+        if: steps.changes.outputs.lane == 'full'
         run: pnpm test:linux-platform
 
       - name: Audit production dependencies
+        if: steps.changes.outputs.lane == 'full'
         run: pnpm audit --prod --audit-level high
+
+      - name: Confirm selected validation completed
+        env:
+          VALIDATION_LANE: ${{ steps.changes.outputs.lane }}
+        run: |
+          case "$VALIDATION_LANE" in
+            docs|full) echo "Completed $VALIDATION_LANE validation" ;;
+            *) echo "Unknown validation lane"; exit 1 ;;
+          esac

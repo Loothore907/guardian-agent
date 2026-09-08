@@ -2,6 +2,13 @@
 
 ## Working agreement
 
+- Use `docs/development/development-loop.md`: agree on one useful outcome and its
+  action, time, spend and retry boundaries; then diagnose, repair and retry within
+  that grant until success or an actual boundary. A recoverable failure is an
+  intermediate result, not a reason for a new approval or documentation-only stop.
+- Use the context atlas when available to locate current sources and relevant
+  tests. Verify its branch/head and read the cited passages; its summaries and
+  historical plans do not establish current state or grant authority.
 - Follow `docs/development/session-git-hygiene.md` for source-changing sessions.
   Run `node scripts/session-hygiene.mjs start --remote` before new feature work
   and `node scripts/session-hygiene.mjs close --remote` before closeout. Resolve
@@ -54,7 +61,11 @@
 - Treat canonicalization, mutation, replay, expiry, caller binding, scope, assurance state, outbound research, and redaction as property-test candidates.
 - Test direct-network, credential-path, alternate-tool, and Git push bypass attempts in the documented reference runtime.
 - Never describe a security property as implemented unless `docs/security-claims.md` identifies reproducible evidence.
-- Run the narrowest relevant checks during iteration and the complete required suite before requesting review.
+- Run the narrowest relevant checks during iteration. Before review, use the
+  change-validation classifier documented in `docs/development/development-loop.md`.
+  Prose-only changes require document and hygiene validation; runtime, fixture,
+  configuration, authority-document and mixed changes require the full suite.
+  The required CI `build` must succeed in either lane.
 
 ## Documentation
 

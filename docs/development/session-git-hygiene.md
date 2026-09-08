@@ -19,6 +19,9 @@ prepare a concrete proposal early instead of accumulating another unreviewed sli
 
 ## During work
 
+- Follow the [development loop](development-loop.md). Keep recoverable failures
+  inside the approved outcome and boundaries. Diagnose and repair before retry;
+  write one consolidated closeout after useful success or an actual stop boundary.
 - Use one issue-linked branch per coherent change; open a draft PR once a useful
   checkpoint exists. Commit tested behavior with its tests and documentation.
 - Treat factual documentation-only reconciliation of the current change's checks,
@@ -33,8 +36,10 @@ prepare a concrete proposal early instead of accumulating another unreviewed sli
   intentional closing keyword) for the issue in the branch name. Umbrella issues
   close only when their complete acceptance criteria pass.
 - Review security boundaries and required checks at the exact candidate head.
-  Failed, missing, skipped or stale checks block integration. Do not disable a
-  check to recover a backlog.
+  Failed, missing, skipped or stale required `build` results block integration.
+  The build selects the tested prose or full-validation lane; steps belonging
+  only to the other lane are intentionally inapplicable. Do not override the
+  classifier or disable a required check to recover a backlog.
 - Merge approved slices through the protected PR path, verify main CI, then
   reconcile dependent bases. Do not force-push, reset or delete branches as
   automatic cleanup. Preserve recovery refs until integration is verified.
@@ -68,7 +73,11 @@ they must not become an implicit permanent deployment workflow.
 The active main ruleset requires an up-to-date GitHub Actions `build`, PRs,
 resolved review threads and squash/linear integration, with no bypass actors.
 The build runs credential-free hygiene tests and checks PR title/branch/issue
-reference syntax on pull-request events. It does not prove issue scope is correct,
+reference syntax on pull-request events. Its change classifier routes only ordinary
+Markdown prose to document validation without dependency installation. Changes to
+runtime, executable/data fixtures, configuration, authority documents, or the
+classifier itself retain the full suite, Linux boundaries and dependency audit.
+It does not prove issue scope is correct,
 human review happened, global instructions were followed or local work was pushed.
 The local remote check additionally verifies the named issue exists and the PR's
 exact head/build. It does not prove protected deployment readiness or replace
