@@ -26,9 +26,16 @@ const plan = {
   ],
 };
 describe("judge scope composition", () => {
-  it("binds exact review and merge without local tools", () => {
+  it("binds exact review and merge without exposing local tools to the worker", () => {
     const result = judgeRuntimeScope(scope, plan);
     expect(result.workerTools).toEqual(["github.pull_request.read", "github.pull_request.merge"]);
+    expect(result.permissions.tools).toEqual([
+      "guardian.session_status",
+      "guardian.local_command",
+      "github.pull_request.read",
+      "github.pull_request.merge",
+    ]);
+    expect(result.permissions.sideEffects).toEqual(["write_workspace", "merge_pull_request"]);
     expect(result.permissions.volume.maxLocalCommands).toBe(0);
   });
   it.each([
@@ -42,12 +49,17 @@ describe("judge scope composition", () => {
     expect(() => judgeRuntimeScope(scope, changed)).toThrow();
   });
   it("accepts a public-only scope without granting GitHub authority", () => {
-    expect(
-      judgeRuntimeScope(
-        { ...scope, githubTarget: null, researchUrls: ["https://fixture.example.org/update"] },
-        undefined,
-      ).workerTools,
-    ).toEqual(["guardian.research"]);
+    const result = judgeRuntimeScope(
+      { ...scope, githubTarget: null, researchUrls: ["https://fixture.example.org/update"] },
+      undefined,
+    );
+    expect(result.workerTools).toEqual(["guardian.research"]);
+    expect(result.permissions.tools).toEqual([
+      "guardian.session_status",
+      "guardian.local_command",
+      "guardian.research",
+    ]);
+    expect(result.permissions.sideEffects).toEqual(["write_workspace"]);
     expect(() =>
       judgeRuntimeScope(
         { ...scope, githubTarget: null, researchUrls: ["https://fixture.example.org/update"] },
