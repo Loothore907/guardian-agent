@@ -41,12 +41,17 @@ export function judgeRuntimeScope(scopeValue: unknown, planValue: unknown) {
       throw new TypeError("judge plan exceeds confirmed scope");
   }
   const domains = [...new Set(scope.researchUrls.map((u) => new URL(u).hostname))];
-  const tools = [
+  const workerTools = [
     ...(scope.researchUrls.length ? ["guardian.research" as const] : []),
     ...(target ? ["github.pull_request.read" as const] : []),
     ...(target?.operation === "github.pull_request.merge"
       ? ["github.pull_request.merge" as const]
       : []),
+  ];
+  const tools = [
+    "guardian.session_status" as const,
+    "guardian.local_command" as const,
+    ...workerTools,
   ];
   const permissions = PermissionEnvelopeSchema.parse({
     tools,
@@ -60,7 +65,10 @@ export function judgeRuntimeScope(scopeValue: unknown, planValue: unknown) {
           : []),
       ],
     },
-    sideEffects: target?.operation === "github.pull_request.merge" ? ["merge_pull_request"] : [],
+    sideEffects:
+      target?.operation === "github.pull_request.merge"
+        ? ["write_workspace", "merge_pull_request"]
+        : ["write_workspace"],
     time: { maxDurationSeconds: 300 },
     volume: {
       maxToolCalls: 20,
@@ -87,5 +95,5 @@ export function judgeRuntimeScope(scopeValue: unknown, planValue: unknown) {
   ];
   if (constraints.some((c) => c.length > 500))
     throw new TypeError("judge source exceeds worker context limit");
-  return { scope, plan, domains, constraints, permissions, workerTools: tools };
+  return { scope, plan, domains, constraints, permissions, workerTools };
 }
