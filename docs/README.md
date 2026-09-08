@@ -30,6 +30,7 @@ This directory separates product intent from verified implementation evidence.
 - [Prepared protected C6 ceremonies](development/protected-c6-ceremonies-2026-09-04.md)
 - [Development roadmap](development/roadmap.md)
 - [Repository strategy](development/repository-strategy.md)
+- [Guardian Context Atlas](development/guardian-context-atlas.md)
 - [Launch and commercialization readiness plan](development/launch-commercialization-plan.md)
 - [CI policy](development/ci-policy.md)
 - [Competition plan](competition-plan.md)

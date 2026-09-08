@@ -78,4 +78,6 @@ Architecture decision records document consequential choices, rejected alternati
 
 - [ADR-0056: Manifest-bound gitless session sources](0056-manifest-bound-gitless-session-sources.md)
 
+- [ADR-0057: Repo-native advisory context atlas](0057-repo-native-context-atlas.md)
+
 Use the next sequential four-digit number. Do not silently rewrite an accepted decision; add a superseding ADR.

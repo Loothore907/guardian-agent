@@ -1,0 +1,20 @@
+{
+  "description": "Load a bounded, sanitized Guardian context packet at session start and after compaction.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "^(startup|compact)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/scripts/guardian-context.mjs\" bootstrap --hook",
+            "commandWindows": "powershell.exe -NoProfile -NonInteractive -Command \"& node (Join-Path (git rev-parse --show-toplevel) 'scripts/guardian-context.mjs') bootstrap --hook\"",
+            "timeout": 10,
+            "statusMessage": "Loading Guardian context",
+            "additionalContextLimit": 1800
+          }
+        ]
+      }
+    ]
+  }
+}
