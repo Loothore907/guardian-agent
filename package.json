@@ -12,7 +12,7 @@
     "boundaries": "depcruise apps packages --config .dependency-cruiser.cjs",
     "build": "pnpm build:linux-peer-helper && tsc -b --pretty false && vite build --config apps/web/vite.config.ts",
     "build:linux-peer-helper": "node scripts/build-linux-peer-helper.mjs",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm build:linux-peer-helper && pnpm test && pnpm test:sqlite-spike && pnpm test:demo-reset-plan && pnpm test:linux-keyring-preflight && pnpm test:managed-demo-budget-operator-clock && pnpm test:c7-cost-tools && pnpm test:github-supervised && pnpm test:headless-judge-host && pnpm test:protected-judge-host && pnpm test:protected-judge-manifest && pnpm test:manifest-bound-workspace-child && pnpm boundaries && pnpm build",
+    "check": "node --test scripts/change-validation.test.mjs scripts/session-hygiene.test.mjs && pnpm format:check && pnpm lint && pnpm typecheck && pnpm build:linux-peer-helper && pnpm test && pnpm test:sqlite-spike && pnpm test:demo-reset-plan && pnpm test:linux-keyring-preflight && pnpm test:managed-demo-budget-operator-clock && pnpm test:c7-cost-tools && pnpm test:github-supervised && pnpm test:headless-judge-host && pnpm test:protected-judge-host && pnpm test:protected-judge-manifest && pnpm test:manifest-bound-workspace-child && pnpm boundaries && pnpm build",
     "dev:web": "vite --config apps/web/vite.config.ts",
     "format": "prettier --write \"apps/**/*.{ts,tsx,css,html,json}\" \"packages/**/*.{ts,json}\" \".github/**/*.{json,yaml,yml}\" \"*.{ts,js,cjs,json,yaml,yml}\"",
     "format:check": "prettier --check \"apps/**/*.{ts,tsx,css,html,json}\" \"packages/**/*.{ts,json}\" \".github/**/*.{json,yaml,yml}\" \"*.{ts,js,cjs,json,yaml,yml}\"",
