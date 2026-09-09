@@ -2,6 +2,10 @@
 
 This checklist translates the official requirements into project gates. It was last verified against the Devpost overview and official rules on September 4, 2026. The live rules remain authoritative.
 
+The September 8 [ADR-0058](../adr/0058-evidence-first-competition-scope.md)
+revises the demo scope and consent narrative. Unchecked items are release gates,
+not a claim that every underlying component is absent.
+
 ## Entrant and eligibility
 
 - [x] Entrant registration is complete and Devpost access is confirmed.
@@ -51,9 +55,18 @@ This checklist translates the official requirements into project gates. It was l
 - [ ] The video shows the application functioning on its intended platform.
 - [ ] Audio explains the use of Nebius and the selected NVIDIA model.
 - [ ] The video visibly connects Tavily-retrieved evidence to Guardian's research journey and decision context.
-- [ ] The video shows the controlled hostile page reaching the untrusted-content path, an unsafe proposal stopping before approval or privileged execution, and a separately authorized legitimate action.
+- [ ] The video shows untrusted content exposure, a forbidden typed proposal,
+  Guardian rejection before the forbidden external effect, and useful completion
+  in the same session under the original grant. Model/harness provenance is explicit.
 - [ ] The video does not claim that Guardian prevents every prompt injection or that temporal association proves model causation.
-- [ ] The exact merge approval shown in the video uses the tested user-verifying passkey path, not the lower-assurance development confirmation.
+- [ ] Launch confirmation or standing operator consent is accurately labelled;
+  no development issuer is presented as WebAuthn or fresh verified user presence.
+- [ ] Already-covered ordinary actions do not trigger redundant consent prompts;
+  genuine scope changes, risk escalation and provider login remain distinct.
+- [ ] Incremental cost/time and interruption measurements name the matched
+  baseline, versions, sample size, failures and limitations.
+- [ ] Nemotron makes a meaningful demonstrated contribution without overriding
+  deterministic policy; its usage is measured.
 - [ ] The project description clearly explains what was created, why, and how it works.
 - [ ] Any future-looking video language is brief and clearly separated from implemented controls and verified evidence.
 - [ ] Required product feedback covers the Nebius and NVIDIA tools actually used.
@@ -67,8 +80,9 @@ This checklist translates the official requirements into project gates. It was l
   agent, models, source, SQLite, logs, traces, and public artifacts.
 - [ ] The disposable repository reset procedure and seeded PR head are verified immediately before rehearsal and recording.
 - [ ] Self-hosted Linux evidence covers the authority-service IPC, database
-  permissions, local credential resolution, approval ceremony, narrow GitHub
-  flow, and documented Enforced runtime controls.
+  permissions, local credential resolution, exact grant provenance, narrow GitHub
+  flow and every runtime control actually claimed. Enforced is used only when
+  the claims document supplies the required evidence.
 - [ ] Setup documentation makes clear that users own their Nebius, optional
   Tavily, and operation-specific accounts, credentials, and billing.
 - [ ] The domain and judge demo do not imply that Agentic Guardian routinely

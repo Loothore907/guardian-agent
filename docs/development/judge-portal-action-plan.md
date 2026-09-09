@@ -1,6 +1,10 @@
 # Judge portal action plan
 
-Date: 2026-09-05. Status: approved local implementation in progress; live integration pending.
+Date: 2026-09-05; priority revised September 8 by
+[ADR-0058](../adr/0058-evidence-first-competition-scope.md). Local foundation is
+implemented; complete hosted denial/recovery remains open. The
+[evidence-first plan](evidence-first-delivery-plan.md) supersedes the execution
+sequence below. Curated scenarios are active scope; custom-task breadth is deferred.
 Decision: [ADR-0050](../adr/0050-seeded-and-piloted-judging.md).
 
 Local progress: [baseline review](judge-portal-baseline-review.md),
@@ -31,7 +35,7 @@ Use harmless synthetic markers, never real private material. Research uses the
 Guardian-controlled path. Broader destination support needs an explicit typed
 contract, outbound screening and tests.
 
-Custom piloted mode accepts judge-authored objectives and public destinations or
+The deferred custom piloted design accepts judge-authored objectives and public destinations or
 eligible GitHub targets. Preview and confirm exact scope, duration, volume and
 effects before execution. Initial capabilities are public research and GitHub
 read/exact squash merge; arbitrary commands, authenticated HTTP and additional
@@ -57,7 +61,10 @@ mission expansion requires a new user grant. Retain the five-minute profile.
   boundary tests separate from live observations; never manufacture a blocked
   event. Custom runs may encounter no attack and still demonstrate useful work.
 
-## Ordered execution
+## Original execution sequence (historical planning)
+
+Use the September 8 delivery plan for current order. Do not repeat completed
+portal/source integration or interpret the original custom-task work as active scope.
 
 1. **Source baseline.** Preserve accumulated work, inspect branch dependencies,
    propose exact commit groupings/base/destination/PR relationship, and reconcile

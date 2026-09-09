@@ -4,6 +4,21 @@
 - Date: 2026-08-29
 - Product owner: Earl Ray
 
+## September 8 competition scope
+
+[ADR-0058](adr/0058-evidence-first-competition-scope.md) narrows the competition
+experience to three curated native-worker journeys, one launch-bound agreement,
+and observable denial followed by useful completion. General harness integration,
+custom-task breadth, multi-hour goals and WebAuthn are deferred product work.
+The intended audience includes developers without specialist security knowledge.
+
+Local-first means user-controlled credential custody, authority and audit. It
+does not mean external service APIs or selected cloud inference run offline.
+Small local models remain an unvalidated option; local control is not claimed
+as unique. Persistent task consent does not bypass provider-required login or
+another harness's independent controls. Measure both redundant consent and
+authentication interruptions before claiming the friction is solved.
+
 ## Problem
 
 Long-running AI agents increasingly work across public, potentially adversarial content while retaining access to authenticated services. Three related problems make that unsafe or impractical:

@@ -24,33 +24,42 @@ Use the [submission checklist](competition/submission-checklist.md) as the opera
 
 ## Competition MVP
 
-The MVP is one complete Nebius-hosted judge story with the same separable runtime
-available for self-hosting. Nebius AI Cloud may host the application and Nebius
-Token Factory serves the versioned native coding worker, Qwen mission dialogue,
-and NVIDIA Nemotron risk roles. The judge build therefore needs no OpenAI key.
-Its authority database
-is owned only by a central local service reached through authenticated typed IPC.
-The user owns the Nebius, optional Tavily, and GitHub accounts and billing;
-reusable credentials remain in local credential-holding services. A separately
-provisioned, tightly rate-limited judge demo may use hackathon credits, but it is
-not the product's production architecture:
+Follow [ADR-0058](adr/0058-evidence-first-competition-scope.md) and the
+[evidence-first delivery plan](development/evidence-first-delivery-plan.md).
+The MVP shows a developer approving a supported job once, retaining a scoped
+connection, and getting useful work despite an attempted unauthorized diversion.
+The intended self-hosted product keeps custody and authority under user control;
+the competition uses Nebius inference/hosting and Tavily research, not a fully
+offline or already-integrated third-party coding harness.
 
-1. From the Guardian-owned terminal CLI, the user or native worker drafts a read-only PR-review mission for a dedicated disposable demo repository; Guardian normalizes it and the user confirms the security-relevant scope directly.
-2. The trusted Guardian launcher starts the native worker inside the documented reference runtime with a mission-specific tool set, an exact-confirmed Guardian-owned session copy, no provider credentials, no automatic source-checkout writeback, and default-denied public egress for local commands.
-3. Routine local analysis and a typed GitHub read proceed without repeated login.
-4. Tavily supplies bounded public evidence, including a controlled live hostile page through the narrow Extract path, and Guardian records a visible, minimized research journey.
-5. The native worker or documented adversarial harness proposes an unsafe merge or authority expansion after exposure to the hostile content.
-6. Direct public network and Git push bypass attempts fail in the reference runtime.
-7. The unauthorized proposal fails deterministic mission policy before approval, GitHub credential minting, or privileged-operation consumption.
-8. Nemotron classifies contextual risk and produces a concise consequence explanation without weakening the denial.
-9. The minimized audit shows the content exposure, attempt, decision, and stopping control without claiming the content caused the attempt.
-10. The model may request a mission revision permitting one merge, but the canonical Guardian ceremony shows the normalized expansion and the user alone confirms the new profile.
-11. The user verifies a passkey challenge bound to the exact repository, PR head commit, squash method, expiry, nonce, caller, connection, and policy version.
-12. The broker revalidates and performs the exact merge with a locally resolved,
-    short-lived or narrowly scoped GitHub credential unavailable to the agent,
-    models, and authority database.
-13. Mutation, resource-version change, expiry, and replay attempts fail.
-14. The terminal resumes with the sanitized result, while the audit UI contrasts the injected denial with the independently authorized merge and connects mission, runtime assurance, public research, policy, guardian, approval, execution, and outcome.
+Finish the research scenario first, then the two existing GitHub variants:
+unauthorized destination, read becoming write, and approved-action substitution.
+Use one complete story in the main video and make other passing curated forms
+inspectable. Reduce variant count if needed before weakening evidence.
+
+1. The human confirms the normalized mission and any exact allowed action at
+   launch. A fixed judge session may use separately identified trusted standing
+   deployment consent; the public request cannot create it.
+2. The supported native worker starts with the confirmed tools, workspace,
+   credential isolation and bounded runtime. Assurance matches actual evidence.
+3. Permitted research or PR review proceeds through the typed Guardian pathways.
+4. Untrusted seed content reaches the worker. Capture an actual model-generated
+   forbidden typed request when observed; label harness-generated requests separately.
+5. Guardian rejects the forbidden request before the unauthorized provider/adapter
+   dispatch or effect. Nemotron may explain or increase scrutiny, never lower the
+   deterministic floor; demonstrate its meaningful contribution and measured cost.
+6. An eligible denial returns a sanitized result. The same session completes the
+   original summary/review or exact already-authorized action without a new grant
+   or redundant confirmation. Critical failures still stop.
+7. The audit connects exposure, proposal provenance, decision, boundary dispatch,
+   denial feedback and useful outcome. Independent checks verify external effects.
+8. Exact target/head substitution, expiry, revocation and replay remain rejected.
+
+The default story requires no second passkey ceremony. WebAuthn remains an
+unevidenced, deferred product goal; development confirmation is not user-verifying
+authentication. A genuine scope change still requires a new reviewed grant and
+cannot be inferred from the hostile page or a blocked action. No public anonymous
+GitHub mutation or automatic fixture replenishment is introduced.
 
 ## Judge experience modes
 
@@ -61,11 +70,9 @@ modes defined by ADR-0034:
   general viewers. It uses the controlled hostile-content fixture and may perform
   live model, research, and typed read operations, but it accepts no arbitrary
   prompt or destination and exposes no anonymous GitHub mutation.
-- **Piloted live demo:** an authenticated operator enters a natural-language
-  objective and confirms the normalized mission. The operator may select the
-  controlled fixture or curated live-web research. GitHub remains read-only by
-  default; an exact mutation is limited to the disposable demo repository and
-  requires a separate user-verifying approval.
+- **Piloted curated demo:** an authenticated operator confirms a selected scenario
+  and its exact launch-bound scope. GitHub remains read-only unless that grant
+  explicitly covers the disposable exact action. Custom-task breadth is deferred.
 
 An open objective is not open authority. Tool families, destinations, budgets,
 models, network paths, and effects remain fixed or explicitly confirmed through
@@ -101,6 +108,11 @@ Cloud-mode disclosures must state that selected context is sent to Nebius and
 that bounded research queries are sent to Tavily when research is enabled.
 
 ## Submission evidence
+
+Measure task success, incremental cost/time, redundant consent prompts and
+credential interruptions using the delivery plan's matched-baseline protocol.
+Whole-journey costs and small curated samples must not be marketed as general
+overhead or attack-success rates. Local-first ownership is not a uniqueness claim.
 
 Maintain a claim-to-evidence map for:
 

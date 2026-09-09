@@ -1,136 +1,22 @@
 # Development Roadmap
 
-Current source-integration priority: [September 6 repository recovery](repo-hygiene-recovery-2026-09-06.md).
-Recovered product slices are integrated through protected issue-linked PRs. The
-recovery record tracks governance and documentation closeout; verify its final
-state before new runtime scope. C6/C7 remain open for their own acceptance gates.
+Current direction: September 8, 2026, [ADR-0058](../adr/0058-evidence-first-competition-scope.md).
+Use the [evidence-first delivery plan](evidence-first-delivery-plan.md) for ordered
+work, evidence requirements and overhead measurement; use [handoff.md](handoff.md)
+for current evidence and operational state. These replace older dated pickup
+sequences. Historical evidence and grants do not authorize new execution.
 
-September 6 operational pickup: [KC handoff](c7-kc-hosted-acceptance-handoff.md).
-Both VMs are stopped; Nebius/Tavily copies and scoped grants are verified. The
-next milestone is one authenticated, budgeted hosted research-only journey.
-ADR-0055 implements the fixed ingress-secret loader and protected research-only
-composition offline; target-host credential use, external ingress and live
-settlement remain open.
-Generalized hosted BYOK and credential-copy plan grants are a separate
-[product-design follow-up](credential-placement-and-plan-approval.md), not a C7
-implementation claim. Earlier dated pickup sections below are historical.
+The clean and paired hostile-source research journeys completed as Observed
+evidence. The successful hostile-source run recorded model resistance, with no
+unauthorized request or Guardian denial. Local portal and bounded continuation
+work is implemented; the next deliverable is one complete attempted violation,
+enforced rejection and useful same-session completion. C6/C7 remain open for their
+acceptance gates. Hosted audit/lifecycle and ordinary HTTPS gaps remain explicit.
 
-Latest product direction (2026-09-05): the user approved three seeded portal
-scenarios plus custom piloted public research and bounded GitHub tasks. Follow the
-[judge portal action plan](judge-portal-action-plan.md) for source integration,
-scenario/fixture design, portal and C7 dispatch work, security evidence and bounded
-hosted rollout. This planned extension does not change current assurance claims.
-
-The [first local portal foundation](evidence/2026-09-05-judge-portal.md) now passes
-full Windows/Linux checks. The UI, strict preview lifecycle, budget adapter and
-fixture reservations exist. The subsequent [C7 local runtime slice](evidence/2026-09-05-c7-runtime.md)
-is implemented and tested; the full C7 milestone remains in progress. Contextual
-risk integration/evaluation, source review and live acceptance are distinguished in
-the [completion plan](c7-completion-and-acceptance-plan.md). Live execution stays disabled.
-
-Current 2026-09-05 update: [launch-bound authority and headless preparation](headless-judge-setup.md). The competition launch grants the exact action before worker execution; managed GitHub installation credentials are noninteractive. Hosted IAM, cold-boot judging and WSL repair remain unverified/open. Earlier descriptions of a required second competition prompt are historical.
-
-## Current launch/headless pickup (2026-09-05)
-
-The [approved launch/headless slice](session-plan-2026-09-05-launch-headless.md)
-is implemented and locally validated: initial exact-plan confirmation, durable
-activation before worker execution, standing deployment consent, headless host
-composition and broker-only GitHub installation-token minting. See
-[current evidence](evidence/2026-09-05-launch-headless.md).
-
-The accumulated source was integrated during the September 6 recovery. Next prepare
-the bounded [hosted deployment plan](headless-judge-setup.md) from reviewed current main. Resolve repeatable judge
-fixture preparation before provisioning and rehearse the actual Linux host with
-real workload identity, secret access and unattended execution. Preserve separate
-WSL repair and C6 containment review tracks. The competition mission remains five
-minutes; a generalized multi-hour worker loop and hosted longevity are not claimed.
-
-## W28 completed checkpoint
-
-The [supervised Linux GitHub harness](evidence/w28-supervised-github-harness.md)
-is implemented with five passing credential-free process tests on both platforms.
-Complete ordinary suites and Linux platform probes pass. Actual Linux GitHub
-enrollment and the protected exact-head PR 3 read now pass. The earlier missing
-connection was resolved through user-operated App enrollment. The exact squash
-effect was separately approved and passed; see the
-[execution record](evidence/2026-09-04-session-readiness.md). W28 is complete
-for this narrow Linux gate; broader C6 closure remains open. The [handoff](w28-github-handoff.md) records the target and
-commands; the [state review](state-review-2026-09-04.md) defines the next gates. Windows real-clock IPC drift
-and recurring WSL user-manager readiness are explicit residual issues. C6 remains
-In progress; local harness success does not close its live effect criterion.
-
-The subsequent [WSL diagnosis](evidence/2026-09-04-wsl-cgroup-diagnosis.md)
-localizes the fault to cgroup attachment during warm distribution restarts.
-Full-VM cold-start-to-hold recovery and existing enrollment persistence pass.
-Use the [operator procedure](wsl-session-recovery.md); a permanent WSL fix and
-broader C6 assurance are not claimed.
-
-## Purpose
-
-This roadmap converts the Guardian Session product contract into evidence-backed build checkpoints. Calendar targets and effort ranges expose delivery risk; they never waive exit criteria.
-
-The current vertical-slice work is an architectural validation gate, not a claim
-that the project must become competition-ready immediately. The complete live
-journey is used to test boundaries and assumptions against reality, feed findings
-back into the design, and establish a stable base for later feature expansion and
-competition hardening. See
-[ADR-0029](../adr/0029-end-to-end-architectural-validation.md).
-
-## Current managed-demo capacity checkpoint
-
-The project-funded Linux demo now has locally tested strict budget contracts,
-separate public/judge SQLite ledgers, atomic preauthorization and settlement,
-bounded queues and rate limits, sanitized provider usage, a deployment-bound
-peer-authenticated budget service, provider-process usage reporters, and a
-single-settlement journey controller. See ADR-0043, ADR-0044, and
-`docs/development/managed-demo-budget-plan.md`.
-
-ADR-0046 now adds a locally tested fixed judge HTTP route, private access-
-credential verification, deployment-keyed source fingerprinting, admission-
-before-execution ordering, exact four-role supervisor reporter projection, and
-conservative terminal settlement. This checkpoint is not deployed or calibrated.
-Protected intended-host SecretStash retrieval, concrete hosted startup, Caddy and
-Linux inspection, authenticated provider-price evidence, 20 protected
-calibration journeys, load/containment evidence, separate IAM/provider-cap
-provisioning, judge-window funding, and deployment remain on the critical path.
-Public traffic must not start before the judge reserve is funded and isolated.
-
-## Completed return-to-roadmap bridge
-
-The [September 4 discovery review](evidence/2026-09-04-discovery-review.md) verifies
-the current flow boundaries, fixes supervisor cleanup and outbound IPv4 query
-screening, and records complete passing Windows/Linux ordinary gates. It keeps
-C6/C7 In progress. The subsequent [W27 implementation](evidence/w27-linux-provider-ipc-containment.md)
-completes shared Linux IPC peer admission and listener authentication across seven
-protocols, with full Windows/Linux gates passing. Protected post-change provider
-consumption and the synthetic Linux GitHub harness subsequently passed. Broader
-intended-host containment and successful real GitHub read/merge remain. See the [ordered session plan](session-plan-2026-09-04-c6-containment.md)
-and [prepared protected gates](protected-c6-ceremonies-2026-09-04.md).
-
-The post-W27 protected Linux Qwen/Nemotron gate subsequently passed in 6.3 seconds
-after targeted WSL user-manager recovery and user-operated unlocking of the
-existing keyring. A metadata-only preflight plus six ordinary regression cases
-now identify unavailable or locked stores before service startup. The broader
-containment corpus and successful Linux GitHub read/merge remain open.
-
-The managed-demo branch is paused at that local seam. The BYOK enrollment gate that interrupted protected Linux inference is now
-complete; the following records that bridge. The failed raw-terminal input route is removed from the
-production command. `guardian credentials review <nebius|tavily>` now exercises
-the preflighted one-use loopback ceremony with no provider or store write, while
-the compiled transactional enrollment path is enabled on Windows after submission,
-cancellation, and the corrected no-autofill interaction passed. The user then
-enrolled Nebius from the accepted Windows flow; sanitized status returned
-`available`, and the bounded supervised Qwen/Nemotron live-inference path passed.
-
-The Linux credential bridge is now complete. The user-operated normal-session
-fixture lifecycle passed write, resolve, rotation, zeroing, and deletion. The
-accepted browser flow then verified and stored a real Nebius credential in Linux
-Secret Service; sanitized status returned `available`, and bounded protected
-Qwen/Nemotron consumption passed. Resume C6 with broader intended-host service
-containment and the narrow Linux GitHub path. Managed-demo SecretStash, Caddy,
-calibration, and deployment work do not block this C6-to-C7 return.
-
-The competition deadline is October 30, 2026 at 10:00 a.m. Pacific time. The internal submission target is October 28, leaving two calendar days for recovery and submission issues. Recheck the [official rules](https://nebiusglobalaihackathon.devpost.com/rules) at every release checkpoint.
+The competition uses the current native worker and exact launch-bound grants.
+General harness adapters, custom-task breadth and WebAuthn ceremony implementation
+are deferred; development confirmation and standing consent must be labelled
+honestly. This planning update does not change runtime controls or assurance.
 
 ## How time is tracked
 
@@ -142,47 +28,45 @@ C1 were completed before session-level time capture began, so their actual effor
 is intentionally recorded as unavailable rather than reconstructed. Do not count
 unattended model, build, provider, or deployment waits as focused effort.
 
-For forecasting, one roadmap effort day represents four focused hours. The current
-35-54-day estimate therefore represents roughly 140-216 focused hours, or 7-11
-weeks at the 20-hour baseline. The lower-to-middle range fits the internal deadline;
-the upper range does not. The schedule is therefore **amber by scope**, while
-checkpoint progress is currently green because C1 passed before its target. This
-range includes implementation, tests, documentation, review, and demo preparation
-but excludes unknown provider onboarding delays.
+For forecasting, one roadmap effort day represents four focused hours. Original
+checkpoint effort ranges below are historical planning estimates, not a new
+estimate of remaining work. Recalibrate from actual remaining gaps and focused
+effort at each weekly review; dates never substitute for evidence.
 
 ## Product outcome
 
-The competition build must prove:
+Approve a supported job once, retain a scoped authenticated connection, reject an
+unauthorized diversion, and complete the permitted work. The intended self-hosted
+product keeps credential custody, authority and audit under user control; selected
+cloud inference and external services still have their own data/authentication
+boundaries. Entirely local small-model operation remains unvalidated future work.
 
-> A Guardian Session gives an AI agent bounded autonomy inside a task-scoped runtime where public research and authenticated actions are forced through observable, policy-controlled pathways.
+The competition must show credential isolation, deterministic mission enforcement,
+bounded public research, a meaningful Nemotron role, exact grant checks and a
+reconstructable denial/recovery chain. Measure incremental cost, elapsed time,
+redundant approvals and authentication interruptions alongside task success.
+Existing grants do not bypass risk escalation or provider-required reauthentication.
 
-The judged experience must demonstrate:
+## Priority order and delivery targets
 
-1. credential isolation;
-2. enforced mission boundaries in the documented reference runtime;
-3. low-friction reuse of a scoped service connection;
-4. bounded Tavily research with visible provenance;
-5. Nemotron contextual judgment that cannot weaken deterministic policy;
-6. exact passkey authorization and final revalidation;
-7. a real polluted-content denial followed by a separately authorized exact action; and
-8. reproducible bypass, mutation, replay, expiry, and redaction evidence.
+Preserve containment, credential isolation, deterministic policy, exact-action
+binding, redaction and honest assurance throughout this sequence:
 
-## Priority order
+| Target in 2026 | Required outcome |
+| --- | --- |
+| September 18 | One research exposure/request/denial/completion chain, correct audit/lifecycle and stage timing |
+| October 2 | Read-only PR and approved-action substitution variants, repeated controls and independent effect checks |
+| October 12 | Coherent judge access, consent, audit and measured overhead; experience and scope freeze |
+| October 23 | Clean-install release candidate, required checks, access plan and timed video |
+| October 28 | Submission lock; October 30 buffer retained |
 
-When scope or schedule conflicts occur, preserve work in this order:
-
-1. Honest assurance boundaries and the enforcement feasibility result.
-2. Credential isolation and removal of alternate authenticated pathways.
-3. Human-authored mission, session profile, and deterministic fail-closed policy.
-4. Exact passkey approval, resource-version binding, mutation rejection, replay rejection, and expiry.
-5. One real narrow GitHub read and one exact privileged action against a disposable repository.
-6. Bounded Tavily research and the minimized research journey.
-7. Required Nebius and NVIDIA guardian inference with safe fallback.
-8. Comprehensible mission, assurance, approval, and audit experience.
-9. Reproducible evidence, clean setup, and submission consistency.
-10. Optional breadth or interoperability.
-
-No optional feature may delay or weaken a higher-priority outcome.
+These accepted targets govern delivery across C6-C9; the older component target
+dates below are historical reference. Finish the first complete journey before
+adding variants. If it slips, reduce showcased variants before weakening evidence.
+Keep operator authentication, audit/lifecycle, provider diagnostics and relevant
+containment work on the path when needed to make the next result trustworthy.
+Defer optional custom tasks, local-model changes, new providers, multi-hour goals
+and additional harness integrations.
 
 ### Integrated validation and expansion rule
 
@@ -213,7 +97,7 @@ enforcement evidence. See
 - Live-provider secrets are never required for public pull-request checks.
 - The deterministic and fake-provider suites must remain sufficient for ordinary public verification.
 
-## Actionable checkpoint map
+## Component checkpoint map (original planning reference)
 
 | Checkpoint                               | Provisional target |   Effort | Required outcome                                                                                                                                                                                                                                                |
 | ---------------------------------------- | ------------------ | -------: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -230,7 +114,7 @@ enforcement evidence. See
 | C10 - Release candidate                  | October 23         | 4-6 days | Clean self-hosted install/test build, optional rate-limited judge demo, full CI, dependency/license review, sensitive-data review, documentation, and timed video rehearsal pass.                                                                               |
 | C11 - Submission lock                    | October 28         | 2-3 days | Final tag, judge-accessible build, repository, video, description, feedback, provenance, and Devpost entry agree on one tested revision.                                                                                                                        |
 
-## Critical path
+## Component dependencies
 
 ```text
 C0 Product contract
@@ -390,7 +274,8 @@ Implement:
 - typed PR read;
 - typed PR merge with fixed endpoint and allowed merge methods;
 - expected head commit binding;
-- an opaque one-time authorization record ready for the C8 passkey issuer;
+- an opaque one-time authorization record; the passkey issuer remains deferred
+  under ADR-0058;
 - atomic nonce consumption for the supported runtime;
 - minimized evidence-exposure, attempt, decision, boundary-crossing, consumption,
   and control-outcome records using bounded signal and reason codes;
@@ -460,9 +345,14 @@ Exit criteria:
 
 ### C8 - Product experience
 
+ADR-0058 narrows this competition gate to the curated native-worker journey.
+WebAuthn, terminal/browser ceremony and general external-harness integration are
+deferred product goals, not implied capabilities of the submitted build.
+
 The experience must show:
 
-- session invocation from the Guardian CLI and a launched or wrapped external host agent;
+- session invocation through the supported Guardian CLI or curated judge portal
+  using the current native worker;
 - trusted local setup with user-owned Nebius access, optional Tavily access when
   research is enabled, and a narrow GitHub connection, without exposing secrets
   to the runner or models;
@@ -470,7 +360,7 @@ The experience must show:
   confirmation of Guardian's normalized goal, resources, tools, destinations,
   lifetime, volume, filesystem and network scope, and side-effect consequences;
 - proof that an unconfirmed host or model draft creates no session authority and
-  that the external host executes inside the Guardian-controlled reference runtime;
+  that the native worker executes inside the documented reference runtime;
 - selected profile, lifetime, scope, and assurance level;
 - useful agent progress without repeated authentication;
 - Tavily-mediated research journey and source provenance;
@@ -479,15 +369,14 @@ The experience must show:
 - the ordered public evidence available before an attempt, structured suspicious
   content signals, the requested effect, the control decision, and whether a
   provider or adapter boundary was crossed;
-- a user-verifying WebAuthn approval showing repository, PR, head commit, squash
-  method, expiry, one-time use, and assurance level;
-- short-lived, single-use terminal-to-browser handoffs only for ceremonies that
-  cannot be completed safely and locally, followed by return to the initiating
-  terminal session;
+- exact launch confirmation showing repository, PR, head, operation, limits and
+  consequences, or separately identified trusted standing deployment consent;
+- no redundant confirmation for ordinary actions already covered by that grant;
+- a sanitized eligible denial followed by useful completion in the same session;
 - local narrow GitHub enrollment without a secret entering the model, mission,
   command arguments, browser URL, or authority database;
-- an explicit contrast between an injected denied attempt that consumes no
-  approval or privileged operation and the independently authorized merge;
+- an explicit contrast between the denied substitution and the original exact
+  action under its existing grant, without treating the denial as new authority;
 - execution result, revocation, and sanitized audit; and
 - clear limitation language for Observed or Unknown environments.
 
@@ -495,11 +384,12 @@ Exit criteria:
 
 - A new viewer can explain what the agent was allowed to do, what it encountered, what it attempted, why Guardian reacted, and what ultimately executed.
 - A new user can begin and resume the complete reference flow from the supported
-  terminal scaffold; the browser appears only for a clearly identified trusted
-  ceremony.
+  native-worker entry point; judge access and confirmation provenance are clear.
 - The UI and setup materials distinguish the Enforced launcher path from an
   Observed or Unknown tool-only integration in an unrestricted harness.
-- The complete happy path and rejection story can be demonstrated in less than three minutes.
+- The complete happy path, rejection and recovery fit below three minutes.
+- Matched baseline measurements report incremental cost/time, task success and
+  approval/authentication interruptions; unknowns and sample sizes remain visible.
 
 ### C9 - Attack and claims gate
 
@@ -512,20 +402,20 @@ Exit criteria:
 - A polluted-page fixture produces a reconstructable evidence-to-attempt-to-denial
   chain without persisting the hostile page, rejected secret-like values, or model
   chain-of-thought, and the UI does not claim temporal association proves causation.
-- A protected self-hosted Linux run retrieves the controlled hostile page through the
-  narrow provider path, denies its unsafe proposal before approval or adapter
-  consumption, then completes a separately passkey-authorized exact squash merge
-  using a locally resolved narrow GitHub credential.
-- WebAuthn origin, challenge binding, user verification, mutation, expiry, and
-  replay tests pass, as do authority-service peer, stale-capability, and direct
-  database-boundary tests.
-- Model-drafted mission activation, handoff mutation, wrong-user, wrong-caller,
-  wrong-session, wrong-return-channel, expiry, replay, agent-click substitution,
-  and false-Enforced tests pass.
+- A protected self-hosted Linux run delivers the controlled untrusted content,
+  rejects a forbidden typed proposal before unauthorized dispatch, and completes
+  the original task in the same session. The exact-merge variant uses its existing
+  launch grant and a locally resolved narrow GitHub credential.
+- Exact grant binding, mutation, expiry, replay, authority-service peer,
+  stale-capability and direct database-boundary tests pass.
+- Model-drafted mission activation, caller/session substitution and false-Enforced
+  tests pass. WebAuthn and browser-handoff-specific acceptance remain deferred;
+  no public identity or user-verification claim is made from development consent.
 - `docs/security-claims.md` names exact commands and evidence for every upgraded claim.
 - Residual risks and prototype limitations are visible in the product and setup materials.
 
-Feature freeze begins when C9 passes.
+Feature freeze is October 12 under ADR-0058. Remaining C9 evidence and critical
+repairs continue after freeze; passing C9 does not reopen optional scope.
 
 ### C10 - Release candidate
 
@@ -555,10 +445,10 @@ Exit criteria:
 ### Required
 
 - One trusted mission-creation path.
-- One terminal-first Guardian launcher and CLI that launch or wrap an external
-  host agent inside the reference constrained runtime.
-- One normalized mission confirmation and short-lived trusted web-ceremony
-  handoff path.
+- One supported Guardian launcher/native-worker path and curated judge surface
+  using the documented constrained runtime.
+- One normalized launch confirmation with exact grant binding, or explicitly
+  identified standing operator consent for fixed judge sessions.
 - One reference constrained interaction-agent runtime.
 - One network-disabled local command executor.
 - One Guardian MCP capability surface.
@@ -566,12 +456,16 @@ Exit criteria:
 - One narrow locally enrolled GitHub connection, one typed read, and one typed
   squash merge.
 - Central authority-service persistence, deterministic mission policy, exact
-  WebAuthn approval, final revalidation, replay protection, and sanitized audit.
+  grant checks, final revalidation, replay protection, and sanitized audit.
 - Nebius Token Factory and Nemotron integration.
 - Mission, assurance, research, approval, denial, and audit UI.
 - Reproducible adversarial evidence and clean-environment setup.
 
-### Deferred unless C9 passes early
+### Deferred beyond the evidence-first competition slice
+
+- WebAuthn and terminal/browser approval ceremony implementation.
+- Custom-task breadth, general multi-hour/multi-goal missions and restart recovery.
+- Local small-model migration and additional harness/provider integrations.
 
 - Tavily Map and Crawl beyond the reference mission's need.
 - Arbitrary third-party terminal-harness enforcement.
@@ -605,11 +499,18 @@ Mandatory reviews:
 - **At C6 close:** the self-hosted Linux authority IPC, database-permission, local
   credential-store, narrow GitHub, and approval-ceremony feasibility review must pass or produce an
   explicit lower-assurance recovery plan before C8 UI freeze.
-- **October 12:** if the complete experience is not demonstrable, freeze architecture and reduce the UI to the shortest coherent path.
-- **October 17:** feature freeze after C9. Accept only evidence, reliability, setup, demo, submission, and critical defect work.
+- **September 18:** if the first denial/recovery journey is incomplete, reduce
+  variant breadth and record an issue-owned recovery plan.
+- **October 12:** freeze architecture and scope; if the experience is incomplete,
+  reduce the UI to the shortest coherent path.
+- **October 17:** review outstanding C9 evidence within the October 12 freeze.
+  Accept only evidence, reliability, setup, demo, submission and critical defects.
 - **October 23:** release-candidate freeze. Use remaining time for rehearsal, recovery, and consistency.
 
-## Time and evidence ledger
+## Historical time and evidence ledger
+
+The dated rows and status snapshot below preserve prior checkpoint evidence.
+They do not supersede the current handoff or September 8 delivery targets.
 
 | Date       | Checkpoint           | Activity                                                                                                           |  Planned |                                                                         Actual | Evidence or output                                                                                                                                                                                   | Variance or blocker                                                                                                         |
 | ---------- | -------------------- | ------------------------------------------------------------------------------------------------------------------ | -------: | -----------------------------------------------------------------------------: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
@@ -659,17 +560,16 @@ At checkpoint close, record:
 - scope or assurance decisions made; and
 - revised forecast based on measured pace.
 
-## Current status
+## Current status (September 8 reconciliation)
 
-| Checkpoint                               | Status      | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| ---------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Gate 0 - Governance foundation           | Passed      | Repository, initial scope, trust boundaries, threat model, claims discipline, competition plan, and governance are established.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| C0 - Product contract                    | Passed      | The enforced-session pivot and consistency review are complete. The unavailable private concept document remains a recorded reconciliation task, not an implementation authority.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| C1 - Enforcement feasibility             | Passed      | Live Nebius proposal, live Tavily research, namespace, filesystem, credential, direct-egress, direct-Git, fake-provider, fail-closed, and tool-denial evidence pass.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| C2 - Stack and session architecture      | Passed      | ADR-0003 accepted; local dependency, workspace, MCP, format, lint, type, test, boundary, audit, license, and build checks pass; the first remote GitHub Actions run passed.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| C3 - Mission and deterministic contracts | Passed      | Strict contracts, scope enforcement, assurance evidence, canonical digests, exact bindings, policy precedence, unit/property tests, security review, and remote CI pass at `65405ff`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| C4 - Reference session runtime           | Passed      | The trusted launcher, exact catalog, lifecycle, profile-bound evidence, disposable command executor, host isolation probes, and remote CI pass at `8d1eee1`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| C5 - Tavily research gateway             | Passed      | PR #12 passed local checks, protected live Tavily evidence, security review, and remote CI, then squash-merged as `6cd1645`; issue #11 is closed.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| C6 - Authorization and GitHub broker     | In progress | PR #14 exact-head squash-merged as `b69e9338d5464cac31d52cf8510256a2d9f21c33`; post-merge `main` CI passed and issue #13 remains open. W19-W23 prove protected Windows credential isolation, Tavily Search/Extract, deterministic and Nemotron no-effect denials, durable audit, exact-head read, and one separately authorized disposable squash merge. W24 actively probes Linux database/socket permissions, W25 verifies kernel peer identity and fail-closed Secret Service resolution, and W26 passes disposable and normal-user Secret Service lifecycles, accepted Linux Nebius enrollment, and protected Qwen/Nemotron consumption. W27 adds provider-service IPC peer authentication and protected Linux consumption; W28 adds the synthetic supervised GitHub harness. C6 is not Passed because broader intended-host containment and source review remain open; W28 now passes real Linux enrollment/read/approved merge. See the September 4 execution record. Successful automatic refresh, WebAuthn, worker-generated dispatch, and the full coordinator remain bounded limitations or later slices, not evidence for closing that Linux criterion. |
-| C7 - Nemotron guardian                   | In progress | W8, W21, and W22 implement and evidence the versioned Nemotron policy, separate minimized envelopes, deterministic-floor monotonicity, strict structured output, Super-to-Ultra escalation, failure denial, a protected Token Factory call, and broker integration. Worker-generated polluted-content dispatch, the evaluation report, intended-Linux containment, and hosted/repeated evidence remain.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| C8-C11                                   | Not started | C8 has design-level ADR-0034 only; later checkpoints remain dependency ordered.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Checkpoint | Status | Current qualification |
+| --- | --- | --- |
+| C0-C5 | Prior gates passed | Retain their recorded evidence and supported-runtime limits. |
+| C6 | In progress | Exact GitHub and grant slices exist; broader containment, credential renewal and integrated acceptance remain open. WebAuthn is deferred by ADR-0058. |
+| C7 | In progress | Local risk/continuation composition and real research success exist; complete live forbidden-request denial/recovery and the evaluation report remain open. |
+| C8 | Partially implemented | Portal, preview, grant and bounded worker components exist; coherent live judge acceptance, lifecycle/audit and ordinary access remain incomplete. |
+| C9 | Evidence incomplete | Existing negative tests are retained; the showcased live chain, repeated outcomes and final claims review remain. |
+| C10-C11 | Pending | Release candidate and submission gates have not passed. |
+
+Use the current handoff for source identity and the latest completed experiment.
+A dated ledger row cannot establish current deployment or upgrade assurance.

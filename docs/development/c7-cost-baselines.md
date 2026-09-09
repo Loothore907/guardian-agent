@@ -1,5 +1,11 @@
 # C7 mission cost baselines
 
+September 8 measurement update: these remain whole-journey planning forecasts.
+They do not measure Guardian's incremental overhead. Use the matched-baseline
+[cost and interruption protocol](evidence-first-delivery-plan.md#cost-and-interruption-benchmark)
+before making latency, cost or approval-fatigue claims. No rate or admission
+ceiling changes in this documentation revision.
+
 - Status: approved planning ranges; not live spending authority
 - Date: 2026-09-06
 - Machine-readable source:
