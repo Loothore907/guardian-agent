@@ -9,7 +9,8 @@ loss, worker rejection and supported formatting changes. They run in `pnpm check
 See [diagnosis and the extraction-only proposal](evidence/2026-09-10-t1-exposure-readiness.md).
 Next execution proposal: verify current origin identity, then at most one Basic
 Extract, with in-memory offline worker projection and zero model calls. The
-proposal is pending approval and exact runner/packet freeze; no paid call has run
+proposal is pending approval; its prepared runner passed seven offline checks and
+the closeout packet must bind the integrated source and runtime. No paid call ran
 in this offline follow-up. Do not rerun the two-case batch before readiness passes.
 
 Both neutral sessions on reviewed main d9d57bae4177db058d012c8656045ea53b84ad53

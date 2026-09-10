@@ -112,8 +112,16 @@ of the stopped grant.
   exercise its zero-network path before opening the credential reader.
 
 This proposal defines the operation; it does not itself authorize a provider call.
-The live runner/packet must bind these limits and exact integrated source before
-execution. The production worker projection is exercised offline; no claim that a
+The private runner is prepared at `tmp/t1-extraction-readiness-20260910/run-probe.mjs`.
+Seven offline orchestration checks passed, including origin mismatch/size stops,
+complete/partial/truncated/redacted content, wrong source/provider error handling,
+and CLI refusal without explicit execution mode. The runner requires an exact
+packet/runner-hash approval record and creates its attempt directory exclusively;
+no approval record or live attempt was created during preparation. The closeout
+packet binds the reviewed integrated source, built runtime hashes and absolute
+expiry before any execution. These private harness artifacts remain distinct
+from the versioned production code and from the unchanged v2 batch.
+The production worker projection is exercised offline; no claim that a
 real model consumed this extraction can follow from the probe.
 
 ## Decision after the probe
