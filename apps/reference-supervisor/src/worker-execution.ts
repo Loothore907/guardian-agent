@@ -9,6 +9,9 @@ import {
   type LocalCommandResult,
   type SessionWorkspaceResult,
   type WorkerBoundaryFailureCode,
+  type WorkerAuditEventInput,
+  type WorkerDenialCause,
+  type WorkerDenialStage,
   type WorkerExecutionAuthorization,
   type WorkerToolExecutionEnvelope,
   type WorkerToolResult,
@@ -139,11 +142,30 @@ export class TrustedWorkerToolDispatcher {
     }
   }
 
+  async #audit(
+    execution: WorkerToolExecutionEnvelope,
+    event: WorkerAuditEventInput,
+  ): Promise<void> {
+    if (this.#authority.recordWorkerAuditEvent === undefined) {
+      if (execution.continuation === undefined) return;
+      return await this.#interrupt(execution, "authority_unavailable", "authority_unavailable");
+    }
+    try {
+      await this.#authority.recordWorkerAuditEvent(execution.sessionId, event);
+    } catch {
+      return await this.#interrupt(execution, "authority_unavailable", "authority_unavailable");
+    }
+  }
+
   async #denialResult(
     execution: WorkerToolExecutionEnvelope,
     authorization: WorkerExecutionAuthorization,
     expiresAt: string,
     commonResult: Record<string, unknown>,
+    classification?: {
+      readonly cause: WorkerDenialCause;
+      readonly stage: WorkerDenialStage;
+    },
   ): Promise<WorkerToolResult> {
     if (authorization.outcome === "unavailable") {
       if (authorization.reason === "revoked") this.#revokeRuntime();
@@ -169,6 +191,7 @@ export class TrustedWorkerToolDispatcher {
           disposition: authorization.disposition,
           policyId: authorization.policyId,
           policyVersion: authorization.policyVersion,
+          ...(classification === undefined ? {} : classification),
         },
       },
       execution,
@@ -180,6 +203,10 @@ export class TrustedWorkerToolDispatcher {
     code: WorkerViolationCode,
     expiresAt: string,
     commonResult: Record<string, unknown>,
+    classification?: {
+      readonly cause: WorkerDenialCause;
+      readonly stage: WorkerDenialStage;
+    },
   ): Promise<WorkerToolResult> {
     let authorization: WorkerExecutionAuthorization;
     try {
@@ -193,7 +220,62 @@ export class TrustedWorkerToolDispatcher {
       this.#interruptRuntime();
       throw new WorkerToolExecutionError("authority_unavailable");
     }
-    return await this.#denialResult(execution, authorization, expiresAt, commonResult);
+    return await this.#denialResult(
+      execution,
+      authorization,
+      expiresAt,
+      commonResult,
+      classification,
+    );
+  }
+
+  async #auditExternalDenial(
+    execution: WorkerToolExecutionEnvelope,
+    result: WorkerToolResult,
+    classification: { readonly cause: WorkerDenialCause; readonly stage: WorkerDenialStage },
+    includeProposal: boolean,
+  ): Promise<void> {
+    if (includeProposal) {
+      await this.#audit(execution, {
+        type: "proposal.received",
+        proposalId: execution.executionId,
+        boundaryId: execution.executionId,
+        boundaryDigest: execution.executionDigest,
+        operation: execution.request.name as
+          "guardian.research" | "github.pull_request.read" | "github.pull_request.merge",
+      });
+    }
+    await this.#audit(execution, {
+      type: "policy.decided",
+      boundaryId: execution.executionId,
+      boundaryDigest: execution.executionDigest,
+      requestDigest: execution.requestDigest,
+      level: "deny",
+      reasonCodes: ["scope_expansion"],
+      denialCause: classification.cause,
+      denialStage: classification.stage,
+    });
+    await this.#audit(execution, {
+      type: "execution.result",
+      boundaryId: execution.executionId,
+      boundaryDigest: execution.executionDigest,
+      requestDigest: execution.requestDigest,
+      outcome: "denied",
+      resultCode:
+        classification.cause === "resource_changed" ? "resource_changed" : "request_mismatch",
+      providerBoundary: "not_crossed",
+      adapterBoundary: "not_crossed",
+    });
+    await this.#audit(execution, {
+      type: "worker.feedback.returned",
+      boundaryId: execution.executionId,
+      boundaryDigest: execution.executionDigest,
+      requestDigest: execution.requestDigest,
+      resultDigest: result.resultDigest,
+      outcome: "denied",
+      denialCause: classification.cause,
+      denialStage: classification.stage,
+    });
   }
 
   async execute(executionValue: unknown): Promise<WorkerToolResult> {
@@ -282,12 +364,19 @@ export class TrustedWorkerToolDispatcher {
         if (!permission.allowed) {
           const denial = denialClassification(permission);
           if (denial.kind === "failure") throw new WorkerToolExecutionError(denial.reason);
-          return await this.#recordViolation(
+          const classification = {
+            cause: "destination_not_allowed" as const,
+            stage: "session_plan_policy" as const,
+          };
+          const denied = await this.#recordViolation(
             execution,
             denial.code,
             status.expiresAt,
             commonResult,
+            classification,
           );
+          await this.#auditExternalDenial(execution, denied, classification, true);
+          return denied;
         }
         let claim: WorkerExecutionAuthorization;
         try {
@@ -301,19 +390,38 @@ export class TrustedWorkerToolDispatcher {
         }
         if (claim.outcome !== "allowed")
           return await this.#denialResult(execution, claim, status.expiresAt, commonResult);
+        await this.#audit(execution, {
+          type: "proposal.received",
+          proposalId: execution.executionId,
+          boundaryId: execution.executionId,
+          boundaryDigest: execution.executionDigest,
+          operation: execution.request.name,
+        });
         let result: Awaited<ReturnType<WorkerExternalTools["execute"]>>;
         try {
           result = await this.#externalTools.execute(execution);
         } catch {
           return await this.#interrupt(execution, "tool_unavailable", "tool_unavailable");
         }
-        if (result.outcome === "denied")
-          return await this.#recordViolation(
+        if (result.outcome === "denied") {
+          const denied = await this.#recordViolation(
             execution,
             "tool_not_allowed",
             status.expiresAt,
             commonResult,
+            { cause: result.cause, stage: result.stage },
           );
+          await this.#auditExternalDenial(
+            execution,
+            denied,
+            {
+              cause: result.cause,
+              stage: result.stage,
+            },
+            false,
+          );
+          return denied;
+        }
         if (result.name !== execution.request.name)
           return await this.#interrupt(execution, "result_invalid", "tool_unavailable");
         let budget: DurableSessionBudget | null;
@@ -330,7 +438,25 @@ export class TrustedWorkerToolDispatcher {
           this.#runtime.status(completedAt).state !== "active"
         )
           return await this.#interrupt(execution, "tool_unavailable", "expired");
-        return await this.#result(
+        await this.#audit(execution, {
+          type: "policy.decided",
+          boundaryId: execution.executionId,
+          boundaryDigest: execution.executionDigest,
+          requestDigest: execution.requestDigest,
+          level: "allow",
+          reasonCodes: ["within_scope"],
+        });
+        await this.#audit(execution, {
+          type: "execution.result",
+          boundaryId: execution.executionId,
+          boundaryDigest: execution.executionDigest,
+          requestDigest: execution.requestDigest,
+          outcome: "succeeded",
+          resultCode: "ok",
+          providerBoundary: "crossed",
+          adapterBoundary: "crossed",
+        });
+        const workerResult = await this.#result(
           {
             ...commonResult,
             outcome: result.outcome,
@@ -344,6 +470,15 @@ export class TrustedWorkerToolDispatcher {
           },
           execution,
         );
+        await this.#audit(execution, {
+          type: "worker.feedback.returned",
+          boundaryId: execution.executionId,
+          boundaryDigest: execution.executionDigest,
+          requestDigest: execution.requestDigest,
+          resultDigest: workerResult.resultDigest,
+          outcome: "succeeded",
+        });
+        return workerResult;
       }
       case "guardian.session_status": {
         const authorization = this.#runtime.authorizeSessionStatusCall(evaluatedAt);

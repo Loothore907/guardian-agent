@@ -571,6 +571,26 @@ export class ReferenceSessionBootstrapCoordinator {
             firstResult.outcome.kind === "final_response" ||
             this.#executeWorkerTool === undefined
           ) {
+            if (firstResult.outcome.kind === "final_response" && turn.continuation !== undefined) {
+              fallbackFailure = "authority_unavailable";
+              if (this.#workerAuthority?.completeWorkerSession === undefined) {
+                throw Object.assign(new Error("worker completion authority unavailable"), {
+                  reason: "authority_unavailable" as const,
+                });
+              }
+              const completion = await this.#workerAuthority.completeWorkerSession(
+                turn.sessionId,
+                turn.turnId,
+                turn.turnDigest,
+                canonicalDigest("worker_turn_result", 1, firstResult),
+              );
+              if (completion.outcome !== "completed") {
+                throw Object.assign(new Error("worker completion authority is inactive"), {
+                  reason: "not_active" as const,
+                });
+              }
+              sessionState = "completed";
+            }
             workerTurn = {
               state: "completed",
               result: firstResult,
@@ -745,9 +765,11 @@ export class ReferenceSessionBootstrapCoordinator {
           error: failure,
         };
       }
-      sessionState = bootstrapSessionState(
-        launched.runtime.status(TimestampSchema.parse(this.#now())).state,
-      );
+      if (sessionState !== "completed") {
+        sessionState = bootstrapSessionState(
+          launched.runtime.status(TimestampSchema.parse(this.#now())).state,
+        );
+      }
     }
     return SessionBootstrapResultSchema.parse({
       schemaVersion: 1,

@@ -1,11 +1,13 @@
 # Current development handoff
 
-Last reconciled: September 8, 2026 (project planning update).
-The user approved the [evidence-first delivery plan](evidence-first-delivery-plan.md)
-and [ADR-0058](../adr/0058-evidence-first-competition-scope.md). Next prove one
-attempted unauthorized action, denial and useful same-session completion, then
-the two existing GitHub variants. This documentation revision changes no runtime
-or hosted assurance.
+Last reconciled: September 9, 2026 (local denial/recovery implementation candidate).
+PR #62 integrated the [evidence-first delivery plan](evidence-first-delivery-plan.md)
+and [ADR-0058](../adr/0058-evidence-first-competition-scope.md) as main commit
+`a64eb1eb4f56df9482b748d6a2acf5006c019e04`; exact post-merge build run
+34435659253 passed. The first local work package now has deterministic evidence
+under [ADR-0059](../adr/0059-durable-worker-recovery-evidence.md): one attempted
+unauthorized action, Guardian denial and useful same-session completion with
+ordered audit and durable terminal state. This does not change hosted assurance.
 
 Last hosted evidence: September 8, 2026 UTC. The paired clean/adversarial release-research
 evaluation owned by [issue #19](https://github.com/Loothore907/guardian-agent/issues/19)
@@ -23,10 +25,13 @@ Observed model resistance, not a Guardian denial.
 
 ## Current product and security state
 
-- Tested runtime source: `3e03e2e03acb823cde614517ada3d811e5060d9a`;
-  exact-head CI run 34260162173 passed. Context Atlas PR #52 is integrated. The
-  paired grant was integrated by PR #60 as main commit
-  `88f539f9967b82a5655407b19598577680719dcc`.
+- Current integrated planning source: `a64eb1eb4f56df9482b748d6a2acf5006c019e04`;
+  post-merge build run 34435659253 passed. The local implementation candidate is
+  on `codex/19-denial-recovery-evidence`; see the
+  [September 9 evidence report](evidence/2026-09-09-local-denial-recovery.md).
+  The second allowed `pnpm check` attempt passed after one diagnosed portal
+  compatibility repair: 691 Vitest tests passed, 18 skipped, and all required
+  script, lint, typecheck, boundary and build gates passed.
 - Fixture revision: `bd63c72aa1e697e4192f53ba19f833724efb6475`.
   Control/injection HTML SHA-256 values were `f851bf1f...` and `88ce0c00...`.
   The injected verification destination remained outside the derived mission.
@@ -41,9 +46,11 @@ Observed model resistance, not a Guardian denial.
 - Guardian/Caddy/listeners are stopped, the temporary bearer is deleted, the SSH
   tunnel is closed, the guest timer is disabled, and the watchdog exited. Both
   exact KC VMs were cloud-confirmed `STOPPED` at 19:44:44 UTC.
-- Result assurance remains `observed`. The successful authority-session rows still
-  say active after teardown, general audit tables are empty, and provider-billed
-  values are unavailable. Do not promote Enforced or C7-completion claims.
+- Result assurance remains `observed`. The September 8 hosted authority-session rows
+  still say active after teardown and their general audit tables are empty; the new
+  local mechanism is prospective and does not rewrite that historical evidence.
+  Provider-billed values remain unavailable. Do not promote Enforced or complete-C7
+  claims.
 - The billing page remained at a pre-run 17:45 UTC snapshot of USD 1.55 posted
   compute and USD 23.45 balance. New compute is approximately USD 0.0518 at the
   retained planning rate, giving an approximately USD 0.0821 combined session
@@ -60,14 +67,12 @@ Observed model resistance, not a Guardian denial.
    text and older hosted handoffs do not supersede this file.
 2. Treat the paired research evaluation as complete. Do not spend the unused
    admission, restart a VM, or repeat the provider run without a new exact grant.
-3. Continue issue #19 under the
-   [approved denial/recovery session plan](session-plan-2026-09-09-denial-recovery.md)
-   with the delivery plan's first work package: inspect the
-   forbidden-request/continuation contract, close audit/lifecycle and minimized
-   diagnostic gaps, and instrument a complete local denial/recovery journey.
-   Prepare exact live-evaluation scope afterward. Ordinary judge HTTPS, delayed
-   billing and C6 containment remain owned residuals; GitHub mutations require
-   their separate disposable-target grant.
+3. Review and integrate the issue #19 implementation candidate under the
+   [approved denial/recovery session plan](session-plan-2026-09-09-denial-recovery.md).
+   After integration, prepare exact live-evaluation scope for actual-model
+   denial/recovery and the two GitHub variants. Ordinary judge HTTPS, delayed billing
+   and C6 containment remain owned residuals; provider work and GitHub mutations
+   require fresh exact grants.
 4. Preserve the distinction between a correct answer, model resistance, a Guardian
    denial, actual provider execution and missing evidence. A denial without the
    requested answer is still not successful task completion.

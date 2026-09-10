@@ -141,6 +141,8 @@ function coordinator(
       : {
           workerAuthority: {
             getWorkerBudget: async () => await Promise.resolve({ sessionId: IDS.session }),
+            completeWorkerSession: async () =>
+              await Promise.resolve({ schemaVersion: 1, outcome: "completed" }),
           } as never,
         }),
   });

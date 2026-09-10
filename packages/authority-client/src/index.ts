@@ -36,6 +36,9 @@ import {
   type DurableSessionRecord,
   type EvidenceExposureRecord,
   type ExactApproval,
+  type AuditEvent,
+  type WorkerAuditEventInput,
+  type WorkerBoundaryCompletion,
   type WorkerBoundaryFailureCode,
   type WorkerBoundaryInterruption,
   type WorkerExecutionAuthorization,
@@ -195,6 +198,13 @@ export interface AuthorityWorkerClient {
     boundaryDigest: unknown,
     code: WorkerViolationCode,
   ): Promise<WorkerExecutionAuthorization>;
+  recordWorkerAuditEvent?(sessionId: unknown, event: WorkerAuditEventInput): Promise<AuditEvent>;
+  completeWorkerSession?(
+    sessionId: unknown,
+    boundaryId: unknown,
+    boundaryDigest: unknown,
+    resultDigest: unknown,
+  ): Promise<WorkerBoundaryCompletion>;
   interruptWorkerSession(
     sessionId: unknown,
     boundaryId: unknown,
@@ -494,6 +504,38 @@ export class LocalAuthorityIpcClient
       code,
     });
     if (response.operation !== "worker.record_violation") {
+      throw new AuthorityIpcError("authority_unavailable");
+    }
+    return response.result;
+  }
+
+  async recordWorkerAuditEvent(
+    sessionIdValue: unknown,
+    event: WorkerAuditEventInput,
+  ): Promise<AuditEvent> {
+    const sessionId = OpaqueIdSchema.parse(sessionIdValue);
+    if (sessionId !== this.#binding.sessionId) throw new AuthorityIpcError("binding_mismatch");
+    const response = await this.#call("worker.audit", { event });
+    if (response.operation !== "worker.audit") {
+      throw new AuthorityIpcError("authority_unavailable");
+    }
+    return response.result;
+  }
+
+  async completeWorkerSession(
+    sessionIdValue: unknown,
+    boundaryIdValue: unknown,
+    boundaryDigestValue: unknown,
+    resultDigestValue: unknown,
+  ): Promise<WorkerBoundaryCompletion> {
+    const sessionId = OpaqueIdSchema.parse(sessionIdValue);
+    if (sessionId !== this.#binding.sessionId) throw new AuthorityIpcError("binding_mismatch");
+    const response = await this.#call("worker.complete", {
+      boundaryId: OpaqueIdSchema.parse(boundaryIdValue),
+      boundaryDigest: Sha256DigestSchema.parse(boundaryDigestValue),
+      resultDigest: Sha256DigestSchema.parse(resultDigestValue),
+    });
+    if (response.operation !== "worker.complete") {
       throw new AuthorityIpcError("authority_unavailable");
     }
     return response.result;

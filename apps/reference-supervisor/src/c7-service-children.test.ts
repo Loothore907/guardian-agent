@@ -4,6 +4,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { DatabaseSync } from "node:sqlite";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LocalAuthorityIpcClient, createAuthorityIpcEndpoint } from "@guardian/authority-client";
 import { DevelopmentAuthorizationIssuer } from "@guardian/authorization-service";
@@ -12,6 +13,7 @@ import { createWorkerIpcCredentials, LocalWorkerIpcClient } from "@guardian/work
 import { createResearchIpcCredentials } from "@guardian/research";
 import {
   ControlledContentJourneyResultSchema,
+  AuditEventSchema,
   type AuthorityCapabilityBinding,
   type AuthorityCallerRole,
   type AuthorityIpcOperation,
@@ -163,6 +165,8 @@ describe("C7 synthetic service-child integration (not live model evidence)", () 
         "worker.claim_external",
         "worker.budget",
         "worker.record_violation",
+        "worker.audit",
+        "worker.complete",
         "worker.interrupt",
       ]);
       const authBinding = binding("authorization_service", [
@@ -173,6 +177,7 @@ describe("C7 synthetic service-child integration (not live model evidence)", () 
         "plan.pending",
       ]);
       const endpoint = createAuthorityIpcEndpoint();
+      const authorityStorePath = join(directory, "authority.sqlite");
       const target = {
         operation: scenario === "merge" ? "github.pull_request.merge" : "github.pull_request.read",
         owner: "fixture",
@@ -211,7 +216,7 @@ describe("C7 synthetic service-child integration (not live model evidence)", () 
               schemaVersion: 1,
               serviceInstanceId: randomUUID(),
               endpoint,
-              authorityStorePath: join(directory, "authority.sqlite"),
+              authorityStorePath,
               workspaceRoots: [],
               capabilities: [
                 launcherBinding,
@@ -476,10 +481,9 @@ describe("C7 synthetic service-child integration (not live model evidence)", () 
             tools: tools.map((t) => ({ name: t.name, outcome: t.outcome })),
           }),
         ).toMatchObject({ state: "completed", result: { outcome: { kind: "final_response" } } });
+        expect(result.state).toBe("completed");
         expect(tools.map((t) => t.outcome)).toEqual(
-          scenario === "merge" || scenario === "research"
-            ? ["succeeded", "denied", "succeeded"]
-            : ["succeeded", "denied"],
+          scenario === "merge" ? ["succeeded", "denied", "succeeded"] : ["succeeded", "denied"],
         );
         if (scenario === "research") {
           const sequences = tools.flatMap((t) =>
@@ -487,13 +491,92 @@ describe("C7 synthetic service-child integration (not live model evidence)", () 
               ? [ControlledContentJourneyResultSchema.parse(t.output).provenance.sequence]
               : [],
           );
-          expect(sequences).toHaveLength(2);
-          expect(sequences[1]).toBeGreaterThan(sequences[0] ?? Number.MAX_SAFE_INTEGER);
+          expect(sequences).toHaveLength(1);
+          if (
+            result.workerTurn.state !== "completed" ||
+            result.workerTurn.result.outcome.kind !== "final_response"
+          ) {
+            throw new TypeError("research journey did not return a final response");
+          }
+          expect(result.workerTurn.result.outcome.response).toMatch(
+            /October 1.*2\.4.*fixture\.example\.org\/update/u,
+          );
         }
+        expect(tools[1]).toMatchObject({
+          outcome: "denied",
+          denial: {
+            code: "request_denied",
+            disposition: "continue",
+            cause: scenario === "research" ? "url_not_allowed" : "destination_not_allowed",
+            stage: scenario === "research" ? "research_request_policy" : "session_plan_policy",
+          },
+        });
+        const beforeDenial = tools[0]?.remainingBudget;
+        const afterDenial = tools[1]?.remainingBudget;
+        if (beforeDenial === undefined || afterDenial === undefined) {
+          throw new TypeError("denial budget evidence is unavailable");
+        }
+        const { remainingDurationSeconds: beforeDuration, ...beforeCounters } = beforeDenial;
+        const { remainingDurationSeconds: afterDuration, ...afterCounters } = afterDenial;
+        expect(afterCounters).toEqual(beforeCounters);
+        expect(afterDuration).toBeLessThanOrEqual(beforeDuration);
         expect(JSON.stringify(tools)).not.toContain("ghu_c7_synthetic");
-        expect((await worker.getWorkerBudget(sessionId))?.remainingToolCalls).toBe(
-          scenario === "merge" || scenario === "research" ? 18 : 19,
-        );
+        expect(await worker.getWorkerBudget(sessionId)).toBeNull();
+        const database = new DatabaseSync(authorityStorePath, { readOnly: true });
+        try {
+          expect(
+            database.prepare("SELECT status FROM sessions WHERE session_id = ?").get(sessionId),
+          ).toEqual({ status: "completed" });
+          expect(
+            database
+              .prepare(
+                "SELECT remaining_tool_calls AS remainingToolCalls FROM session_budgets WHERE session_id = ?",
+              )
+              .get(sessionId),
+          ).toEqual({ remainingToolCalls: scenario === "merge" ? 18 : 19 });
+          const audit = database
+            .prepare(
+              "SELECT event_json AS eventJson FROM audit_events WHERE session_id = ? ORDER BY sequence",
+            )
+            .all(sessionId)
+            .map((row) => AuditEventSchema.parse(JSON.parse(String(row.eventJson))));
+          expect(audit.map((event) => event.sequence)).toEqual(
+            Array.from({ length: audit.length }, (_, index) => index + 1),
+          );
+          expect(audit.map((event) => event.type)).toEqual([
+            "proposal.received",
+            "policy.decided",
+            "execution.result",
+            "worker.feedback.returned",
+            "proposal.received",
+            "policy.decided",
+            "execution.result",
+            "worker.feedback.returned",
+            ...(scenario === "merge"
+              ? [
+                  "proposal.received",
+                  "policy.decided",
+                  "execution.result",
+                  "worker.feedback.returned",
+                ]
+              : []),
+            "worker.completion.returned",
+            "session.terminal",
+          ]);
+          expect(
+            audit.find((event) => event.type === "policy.decided" && event.level === "deny"),
+          ).toMatchObject({
+            denialCause: scenario === "research" ? "url_not_allowed" : "destination_not_allowed",
+            denialStage:
+              scenario === "research" ? "research_request_policy" : "session_plan_policy",
+          });
+          expect(
+            audit.find((event) => event.type === "execution.result" && event.outcome === "denied"),
+          ).toMatchObject({ providerBoundary: "not_crossed", adapterBoundary: "not_crossed" });
+          expect(audit.at(-1)).toMatchObject({ type: "session.terminal", state: "completed" });
+        } finally {
+          database.close();
+        }
       } finally {
         vi.useRealTimers();
         syntheticClock = undefined;

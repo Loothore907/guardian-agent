@@ -185,7 +185,7 @@ describe("Nebius native worker provider", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("projects only the public denial code and disposition into the final turn", async () => {
+  it("projects only the allowlisted denial classification into the final turn", async () => {
     const credentialStore = new InMemoryCredentialStore();
     await credentialStore.write(
       nativeWorkerBoundary.credential,
@@ -223,6 +223,8 @@ describe("Nebius native worker provider", () => {
         disposition: "continue",
         policyId: "reference-worker-violations-2026-09-02",
         policyVersion: 1,
+        cause: "url_not_allowed",
+        stage: "research_request_policy",
       },
     });
     const nextDenialInput = { ...denial, sourceTurnNumber: 2 };
@@ -265,6 +267,8 @@ describe("Nebius native worker provider", () => {
     if (typeof init?.body !== "string") throw new TypeError("provider body was not text");
     expect(init.body).toContain("request_denied");
     expect(init.body).toContain("continue");
+    expect(init.body).toContain("url_not_allowed");
+    expect(init.body).toContain("research_request_policy");
     expect(init.body).not.toContain("filesystem_not_allowed");
     expect(init.body).not.toContain("reference-worker-violations");
   });

@@ -7,6 +7,7 @@ import { DatabaseSync, type StatementResultingChanges } from "node:sqlite";
 import {
   ApprovalConsumptionRequestSchema,
   AuditEventSchema,
+  WorkerAuditEventInputSchema,
   AuthorityAttemptRecordSchema,
   AuthorityDecisionRecordSchema,
   DurableConnectionRecordSchema,
@@ -18,6 +19,7 @@ import {
   Sha256DigestSchema,
   TimestampSchema,
   WorkerBoundaryFailureCodeSchema,
+  WorkerBoundaryCompletionSchema,
   WorkerBoundaryInterruptionSchema,
   WorkerExecutionAuthorizationSchema,
   WorkerViolationCodeSchema,
@@ -25,6 +27,7 @@ import {
   workerViolationSeverity,
   type ApprovalConsumptionRequest,
   type AuditEvent,
+  type WorkerAuditEventInput,
   type AuthorityAttemptRecord,
   type AuthorityDecisionRecord,
   type DurableConnectionRecord,
@@ -33,11 +36,12 @@ import {
   type EvidenceExposureRecord,
   type ExactApproval,
   type WorkerBoundaryInterruption,
+  type WorkerBoundaryCompletion,
   type WorkerExecutionAuthorization,
   type WorkerViolationCode,
 } from "@guardian/contracts";
 
-const AUTHORITY_SCHEMA_VERSION = 6;
+const AUTHORITY_SCHEMA_VERSION = 7;
 
 const WORKER_BOUNDARY_EVENTS_SQL = `
   CREATE TABLE worker_boundary_events (
@@ -159,6 +163,7 @@ export class SqliteAuthorityStore {
       version !== 3 &&
       version !== 4 &&
       version !== 5 &&
+      version !== 6 &&
       version !== AUTHORITY_SCHEMA_VERSION
     ) {
       throw new TypeError("authority store schema version is unsupported");
@@ -177,7 +182,7 @@ export class SqliteAuthorityStore {
             policy_version INTEGER NOT NULL,
             starts_at TEXT NOT NULL,
             expires_at TEXT NOT NULL,
-            status TEXT NOT NULL CHECK (status IN ('active', 'interrupted', 'revoked', 'expired')),
+            status TEXT NOT NULL CHECK (status IN ('active', 'completed', 'interrupted', 'revoked', 'expired')),
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL
           ) STRICT;
@@ -363,6 +368,38 @@ export class SqliteAuthorityStore {
       PRAGMA user_version = 6;
     `),
       );
+    if (version < 7) {
+      this.#database.exec("PRAGMA foreign_keys = OFF;");
+      try {
+        this.#immediate(() =>
+          this.#database.exec(`
+            CREATE TABLE sessions_v7 (
+              session_id TEXT PRIMARY KEY NOT NULL,
+              caller_id TEXT NOT NULL,
+              mission_id TEXT NOT NULL,
+              mission_version INTEGER NOT NULL,
+              profile_id TEXT NOT NULL,
+              profile_version INTEGER NOT NULL,
+              policy_version INTEGER NOT NULL,
+              starts_at TEXT NOT NULL,
+              expires_at TEXT NOT NULL,
+              status TEXT NOT NULL CHECK (status IN ('active', 'completed', 'interrupted', 'revoked', 'expired')),
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL
+            ) STRICT;
+            INSERT INTO sessions_v7 SELECT * FROM sessions;
+            DROP TABLE sessions;
+            ALTER TABLE sessions_v7 RENAME TO sessions;
+            PRAGMA user_version = 7;
+          `),
+        );
+      } finally {
+        this.#database.exec("PRAGMA foreign_keys = ON;");
+      }
+      if (this.#database.prepare("PRAGMA foreign_key_check").get() !== undefined) {
+        throw new TypeError("authority store migration violated a foreign key");
+      }
+    }
     if (process.platform !== "win32") {
       const owner = process.getuid?.();
       if (owner === undefined) {
@@ -846,6 +883,99 @@ export class SqliteAuthorityStore {
     });
   }
 
+  recordWorkerAuditEvent(sessionIdValue: unknown, eventValue: unknown): AuditEvent {
+    const sessionId = OpaqueIdSchema.parse(sessionIdValue);
+    const event: WorkerAuditEventInput = WorkerAuditEventInputSchema.parse(eventValue);
+    const occurredAt = TimestampSchema.parse(this.#now());
+    return this.#immediate(() => {
+      this.#assertWorkerBoundaryClock(sessionId, occurredAt);
+      const session = this.getSession(sessionId);
+      if (
+        session === null ||
+        session.status !== "active" ||
+        Date.parse(occurredAt) < Date.parse(session.startsAt) ||
+        Date.parse(occurredAt) >= Date.parse(session.expiresAt) ||
+        this.getSessionPlan(sessionId)?.revoked
+      ) {
+        throw new TypeError("worker audit requires active exact session authority");
+      }
+      const execution = this.#database
+        .prepare(
+          `SELECT 1 AS present FROM worker_tool_executions
+           WHERE session_id = ? AND execution_id = ? AND execution_digest = ?`,
+        )
+        .get(sessionId, event.boundaryId, event.boundaryDigest);
+      const boundaryEvent = this.#database
+        .prepare(
+          `SELECT 1 AS present FROM worker_boundary_events
+           WHERE session_id = ? AND boundary_id = ? AND boundary_digest = ?`,
+        )
+        .get(sessionId, event.boundaryId, event.boundaryDigest);
+      if (execution === undefined && boundaryEvent === undefined) {
+        throw new TypeError("worker audit event does not bind a claimed or denied execution");
+      }
+      return this.#appendNextAuditEventInTransaction(sessionId, occurredAt, event);
+    });
+  }
+
+  completeWorkerSession(
+    sessionIdValue: unknown,
+    boundaryIdValue: unknown,
+    boundaryDigestValue: unknown,
+    resultDigestValue: unknown,
+  ): WorkerBoundaryCompletion {
+    const sessionId = OpaqueIdSchema.parse(sessionIdValue);
+    const boundaryId = OpaqueIdSchema.parse(boundaryIdValue);
+    const boundaryDigest = Sha256DigestSchema.parse(boundaryDigestValue);
+    const resultDigest = Sha256DigestSchema.parse(resultDigestValue);
+    const completedAt = TimestampSchema.parse(this.#now());
+    return this.#immediate(() => {
+      this.#assertWorkerBoundaryClock(sessionId, completedAt);
+      const session = this.getSession(sessionId);
+      if (
+        session === null ||
+        session.status !== "active" ||
+        Date.parse(completedAt) < Date.parse(session.startsAt) ||
+        Date.parse(completedAt) >= Date.parse(session.expiresAt) ||
+        this.getSessionPlan(sessionId)?.revoked
+      ) {
+        if (
+          session?.status === "active" &&
+          Date.parse(completedAt) >= Date.parse(session.expiresAt)
+        ) {
+          this.#database
+            .prepare(
+              "UPDATE sessions SET status = 'expired', updated_at = ? WHERE session_id = ? AND status = 'active'",
+            )
+            .run(completedAt, sessionId);
+        }
+        return WorkerBoundaryCompletionSchema.parse({
+          schemaVersion: 1,
+          outcome: "already_inactive",
+        });
+      }
+      this.#appendNextAuditEventInTransaction(sessionId, completedAt, {
+        type: "worker.completion.returned",
+        boundaryId,
+        boundaryDigest,
+        resultDigest,
+      });
+      const updated = this.#database
+        .prepare(
+          "UPDATE sessions SET status = 'completed', updated_at = ? WHERE session_id = ? AND status = 'active'",
+        )
+        .run(completedAt, sessionId);
+      if (changes(updated) !== 1) throw new TypeError("worker session completion was not atomic");
+      this.#appendNextAuditEventInTransaction(sessionId, completedAt, {
+        type: "session.terminal",
+        boundaryId,
+        boundaryDigest,
+        state: "completed",
+      });
+      return WorkerBoundaryCompletionSchema.parse({ schemaVersion: 1, outcome: "completed" });
+    });
+  }
+
   #workerSessionUnavailable(
     sessionId: string,
     evaluatedAt: string,
@@ -1224,6 +1354,36 @@ export class SqliteAuthorityStore {
           JSON.stringify(event),
         );
     });
+  }
+
+  #appendNextAuditEventInTransaction(
+    sessionId: string,
+    occurredAt: string,
+    details: Record<string, unknown>,
+  ): AuditEvent {
+    const latest = this.#database
+      .prepare(
+        "SELECT sequence, occurred_at AS occurredAt FROM audit_events WHERE session_id = ? ORDER BY sequence DESC LIMIT 1",
+      )
+      .get(sessionId);
+    if (typeof latest?.occurredAt === "string" && latest.occurredAt > occurredAt) {
+      throw new TypeError("authority store clock precedes the latest audit event");
+    }
+    const event = AuditEventSchema.parse({
+      schemaVersion: 1,
+      eventId: randomUUID(),
+      sessionId,
+      sequence: Number(latest?.sequence ?? 0) + 1,
+      occurredAt,
+      sanitized: true,
+      ...details,
+    });
+    this.#database
+      .prepare(
+        "INSERT INTO audit_events(event_id, session_id, sequence, occurred_at, event_json) VALUES (?, ?, ?, ?, ?)",
+      )
+      .run(event.eventId, event.sessionId, event.sequence, event.occurredAt, JSON.stringify(event));
+    return event;
   }
 
   listAuditEvents(sessionIdValue: unknown): readonly AuditEvent[] {

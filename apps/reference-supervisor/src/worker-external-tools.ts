@@ -6,6 +6,8 @@ import {
   type ControlledContentJourneyResult,
   type GitHubPullRequestSnapshot,
   type GitHubMergeResult,
+  type WorkerDenialCause,
+  type WorkerDenialStage,
 } from "@guardian/contracts";
 import {
   ResearchIpcError,
@@ -33,7 +35,13 @@ export type ExternalWorkerResult =
       output: GitHubMergeResult;
       remainingPrivilegedActions: number;
     }
-  | { outcome: "denied" };
+  | {
+      outcome: "denied";
+      cause: WorkerDenialCause;
+      stage: WorkerDenialStage;
+      providerBoundary: "not_crossed";
+      adapterBoundary: "not_crossed";
+    };
 
 /** Trusted composition over the same IPC clients as the competition journey.
  * No credentials, arbitrary transport, or agent-supplied connection IDs. */
@@ -94,7 +102,13 @@ export class WorkerExternalTools {
             "url_not_allowed",
           ].includes(error.reason)
         )
-          return { outcome: "denied" };
+          return {
+            outcome: "denied",
+            cause: error.reason as WorkerDenialCause,
+            stage: "research_request_policy",
+            providerBoundary: "not_crossed",
+            adapterBoundary: "not_crossed",
+          };
         throw Object.assign(new TypeError("research unavailable"), {
           code: error instanceof ResearchIpcError ? error.reason : "service_unavailable",
         });
@@ -125,7 +139,14 @@ export class WorkerExternalTools {
         t.operation === request.name,
     );
     // Unknown targets have no trustworthy version/connection. Deny without inventing either.
-    if (!target) return { outcome: "denied" };
+    if (!target)
+      return {
+        outcome: "denied",
+        cause: "destination_not_allowed",
+        stage: "session_plan_policy",
+        providerBoundary: "not_crossed",
+        adapterBoundary: "not_crossed",
+      };
     const resourceVersion = {
       kind: "github_pull_request",
       owner: target.owner,
@@ -161,7 +182,13 @@ export class WorkerExternalTools {
     const result = await this.options.broker.execute({ request: canonical });
     if (!result.ok) {
       if (["scope_mismatch", "resource_changed"].includes(result.code))
-        return { outcome: "denied" };
+        return {
+          outcome: "denied",
+          cause: result.code as "scope_mismatch" | "resource_changed",
+          stage: "broker_policy",
+          providerBoundary: "not_crossed",
+          adapterBoundary: "not_crossed",
+        };
       // Step-up, uncertainty, replay, expiry and service failure cannot become ordinary continuation.
       throw Object.assign(new TypeError("broker authorization unavailable"), { code: result.code });
     }

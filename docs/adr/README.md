@@ -82,4 +82,6 @@ Architecture decision records document consequential choices, rejected alternati
 
 - [ADR-0058: Evidence-first competition scope and consent](0058-evidence-first-competition-scope.md)
 
+- [ADR-0059: Durable worker denial-recovery evidence](0059-durable-worker-recovery-evidence.md)
+
 Use the next sequential four-digit number. Do not silently rewrite an accepted decision; add a superseding ADR.

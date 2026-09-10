@@ -110,7 +110,13 @@ function projectToolContent(result: WorkerToolResult) {
     return {
       name: result.name,
       outcome: result.outcome,
-      denial: { code: result.denial.code, disposition: result.denial.disposition },
+      denial: {
+        code: result.denial.code,
+        disposition: result.denial.disposition,
+        ...(result.denial.cause === undefined
+          ? {}
+          : { cause: result.denial.cause, stage: result.denial.stage }),
+      },
     };
   const output =
     result.name === "guardian.session_status"

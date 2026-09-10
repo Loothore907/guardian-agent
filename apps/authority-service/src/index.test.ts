@@ -287,6 +287,55 @@ describe("central authority service", () => {
     }
   });
 
+  it("records worker audit evidence and completes the durable session over exact IPC", async () => {
+    const { databasePath } = await location();
+    const endpoint = createAuthorityIpcEndpoint();
+    const launcherBinding = binding(randomUUID(), "launcher", ["session.create"]);
+    const workerBinding = binding(randomUUID(), "worker_dispatcher", [
+      "worker.claim_external",
+      "worker.audit",
+      "worker.complete",
+    ]);
+    const brokerBinding = binding(randomUUID(), "broker_service", ["session.get"]);
+    const service = await startAuthorityService(
+      {
+        schemaVersion: 1,
+        serviceInstanceId: randomUUID(),
+        endpoint,
+        authorityStorePath: databasePath,
+        workspaceRoots: [],
+        capabilities: [launcherBinding, workerBinding, brokerBinding],
+      },
+      { now: () => NOW },
+    );
+    try {
+      const launcher = new LocalAuthorityIpcClient({ endpoint, binding: launcherBinding });
+      await launcher.createSession(session(), budget());
+      const worker = new LocalAuthorityIpcClient({ endpoint, binding: workerBinding });
+      const executionId = randomUUID();
+      const executionDigest = "7".repeat(64);
+      await expect(
+        worker.claimExternalExecution(SESSION, executionId, executionDigest),
+      ).resolves.toMatchObject({ outcome: "allowed" });
+      await expect(
+        worker.recordWorkerAuditEvent(SESSION, {
+          type: "proposal.received",
+          proposalId: executionId,
+          boundaryId: executionId,
+          boundaryDigest: executionDigest,
+          operation: "guardian.research",
+        }),
+      ).resolves.toMatchObject({ sequence: 1, sanitized: true });
+      await expect(
+        worker.completeWorkerSession(SESSION, randomUUID(), "8".repeat(64), "9".repeat(64)),
+      ).resolves.toEqual({ schemaVersion: 1, outcome: "completed" });
+      const broker = new LocalAuthorityIpcClient({ endpoint, binding: brokerBinding });
+      await expect(broker.getSession(SESSION)).resolves.toMatchObject({ status: "completed" });
+    } finally {
+      await service.close();
+    }
+  });
+
   it("authenticates exact caller bindings and never persists IPC capabilities", async () => {
     const { databasePath } = await location();
     const endpoint = createAuthorityIpcEndpoint();

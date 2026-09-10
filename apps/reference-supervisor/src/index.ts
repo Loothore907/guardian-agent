@@ -131,6 +131,8 @@ const ROLE_OPERATIONS = {
     "worker.budget",
     "budget.consume_local_command",
     "worker.record_violation",
+    "worker.audit",
+    "worker.complete",
     "worker.interrupt",
   ],
 } as const satisfies Readonly<Record<AuthorityCallerRole, readonly AuthorityIpcOperation[]>>;
