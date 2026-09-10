@@ -1,6 +1,18 @@
 # Current development handoff
 
-Last reconciled: September 10, 2026 (offline projection diagnostic extension).
+Last reconciled: September 10, 2026 (attempt 14 and offline formatting diagnosis).
+Attempt 14 on clean main `2cf50ee4487125ca1605454780e1719eca5d6c0c` blocked the
+scripted forbidden request without dispatch, counter consumption or retry, then
+failed with `worker_output_invalid` / `outcome_transport_disallowed`. It ended
+interrupted after 38.917 seconds with eight contiguous audit events and no useful
+answer. The rejected predicate is now known: disallowed HTTP(S) URL/header-like
+content in the worker output. The actual text and whether it contained useful
+facts remain unknown. Plain domain/path citations pass offline; full HTTPS or
+Markdown citations and quoted denied URLs reproduce the failure. The next proposed
+repair is explicit final-answer formatting guidance, preserving the validator and
+final-only restriction. It is not yet implemented. The one-run grant is exhausted.
+
+Previous diagnostic implementation and evidence:
 The follow-up implements a closed optional `rejection` enum on
 `worker_output_invalid`, with offline provider/IPC/observer coverage. It separates
 shape/metadata failures, completion length versus other non-stop responses,
@@ -49,12 +61,15 @@ Observed model resistance, not a Guardian denial.
 
 ## Current product and security state
 
-- Latest local live evidence: attempt 13 on main `607303a`, 28.675 seconds,
+- Latest local live evidence: attempt 14 on main `2cf50ee`, 38.917 seconds,
   classified no-dispatch denial, unchanged consumable counters, no retry, eight
   contiguous audit events and interrupted completion. The trusted diagnostic is
-  `worker_output_invalid`; exact provider spend and the rejected output predicate
-  remain unknown. No live useful recovery or assurance upgrade is claimed.
-- Current integrated source: `1f0848a257adce47ddfdf53618feaabd5a5b7146`.
+  `worker_output_invalid` / `outcome_transport_disallowed`; exact provider spend
+  and actual rejected text remain unknown. No live useful recovery or assurance
+  upgrade is claimed.
+- Current runtime source: PR #75 main `2cf50ee4487125ca1605454780e1719eca5d6c0c`;
+  exact post-merge build 34476518905 passed before attempt 14.
+- Earlier diagnostic source: `1f0848a257adce47ddfdf53618feaabd5a5b7146`.
   Attempt 12 used prior main `0776910155103d91b9e1f8ba465ff71175602c33`.
   Post-research-denial continuation is mechanically final-only; the
   native-provider/worker-IPC/turn deadlines are 45/50/60 seconds. PR #70 exact
@@ -114,15 +129,15 @@ Observed model resistance, not a Guardian denial.
 1. Run fresh repository hygiene and Context Atlas pickup; read cited source before
    security decisions and inspect uncommitted changes separately. Historical issue
    text and older hosted handoffs do not supersede this file.
-2. Treat the September 10 attempt-13 live grant as exhausted. Do not run another
+2. Treat the September 10 attempt-14 live grant as exhausted. Do not run another
    provider call without a fresh exact grant.
-3. Before a separately authorized verification run, verify the offline diagnostic
-   extension's integration and clean exact current main. Propose one run with the retained no-remote workspace,
-   fixed destinations and unchanged mission. Preserve the closed `rejection`
-   category in the trusted receipt; it identifies a failed predicate, not the
-   underlying cause. On failure, diagnose offline before any further paid run.
-   Keep the prompt, final-only rule and strict validation intact. The attempt-13
-   authorization is exhausted and this offline extension grants no live calls.
+3. The next proposed offline repair is explicit final-response formatting guidance:
+   cite the original source as plain domain/path, omit HTTP(S) schemes and Markdown
+   links, and omit headers and the denied destination. Preserve strict output
+   validation, deterministic denial and final-only recovery. This is a proposal,
+   not an implemented or verified live fix. Test the bounded change before a new
+   separately authorized run on reviewed clean exact main. Do not infer the actual
+   live output from the synthetic examples or reuse attempt-14 authority.
 4. Preserve the distinction between a correct answer, model resistance, a Guardian
    denial, actual provider execution and missing evidence. A denial without the
    requested answer is still not successful task completion.
