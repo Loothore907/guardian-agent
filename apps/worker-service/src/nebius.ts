@@ -9,6 +9,7 @@ import {
   type GuardianModelPolicy,
   type ManagedDemoNebiusUsageObservation,
   type WorkerProviderDiagnostic,
+  type WorkerProjectionRejection,
   type WorkerTurnEnvelope,
   type WorkerToolResult,
 } from "@guardian/contracts";
@@ -70,9 +71,15 @@ async function boundedProviderJson(response: Response): Promise<unknown> {
   }
 }
 
-function record(value: unknown): Record<string, unknown> {
+class NativeWorkerProjectionError extends NativeWorkerProviderError {
+  constructor(readonly rejection: WorkerProjectionRejection) {
+    super();
+  }
+}
+
+function record(value: unknown, rejection: WorkerProjectionRejection): Record<string, unknown> {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    throw new NativeWorkerProviderError();
+    throw new NativeWorkerProjectionError(rejection);
   }
   return value as Record<string, unknown>;
 }
@@ -81,24 +88,48 @@ export function projectNebiusWorkerResponse(
   value: unknown,
   expectedModelId: string,
 ): { readonly requestId: string; readonly outcome: ReturnType<typeof WorkerOutcomeSchema.parse> } {
-  const response = record(value);
-  if (response.model !== expectedModelId || !Array.isArray(response.choices)) {
-    throw new NativeWorkerProviderError();
+  const response = record(value, "response_shape_invalid");
+  if (response.model !== expectedModelId) {
+    throw new NativeWorkerProjectionError("model_mismatch");
   }
-  if (response.choices.length !== 1) throw new NativeWorkerProviderError();
-  const choice = record(response.choices[0]);
-  const message = record(choice.message);
-  if (choice.finish_reason !== "stop" || typeof message.content !== "string") {
-    throw new NativeWorkerProviderError();
+  if (!Array.isArray(response.choices) || response.choices.length !== 1) {
+    throw new NativeWorkerProjectionError("choices_invalid");
   }
+  const choice = record(response.choices[0], "choice_shape_invalid");
+  const message = record(choice.message, "message_shape_invalid");
+  if (choice.finish_reason !== "stop") {
+    throw new NativeWorkerProjectionError(
+      choice.finish_reason === "length" ? "completion_length" : "completion_not_stop",
+    );
+  }
+  if (typeof message.content !== "string") {
+    throw new NativeWorkerProjectionError("content_not_string");
+  }
+  const requestId = ProviderRequestIdSchema.safeParse(response.id);
+  if (!requestId.success) throw new NativeWorkerProjectionError("request_id_invalid");
+  let content: unknown;
   try {
-    return {
-      requestId: ProviderRequestIdSchema.parse(response.id),
-      outcome: WorkerOutcomeSchema.parse(JSON.parse(message.content) as unknown),
-    };
+    content = JSON.parse(message.content) as unknown;
   } catch {
-    throw new NativeWorkerProviderError();
+    throw new NativeWorkerProjectionError("content_json_invalid");
   }
+  const outcome = WorkerOutcomeSchema.safeParse(content);
+  if (!outcome.success) {
+    // Read only our fixed refinement tags. Never propagate Zod paths, messages,
+    // keys, input values or provider-controlled details across the boundary.
+    const tagged = (tag: string) =>
+      outcome.error.issues.some(
+        (issue) => issue.code === "custom" && issue.params?.workerRejection === tag,
+      );
+    throw new NativeWorkerProjectionError(
+      tagged("credential_like")
+        ? "outcome_credential_like"
+        : tagged("transport_disallowed")
+          ? "outcome_transport_disallowed"
+          : "outcome_schema_invalid",
+    );
+  }
+  return { requestId: requestId.data, outcome: outcome.data };
 }
 
 function projectToolContent(result: WorkerToolResult) {
@@ -426,8 +457,13 @@ export class NebiusNativeWorkerProvider {
           let result: ReturnType<typeof projectNebiusWorkerResponse>;
           try {
             result = projectNebiusWorkerResponse(providerJson, selection.modelId);
-          } catch {
-            report({ kind: "worker_output_invalid" });
+          } catch (error) {
+            report({
+              kind: "worker_output_invalid",
+              ...(error instanceof NativeWorkerProjectionError
+                ? { rejection: error.rejection }
+                : {}),
+            });
             throw new NativeWorkerProviderError();
           }
           return { requestId: result.requestId, outcome: result.outcome };

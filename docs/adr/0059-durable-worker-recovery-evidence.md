@@ -60,6 +60,18 @@ The trusted supervisor may observe it for private evaluation evidence. Provider
 text, response bodies, headers, arbitrary error strings and credentials remain
 excluded, and neither the worker nor the public result receives it.
 
+Attempt 13 verified that propagation but narrowed its failed final turn only to
+`worker_output_invalid`. That class now optionally carries a closed `rejection`
+enum: response/model/choice/message shape, completion length or other non-stop
+completion, non-string content, invalid request ID, invalid content JSON, invalid
+outcome schema, credential-like outcome or disallowed transport content. No raw
+finish reason, schema path, key, message, input value or provider content is copied.
+Legacy class-only diagnostics remain valid. Rejection follows projection check
+order; outcome refinements prefer the credential-like tag before the transport
+tag when both apply. A category identifies a failed predicate, not its underlying
+cause, and does not reconstruct the historical response. The strict validators,
+public failure, mission prompt and final-only continuation remain unchanged.
+
 For bounded continuation, a contract-valid final response must cross a new exact
 completion boundary. The supervisor binds the final turn ID and digest plus a digest
 of its validated result. The authority store atomically appends useful-completion

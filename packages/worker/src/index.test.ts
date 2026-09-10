@@ -466,22 +466,28 @@ describe("one-use worker IPC", () => {
     });
     expect(String(error)).not.toContain(secret);
 
-    const invalid = await serverWith(
-      () =>
-        Promise.reject(
-          Object.assign(new Error(secret), {
-            reason: "provider_unavailable",
-            providerDiagnostic: { kind: "http_error", status: 999, detail: secret },
-          }),
-        ),
-      { now: () => "2026-09-01T00:00:10.000Z" },
-    );
-    await expect(
-      client(invalid.credentials, invalid.exactTurn).run("2026-09-01T00:00:10.000Z"),
-    ).rejects.toMatchObject({
-      reason: "provider_unavailable",
-      providerDiagnostic: undefined,
-    });
+    for (const providerDiagnostic of [
+      { kind: "http_error", status: 999, detail: secret },
+      { kind: "worker_output_invalid", rejection: secret },
+      { kind: "worker_output_invalid", rejection: "completion_length", detail: secret },
+    ]) {
+      const invalid = await serverWith(
+        () =>
+          Promise.reject(
+            Object.assign(new Error(secret), {
+              reason: "provider_unavailable",
+              providerDiagnostic,
+            }),
+          ),
+        { now: () => "2026-09-01T00:00:10.000Z" },
+      );
+      await expect(
+        client(invalid.credentials, invalid.exactTurn).run("2026-09-01T00:00:10.000Z"),
+      ).rejects.toMatchObject({
+        reason: "provider_unavailable",
+        providerDiagnostic: undefined,
+      });
+    }
   });
 
   it("rejects a mutated envelope digest before listening", () => {

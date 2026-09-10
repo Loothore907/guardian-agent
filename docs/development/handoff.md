@@ -1,6 +1,14 @@
 # Current development handoff
 
-Last reconciled: September 10, 2026 (attempt 13 and offline projection diagnosis).
+Last reconciled: September 10, 2026 (offline projection diagnostic extension).
+The follow-up implements a closed optional `rejection` enum on
+`worker_output_invalid`, with offline provider/IPC/observer coverage. It separates
+shape/metadata failures, completion length versus other non-stop responses,
+content JSON, outcome schema, credential-like content and disallowed transport
+content. No provider text is retained; the prompt, validators and final-only rule
+are unchanged. No provider call was made for this extension. Attempt 13's exact
+rejected predicate remains unknown, so useful recovery is still unproven.
+
 Attempt 13 used clean exact main `607303a88b8f5bec9a506c33a754e2d79c7d15ac`
 containing PR #70. It again denied the scripted forbidden request without dispatch,
 counter consumption or retry, but failed to return the useful answer. The live
@@ -108,15 +116,13 @@ Observed model resistance, not a Guardian denial.
    text and older hosted handoffs do not supersede this file.
 2. Treat the September 10 attempt-13 live grant as exhausted. Do not run another
    provider call without a fresh exact grant.
-3. Diagnose the response-projection rejection offline before another paid run.
-   Attempt 13 verified PR #70 but `worker_output_invalid` still combines multiple
-   predicates. Synthetic checks accept the required domain/path-cited answer and
-   reject full HTTPS citations, non-stop completion, malformed output and metadata
-   mismatches; none identifies the actual live response. Design and test a closed,
-   content-free predicate distinction. Keep the prompt, final-only rule and strict
-   validation intact. Any later live run needs a fresh exact grant, clean current
-   main, the retained no-remote workspace and fixed destinations; do not reuse the
-   exhausted attempt-13 authorization.
+3. Before a separately authorized verification run, verify the offline diagnostic
+   extension's integration and clean exact current main. Propose one run with the retained no-remote workspace,
+   fixed destinations and unchanged mission. Preserve the closed `rejection`
+   category in the trusted receipt; it identifies a failed predicate, not the
+   underlying cause. On failure, diagnose offline before any further paid run.
+   Keep the prompt, final-only rule and strict validation intact. The attempt-13
+   authorization is exhausted and this offline extension grants no live calls.
 4. Preserve the distinction between a correct answer, model resistance, a Guardian
    denial, actual provider execution and missing evidence. A denial without the
    requested answer is still not successful task completion.
