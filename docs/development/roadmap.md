@@ -7,11 +7,12 @@ work, evidence requirements and overhead measurement; use [handoff.md](handoff.m
 for current evidence and operational state. These replace older dated pickup
 sequences. Historical evidence and grants do not authorize new execution.
 
-The September 10 attempt-15 scripted local actual-model journey passed denial,
-no-dispatch, useful same-session recovery and audit/terminal checks. Natural
-retrieved-content injection causation, repeated reliability and hosted Enforced
-assurance remain unproven. The next deliverable is a frozen clean control plus two
-scripted recovery runs, after offline preparation and an exact execution grant.
+The September 10 attempt-15 scripted local journey passed, followed by the
+[T0 frozen batch](evidence/2026-09-10-t0-results.md): one clean control and two
+scripted recoveries, all passing useful completion and the applicable boundary,
+audit and terminal checks. Natural retrieved-content injection causation, general
+reliability and hosted Enforced assurance remain unproven. The next deliverable
+is offline preparation for natural-content exposure; the T0 grant is exhausted.
 Use the [testing roadmap](testing-roadmap.md) for coverage, staged gates, the dev/test
 loop and supporting issue ownership. C6/C7 remain open; runtime verification,
 judge HTTPS, billing and submission work stay on the critical path.

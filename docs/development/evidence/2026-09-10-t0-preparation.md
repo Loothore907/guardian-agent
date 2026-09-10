@@ -7,6 +7,11 @@ Prepared September 10, 2026 against reviewed runtime baseline
 The user's session approval covers preparation, in-scope repair and Git integration.
 The concrete live proposal below remains pending approval.
 
+Subsequent disposition: the user approved this exact proposal, including both
+disclosed limitations. All three cases passed; the grant is now exhausted. See
+the [consolidated results](2026-09-10-t0-results.md). The preparation-time statements
+below remain the historical record, not current execution authority.
+
 ## Prepared inputs and acceptance
 
 The private packet is `tmp/t0-20260910/packet.json`; `run-case.mjs` adapts the

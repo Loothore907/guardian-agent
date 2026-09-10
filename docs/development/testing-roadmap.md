@@ -21,8 +21,11 @@ returned the required facts and citation, made no forbidden dispatch or retry,
 preserved consumable counters and ended with ten contiguous audit events and a
 completed session. [The evidence report](evidence/2026-09-10-live-denial-recovery-evaluation.md)
 also retains the earlier failures. Tavily omitted the injected URL; the mission
-explicitly elicited the proposal. Repeatability and natural injection exposure
-are not established. Existing deterministic tests are a foundation to map and
+explicitly elicited the proposal. The subsequent [T0 batch](evidence/2026-09-10-t0-results.md)
+passed its clean control and two identical scripted recovery cases on main d961cbb,
+with no failures, retries or between-case changes. This satisfies the small frozen
+batch gate; natural injection exposure and general reliability remain unproven.
+Existing deterministic tests are a foundation to map and
 extend, not evidence that every case below has already passed.
 
 The ceiling is three families; reduce the showcased set to two, or the one proven
@@ -36,7 +39,7 @@ or enrollment work merely to recreate context.
 
 | Gate / target | Work | Exit evidence and next decision |
 | --- | --- | --- |
-| T0: next bounded slice | Prepare one clean control and two scripted research denial/recovery sessions on freshly verified reviewed main | Production-contract preflight, frozen inputs and expected outputs, exact grant, all three results; stop the batch at its first failure. Passing admits the next preparation slice, not extra paid runs. |
+| T0: passed September 10 | One clean control and two scripted research denial/recovery sessions on reviewed main d961cbb | All three passed after production-contract preflight under a frozen exact grant. [Results](evidence/2026-09-10-t0-results.md). Grant exhausted; admits T1 preparation, not extra paid runs. |
 | T1: September 18 | Establish repeatability and real retrieved-content exposure; extend deterministic research near misses | The three-run T0 batch passes; a bounded natural-content evaluation records whether the instruction actually reached the worker and what it did. Missing exposure needs fixture repair; resistance is a valid separate result. No requirement to hunt for a vulnerable model. |
 | T2: October 2 | Add read-only PR and exact-action substitution families in that order | Clean and adversarial production-composition cases pass; bounded live pilot results and independent remote-state checks retained for each showcased family. Exact-action tests require a finite disposable fixture pool. |
 | T3: October 12 | Reconcile intended-runtime boundaries, judge access, risk evaluation, consent and overhead; freeze scope | Capability/claim evidence map has no unexplained gaps; intended public access works; assurance matches evidence; a novice can follow a timed rehearsal. Any missing enforcement evidence limits the claim even if the demo works. |
@@ -166,7 +169,7 @@ ready; it does not expand tools, destinations, budgets or public claims.
 
 | Work | Owner | Priority / next action |
 | --- | --- | --- |
-| Journey correctness, repeatability, natural exposure, audit and contextual risk | #19 | Primary flow; prepare T0 and map remaining C7 criteria to current evidence |
+| Journey correctness, repeatability, natural exposure, audit and contextual risk | #19 | Primary flow; T0 passed, prepare natural-content exposure and map remaining C7 criteria to current evidence |
 | Credential custody, exact GitHub action and intended-runtime containment | #13 with #19 | Required supporting flow; compare current deployment composition with existing C6 evidence before claim promotion |
 | Judge HTTPS, admission, budget settlement and delayed billing | #21 with #19 | Deadline-critical; diagnose access and accounting gaps early, execute only under exact resource grants |
 | Operator access preflight | #49 | Must be ready before a hosted paid window so cleanup remains operable |
@@ -183,10 +186,12 @@ supported typed capabilities in a verified runtime, not any agent/tool/machine.
 
 ## Next execution boundary
 
-Prepare T0 from fresh clean upstream-aligned main. Keep the retained sanitized
-no-remote workspace and fixed source/outside destinations. Specify exact source,
-model/policy, credential readers, three sessions, per-session and total request,
-time and spend limits, expiry, stop conditions and cleanup in the concrete grant.
-Reuse preflight/evidence machinery where possible. No provider, credential, VM,
-GitHub mutation or deployment action is authorized by this roadmap. The exhausted
-attempt-15 grant stays exhausted. This planning slice changes no runtime or claim.
+T0 passed; its grant and the attempt-15 grant are exhausted. Prepare T1's
+natural-content exposure slice offline on fresh reviewed main, using a neutral
+mission and checking which instruction reaches the worker through the actual
+research-result projection. Freeze any repaired fixture separately. Reuse the
+existing preflight/evidence machinery. A later live proposal must specify exact
+source, model/policy, readers, destinations, counts, request/time/spend limits,
+expiry, stop conditions and cleanup, retaining the disclosed billing limitations.
+No provider, credential, VM, GitHub mutation or deployment action is authorized by
+this roadmap. Passing T0 does not promote broader runtime or security claims.

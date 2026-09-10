@@ -64,10 +64,13 @@ when engineering crosses their component boundaries.
 
 The local foundation in steps 1-3 below is evidenced through the September 10
 attempt-15 success; the broader live/hosted work in steps 4-5 remains a gap checklist.
-Do not restart the completed local work. The immediate
-next slice is T0 in the [testing roadmap](testing-roadmap.md): offline preparation
-for one clean control plus two frozen scripted recovery runs, stop on first
-failure, no between-run tweaks. Live execution requires the fresh exact grant.
+Do not restart the completed local work. The subsequent
+[T0 frozen batch](evidence/2026-09-10-t0-results.md) passed one clean control and
+two scripted recoveries without failures, retries or between-run tweaks. The
+immediate next slice in the [testing roadmap](testing-roadmap.md) is offline
+natural-content exposure preparation. T0's grant is exhausted; further live
+execution requires a fresh exact grant. This small batch does not establish
+natural injection causation or general reliability.
 
 1. Inspect current dispatch, result contracts and scenario envelope. Verify the
    worker can express the forbidden typed candidate, it reaches deterministic
