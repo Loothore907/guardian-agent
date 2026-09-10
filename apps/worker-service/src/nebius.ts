@@ -8,6 +8,7 @@ import {
   WorkerTurnEnvelopeSchema,
   type GuardianModelPolicy,
   type ManagedDemoNebiusUsageObservation,
+  type WorkerProviderDiagnostic,
   type WorkerTurnEnvelope,
   type WorkerToolResult,
 } from "@guardian/contracts";
@@ -24,12 +25,7 @@ export class NativeWorkerProviderError extends Error {
   }
 }
 
-export type NativeWorkerProviderDiagnostic =
-  | { readonly kind: "transport_failure" }
-  | { readonly kind: "http_error"; readonly status: number }
-  | { readonly kind: "response_envelope_invalid" }
-  | { readonly kind: "worker_output_invalid" }
-  | { readonly kind: "credential_or_internal_failure" };
+export type NativeWorkerProviderDiagnostic = WorkerProviderDiagnostic;
 
 async function boundedProviderJson(response: Response): Promise<unknown> {
   const contentType = response.headers.get("content-type");
@@ -361,8 +357,10 @@ export class NebiusNativeWorkerProvider {
       throw new NativeWorkerProviderError();
     }
     let diagnosed = false;
+    let providerDiagnostic: NativeWorkerProviderDiagnostic | undefined;
     const report = (diagnostic: NativeWorkerProviderDiagnostic) => {
       diagnosed = true;
+      providerDiagnostic = diagnostic;
       try {
         this.#diagnostic(diagnostic);
       } catch {
@@ -437,7 +435,10 @@ export class NebiusNativeWorkerProvider {
       );
     } catch {
       if (!diagnosed) report({ kind: "credential_or_internal_failure" });
-      throw new NativeWorkerProviderError();
+      throw Object.assign(new NativeWorkerProviderError(), {
+        reason: "provider_unavailable" as const,
+        providerDiagnostic,
+      });
     }
   }
 }

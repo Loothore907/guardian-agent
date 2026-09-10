@@ -23,6 +23,7 @@ import {
   SessionWorkspaceSelectionSchema,
   TimestampSchema,
   ToolCapabilitySchema,
+  WorkerProviderDiagnosticSchema,
   WorkerTurnIpcFailureReasonSchema,
   type CompiledMissionCandidate,
   type InteractionMissionContext,
@@ -42,6 +43,7 @@ import {
   type ToolCapability,
   type UntrustedMissionDraftInput,
   type WorkerTurnEnvelope,
+  type WorkerProviderDiagnostic,
   type WorkerTurnIpcFailureReason,
   type WorkerTurnResult,
   type WorkerToolExecutionEnvelope,
@@ -137,7 +139,12 @@ interface PendingDraft {
 
 export type WorkerObservation =
   | { kind: "turn"; turn: WorkerTurnEnvelope; result: WorkerTurnResult }
-  | { kind: "tool"; result: WorkerToolResult };
+  | { kind: "tool"; result: WorkerToolResult }
+  | {
+      kind: "failure";
+      error: WorkerTurnIpcFailureReason;
+      providerDiagnostic?: WorkerProviderDiagnostic;
+    };
 
 export interface ReferenceSessionBootstrapOptions {
   readonly observeWorker?: (event: WorkerObservation) => void;
@@ -720,6 +727,18 @@ export class ReferenceSessionBootstrapCoordinator {
             : undefined,
         );
         let failure = reason.success ? reason.data : fallbackFailure;
+        const providerDiagnostic = WorkerProviderDiagnosticSchema.safeParse(
+          typeof error === "object" && error !== null && "providerDiagnostic" in error
+            ? error.providerDiagnostic
+            : undefined,
+        );
+        this.#observeWorker?.({
+          kind: "failure",
+          error: failure,
+          ...(failure === "provider_unavailable" && providerDiagnostic.success
+            ? { providerDiagnostic: providerDiagnostic.data }
+            : {}),
+        });
         const violationFailures = new Set<WorkerTurnIpcFailureReason>([
           "invalid_request",
           "provider_malformed",

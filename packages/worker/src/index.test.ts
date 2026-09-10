@@ -441,6 +441,49 @@ describe("one-use worker IPC", () => {
     }
   });
 
+  it("propagates only an allowlisted provider diagnostic with provider-unavailable", async () => {
+    const secret = "private-provider-diagnostic";
+    const harness = await serverWith(
+      () =>
+        Promise.reject(
+          Object.assign(new Error(secret), {
+            reason: "provider_unavailable",
+            providerDiagnostic: { kind: "http_error", status: 503 },
+          }),
+        ),
+      { now: () => "2026-09-01T00:00:10.000Z" },
+    );
+    let error: unknown;
+    try {
+      await client(harness.credentials, harness.exactTurn).run("2026-09-01T00:00:10.000Z");
+    } catch (caught) {
+      error = caught;
+    }
+    expect(error).toBeInstanceOf(WorkerIpcError);
+    expect(error).toMatchObject({
+      reason: "provider_unavailable",
+      providerDiagnostic: { kind: "http_error", status: 503 },
+    });
+    expect(String(error)).not.toContain(secret);
+
+    const invalid = await serverWith(
+      () =>
+        Promise.reject(
+          Object.assign(new Error(secret), {
+            reason: "provider_unavailable",
+            providerDiagnostic: { kind: "http_error", status: 999, detail: secret },
+          }),
+        ),
+      { now: () => "2026-09-01T00:00:10.000Z" },
+    );
+    await expect(
+      client(invalid.credentials, invalid.exactTurn).run("2026-09-01T00:00:10.000Z"),
+    ).rejects.toMatchObject({
+      reason: "provider_unavailable",
+      providerDiagnostic: undefined,
+    });
+  });
+
   it("rejects a mutated envelope digest before listening", () => {
     const credentials = createWorkerIpcCredentials();
     const exactTurn = turn();

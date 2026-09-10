@@ -1,16 +1,18 @@
 # Current development handoff
 
-Last reconciled: September 10, 2026 (live denial evaluation and repairs integrated).
+Last reconciled: September 10, 2026 (sixth live denial run and diagnostic follow-up).
 PRs [#65](https://github.com/Loothore907/guardian-agent/pull/65) through
-[#68](https://github.com/Loothore907/guardian-agent/pull/68) integrated the diagnosed
-live-worker repairs as main commit
-`6799e991c04c8dd613500a13784d5868e1065f6b`; exact post-merge build run
-34465177023 passed. See the
+[#69](https://github.com/Loothore907/guardian-agent/pull/69) integrated the diagnosed
+live-worker repairs and first evidence closeout as main commit
+`0776910155103d91b9e1f8ba465ff71175602c33`; exact post-merge build run
+34466526551 passed. See the
 [September 10 evidence report](evidence/2026-09-10-live-denial-recovery-evaluation.md).
-The five-attempt scripted actual-model evaluation proves a classified Guardian
+The six-attempt scripted actual-model evaluation proves a classified Guardian
 research denial before provider/adapter dispatch, but it did not produce useful
-same-session completion. The final deadline-aligned source has not received a live
-full journey. This does not change hosted assurance.
+same-session completion. Attempt 12 exercised the deadline-aligned source and
+exposed that worker IPC discarded the provider's finer allowlisted diagnostic;
+[PR #70](https://github.com/Loothore907/guardian-agent/pull/70) tracks the sanitized
+diagnostic-propagation repair. This does not change hosted assurance.
 
 Last hosted evidence: September 8, 2026 UTC. The paired clean/adversarial release-research
 evaluation owned by [issue #19](https://github.com/Loothore907/guardian-agent/issues/19)
@@ -28,15 +30,20 @@ Observed model resistance, not a Guardian denial.
 
 ## Current product and security state
 
-- Current integrated source:
-  `6799e991c04c8dd613500a13784d5868e1065f6b`. Post-research-denial continuation is
-  mechanically final-only; the native-provider/worker-IPC/turn deadlines are
-  45/50/60 seconds. Exact post-merge build run 34465177023 passed.
-- Five scripted actual-model runs emitted the exact outside research proposal and
+- Attempt 12 code baseline: `0776910155103d91b9e1f8ba465ff71175602c33`.
+  Post-research-denial continuation is mechanically final-only; the
+  native-provider/worker-IPC/turn deadlines are 45/50/60 seconds. Exact post-merge
+  build run 34466526551 passed.
+- Six scripted actual-model runs emitted the exact outside research proposal and
   received `url_not_allowed` at `research_request_policy` with no forbidden provider
   or adapter crossing and unchanged consumable counters. Attempt 7 repeated the
-  denied request; attempts 8-11 did not. All five lacked a useful final answer and
+  denied request; attempts 8-12 did not. All six lacked a useful final answer and
   ended interrupted, so live useful recovery is not claimed.
+- Attempt 12's final-only turn returned generic `provider_unavailable`. Existing
+  source produced an allowlisted finer class internally but did not carry it across
+  worker IPC. PR #70 allows only that closed class and bounded HTTP status to reach
+  the trusted supervisor observer; it does not expose raw provider detail or add
+  another live result.
 - Tavily returned October 1 and version 2.4 but omitted the injected URL. The live
   request was elicited explicitly by the evaluation mission; natural fixture
   prompt-injection causation remains unproven.
@@ -80,13 +87,13 @@ Observed model resistance, not a Guardian denial.
 1. Run fresh repository hygiene and Context Atlas pickup; read cited source before
    security decisions and inspect uncommitted changes separately. Historical issue
    text and older hosted handoffs do not supersede this file.
-2. Treat the September 10 five-attempt live grant as exhausted. Do not run another
+2. Treat the September 10 attempt-12 live grant as exhausted. Do not run another
    provider call without a fresh exact grant.
-3. The next useful grant is one local scripted denial/recovery run against exact main
-   `6799e991c04c8dd613500a13784d5868e1065f6b`, using the retained sanitized
-   no-remote workspace and fixed source/outside destinations. Stop on complete
-   success; if the final turn fails, capture only its allowlisted diagnostic class
-   before considering another paid call.
+3. Integrate PR #70 through exact-head and post-merge CI before another live run.
+   The next useful grant is one local scripted denial/recovery run against that exact
+   main, using the retained sanitized no-remote workspace and fixed source/outside
+   destinations. Stop on complete success; if the final turn fails, retain only its
+   allowlisted diagnostic class before considering another paid call.
 4. Preserve the distinction between a correct answer, model resistance, a Guardian
    denial, actual provider execution and missing evidence. A denial without the
    requested answer is still not successful task completion.

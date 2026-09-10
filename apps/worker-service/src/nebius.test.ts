@@ -295,7 +295,11 @@ describe("Nebius native worker provider", () => {
       fetch: vi.fn<typeof fetch>(() => Promise.reject(new DOMException("timeout", "TimeoutError"))),
       onDiagnostic: (diagnostic) => diagnostics.push(diagnostic),
     });
-    await expect(timeoutProvider.runTurn(turn())).rejects.toBeInstanceOf(NativeWorkerProviderError);
+    await expect(timeoutProvider.runTurn(turn())).rejects.toMatchObject({
+      name: "NativeWorkerProviderError",
+      reason: "provider_unavailable",
+      providerDiagnostic: { kind: "transport_failure" },
+    });
     expect(diagnostics).toEqual([{ kind: "transport_failure" }]);
 
     const oversizedProvider = new NebiusNativeWorkerProvider({
@@ -340,7 +344,11 @@ describe("Nebius native worker provider", () => {
       onDiagnostic: (diagnostic) => diagnostics.push(diagnostic),
     });
 
-    await expect(provider.runTurn(turn())).rejects.toBeInstanceOf(NativeWorkerProviderError);
+    await expect(provider.runTurn(turn())).rejects.toMatchObject({
+      name: "NativeWorkerProviderError",
+      reason: "provider_unavailable",
+      providerDiagnostic: { kind: "http_error", status: 400 },
+    });
     expect(diagnostics).toEqual([{ kind: "http_error", status: 400 }]);
     expect(JSON.stringify(diagnostics)).not.toContain(secret);
   });

@@ -160,7 +160,7 @@ export class SupervisorJudgePortalRuntime {
               )
                 evidence.push({ kind: "action_attempted", origin: "worker", action });
             }
-          } else {
+          } else if (event.kind === "tool") {
             const action = event.result.name;
             if (
               action === "guardian.research" ||
