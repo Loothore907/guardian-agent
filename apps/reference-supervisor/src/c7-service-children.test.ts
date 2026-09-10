@@ -511,7 +511,15 @@ describe("C7 synthetic service-child integration (not live model evidence)", () 
             stage: scenario === "research" ? "research_request_policy" : "session_plan_policy",
           },
         });
-        expect(tools[1]?.remainingBudget).toEqual(tools[0]?.remainingBudget);
+        const beforeDenial = tools[0]?.remainingBudget;
+        const afterDenial = tools[1]?.remainingBudget;
+        if (beforeDenial === undefined || afterDenial === undefined) {
+          throw new TypeError("denial budget evidence is unavailable");
+        }
+        const { remainingDurationSeconds: beforeDuration, ...beforeCounters } = beforeDenial;
+        const { remainingDurationSeconds: afterDuration, ...afterCounters } = afterDenial;
+        expect(afterCounters).toEqual(beforeCounters);
+        expect(afterDuration).toBeLessThanOrEqual(beforeDuration);
         expect(JSON.stringify(tools)).not.toContain("ghu_c7_synthetic");
         expect(await worker.getWorkerBudget(sessionId)).toBeNull();
         const database = new DatabaseSync(authorityStorePath, { readOnly: true });

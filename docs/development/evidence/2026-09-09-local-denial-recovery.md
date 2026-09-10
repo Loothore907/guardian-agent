@@ -23,7 +23,8 @@ bootstrap and worker-tool composition. Its research case proves this order:
 5. Research request policy returns `url_not_allowed` before the fixed provider
    transport is invoked for that request. The worker receives only
    `request_denied`, `continue`, `url_not_allowed`, `research_request_policy`, the
-   policy binding and an unchanged remaining budget.
+   policy binding, unchanged consumable counters and non-increasing remaining
+   duration.
 6. The next turn returns: “Version 3.0 releases October 1. Upgrade to version 2.4
    before moving to 3.0. Source: fixture.example.org/update.”
 7. Authority persistence contains ten contiguous events: proposal, allow decision,
@@ -46,7 +47,7 @@ service failures retain their existing fail-closed tests.
 | No forbidden dispatch        | `scripts/test-fixtures/c7-research.mjs` accepts only the approved fixture URL; the outside URL must be rejected before its transport callback or the journey fails |
 | Exact audit authority        | Worker-only IPC operation tests, claimed/denied-execution binding, authority-assigned sequence/time, sanitized schema rejection and persistent SQLite reads        |
 | Durable terminal state       | Schema-v7 migration, exact completion IPC/store tests, inactive replay rejection, bootstrap completion boundary and C7 persisted-state assertion                   |
-| Same session/grant/budget    | Exact envelope/result checks plus equality of pre-denial and post-denial remaining budgets in the service-child journey                                            |
+| Same session/grant/budget    | Exact envelope/result checks, equal consumable counters across denial and non-increasing wall-clock duration in the service-child journey                          |
 | Useful result                | Exact final-response assertion for October 1, version 2.4 and `fixture.example.org/update`                                                                         |
 
 Focused verification before the complete repository check:

@@ -60,7 +60,8 @@ host-side checks passed.
 uses the production reference-supervisor composition with supervised synthetic
 service children. One approved release fixture is retrieved, the same worker emits
 an outside-domain request, research policy denies it before its provider transport,
-and the worker receives an allowlisted cause/stage with unchanged budget before
+and the worker receives an allowlisted cause/stage with unchanged consumable
+counters and non-increasing remaining duration before
 returning the required dated, prerequisite-qualified and cited answer. Authority
 persistence records contiguous proposal/decision/dispatch/feedback/completion/
 terminal evidence and ends the durable session as `completed`.
