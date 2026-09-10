@@ -253,6 +253,7 @@ function readJsonLine(socket: Socket, maximumBytes: number): Promise<string> {
 }
 
 function writeResponse(socket: Socket, response: unknown): void {
+  if (socket.destroyed || socket.writableEnded) return;
   socket.end(`${JSON.stringify(WorkerTurnIpcResponseSchema.parse(response))}\n`);
 }
 
@@ -375,7 +376,19 @@ export class LocalWorkerIpcServer {
   }
 
   async #serve(socket: Socket): Promise<void> {
-    socket.setTimeout(DEFAULT_TIMEOUT_MS, () => socket.destroy());
+    const turn = this.#config.turn;
+    // Request framing and provider execution have different bounds. An idle
+    // socket timeout must not cut off an authenticated in-flight provider call.
+    const requestTimeout = setTimeout(() => socket.destroy(), DEFAULT_TIMEOUT_MS);
+    const deadline = setTimeout(
+      () => writeResponse(socket, { schemaVersion: 1, ok: false, error: "expired" }),
+      Math.max(1, Date.parse(turn.expiresAt) - Date.parse(TimestampSchema.parse(this.#now()))),
+    );
+    const clearTimers = () => {
+      clearTimeout(requestTimeout);
+      clearTimeout(deadline);
+    };
+    socket.once("close", clearTimers);
     let request: WorkerTurnIpcRequest;
     try {
       request = WorkerTurnIpcRequestSchema.parse(
@@ -385,7 +398,7 @@ export class LocalWorkerIpcServer {
       writeResponse(socket, { schemaVersion: 1, ok: false, error: "invalid_request" });
       return;
     }
-    const turn = this.#config.turn;
+    if (socket.destroyed || socket.writableEnded) return;
     if (
       !capabilitiesMatch(request.capability, this.#config.capability) ||
       request.sessionId !== turn.sessionId ||
@@ -410,10 +423,20 @@ export class LocalWorkerIpcServer {
       return;
     }
     this.#turnConsumed = true;
+    clearTimeout(requestTimeout);
+    const responseUnavailable = () => {
+      if (socket.destroyed || socket.writableEnded) return true;
+      if (Date.parse(TimestampSchema.parse(this.#now())) >= Date.parse(turn.expiresAt)) {
+        writeResponse(socket, { schemaVersion: 1, ok: false, error: "expired" });
+        return true;
+      }
+      return false;
+    };
     let result: WorkerProviderResult;
     try {
       result = await this.#handler(turn, evaluatedAt);
     } catch (error) {
+      if (responseUnavailable()) return;
       const parsed = WorkerTurnIpcFailureReasonSchema.safeParse(
         typeof error === "object" && error !== null && "reason" in error ? error.reason : undefined,
       );
@@ -433,6 +456,7 @@ export class LocalWorkerIpcServer {
       });
       return;
     }
+    if (responseUnavailable()) return;
     try {
       const exactResult = WorkerTurnResultSchema.parse({
         providerRequestId: ProviderRequestIdSchema.parse(result.providerRequestId),
@@ -513,7 +537,7 @@ export class LocalWorkerIpcClient {
       return response.result;
     } catch (error) {
       if (error instanceof WorkerIpcError) throw error;
-      throw new WorkerIpcError("provider_unavailable");
+      throw new WorkerIpcError("provider_unavailable", { kind: "transport_failure" });
     } finally {
       socket.destroy();
     }
