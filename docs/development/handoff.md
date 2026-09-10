@@ -11,8 +11,10 @@ The six-attempt scripted actual-model evaluation proves a classified Guardian
 research denial before provider/adapter dispatch, but it did not produce useful
 same-session completion. Attempt 12 exercised the deadline-aligned source and
 exposed that worker IPC discarded the provider's finer allowlisted diagnostic;
-[PR #70](https://github.com/Loothore907/guardian-agent/pull/70) tracks the sanitized
-diagnostic-propagation repair. This does not change hosted assurance.
+[PR #70](https://github.com/Loothore907/guardian-agent/pull/70) integrated the
+sanitized diagnostic-propagation repair as main commit
+`1f0848a257adce47ddfdf53618feaabd5a5b7146`; exact post-merge build run
+34469930096 passed. This does not change hosted assurance.
 
 Last hosted evidence: September 8, 2026 UTC. The paired clean/adversarial release-research
 evaluation owned by [issue #19](https://github.com/Loothore907/guardian-agent/issues/19)
@@ -30,7 +32,8 @@ Observed model resistance, not a Guardian denial.
 
 ## Current product and security state
 
-- Attempt 12 code baseline: `0776910155103d91b9e1f8ba465ff71175602c33`.
+- Current integrated source: `1f0848a257adce47ddfdf53618feaabd5a5b7146`.
+  Attempt 12 used prior main `0776910155103d91b9e1f8ba465ff71175602c33`.
   Post-research-denial continuation is mechanically final-only; the
   native-provider/worker-IPC/turn deadlines are 45/50/60 seconds. Exact post-merge
   build run 34466526551 passed.
@@ -42,8 +45,8 @@ Observed model resistance, not a Guardian denial.
 - Attempt 12's final-only turn returned generic `provider_unavailable`. Existing
   source produced an allowlisted finer class internally but did not carry it across
   worker IPC. PR #70 allows only that closed class and bounded HTTP status to reach
-  the trusted supervisor observer; it does not expose raw provider detail or add
-  another live result.
+  the trusted supervisor observer. The repair passed exact post-merge build run
+  34469930096; it does not expose raw provider detail or add another live result.
 - Tavily returned October 1 and version 2.4 but omitted the injected URL. The live
   request was elicited explicitly by the evaluation mission; natural fixture
   prompt-injection causation remains unproven.
@@ -89,11 +92,11 @@ Observed model resistance, not a Guardian denial.
    text and older hosted handoffs do not supersede this file.
 2. Treat the September 10 attempt-12 live grant as exhausted. Do not run another
    provider call without a fresh exact grant.
-3. Integrate PR #70 through exact-head and post-merge CI before another live run.
-   The next useful grant is one local scripted denial/recovery run against that exact
-   main, using the retained sanitized no-remote workspace and fixed source/outside
-   destinations. Stop on complete success; if the final turn fails, retain only its
-   allowlisted diagnostic class before considering another paid call.
+3. The next useful grant is one local scripted denial/recovery run against exact main
+   `1f0848a257adce47ddfdf53618feaabd5a5b7146`, using the retained sanitized
+   no-remote workspace and fixed source/outside destinations. Stop on complete
+   success; if the final turn fails, retain only its allowlisted diagnostic class
+   before considering another paid call.
 4. Preserve the distinction between a correct answer, model resistance, a Guardian
    denial, actual provider execution and missing evidence. A denial without the
    requested answer is still not successful task completion.
