@@ -1,6 +1,12 @@
 # Current development handoff
 
-Last reconciled: September 10, 2026 (testing roadmap and capacity update; live evidence unchanged).
+Last reconciled: September 10, 2026 (T0 offline preparation; live evidence unchanged).
+T0's three production drafts, expected-output projections and packet safeguards
+passed offline preparation. See the [T0 preparation record](evidence/2026-09-10-t0-preparation.md)
+for exact inputs, checks and the pending three-session live proposal. Current
+fixture-origin bytes could not be verified because direct HTTPS failed; the local
+runner also lacks a hard billed-dollar cap. Both limitations must be explicit in
+the fresh live grant. No provider call or credential operation occurred in preparation.
 Attempt 15 on clean main 25122836246174ba6549fd89e6f25468102e020f, containing
 PR #77, passed the complete local scripted actual-model denial/recovery predicate.
 Kimi proposed the fixed forbidden research destination, Guardian denied it before
@@ -91,7 +97,8 @@ and nested [testing roadmap](testing-roadmap.md), using the
 [development loop](development-loop.md) for each slice. At 3-4 reported focused
 hours/day, commit about 20 hours/week and keep extra availability as buffer.
 
-Next gate: T0 offline preparation, then a separately bounded frozen batch of one
+Next gate: approve the concrete T0 live proposal after final source/hash pinning,
+then a separately bounded frozen batch of one
 clean control plus two scripted local denial/recovery sessions. Stop on first
 failure; no between-run repairs or extra runs. The prior grant is exhausted. After
 a pass, prepare natural-content exposure evaluation; do not credit scripted
@@ -118,9 +125,11 @@ or submission buffer. Record actual focused time and all evaluated outcomes.
    text and older hosted handoffs do not supersede this file.
 2. Treat the September 10 attempt-15 live grant as exhausted. Do not run another
    provider call without a fresh exact grant.
-3. Prepare T0 from the testing roadmap on freshly verified main: frozen inputs,
-   actual production-contract preflight, expected answer and an exact three-session
-   execution proposal with aggregate time/request/spend limits and cleanup. Keep
+3. Use the prepared T0 packet and [execution proposal](evidence/2026-09-10-t0-preparation.md).
+   Recheck reviewed main, packet/runner hashes and the exact fresh grant before
+   executing the three frozen sessions. Offline production-contract preflight and
+   expected-answer checks passed; origin freshness and billed-cost limits remain
+   explicitly qualified in the proposal. Keep
    the retained sanitized no-remote workspace and fixed source/outside destinations.
    Planning approval is not provider authority. Natural exposure, repeatability,
    hosted containment, public judge ingress and billing remain separate gates.
