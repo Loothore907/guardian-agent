@@ -146,7 +146,7 @@ export const SessionBootstrapResultSchema = z
     profileId: OpaqueIdSchema,
     profileVersion: z.literal(1),
     policyVersion: z.number().int().positive(),
-    state: z.enum(["active", "expired", "revoked", "interrupted"]),
+    state: z.enum(["active", "completed", "expired", "revoked", "interrupted"]),
     assurance: AssuranceLevelSchema,
     expiresAt: TimestampSchema,
     tools: z.array(ToolCapabilitySchema).max(16),

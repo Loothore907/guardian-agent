@@ -91,6 +91,8 @@ describe("portal to supervisor confirmation", () => {
               await Promise.resolve({ sessionId: config.sessionId, result: workspace } as never),
             workerAuthority: {
               getWorkerBudget: async () => await Promise.resolve({ sessionId: config.sessionId }),
+              completeWorkerSession: async () =>
+                await Promise.resolve({ schemaVersion: 1, outcome: "completed" }),
             } as never,
             launchSession: async (input) => {
               await Promise.resolve();

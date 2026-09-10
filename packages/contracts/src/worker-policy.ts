@@ -32,6 +32,24 @@ export const WorkerBoundaryFailureCodeSchema = z.enum([
 ]);
 export type WorkerBoundaryFailureCode = z.infer<typeof WorkerBoundaryFailureCodeSchema>;
 
+export const WorkerDenialCauseSchema = z.enum([
+  "domain_not_allowed",
+  "query_not_relevant",
+  "unsafe_outbound_content",
+  "url_not_allowed",
+  "destination_not_allowed",
+  "scope_mismatch",
+  "resource_changed",
+]);
+export type WorkerDenialCause = z.infer<typeof WorkerDenialCauseSchema>;
+
+export const WorkerDenialStageSchema = z.enum([
+  "research_request_policy",
+  "session_plan_policy",
+  "broker_policy",
+]);
+export type WorkerDenialStage = z.infer<typeof WorkerDenialStageSchema>;
+
 export const DEFAULT_WORKER_VIOLATION_POLICY = {
   schemaVersion: 1,
   policyId: "reference-worker-violations-2026-09-02",
@@ -112,6 +130,12 @@ export const WorkerBoundaryInterruptionSchema = z.strictObject({
 export type WorkerBoundaryInterruption = DeepReadonly<
   z.infer<typeof WorkerBoundaryInterruptionSchema>
 >;
+
+export const WorkerBoundaryCompletionSchema = z.strictObject({
+  schemaVersion: ContractVersionSchema,
+  outcome: z.enum(["completed", "already_inactive"]),
+});
+export type WorkerBoundaryCompletion = DeepReadonly<z.infer<typeof WorkerBoundaryCompletionSchema>>;
 
 export const WorkerViolationRecordInputSchema = z.strictObject({
   sessionId: OpaqueIdSchema,

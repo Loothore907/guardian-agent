@@ -658,4 +658,90 @@ describe("external worker claims", () => {
       store.close();
     }
   });
+
+  it("persists ordered worker evidence and atomically completes exact session authority", async () => {
+    const { store } = await openStore();
+    store.createSession(session(), budget());
+    const executionId = randomUUID();
+    const executionDigest = "e".repeat(64);
+    expect(store.claimExternalExecution(IDS.session, executionId, executionDigest).outcome).toBe(
+      "allowed",
+    );
+    store.recordWorkerAuditEvent(IDS.session, {
+      type: "proposal.received",
+      proposalId: executionId,
+      boundaryId: executionId,
+      boundaryDigest: executionDigest,
+      operation: "guardian.research",
+    });
+    store.recordWorkerAuditEvent(IDS.session, {
+      type: "policy.decided",
+      boundaryId: executionId,
+      boundaryDigest: executionDigest,
+      requestDigest: REQUEST_DIGEST,
+      level: "deny",
+      reasonCodes: ["scope_expansion"],
+      denialCause: "url_not_allowed",
+      denialStage: "research_request_policy",
+    });
+    store.recordWorkerAuditEvent(IDS.session, {
+      type: "execution.result",
+      boundaryId: executionId,
+      boundaryDigest: executionDigest,
+      requestDigest: REQUEST_DIGEST,
+      outcome: "denied",
+      resultCode: "request_mismatch",
+      providerBoundary: "not_crossed",
+      adapterBoundary: "not_crossed",
+    });
+    store.recordWorkerAuditEvent(IDS.session, {
+      type: "worker.feedback.returned",
+      boundaryId: executionId,
+      boundaryDigest: executionDigest,
+      requestDigest: REQUEST_DIGEST,
+      resultDigest: "f".repeat(64),
+      outcome: "denied",
+      denialCause: "url_not_allowed",
+      denialStage: "research_request_policy",
+    });
+    const finalBoundaryId = randomUUID();
+    const finalBoundaryDigest = "1".repeat(64);
+    expect(
+      store.completeWorkerSession(
+        IDS.session,
+        finalBoundaryId,
+        finalBoundaryDigest,
+        "2".repeat(64),
+      ),
+    ).toEqual({ schemaVersion: 1, outcome: "completed" });
+    expect(store.getSession(IDS.session)?.status).toBe("completed");
+    expect(store.getActiveWorkerBudget(IDS.session)).toBeNull();
+    expect(store.listAuditEvents(IDS.session).map((event) => event.type)).toEqual([
+      "proposal.received",
+      "policy.decided",
+      "execution.result",
+      "worker.feedback.returned",
+      "worker.completion.returned",
+      "session.terminal",
+    ]);
+    expect(
+      store.completeWorkerSession(
+        IDS.session,
+        finalBoundaryId,
+        finalBoundaryDigest,
+        "2".repeat(64),
+      ),
+    ).toEqual({ schemaVersion: 1, outcome: "already_inactive" });
+    expect(store.listAuditEvents(IDS.session)).toHaveLength(6);
+    expect(() =>
+      store.recordWorkerAuditEvent(IDS.session, {
+        type: "proposal.received",
+        proposalId: executionId,
+        boundaryId: executionId,
+        boundaryDigest: executionDigest,
+        operation: "guardian.research",
+      }),
+    ).toThrow(/active exact session authority/u);
+    store.close();
+  });
 });

@@ -50,15 +50,6 @@ const server = await startWorkerService(config, {
               },
             },
       };
-    } else if (research && turn.turnNumber === 3) {
-      assert.equal(turn.previousToolResult.outcome, "denied");
-      outcome = {
-        kind: "tool_request",
-        request: {
-          name: "guardian.research",
-          arguments: { sourceUrl: "https://fixture.example.org/update" },
-        },
-      };
     } else if (merge && turn.turnNumber === 3) {
       assert.equal(turn.previousToolResult.outcome, "denied");
       outcome = {
@@ -79,7 +70,7 @@ const server = await startWorkerService(config, {
       outcome = {
         kind: "final_response",
         response: research
-          ? "Release October 1; upgrade via 2.4 before 3.0."
+          ? "Version 3.0 releases October 1. Upgrade to version 2.4 before moving to 3.0. Source: fixture.example.org/update."
           : "release.md changes draft to ready.",
       };
     }

@@ -47,6 +47,8 @@ const ROLE_OPERATIONS: Readonly<Record<AuthorityCallerRole, ReadonlySet<Authorit
     "worker.budget",
     "budget.consume_local_command",
     "worker.record_violation",
+    "worker.audit",
+    "worker.complete",
     "worker.interrupt",
   ]),
 };
@@ -493,6 +495,25 @@ export class LocalAuthorityIpcServer implements AuthorityServiceBoundary {
               request.boundaryId,
               request.boundaryDigest,
               request.code,
+            ),
+          });
+          return;
+        case "worker.audit":
+          writeResponse(socket, {
+            ...base,
+            operation: request.operation,
+            result: this.#store.recordWorkerAuditEvent(request.sessionId, request.event),
+          });
+          return;
+        case "worker.complete":
+          writeResponse(socket, {
+            ...base,
+            operation: request.operation,
+            result: this.#store.completeWorkerSession(
+              request.sessionId,
+              request.boundaryId,
+              request.boundaryDigest,
+              request.resultDigest,
             ),
           });
           return;

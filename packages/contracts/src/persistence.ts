@@ -9,7 +9,13 @@ import {
   type DeepReadonly,
 } from "./common.js";
 
-export const DurableSessionStatusSchema = z.enum(["active", "interrupted", "revoked", "expired"]);
+export const DurableSessionStatusSchema = z.enum([
+  "active",
+  "completed",
+  "interrupted",
+  "revoked",
+  "expired",
+]);
 export type DurableSessionStatus = z.infer<typeof DurableSessionStatusSchema>;
 
 export const DurableSessionRecordSchema = z

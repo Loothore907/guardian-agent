@@ -241,7 +241,7 @@ export class SupervisorJudgePortalRuntime {
             const completed =
               !closed &&
               !signal.aborted &&
-              result.state === "active" &&
+              result.state === "completed" &&
               final !== undefined &&
               (sessionPlan === undefined || result.sessionPlanGrantId !== undefined);
             if (completed)

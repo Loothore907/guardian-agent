@@ -19,6 +19,7 @@ import {
   type DeepReadonly,
 } from "./common.js";
 import { ExactApprovalSchema } from "./authorization.js";
+import { AuditEventSchema, WorkerAuditEventInputSchema } from "./audit.js";
 import {
   ApprovalConsumptionRequestSchema,
   DurableSessionBudgetSchema,
@@ -27,6 +28,7 @@ import {
 import { DurableConnectionRecordSchema } from "./authority-context.js";
 import {
   WorkerBoundaryFailureCodeSchema,
+  WorkerBoundaryCompletionSchema,
   WorkerBoundaryInterruptionSchema,
   WorkerExecutionAuthorizationSchema,
   WorkerViolationCodeSchema,
@@ -54,6 +56,8 @@ export const AuthorityIpcOperationSchema = z.enum([
   "worker.budget",
   "budget.consume_local_command",
   "worker.record_violation",
+  "worker.audit",
+  "worker.complete",
   "worker.interrupt",
   "approval.consume",
   "context.append_attempt",
@@ -169,6 +173,18 @@ export const AuthorityIpcRequestSchema = z.discriminatedUnion("operation", [
     boundaryId: OpaqueIdSchema,
     boundaryDigest: z.string().regex(/^[a-f0-9]{64}$/u),
     code: WorkerViolationCodeSchema,
+  }),
+  z.strictObject({
+    ...AuthorityRequestBindingShape,
+    operation: z.literal("worker.audit"),
+    event: WorkerAuditEventInputSchema,
+  }),
+  z.strictObject({
+    ...AuthorityRequestBindingShape,
+    operation: z.literal("worker.complete"),
+    boundaryId: OpaqueIdSchema,
+    boundaryDigest: z.string().regex(/^[a-f0-9]{64}$/u),
+    resultDigest: z.string().regex(/^[a-f0-9]{64}$/u),
   }),
   z.strictObject({
     ...AuthorityRequestBindingShape,
@@ -344,6 +360,18 @@ export const AuthorityIpcSuccessResponseSchema = z.discriminatedUnion("operation
     ok: z.literal(true),
     operation: z.literal("worker.record_violation"),
     result: WorkerExecutionAuthorizationSchema,
+  }),
+  z.strictObject({
+    ...AuthorityResponseBindingShape,
+    ok: z.literal(true),
+    operation: z.literal("worker.audit"),
+    result: AuditEventSchema,
+  }),
+  z.strictObject({
+    ...AuthorityResponseBindingShape,
+    ok: z.literal(true),
+    operation: z.literal("worker.complete"),
+    result: WorkerBoundaryCompletionSchema,
   }),
   z.strictObject({
     ...AuthorityResponseBindingShape,

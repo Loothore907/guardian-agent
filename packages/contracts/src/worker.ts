@@ -29,7 +29,11 @@ import {
   GuardianModelIdSchema,
   GuardianModelPolicyIdSchema,
 } from "./model-policy.js";
-import { DEFAULT_WORKER_VIOLATION_POLICY } from "./worker-policy.js";
+import {
+  DEFAULT_WORKER_VIOLATION_POLICY,
+  WorkerDenialCauseSchema,
+  WorkerDenialStageSchema,
+} from "./worker-policy.js";
 import { CredentialStoreConfigSchema } from "./credentials.js";
 import { ManagedDemoWorkerUsageReporterConfigSchema } from "./managed-demo-budget-ipc.js";
 
@@ -338,6 +342,8 @@ const WorkerToolDenialShape = {
     disposition: z.enum(["continue", "revoked"]),
     policyId: z.literal(DEFAULT_WORKER_VIOLATION_POLICY.policyId),
     policyVersion: z.literal(DEFAULT_WORKER_VIOLATION_POLICY.version),
+    cause: WorkerDenialCauseSchema.optional(),
+    stage: WorkerDenialStageSchema.optional(),
   }),
 } as const;
 
@@ -351,6 +357,18 @@ const WorkerToolDeniedResultWithoutDigestSchema = z.discriminatedUnion("name", [
 
 export const WorkerToolResultWithoutDigestSchema = z
   .union([WorkerToolSuccessResultWithoutDigestSchema, WorkerToolDeniedResultWithoutDigestSchema])
+  .superRefine((result, context) => {
+    if (
+      result.outcome === "denied" &&
+      (result.denial.cause === undefined) !== (result.denial.stage === undefined)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "worker denial cause and stage must be returned together",
+        path: ["denial"],
+      });
+    }
+  })
   .refine(publicToolResultIsSafe, "unsafe worker result")
   .refine(
     (r) =>
