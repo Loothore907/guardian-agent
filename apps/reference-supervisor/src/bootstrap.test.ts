@@ -918,9 +918,11 @@ describe("reference terminal session bootstrap", () => {
         providerDiagnostic: diagnostic,
       });
       expect(JSON.stringify(observeWorker.mock.calls)).not.toContain("private provider detail");
-      expect(
-        JSON.parse(JSON.stringify(observeWorker.mock.calls[0]?.[0])).providerDiagnostic,
-      ).toEqual(diagnostic);
+      expect(JSON.parse(JSON.stringify(observeWorker.mock.calls[0]?.[0])) as unknown).toMatchObject(
+        {
+          providerDiagnostic: diagnostic,
+        },
+      );
     },
   );
 
