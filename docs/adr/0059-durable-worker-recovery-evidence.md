@@ -42,12 +42,15 @@ ordinary continuations, the trusted dispatcher remains the decision boundary for
 proposed tool outside the advertised catalog so it can return the existing typed
 denial.
 
-The native-worker provider timeout is 45 seconds, bounded inside the existing
-60-second worker-turn deadline. Three merged-main evaluation attempts reached the
-20-second provider cutoff only on the evidence-bearing final turn, while the compact
-final-only compatibility probe completed. The longer inner timeout preserves the
-same outer deadline and fail-closed behavior while allowing that larger context a
-useful completion window.
+The native-worker provider timeout is 45 seconds and its supervised IPC client
+timeout is 50 seconds, both bounded inside the existing 60-second worker-turn
+deadline. Three merged-main evaluation attempts stopped around the prior 20-second
+cutoff only on the evidence-bearing final turn, while the compact final-only
+compatibility probe completed. A fourth attempt after increasing only the provider
+timeout exposed the still-shorter IPC timeout, which preempted the provider window.
+The aligned inner deadlines preserve the same outer deadline and fail-closed
+behavior while allowing the larger context a useful completion window. Live useful
+completion remains unproven until a newly authorized evaluation succeeds.
 
 For bounded continuation, a contract-valid final response must cross a new exact
 completion boundary. The supervisor binds the final turn ID and digest plus a digest
