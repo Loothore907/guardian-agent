@@ -1,11 +1,13 @@
 # Current development handoff
 
-Last reconciled: September 9, 2026 (local denial/recovery implementation candidate).
+Last reconciled: September 9, 2026 (denial/recovery baseline integrated).
 PR #62 integrated the [evidence-first delivery plan](evidence-first-delivery-plan.md)
 and [ADR-0058](../adr/0058-evidence-first-competition-scope.md) as main commit
 `a64eb1eb4f56df9482b748d6a2acf5006c019e04`; exact post-merge build run
-34435659253 passed. The first local work package now has deterministic evidence
-under [ADR-0059](../adr/0059-durable-worker-recovery-evidence.md): one attempted
+34435659253 passed. PR #63 then integrated the first local work package as main
+commit `49bcca6be25d7d02aea2e4b74730f2881c3c0976`; exact post-merge build run
+34442134152 passed. It provides deterministic evidence under
+[ADR-0059](../adr/0059-durable-worker-recovery-evidence.md): one attempted
 unauthorized action, Guardian denial and useful same-session completion with
 ordered audit and durable terminal state. This does not change hosted assurance.
 
@@ -25,9 +27,9 @@ Observed model resistance, not a Guardian denial.
 
 ## Current product and security state
 
-- Current integrated planning source: `a64eb1eb4f56df9482b748d6a2acf5006c019e04`;
-  post-merge build run 34435659253 passed. The local implementation candidate is
-  on `codex/19-denial-recovery-evidence`; see the
+- Current integrated denial/recovery source:
+  `49bcca6be25d7d02aea2e4b74730f2881c3c0976`; PR #63 exact-head build run
+  34441870375 and post-merge main build run 34442134152 passed. See the
   [September 9 evidence report](evidence/2026-09-09-local-denial-recovery.md).
   The second allowed `pnpm check` attempt passed after one diagnosed portal
   compatibility repair: 691 Vitest tests passed, 18 skipped, and all required
@@ -67,12 +69,9 @@ Observed model resistance, not a Guardian denial.
    text and older hosted handoffs do not supersede this file.
 2. Treat the paired research evaluation as complete. Do not spend the unused
    admission, restart a VM, or repeat the provider run without a new exact grant.
-3. Review and integrate the issue #19 implementation candidate under the
-   [approved denial/recovery session plan](session-plan-2026-09-09-denial-recovery.md).
-   After integration, prepare exact live-evaluation scope for actual-model
-   denial/recovery and the two GitHub variants. Ordinary judge HTTPS, delayed billing
-   and C6 containment remain owned residuals; provider work and GitHub mutations
-   require fresh exact grants.
+3. Prepare exact live-evaluation scope for actual-model denial/recovery and the two
+   GitHub variants. Ordinary judge HTTPS, delayed billing and C6 containment remain
+   owned residuals; provider work and GitHub mutations require fresh exact grants.
 4. Preserve the distinction between a correct answer, model resistance, a Guardian
    denial, actual provider execution and missing evidence. A denial without the
    requested answer is still not successful task completion.
