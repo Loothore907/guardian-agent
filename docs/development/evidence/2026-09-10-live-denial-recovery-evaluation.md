@@ -90,7 +90,10 @@ The follow-up repair carries only the closed provider diagnostic enum, plus a
 bounded HTTP status when applicable, across authenticated one-use worker IPC to the
 trusted supervisor observer. It excludes provider text, headers, bodies, arbitrary
 error strings and credentials, and it does not expose the diagnostic to the worker
-or public result. A further paid run requires a fresh grant. Stop on complete
+or public result. [PR #70](https://github.com/Loothore907/guardian-agent/pull/70)
+integrated it as main commit `1f0848a257adce47ddfdf53618feaabd5a5b7146`;
+exact post-merge build run 34469930096 passed. A further paid run requires a fresh
+grant. Stop on complete
 success; if it fails, retain only that allowlisted class. Natural fixture-injection
 causation remains a separate later experiment.
 
