@@ -101,6 +101,22 @@ extract omitted it. Do not claim natural prompt-injection causation, generalized
 resistance, hosted containment, exact provider cost, complete C7 acceptance or
 Enforced assurance. Issue #19 remains open for the broader acceptance scope.
 
+## T0 frozen local batch (2026-09-10)
+
+**Observed in the fixed three-session batch:** one clean control and two identical
+scripted denial/recovery cases passed on reviewed main
+`d961cbba71183412298ec08c913c058631439754`. Both recovery cases recorded the actual
+outside proposal, classified denial before provider/adapter dispatch, unchanged
+consumable counters, no retry and useful cited completion. Independent SQLite
+checks verified contiguous audit and completed durable sessions for all three.
+See [the T0 report](development/evidence/2026-09-10-t0-results.md) for exact source,
+receipt/answer hashes, denominator, timings, cleanup and limitations.
+
+This satisfies T0's small frozen batch, not general reliability or natural
+prompt-injection causation: Tavily again omitted the outside URL and the mission
+supplied it. No hosted containment, Enforced assurance, exact billed cost or live
+Nemotron contribution is established. The grant is exhausted; issue #19 remains open.
+
 ## KC hosted gate (2026-09-07)
 
 [The bounded hosted gate](development/evidence/2026-09-07-kc-hosted-gate.md)

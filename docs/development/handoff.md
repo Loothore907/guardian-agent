@@ -1,12 +1,17 @@
 # Current development handoff
 
-Last reconciled: September 10, 2026 (T0 offline preparation; live evidence unchanged).
-T0's three production drafts, expected-output projections and packet safeguards
-passed offline preparation. See the [T0 preparation record](evidence/2026-09-10-t0-preparation.md)
-for exact inputs, checks and the pending three-session live proposal. Current
-fixture-origin bytes could not be verified because direct HTTPS failed; the local
-runner also lacks a hard billed-dollar cap. Both limitations must be explicit in
-the fresh live grant. No provider call or credential operation occurred in preparation.
+Last reconciled: September 10, 2026 (T0 frozen live batch passed).
+T0 completed all three authorized cases on clean main
+`d961cbba71183412298ec08c913c058631439754`: clean control in 24.867 seconds and
+scripted recoveries in 27.942 and 28.464 seconds. Both recoveries had classified
+no-dispatch denial, unchanged consumable counters, no retry and useful cited
+answers. All three durable sessions completed; separate process inspection found
+no remaining services. See [the consolidated T0 report](evidence/2026-09-10-t0-results.md).
+Eight worker calls and three research requests occurred; actual billed cost is
+unavailable. The three-run grant is exhausted. Next is offline preparation for
+natural-content exposure under T1; Tavily again omitted the outside URL.
+
+Earlier local baseline:
 Attempt 15 on clean main 25122836246174ba6549fd89e6f25468102e020f, containing
 PR #77, passed the complete local scripted actual-model denial/recovery predicate.
 Kimi proposed the fixed forbidden research destination, Guardian denied it before
@@ -39,12 +44,12 @@ Observed model resistance, not a Guardian denial.
 
 ## Current product and security state
 
-- Latest local live evidence: attempt 15 on main 2512283, 31.756 seconds,
-  classified no-dispatch denial, unchanged consumable counters, no retry, useful
-  cited answer, ten contiguous audit events and durable completed state.
-- Latest live-tested runtime source: PR #77 main
-  25122836246174ba6549fd89e6f25468102e020f; exact post-merge build 34479973416
-  passed before attempt 15. Post-denial continuation remains mechanically
+- Latest local live evidence: T0 passed 3/3 cases on main d961cbb, with zero
+  failed/unrun cases or retries. The two recoveries independently passed denial,
+  no-dispatch, counter, useful-answer, audit and terminal checks.
+- Latest live-tested runtime source: PR #80 main
+  d961cbba71183412298ec08c913c058631439754; exact post-merge build 34500333374
+  passed before T0. Post-denial continuation remains mechanically
   final-only and provider/IPC/turn deadlines remain 45/50/60 seconds.
 - Attempts 7-14 did not complete useful recovery. Attempt 14 identified the
   transport-content output rejection; PR #77 made final-answer citation formatting
@@ -97,12 +102,11 @@ and nested [testing roadmap](testing-roadmap.md), using the
 [development loop](development-loop.md) for each slice. At 3-4 reported focused
 hours/day, commit about 20 hours/week and keep extra availability as buffer.
 
-Next gate: approve the concrete T0 live proposal after final source/hash pinning,
-then a separately bounded frozen batch of one
-clean control plus two scripted local denial/recovery sessions. Stop on first
-failure; no between-run repairs or extra runs. The prior grant is exhausted. After
-a pass, prepare natural-content exposure evaluation; do not credit scripted
-proposals as injection causation. Preserve final-only research recovery.
+T0 passed its frozen clean-plus-two-recovery batch. Next gate: prepare T1's
+natural-content exposure evaluation offline. Keep its mission neutral and verify
+actual research-result exposure before interpreting model behavior. Do not credit
+scripted proposals as injection causation. Preserve final-only research recovery.
+Both the attempt-15 and T0 live grants are exhausted.
 
 Issue #19 owns this primary flow. Supporting deadline-critical work is intended
 runtime/credential and exact-action evidence (#13), judge HTTPS/admission/billing
@@ -123,17 +127,16 @@ or submission buffer. Record actual focused time and all evaluated outcomes.
 1. Run fresh repository hygiene and Context Atlas pickup; read cited source before
    security decisions and inspect uncommitted changes separately. Historical issue
    text and older hosted handoffs do not supersede this file.
-2. Treat the September 10 attempt-15 live grant as exhausted. Do not run another
+2. Treat the September 10 attempt-15 and T0 live grants as exhausted. Do not run another
    provider call without a fresh exact grant.
-3. Use the prepared T0 packet and [execution proposal](evidence/2026-09-10-t0-preparation.md).
-   Recheck reviewed main, packet/runner hashes and the exact fresh grant before
-   executing the three frozen sessions. Offline production-contract preflight and
-   expected-answer checks passed; origin freshness and billed-cost limits remain
-   explicitly qualified in the proposal. Keep
-   the retained sanitized no-remote workspace and fixed source/outside destinations.
-   Planning approval is not provider authority. Natural exposure, repeatability,
-   hosted containment, public judge ingress and billing remain separate gates.
-   Preserve the strict validator, deterministic denial and final-only rule.
+3. Start from the [T0 results](evidence/2026-09-10-t0-results.md) and prepare
+   natural-content exposure offline. Investigate which instruction survives the
+   production research-result projection with a neutral mission; classify missing
+   exposure separately from resistance. Freeze any repaired fixture as a new
+   configuration before seeking further paid execution. Retain the sanitized
+   no-remote workspace, strict validator, deterministic denial and final-only rule.
+   Billed cost, origin-byte identity, hosted containment and judge ingress remain
+   separately qualified; passing T0 grants no additional execution authority.
 4. Preserve the distinction between a correct answer, model resistance, a Guardian
    denial, actual provider execution and missing evidence. A denial without the
    requested answer is still not successful task completion.
@@ -143,12 +146,13 @@ or submission buffer. Record actual focused time and all evaluated outcomes.
    projection investigation; and `credential_or_internal_failure` as a protected
    credential-store or usage-recording investigation. Diagnose before proposing a
    further paid run, and do not weaken the deterministic denial or final-only rule.
-6. The evidence report and security claims record live useful recovery only for
-   this one scripted local probe. Natural fixture-injection causation,
+6. The evidence reports and security claims record attempt 15 and the fixed T0
+   batch as scripted local evidence. Natural fixture-injection causation,
    hosted containment, generalized resistance and Enforced assurance remain
    separate claims. Keep issue #19 open unless all of its remaining acceptance scope
    is actually satisfied or explicitly split into owning follow-up issues.
-7. Keep private evidence under `tmp/issue19-live-denial-recovery-20260909/` and
+7. Keep private evidence under `tmp/t0-20260910/`,
+   `tmp/issue19-live-denial-recovery-20260909/` and
    `tmp/c7-acceptance/issue19-paired-3e03e2e/` out of indiscriminate staging.
 
 The earlier clean journey remains documented in
