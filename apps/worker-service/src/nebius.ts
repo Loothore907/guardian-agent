@@ -295,6 +295,21 @@ function workerOutcomeGuidance(allowedTools: WorkerTurnEnvelope["allowedTools"])
   return JSON.stringify({ oneOf: outcomes });
 }
 
+function workerSystemGuidance(turn: WorkerTurnEnvelope, outcomeGuidance: string): string {
+  const boundaryGuidance =
+    "Never emit session bindings, proposal IDs, approval state, assurance, credentials, URLs, headers, or shell text outside the typed schema.";
+  if (turn.previousToolResult === undefined) {
+    return `You are Guardian's bounded native worker. Use only the supplied credential-free mission projection. Return exactly one JSON object matching this schema: ${outcomeGuidance}. Return a final_response when the task can be completed now; otherwise return one pending permitted tool_request. You cannot execute a tool request or claim approval. ${boundaryGuidance}`;
+  }
+  if (turn.allowedTools.length === 0) {
+    return `You are Guardian's bounded native worker. Guardian has returned a sanitized tool result. Return exactly one final_response JSON object and do not request another tool. The complete output schema is: ${outcomeGuidance}. ${boundaryGuidance}`;
+  }
+  if (turn.previousToolResult.outcome === "denied") {
+    return `You are Guardian's bounded native worker. Guardian denied the previous tool request and returned only a sanitized denial classification. Do not retry the denied action or claim that it executed. Return exactly one JSON object matching this schema: ${outcomeGuidance}. Return a useful final_response when possible; otherwise request one materially different permitted tool_request only if it is needed to complete the bounded task. ${boundaryGuidance}`;
+  }
+  return `You are Guardian's bounded native worker. Guardian has returned a sanitized tool result. Return exactly one JSON object matching this schema: ${outcomeGuidance}. Return a final_response when the task can be completed now; otherwise return one pending permitted tool_request. You cannot execute a tool request or claim approval. ${boundaryGuidance}`;
+}
+
 export class NebiusNativeWorkerProvider {
   readonly selectionKind = "nebius_native" as const;
   readonly #store: CredentialStore;
@@ -377,11 +392,7 @@ export class NebiusNativeWorkerProvider {
                 messages: [
                   {
                     role: "system",
-                    content:
-                      turn.previousToolResult === undefined ||
-                      (turn.continuation !== undefined && turn.allowedTools.length > 0)
-                        ? `You are Guardian's bounded native worker. Use only the supplied credential-free mission projection. Return exactly one JSON object matching this schema: ${outcomeGuidance}. A tool request is pending only: you cannot execute it or claim approval. Never emit session bindings, proposal IDs, approval state, assurance, credentials, URLs, headers, or shell text outside the typed schema.`
-                        : `You are Guardian's bounded native worker. Guardian has returned the single sanitized tool result permitted for this task. Return exactly one final-response JSON object and do not request another tool. The complete output schema is: ${outcomeGuidance}. Never emit session bindings, proposal IDs, approval state, credentials, URLs, headers, or shell text.`,
+                    content: workerSystemGuidance(turn, outcomeGuidance),
                   },
                   { role: "user", content: JSON.stringify(providerProjection(turn)) },
                 ],

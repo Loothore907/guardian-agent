@@ -185,7 +185,7 @@ describe("Nebius native worker provider", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("projects only the allowlisted denial classification into the final turn", async () => {
+  it("permits a final response after denial while tools remain without encouraging a retry", async () => {
     const credentialStore = new InMemoryCredentialStore();
     await credentialStore.write(
       nativeWorkerBoundary.credential,
@@ -235,7 +235,7 @@ describe("Nebius native worker provider", () => {
       turnNumber: 3,
       continuation: { kind: "bounded_v1", maxTurns: 3, deadline: firstTurn.expiresAt },
       startsAt: "2026-09-01T00:00:20.000Z",
-      allowedTools: [],
+      allowedTools: ["guardian.research"],
       remainingBudget: denial.remainingBudget,
       previousToolResult: nextDenial,
       toolHistory: [denial],
@@ -265,6 +265,15 @@ describe("Nebius native worker provider", () => {
     });
     const init = fetchMock.mock.calls[0]?.[1];
     if (typeof init?.body !== "string") throw new TypeError("provider body was not text");
+    const request = JSON.parse(init.body) as {
+      readonly messages: readonly { readonly content: string }[];
+    };
+    const systemGuidance = request.messages[0]?.content ?? "";
+    expect(systemGuidance).toContain("Guardian denied the previous tool request");
+    expect(systemGuidance).toContain("Do not retry the denied action");
+    expect(systemGuidance).toContain('"kind":{"const":"final_response"}');
+    expect(systemGuidance).toContain('"name":{"const":"guardian.research"}');
+    expect(systemGuidance).not.toContain("A tool request is pending only");
     expect(init.body).toContain("request_denied");
     expect(init.body).toContain("continue");
     expect(init.body).toContain("url_not_allowed");
