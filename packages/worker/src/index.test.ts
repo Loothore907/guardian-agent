@@ -117,7 +117,15 @@ describe("one-use worker IPC", () => {
     });
     const socket = createConnection(stalled.credentials.endpoint);
     await once(socket, "connect");
-    const closed = once(socket, "close");
+    const framingErrors: string[] = [];
+    socket.on("error", (error: NodeJS.ErrnoException) => {
+      framingErrors.push(error.code ?? "unknown");
+    });
+    // Linux may reset a socket with an unread partial frame; Windows may close
+    // it normally. Both must close without ever invoking the handler.
+    const closed = new Promise<void>((resolveClosed) =>
+      socket.once("close", () => resolveClosed()),
+    );
     socket.write('{"');
     const trickle = setInterval(() => socket.write("x"), 4_000);
     try {
@@ -130,6 +138,7 @@ describe("one-use worker IPC", () => {
         closed,
       ]);
       expect(stalledHandler).not.toHaveBeenCalled();
+      expect(framingErrors.every((code) => code === "ECONNRESET" || code === "EPIPE")).toBe(true);
     } finally {
       clearInterval(trickle);
       socket.destroy();
