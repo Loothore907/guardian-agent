@@ -80,4 +80,6 @@ Architecture decision records document consequential choices, rejected alternati
 
 - [ADR-0057: Repo-native advisory context atlas](0057-repo-native-context-atlas.md)
 
+- [ADR-0058: Evidence-first competition scope and consent](0058-evidence-first-competition-scope.md)
+
 Use the next sequential four-digit number. Do not silently rewrite an accepted decision; add a superseding ADR.

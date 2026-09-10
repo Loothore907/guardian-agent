@@ -1,5 +1,10 @@
 # C7 completion and acceptance plan
 
+September 8 supersession: use the [evidence-first delivery plan](evidence-first-delivery-plan.md)
+and [current handoff](handoff.md). The paired research evaluation completed;
+complete live denial/recovery and broader C7 acceptance remain open. The dates,
+branch state and grants below are historical and do not authorize new execution.
+
 2026-09-05. Historical completion outline, updated by the user-approved
 [test-zone plan](c7-test-zones-and-hosting-plan.md). Use the
 [KC hosted acceptance handoff](c7-kc-hosted-acceptance-handoff.md) for current status,

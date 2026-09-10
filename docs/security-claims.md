@@ -1,5 +1,12 @@
 # Security Claims and Evidence
 
+September 8 planning update: [ADR-0058](adr/0058-evidence-first-competition-scope.md)
+prioritizes curated denial/recovery under existing exact grants. WebAuthn and
+general harness integration remain deferred goals. The development issuer and
+standing deployment consent do not establish verified user presence. This scope
+revision changes no runtime control or claim status; use the
+[current handoff](development/handoff.md) for actual hosted evidence.
+
 This file is the authority for public security language. A design description does not become a guarantee merely because it appears in documentation or code.
 
 ## Status definitions

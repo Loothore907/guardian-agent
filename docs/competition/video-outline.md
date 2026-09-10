@@ -1,50 +1,49 @@
 # Three-Minute Demo Narrative
 
-Current 2026-09-05 update: [launch-bound authority and headless preparation](../development/headless-judge-setup.md). The competition launch grants the exact action before worker execution; managed GitHub installation credentials are noninteractive. Hosted IAM, cold-boot judging and WSL repair remain unverified/open. Earlier descriptions of a required second competition prompt are historical.
-
-This is a provisional narrative guide, not a final script. The final video must
-show the tested competition build, remain under three minutes, and use security
-language supported by `docs/security-claims.md`.
-
-Recording remains gated on the complete tested journey: worker-generated
-research/GitHub dispatch, user-verifying passkey approval, and the protected
-effect-completing coordinator are not yet evidenced together. The allocation
-ends at 2:58 to stay below the submission's three-minute limit; verify the final
-export duration rather than treating this outline as timing evidence.
+Revised September 8, 2026 under
+[ADR-0058](../adr/0058-evidence-first-competition-scope.md). This provisional
+outline follows the [evidence-first plan](../development/evidence-first-delivery-plan.md).
+The final video must show the tested build and use language supported by
+[security claims](../security-claims.md). The allocation ends at 2:58; verify the
+exported duration. This outline is not recording or timing evidence.
 
 ## Story allocation
 
-| Time      | Story beat                                                                                                                                                                                                        |
-| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0:00-0:18 | The problem: agents read hostile public content while holding useful service capabilities; untrusted text must not create authority.                                                                              |
-| 0:18-0:38 | The contract: the user creates a read-only mission for the disposable demo repository and Guardian launches the Enforced reference session.                                                                       |
-| 0:38-1:05 | Useful work: the agent reads the seeded PR and Guardian retrieves the controlled live public fixture through bounded Tavily research with visible untrusted provenance.                                           |
-| 1:05-1:35 | The injection test: the page asks for an unauthorized merge or authority expansion; the resulting unsafe proposal is denied before approval, GitHub token minting, or mutation. Nemotron cannot lower that floor. |
-| 1:35-1:53 | Evidence: the UI connects content exposure, attempted effect, deterministic decision, and stopping control while explicitly avoiding a causation claim.                                                           |
-| 1:53-2:26 | Deliberate authority: the human creates the permitted mission revision, reviews the exact repository, PR head, squash method, expiry, and nonce, then verifies a bound passkey challenge.                         |
-| 2:26-2:45 | Exact execution: Guardian re-fetches and re-digests the request, atomically consumes the nonce, resolves a narrow local GitHub credential unavailable to the agent, and completes the squash merge.               |
-| 2:45-2:55 | Contrast: mutation or replay fails; the audit distinguishes the injected denial from the separately authorized action.                                                                                            |
-| 2:55-2:58 | Product name and concise closing statement.                                                                                                                                                                       |
+| Time | Story beat |
+| --- | --- |
+| 0:00-0:18 | Developer problem: repeated permission and credential interruptions make delegation difficult. State the bounded job the user wants completed. |
+| 0:18-0:38 | One agreement: show normalized targets, permitted actions and limits, then launch confirmation or clearly labelled standing operator consent. Display actual assurance. |
+| 0:38-1:00 | Useful work: the native worker retrieves the approved public or PR content through Guardian; show the untrusted source reaching the worker. |
+| 1:00-1:28 | Forbidden attempt: show the concrete typed request and identify whether it came from the live model or a deterministic adversarial harness. Guardian denies it before the forbidden external effect. |
+| 1:28-1:48 | Explain the evidence: scope, attempted effect, deterministic decision and boundary observation. Show a meaningful Nemotron assessment/explanation with no power to weaken the floor. |
+| 1:48-2:20 | Recovery: the same session receives the sanitized denial and completes the legitimate summary/review, or the original exact action already covered by the launch grant. No hidden reset or redundant approval. |
+| 2:20-2:42 | Proof: show correct output, independently verified external state, terminal session state, and measured cost/time and interruption counts with baseline/sample qualification. |
+| 2:42-2:55 | Briefly identify other passing curated forms: unauthorized destination, read becoming write, and approved-action substitution. Do not portray uncompleted variants as working. |
+| 2:55-2:58 | Product name and tested-build/access reference. |
 
-Future direction is omitted from the default cut. If the tested story runs short,
-use any remaining seconds for evidence or setup clarity before adding speculative
-material.
+## Recording gate
 
-The merge sequence must visibly distinguish the denied read-only session from the
-later human-authored mission revision. An approval cannot override the original
-mission, and the interaction agent cannot revise or expand that mission itself.
-The hostile page and proposal may be deterministic for repeatability, but the
-retrieval and Guardian control outcomes must be real and identified honestly. Do
-not imply that temporal proximity proves the page caused the model behavior, that
-Guardian prevents every injection, or that a passkey is necessarily biometric or
-hardware-backed.
+The main cut needs one complete attempted-action denial and useful recovery chain.
+The September 8 hostile-source success only showed model resistance and cannot
+fill that beat. A deterministic adversarial harness is an honest reproducible
+boundary demonstration when clearly labelled; it cannot be described as an actual
+model injection success. Show actual-model observations separately, including
+resistance or invalid output. Preserve the frozen fixture/model/source identity
+and report repeated-run results in the supporting evidence, not just a selected clip.
 
+Use the same worker session and original grant through recovery. The unauthorized
+destination case ends with a supported summary; the read-only case ends with a
+review and no merge; the exact-action case rejects substitution and executes only
+the original still-valid action. Critical failures or exhausted/revoked authority
+must stop; never edit a restarted session into an apparent continuous recovery.
 
-## Session-authority claim boundary (2026-09-05)
+The default cut has no second approval ceremony. Development confirmation is not
+WebAuthn, and standing deployment consent is not fresh human verification. A true
+authority expansion needs a reviewed amendment and is outside the default story.
+Do not claim anonymous GitHub mutation, universal injection prevention, fully local
+inference, production identity or general third-party harness enforcement.
 
-The local development runtime can demonstrate one confirmation covering exact
-GitHub read/squash targets with later out-of-plan refusal and durable review.
-The initial competition CLI confirmation now includes that action plan; the
-journey requires no second prompt. Use the [current launch/headless evidence](../development/evidence/2026-09-05-launch-headless.md), clearly identifying synthetic provider tests.
-Do not present it as a deployed headless judge flow, WebAuthn confirmation,
-generalized unattended worker loop, or permanent WSL repair.
+Future direction is omitted from the default cut. Required Nebius/NVIDIA usage,
+Tavily's role, explicit credential custody and truthful assurance should be visible
+in the functioning flow. Any narration about overhead must distinguish measured
+incremental values from forecasts and whole-journey cost.

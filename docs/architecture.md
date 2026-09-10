@@ -1,5 +1,12 @@
 # Architecture
 
+September 8 planning update: [ADR-0058](adr/0058-evidence-first-competition-scope.md)
+prioritizes curated denial/recovery under existing exact grants. WebAuthn and
+general harness integration remain deferred goals. The development issuer and
+standing deployment consent do not establish verified user presence. This scope
+revision changes no runtime control or claim status; use the
+[current handoff](development/handoff.md) for actual hosted evidence.
+
 Managed-demo queued admission and settlement stamp requests with one trusted
 ledger-clock sample at execution. Client timestamps do not control availability,
 queue deadlines, reservation expiry, or settlement time. Direct ledger calls keep

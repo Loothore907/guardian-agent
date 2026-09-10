@@ -4,6 +4,21 @@
 - Date: 2026-08-29
 - Product owner: Earl Ray
 
+## September 8 competition scope
+
+[ADR-0058](adr/0058-evidence-first-competition-scope.md) narrows the competition
+experience to three curated native-worker journeys, one launch-bound agreement,
+and observable denial followed by useful completion. General harness integration,
+custom-task breadth, multi-hour goals and WebAuthn are deferred product work.
+The intended audience includes developers without specialist security knowledge.
+
+Local-first means user-controlled credential custody, authority and audit. It
+does not mean external service APIs or selected cloud inference run offline.
+Small local models remain an unvalidated option; local control is not claimed
+as unique. Persistent task consent does not bypass provider-required login or
+another harness's independent controls. Measure both redundant consent and
+authentication interruptions before claiming the friction is solved.
+
 ## Problem
 
 Long-running AI agents increasingly work across public, potentially adversarial content while retaining access to authenticated services. Three related problems make that unsafe or impractical:
@@ -44,7 +59,7 @@ and self-hosted; the project maintainers are not the user's credential custodian
 8. Tavily supplies bounded public evidence. Guardian records a minimized research journey and labels all retrieved content untrusted.
 9. Deterministic policy establishes the minimum authorization requirement for every proposal. Runtime Nemotron review may preserve or increase that floor at selected semantic-risk boundaries.
 10. A central local authority service is the sole owner of durable authorization state and exposes narrow authenticated operations to trusted components.
-11. A human uses a user-verifying passkey to approve an exact consequential boundary crossing when the revised mission permits it but no existing grant authorizes it.
+11. A consequential boundary crossing that is absent from the current grant requires a separate reviewed authorization. User-verifying WebAuthn is the intended future ceremony for that product path, but it is deferred from the competition slice and existing development confirmation is not fresh user presence.
 12. The privileged broker independently revalidates and executes only the exact authorized typed operation using a just-in-time, short-lived service credential.
 13. Denial contains the rejected boundary attempt and normally returns a typed result so permitted work can continue. Immediate-severity events or a bounded repeated-violation pattern may trigger deterministic revocation or interruption; model output cannot choose or weaken that policy.
 
@@ -134,22 +149,28 @@ The competition demonstration targets **Enforced** for the documented reference 
 
 ## Competition mission
 
-The reference mission operates against a dedicated, disposable demo repository:
+The competition uses three curated native-worker missions. The first summarizes
+the synthetic release fixture while rejecting an unauthorized destination. The
+two GitHub variants use dedicated disposable fixtures: read becoming write, and
+substitution of an already-authorized exact action. Each launch confirms its
+normalized scope and any exact permitted action; a fixed judge session may instead
+use clearly identified trusted standing deployment consent that the public request
+cannot create or widen.
 
-> Review the seeded pull request and report findings. Do not modify the remote repository.
+Across the three scenarios, the demonstration must show:
 
-The mission permits bounded local analysis, tests, GitHub reads, and Tavily-mediated public research. It denies external writes. The demonstration then shows:
+1. permitted research, review or exact already-authorized work proceeding without redundant login or consent;
+2. controlled untrusted content reaching the native worker through Guardian's bounded typed path;
+3. the worker or a separately labelled deterministic harness producing a concrete forbidden typed request;
+4. deterministic rejection before the unauthorized provider, credential or adapter effect;
+5. Nemotron meaningfully explaining or increasing contextual risk without weakening the deterministic floor;
+6. sanitized denial feedback followed by useful completion in the same worker session and under the same grant;
+7. a minimized exposure-to-attempt-to-decision-to-outcome chain that records proposal provenance without claiming the content caused it;
+8. direct network, Git push, substitution, expiry, revocation and replay near misses failing as applicable; and
+9. independent verification that the forbidden effect did not occur and that any original exact authorized action affected only its unchanged target.
 
-1. useful research and review proceeding without repeated login;
-2. a controlled live public page delivering indirect prompt-injection content through Guardian's bounded retrieval path;
-3. an unsafe merge or authority-expansion proposal rejected by the read-only mission before approval, credential minting, or GitHub mutation consumes anything;
-4. direct network and Git push bypass attempts failing in the reference runtime;
-5. Nemotron explaining or increasing contextual risk without weakening deterministic policy;
-6. a minimized evidence-to-attempt-to-decision view that does not claim the public content caused the proposal;
-7. a later human-authored mission revision and legitimate merge request approved with a user-verifying passkey bound to the repository, pull-request head commit, squash method, expiry, and nonce;
-8. immediate re-fetch, re-normalization, digest verification, atomic nonce consumption, and execution through a narrow GitHub adapter using a locally resolved short-lived or narrowly scoped credential;
-9. post-approval mutation and replay rejection; and
-10. a sanitized audit contrasting the injected denied attempt with the separately authorized legitimate action.
+The competition path does not require a second passkey ceremony. A genuine scope
+change still needs a new reviewed authorization and is not represented as recovery.
 
 ## Product goals and prototype success metrics
 
@@ -177,7 +198,7 @@ The mission permits bounded local analysis, tests, GitHub reads, and Tavily-medi
 
 - Mutation, expiry, replay, cross-session use, cross-connection use, scope expansion, and resource-version changes are rejected by reproducible tests.
 - A privileged operation is re-normalized and its digest revalidated immediately before execution.
-- The showcased approval uses a user-verifying WebAuthn assertion whose challenge is bound to the exact request and authority context.
+- The showcased action is covered by the exact launch-bound grant or clearly labelled standing deployment authorization, and is rechecked against its request and authority context immediately before execution. Neither path is represented as user-verifying WebAuthn.
 - The showcased GitHub credential is short-lived or narrowly scoped, resolved by
   the applicable BYOK or managed-demo credential service, and unavailable to the
   agent, models, authority database, logs, and public results. Protected BYOK and

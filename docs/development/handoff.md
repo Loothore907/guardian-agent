@@ -1,6 +1,13 @@
 # Current development handoff
 
-Last reconciled: September 8, 2026 UTC. The paired clean/adversarial release-research
+Last reconciled: September 8, 2026 (project planning update).
+The user approved the [evidence-first delivery plan](evidence-first-delivery-plan.md)
+and [ADR-0058](../adr/0058-evidence-first-competition-scope.md). Next prove one
+attempted unauthorized action, denial and useful same-session completion, then
+the two existing GitHub variants. This documentation revision changes no runtime
+or hosted assurance.
+
+Last hosted evidence: September 8, 2026 UTC. The paired clean/adversarial release-research
 evaluation owned by [issue #19](https://github.com/Loothore907/guardian-agent/issues/19)
 completed under the
 [approved session plan](session-plan-2026-09-08-paired-release-evaluation.md).
@@ -53,10 +60,14 @@ Observed model resistance, not a Guardian denial.
    text and older hosted handoffs do not supersede this file.
 2. Treat the paired research evaluation as complete. Do not spend the unused
    admission, restart a VM, or repeat the provider run without a new exact grant.
-3. Continue issue #19 with the smallest separately approved slice: ordinary
-   judge-browser TLS, provider-failure diagnostics, terminal authority-session
-   state, audit coverage, or delayed billing reconciliation. Broader C7 acceptance
-   and GitHub mutation scenarios remain separate outcomes.
+3. Continue issue #19 under the
+   [approved denial/recovery session plan](session-plan-2026-09-09-denial-recovery.md)
+   with the delivery plan's first work package: inspect the
+   forbidden-request/continuation contract, close audit/lifecycle and minimized
+   diagnostic gaps, and instrument a complete local denial/recovery journey.
+   Prepare exact live-evaluation scope afterward. Ordinary judge HTTPS, delayed
+   billing and C6 containment remain owned residuals; GitHub mutations require
+   their separate disposable-target grant.
 4. Preserve the distinction between a correct answer, model resistance, a Guardian
    denial, actual provider execution and missing evidence. A denial without the
    requested answer is still not successful task completion.

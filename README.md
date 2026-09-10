@@ -1,22 +1,24 @@
 # Agentic Guardian
 
-The local [judge portal](docs/development/judge-portal-action-plan.md) now presents
-three seeded scenarios and a custom-task scope form. Live portal execution remains
-disabled pending protected-provider and hosted validation. The
-[C7 runtime](docs/development/evidence/2026-09-05-c7-runtime.md) connects typed
-research/GitHub results and bounded worker continuation in local tests. After building, run
-`pnpm start:control-api` and `pnpm dev:web` to inspect the local interface.
+Agentic Guardian aims to let developers approve a bounded job once, retain a
+scoped authenticated connection, and get useful work without redundant approval
+or credential handling. The competition focus is three curated journeys showing
+an unauthorized diversion, Guardian rejection and useful same-session completion.
+See the [delivery plan](docs/development/evidence-first-delivery-plan.md).
 
-The [KC continuation](docs/development/evidence/2026-09-06-kc-continuation.md)
-verified synthetic credential lifecycle, budget IPC and static fixtures, and fixed
-the budget admission clock race. Both cloud VMs are stopped. Approved testing keys
-are enrolled in SecretStash; runtime retrieval and live judge acceptance remain
-incomplete.
+Current evidence: the September 8 paired research evaluation used real Nebius and
+Tavily calls and returned correct results. The successful injected run showed
+model resistance, with no forbidden request or Guardian denial. Local portal and
+bounded runtime tests exist; complete live denial/recovery, ordinary judge HTTPS,
+audit/lifecycle and broader acceptance remain open. Assurance remains Observed.
+Use the [current handoff](docs/development/handoff.md) and
+[security claims](docs/security-claims.md) for evidence and limitations.
 
-Current local status: launch confirmation now binds the exact competition action,
-and a headless judge host factory uses standing deployment consent with broker-only
-installation tokens. [Validation and limits](docs/development/evidence/2026-09-05-launch-headless.md);
-[hosted setup still required](docs/development/headless-judge-setup.md).
+After building, run `pnpm start:control-api` and `pnpm dev:web` to inspect the
+local interface. Live execution is disabled by default. The competition uses the
+current native worker; general Codex/Claude/Cursor adapters, local small-model
+migration, multi-hour missions and WebAuthn are deferred. Local-first describes
+user control of custody and authority, not absence of external service calls.
 
 Agentic Guardian is an open-source, local-first capability firewall and task-scoped
 runtime for AI agents. It lets users bring their own providers and credentials
@@ -98,7 +100,10 @@ real Secret Service preflight, accepted Linux enrollment, and protected supervis
 Qwen/Nemotron consumption also pass. macOS support remains pending. `.env.local` remains
 development-only.
 
-## Current status
+## Component checkpoints (historical detail)
+
+These dated checkpoints preserve implementation history. The current handoff
+and September 8 delivery plan supersede their old next-step lists.
 
 Agentic Guardian has completed its product contract, enforcement feasibility, mission
 contracts, C4 reference-runtime gate, and C5 bounded Tavily Search gateway. The supported Windows/WSL launcher
