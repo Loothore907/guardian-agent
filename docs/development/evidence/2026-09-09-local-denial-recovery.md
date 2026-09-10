@@ -69,7 +69,15 @@ passed and 5 skipped; 691 Vitest tests passed and 18 skipped; SQLite, reset,
 preflight, budget-clock, cost, supervised GitHub, headless/protected host, manifest,
 Guardian Context, lint, typecheck and production build checks all passed. Dependency
 boundaries reported no violations across 242 modules and 561 dependencies. Exact-head
-CI remains a separate pull-request gate and is not pre-claimed here.
+CI remained a separate pull-request gate and was not pre-claimed by the local run.
+
+## Integration result
+
+PR #63 passed exact-head build run 34441870375 at
+`67a9ca8769dd2c92096e58abc19c3a46df3cc6c4` and was squash-merged as main commit
+`49bcca6be25d7d02aea2e4b74730f2881c3c0976`. Exact post-merge main build run
+34442134152 passed. These integration facts do not expand the local-only claim
+boundary below.
 
 ## Claim boundary
 
