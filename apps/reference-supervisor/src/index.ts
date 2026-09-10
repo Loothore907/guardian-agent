@@ -104,6 +104,8 @@ export function normalizeManagedDemoJourneyUsageReporters(
   return ManagedDemoJourneyUsageReportersSchema.parse(value);
 }
 
+const SUPERVISED_WORKER_IPC_TIMEOUT_MS = 50_000;
+
 const ROLE_OPERATIONS = {
   launcher: ["connection.create", "session.create"],
   research_service: ["research.reserve", "research.settle", "context.append_exposures"],
@@ -630,6 +632,7 @@ export async function startReferenceAuthoritySupervisor(
           turnId: turn.turnId,
           turnNumber: turn.turnNumber,
           turnDigest: turn.turnDigest,
+          timeoutMs: SUPERVISED_WORKER_IPC_TIMEOUT_MS,
         }).run(options.now?.() ?? new Date().toISOString());
       } finally {
         signal?.removeEventListener("abort", abortWorker);
