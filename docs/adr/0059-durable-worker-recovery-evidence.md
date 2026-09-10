@@ -42,6 +42,13 @@ ordinary continuations, the trusted dispatcher remains the decision boundary for
 proposed tool outside the advertised catalog so it can return the existing typed
 denial.
 
+The native-worker provider timeout is 45 seconds, bounded inside the existing
+60-second worker-turn deadline. Three merged-main evaluation attempts reached the
+20-second provider cutoff only on the evidence-bearing final turn, while the compact
+final-only compatibility probe completed. The longer inner timeout preserves the
+same outer deadline and fail-closed behavior while allowing that larger context a
+useful completion window.
+
 For bounded continuation, a contract-valid final response must cross a new exact
 completion boundary. The supervisor binds the final turn ID and digest plus a digest
 of its validated result. The authority store atomically appends useful-completion
