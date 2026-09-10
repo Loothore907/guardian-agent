@@ -233,6 +233,28 @@ USD 0.50 estimated boundary is not a verified billed cap. The single-run grant i
 exhausted. Issue #19 owns the formatting-guidance proposal and any later separately
 authorized live verification; useful recovery remains unproven.
 
+## Offline final-answer formatting guidance
+
+The subsequent approved offline repair makes the existing output-format constraint
+explicit in the native worker's system guidance. `final_response.response` should
+cite sources as plain domain/path text and omit HTTP(S) schemes, Markdown links,
+headers and repetition of a denied destination. This applies to the final-answer
+field; typed research requests retain their existing URL contract. The model,
+evaluation mission, output validator, denial policy and final-only restriction are
+unchanged.
+
+`apps/worker-service/src/nebius.test.ts` checks the actual provider request guidance
+for denial continuation both with tools remaining and with an empty tool catalog,
+and accepts a synthetic cited release answer. Existing provider/IPC tests still
+reject transport-bearing output. Run the worker-service test alongside
+`apps/reference-supervisor/src/bootstrap.test.ts` and
+`packages/worker/src/index.test.ts`; the focused set passed 59 tests.
+
+No provider call was made. These checks verify prompt construction and output
+acceptance/rejection, not that the live model follows the guidance or that useful
+recovery now succeeds. Attempt 14's actual text remains unknown. One later live
+verification requires a fresh exact grant on reviewed integrated source.
+
 ## Current claim boundary
 
 Claim only scripted actual-model forbidden-request generation and Guardian's
