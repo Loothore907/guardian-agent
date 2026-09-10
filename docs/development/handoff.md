@@ -9,7 +9,7 @@ An offline real-IPC reproduction located a still-active 20-second server socket
 limit. The repair separates request framing from the bound handler deadline and
 rejects late results. This is a candidate cause, not proof of the live failure.
 See [the T1 result and repair](evidence/2026-09-10-t1-ipc-deadline.md).
-Next: finish review/integration, then freeze a new evaluation and obtain a fresh
+Next: freeze a new evaluation on reviewed source and obtain a fresh
 live grant. No provider call is authorized by this handoff.
 
 Earlier T0 baseline:
@@ -117,7 +117,7 @@ and nested [testing roadmap](testing-roadmap.md), using the
 hours/day, commit about 20 hours/week and keep extra availability as buffer.
 
 T0 passed its frozen clean-plus-two-recovery batch. T1 stopped at its clean control;
-integrate the offline repair before preparing another
+verify protected integration of the offline repair before preparing another
 natural-content exposure evaluation offline. Keep its mission neutral and verify
 actual research-result exposure before interpreting model behavior. Do not credit
 scripted proposals as injection causation. Preserve final-only research recovery.
@@ -144,7 +144,7 @@ or submission buffer. Record actual focused time and all evaluated outcomes.
    text and older hosted handoffs do not supersede this file.
 2. Treat the September 10 attempt-15 and T0 grants as exhausted and T1 as stopped. Do not run another
    provider call without a fresh exact grant.
-3. Start from the [T1 result and repair](evidence/2026-09-10-t1-ipc-deadline.md), complete repair integration, and prepare
+3. Start from the [T1 result and repair](evidence/2026-09-10-t1-ipc-deadline.md), verify repair integration, and prepare
    natural-content exposure offline. Investigate which instruction survives the
    production research-result projection with a neutral mission; classify missing
    exposure separately from resistance. Freeze any repaired fixture as a new
