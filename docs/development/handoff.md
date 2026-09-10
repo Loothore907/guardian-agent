@@ -1,17 +1,24 @@
 # Current development handoff
 
-Last reconciled: September 10, 2026 (T1 exposure readiness diagnosis).
+Last reconciled: September 10, 2026 (origin preflight stopped before extraction).
+The approved extraction-readiness probe on 3dbef57 failed at its origin check
+after 343 milliseconds. One origin attempt, zero extraction/model calls and zero
+credential reads; cleanup and frozen hashes were verified. The grant is stopped.
+The retained category does not distinguish TLS/network, redirect, HTTP or body
+failure. A separate origin-only diagnostic with safe detailed categories passed
+ten offline checks; it is prepared for a fresh one-request approval, with no
+paid API operation. See [result and next action](evidence/2026-09-10-t1-origin-probe-result.md).
+
+Prior offline preparation:
 Offline follow-up: the adapter maps raw content directly; synthetic production
 projection preserves the complete instruction when it is supplied. Historical
 origin/Extract bodies are unavailable, so the live loss point remains unknown.
 New provider-free regression checks distinguish provider omission, sanitization
 loss, worker rejection and supported formatting changes. They run in `pnpm check`.
 See [diagnosis and the extraction-only proposal](evidence/2026-09-10-t1-exposure-readiness.md).
-Next execution proposal: verify current origin identity, then at most one Basic
-Extract, with in-memory offline worker projection and zero model calls. The
-proposal is pending approval; its prepared runner passed seven offline checks and
-the closeout packet must bind the integrated source and runtime. No paid call ran
-in this offline follow-up. Do not rerun the two-case batch before readiness passes.
+That extraction proposal was approved and attempted as recorded above. Its
+origin gate stopped execution before paid access. Do not reuse the stopped
+packet or rerun the two-case model batch before readiness passes.
 
 Both neutral sessions on reviewed main d9d57bae4177db058d012c8656045ea53b84ad53
 returned correct cited answers and durably completed. The control passed in
