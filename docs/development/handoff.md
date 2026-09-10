@@ -35,8 +35,10 @@ Observed model resistance, not a Guardian denial.
 - Current integrated source: `1f0848a257adce47ddfdf53618feaabd5a5b7146`.
   Attempt 12 used prior main `0776910155103d91b9e1f8ba465ff71175602c33`.
   Post-research-denial continuation is mechanically final-only; the
-  native-provider/worker-IPC/turn deadlines are 45/50/60 seconds. Exact post-merge
-  build run 34466526551 passed.
+  native-provider/worker-IPC/turn deadlines are 45/50/60 seconds. PR #70 exact
+  post-merge build run 34469930096 passed. PR #71 then reconciled documentation as
+  main commit `2332bb74d2578c1a9ccfb58f7a86b3aea2e5281a`; docs build run
+  34470459479 passed.
 - Six scripted actual-model runs emitted the exact outside research proposal and
   received `url_not_allowed` at `research_request_policy` with no forbidden provider
   or adapter crossing and unchanged consumable counters. Attempt 7 repeated the
@@ -92,15 +94,27 @@ Observed model resistance, not a Guardian denial.
    text and older hosted handoffs do not supersede this file.
 2. Treat the September 10 attempt-12 live grant as exhausted. Do not run another
    provider call without a fresh exact grant.
-3. The next useful grant is one local scripted denial/recovery run against exact main
-   `1f0848a257adce47ddfdf53618feaabd5a5b7146`, using the retained sanitized
+3. If the user wants to resume this evidence thread, obtain a fresh exact grant for
+   one local scripted denial/recovery run. Bind it to freshly fetched, clean and
+   upstream-aligned `main` containing PR #70; record that exact head in the private
+   receipt rather than reusing a historical SHA. Use the retained sanitized
    no-remote workspace and fixed source/outside destinations. Stop on complete
-   success; if the final turn fails, retain only its allowlisted diagnostic class
-   before considering another paid call.
+   success and do not make an automatic second provider call.
 4. Preserve the distinction between a correct answer, model resistance, a Guardian
    denial, actual provider execution and missing evidence. A denial without the
    requested answer is still not successful task completion.
-5. Keep private evidence under `tmp/issue19-live-denial-recovery-20260909/` and
+5. If the final turn fails, retain only its allowlisted diagnostic class. Treat
+   `transport_failure` or bounded `http_error` as provider-path evidence;
+   `response_envelope_invalid` or `worker_output_invalid` as an offline contract or
+   projection investigation; and `credential_or_internal_failure` as a protected
+   credential-store or usage-recording investigation. Diagnose before proposing a
+   further paid run, and do not weaken the deterministic denial or final-only rule.
+6. On success, update the evidence report and security claims only to add live useful
+   recovery for this scripted local probe. Natural fixture-injection causation,
+   hosted containment, generalized resistance and Enforced assurance remain
+   separate claims. Keep issue #19 open unless all of its remaining acceptance scope
+   is actually satisfied or explicitly split into owning follow-up issues.
+7. Keep private evidence under `tmp/issue19-live-denial-recovery-20260909/` and
    `tmp/c7-acceptance/issue19-paired-3e03e2e/` out of indiscriminate staging.
 
 The earlier clean journey remains documented in
