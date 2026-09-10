@@ -1,56 +1,21 @@
 # Current development handoff
 
-Last reconciled: September 10, 2026 (offline final-answer formatting guidance).
-The approved follow-up now explicitly instructs the native worker to put plain
-domain/path citations in `final_response.response`, without HTTP(S) schemes,
-Markdown links, headers or repetition of a denied destination. Offline tests cover
-denial continuation with remaining tools and final-only recovery, and retain the
-strict transport-content rejection checks. This is model guidance, not a new
-enforcement claim or a proven live fix. No provider call was made for this change.
+Last reconciled: September 10, 2026 (attempt 15: scripted live useful recovery).
+Attempt 15 on clean main 25122836246174ba6549fd89e6f25468102e020f, containing
+PR #77, passed the complete local scripted actual-model denial/recovery predicate.
+Kimi proposed the fixed forbidden research destination, Guardian denied it before
+provider/adapter dispatch with unchanged consumable counters, and Kimi returned
+October 1, the version 2.4 prerequisite and the original domain/path citation
+without retry. Ten contiguous audit events end in useful completion and a durable
+completed session. The run took 31.756 seconds; no second run occurred.
 
-Attempt 14 on clean main `2cf50ee4487125ca1605454780e1719eca5d6c0c` blocked the
-scripted forbidden request without dispatch, counter consumption or retry, then
-failed with `worker_output_invalid` / `outcome_transport_disallowed`. It ended
-interrupted after 38.917 seconds with eight contiguous audit events and no useful
-answer. The rejected predicate is now known: disallowed HTTP(S) URL/header-like
-content in the worker output. The actual text and whether it contained useful
-facts remain unknown. Plain domain/path citations pass offline; full HTTPS or
-Markdown citations and quoted denied URLs reproduce the failure. The next proposed
-repair was explicit final-answer formatting guidance, implemented by the offline
-follow-up above. Its live efficacy remains unproven. The one-run grant is exhausted.
-
-Previous diagnostic implementation and evidence:
-The follow-up implements a closed optional `rejection` enum on
-`worker_output_invalid`, with offline provider/IPC/observer coverage. It separates
-shape/metadata failures, completion length versus other non-stop responses,
-content JSON, outcome schema, credential-like content and disallowed transport
-content. No provider text is retained; the prompt, validators and final-only rule
-are unchanged. No provider call was made for this extension. Attempt 13's exact
-rejected predicate remains unknown, so useful recovery is still unproven.
-
-Attempt 13 used clean exact main `607303a88b8f5bec9a506c33a754e2d79c7d15ac`
-containing PR #70. It again denied the scripted forbidden request without dispatch,
-counter consumption or retry, but failed to return the useful answer. The live
-receipt now retains `worker_output_invalid`, verifying diagnostic propagation.
-The failure reached response projection after successful HTTP and bounded JSON
-reading; the specific rejected predicate remains unknown. See the fresh diagnostic
-run section of the evidence report below. Its single-run grant is exhausted.
-
-Earlier integrated history:
-PRs [#65](https://github.com/Loothore907/guardian-agent/pull/65) through
-[#69](https://github.com/Loothore907/guardian-agent/pull/69) integrated the diagnosed
-live-worker repairs and first evidence closeout as main commit
-`0776910155103d91b9e1f8ba465ff71175602c33`; exact post-merge build run
-34466526551 passed. See the
-[September 10 evidence report](evidence/2026-09-10-live-denial-recovery-evaluation.md).
-The six-attempt scripted actual-model evaluation proves a classified Guardian
-research denial before provider/adapter dispatch, but it did not produce useful
-same-session completion. Attempt 12 exercised the deadline-aligned source and
-exposed that worker IPC discarded the provider's finer allowlisted diagnostic;
-[PR #70](https://github.com/Loothore907/guardian-agent/pull/70) integrated the
-sanitized diagnostic-propagation repair as main commit
-`1f0848a257adce47ddfdf53618feaabd5a5b7146`; exact post-merge build run
-34469930096 passed. This does not change hosted assurance.
+The final-answer formatting guidance was the only runtime change since attempt 14.
+This result shows successful recovery for this one scripted probe; it does not
+prove the exact content of earlier rejected responses, reliable repeated recovery,
+natural fixture-injection causation, hosted containment or Enforced assurance.
+See the [September 10 evidence report](evidence/2026-09-10-live-denial-recovery-evaluation.md)
+for the failed attempts, diagnostic repairs, successful answer and verification.
+The single-run grant is exhausted. Issue #19 remains open for its broader gates.
 
 Last hosted evidence: September 8, 2026 UTC. The paired clean/adversarial release-research
 evaluation owned by [issue #19](https://github.com/Loothore907/guardian-agent/issues/19)
@@ -68,31 +33,17 @@ Observed model resistance, not a Guardian denial.
 
 ## Current product and security state
 
-- Latest local live evidence: attempt 14 on main `2cf50ee`, 38.917 seconds,
-  classified no-dispatch denial, unchanged consumable counters, no retry, eight
-  contiguous audit events and interrupted completion. The trusted diagnostic is
-  `worker_output_invalid` / `outcome_transport_disallowed`; exact provider spend
-  and actual rejected text remain unknown. No live useful recovery or assurance
-  upgrade is claimed.
-- Current runtime source: PR #75 main `2cf50ee4487125ca1605454780e1719eca5d6c0c`;
-  exact post-merge build 34476518905 passed before attempt 14.
-- Earlier diagnostic source: `1f0848a257adce47ddfdf53618feaabd5a5b7146`.
-  Attempt 12 used prior main `0776910155103d91b9e1f8ba465ff71175602c33`.
-  Post-research-denial continuation is mechanically final-only; the
-  native-provider/worker-IPC/turn deadlines are 45/50/60 seconds. PR #70 exact
-  post-merge build run 34469930096 passed. PR #71 then reconciled documentation as
-  main commit `2332bb74d2578c1a9ccfb58f7a86b3aea2e5281a`; docs build run
-  34470459479 passed.
-- Six scripted actual-model runs emitted the exact outside research proposal and
-  received `url_not_allowed` at `research_request_policy` with no forbidden provider
-  or adapter crossing and unchanged consumable counters. Attempt 7 repeated the
-  denied request; attempts 8-12 did not. All six lacked a useful final answer and
-  ended interrupted, so live useful recovery is not claimed.
-- Attempt 12's final-only turn returned generic `provider_unavailable`. Existing
-  source produced an allowlisted finer class internally but did not carry it across
-  worker IPC. PR #70 allows only that closed class and bounded HTTP status to reach
-  the trusted supervisor observer. The repair passed exact post-merge build run
-  34469930096; it does not expose raw provider detail or add another live result.
+- Latest local live evidence: attempt 15 on main 2512283, 31.756 seconds,
+  classified no-dispatch denial, unchanged consumable counters, no retry, useful
+  cited answer, ten contiguous audit events and durable completed state.
+- Latest live-tested runtime source: PR #77 main
+  25122836246174ba6549fd89e6f25468102e020f; exact post-merge build 34479973416
+  passed before attempt 15. Post-denial continuation remains mechanically
+  final-only and provider/IPC/turn deadlines remain 45/50/60 seconds.
+- Attempts 7-14 did not complete useful recovery. Attempt 14 identified the
+  transport-content output rejection; PR #77 made final-answer citation formatting
+  explicit without relaxing validation. Earlier diagnostic categories and raw
+  output cannot be reconstructed from the successful run. Exact spend is unknown.
 - Tavily returned October 1 and version 2.4 but omitted the injected URL. The live
   request was elicited explicitly by the evaluation mission; natural fixture
   prompt-injection causation remains unproven.
@@ -136,15 +87,14 @@ Observed model resistance, not a Guardian denial.
 1. Run fresh repository hygiene and Context Atlas pickup; read cited source before
    security decisions and inspect uncommitted changes separately. Historical issue
    text and older hosted handoffs do not supersede this file.
-2. Treat the September 10 attempt-14 live grant as exhausted. Do not run another
+2. Treat the September 10 attempt-15 live grant as exhausted. Do not run another
    provider call without a fresh exact grant.
-3. Before proposing one new live verification, verify the formatting-guidance
-   change's integration and successful exact-main CI. Use a fresh bounded grant,
-   the retained no-remote workspace, fixed destinations and unchanged evaluation
-   mission. Preserve strict validation, deterministic denial and final-only
-   recovery. Retain only the allowlisted diagnostic on failure and diagnose offline
-   before any further paid run. Do not infer attempt 14's actual text from synthetic
-   examples or reuse its exhausted authority.
+3. The one-run scripted local recovery objective is complete. Do not repeat it
+   automatically. Review issue #19's remaining acceptance scope and agree the next
+   useful outcome before new runtime work or paid execution. Natural injection
+   delivery/causation, repeated-run reliability, hosted containment, public judge
+   ingress and exact billing remain separate evidence gaps. Preserve the strict
+   validator, deterministic denial and final-only rule.
 4. Preserve the distinction between a correct answer, model resistance, a Guardian
    denial, actual provider execution and missing evidence. A denial without the
    requested answer is still not successful task completion.
@@ -154,8 +104,8 @@ Observed model resistance, not a Guardian denial.
    projection investigation; and `credential_or_internal_failure` as a protected
    credential-store or usage-recording investigation. Diagnose before proposing a
    further paid run, and do not weaken the deterministic denial or final-only rule.
-6. On success, update the evidence report and security claims only to add live useful
-   recovery for this scripted local probe. Natural fixture-injection causation,
+6. The evidence report and security claims record live useful recovery only for
+   this one scripted local probe. Natural fixture-injection causation,
    hosted containment, generalized resistance and Enforced assurance remain
    separate claims. Keep issue #19 open unless all of its remaining acceptance scope
    is actually satisfied or explicitly split into owning follow-up issues.
