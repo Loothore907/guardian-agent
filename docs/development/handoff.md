@@ -1,6 +1,15 @@
 # Current development handoff
 
-Last reconciled: September 10, 2026 (sixth live denial run and diagnostic follow-up).
+Last reconciled: September 10, 2026 (attempt 13 and offline projection diagnosis).
+Attempt 13 used clean exact main `607303a88b8f5bec9a506c33a754e2d79c7d15ac`
+containing PR #70. It again denied the scripted forbidden request without dispatch,
+counter consumption or retry, but failed to return the useful answer. The live
+receipt now retains `worker_output_invalid`, verifying diagnostic propagation.
+The failure reached response projection after successful HTTP and bounded JSON
+reading; the specific rejected predicate remains unknown. See the fresh diagnostic
+run section of the evidence report below. Its single-run grant is exhausted.
+
+Earlier integrated history:
 PRs [#65](https://github.com/Loothore907/guardian-agent/pull/65) through
 [#69](https://github.com/Loothore907/guardian-agent/pull/69) integrated the diagnosed
 live-worker repairs and first evidence closeout as main commit
@@ -32,6 +41,11 @@ Observed model resistance, not a Guardian denial.
 
 ## Current product and security state
 
+- Latest local live evidence: attempt 13 on main `607303a`, 28.675 seconds,
+  classified no-dispatch denial, unchanged consumable counters, no retry, eight
+  contiguous audit events and interrupted completion. The trusted diagnostic is
+  `worker_output_invalid`; exact provider spend and the rejected output predicate
+  remain unknown. No live useful recovery or assurance upgrade is claimed.
 - Current integrated source: `1f0848a257adce47ddfdf53618feaabd5a5b7146`.
   Attempt 12 used prior main `0776910155103d91b9e1f8ba465ff71175602c33`.
   Post-research-denial continuation is mechanically final-only; the
@@ -92,14 +106,17 @@ Observed model resistance, not a Guardian denial.
 1. Run fresh repository hygiene and Context Atlas pickup; read cited source before
    security decisions and inspect uncommitted changes separately. Historical issue
    text and older hosted handoffs do not supersede this file.
-2. Treat the September 10 attempt-12 live grant as exhausted. Do not run another
+2. Treat the September 10 attempt-13 live grant as exhausted. Do not run another
    provider call without a fresh exact grant.
-3. If the user wants to resume this evidence thread, obtain a fresh exact grant for
-   one local scripted denial/recovery run. Bind it to freshly fetched, clean and
-   upstream-aligned `main` containing PR #70; record that exact head in the private
-   receipt rather than reusing a historical SHA. Use the retained sanitized
-   no-remote workspace and fixed source/outside destinations. Stop on complete
-   success and do not make an automatic second provider call.
+3. Diagnose the response-projection rejection offline before another paid run.
+   Attempt 13 verified PR #70 but `worker_output_invalid` still combines multiple
+   predicates. Synthetic checks accept the required domain/path-cited answer and
+   reject full HTTPS citations, non-stop completion, malformed output and metadata
+   mismatches; none identifies the actual live response. Design and test a closed,
+   content-free predicate distinction. Keep the prompt, final-only rule and strict
+   validation intact. Any later live run needs a fresh exact grant, clean current
+   main, the retained no-remote workspace and fixed destinations; do not reuse the
+   exhausted attempt-13 authorization.
 4. Preserve the distinction between a correct answer, model resistance, a Guardian
    denial, actual provider execution and missing evidence. A denial without the
    requested answer is still not successful task completion.
