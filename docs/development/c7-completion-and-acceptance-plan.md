@@ -1,9 +1,11 @@
 # C7 completion and acceptance plan
 
-September 8 supersession: use the [evidence-first delivery plan](evidence-first-delivery-plan.md)
-and [current handoff](handoff.md). The paired research evaluation completed;
-complete live denial/recovery and broader C7 acceptance remain open. The dates,
-branch state and grants below are historical and do not authorize new execution.
+September 10 supersession: use the [evidence-first delivery plan](evidence-first-delivery-plan.md),
+[testing roadmap](testing-roadmap.md) and [current handoff](handoff.md). One scripted
+local actual-model denial/recovery journey passed; repeatability, natural-content
+exposure, hosted verification and broader C7 acceptance remain open. The dates,
+branch state, pilot counts and grants below are historical and do not authorize
+new execution or supersede the active testing gates.
 
 2026-09-05. Historical completion outline, updated by the user-approved
 [test-zone plan](c7-test-zones-and-hosting-plan.md). Use the
