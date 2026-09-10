@@ -14,9 +14,10 @@ approval and authentication interruptions. Credential custody and bounded
 authority make that delegation acceptable. The intended audience includes
 developers who do not specialize in authentication or agent security.
 
-Finish one complete research journey, then extend the same evidence chain to the
-three existing curated scenarios: unauthorized destination, read becoming write,
-and substitution of an approved exact action. The chain is content exposure,
+Prove the unauthorized-destination research journey first, then extend the same
+evidence chain to the two existing GitHub scenarios: read becoming write and
+substitution of an approved exact action. These are the three curated scenarios
+in total. The chain is content exposure,
 unauthorized typed request, Guardian denial before the forbidden external effect,
 sanitized denial feedback, and useful completion in the same session. No hidden
 worker replacement, new grant or reset may be presented as continued execution.

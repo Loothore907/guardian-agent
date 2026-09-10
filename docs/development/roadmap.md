@@ -52,13 +52,13 @@ Existing grants do not bypass risk escalation or provider-required reauthenticat
 Preserve containment, credential isolation, deterministic policy, exact-action
 binding, redaction and honest assurance throughout this sequence:
 
-| Target in 2026 | Required outcome |
-| --- | --- |
-| September 18 | One research exposure/request/denial/completion chain, correct audit/lifecycle and stage timing |
-| October 2 | Read-only PR and approved-action substitution variants, repeated controls and independent effect checks |
-| October 12 | Coherent judge access, consent, audit and measured overhead; experience and scope freeze |
-| October 23 | Clean-install release candidate, required checks, access plan and timed video |
-| October 28 | Submission lock; October 30 buffer retained |
+| Target in 2026 | Required outcome                                                                                        |
+| -------------- | ------------------------------------------------------------------------------------------------------- |
+| September 18   | One research exposure/request/denial/completion chain, correct audit/lifecycle and stage timing         |
+| October 2      | Read-only PR and approved-action substitution variants, repeated controls and independent effect checks |
+| October 12     | Coherent judge access, consent, audit and measured overhead; experience and scope freeze                |
+| October 23     | Clean-install release candidate, required checks, access plan and timed video                           |
+| October 28     | Submission lock; October 30 buffer retained                                                             |
 
 These accepted targets govern delivery across C6-C9; the older component target
 dates below are historical reference. Finish the first complete journey before
@@ -497,7 +497,7 @@ Mandatory reviews:
 - **September 21:** if C4 has not passed, stop provider and UI breadth until the runtime boundary works.
 - **October 2:** if exact read/merge does not work, stop all optional research and UI additions until C6 passes.
 - **At C6 close:** the self-hosted Linux authority IPC, database-permission, local
-  credential-store, narrow GitHub, and approval-ceremony feasibility review must pass or produce an
+  credential-store, narrow GitHub, and competition launch-authority review must pass or produce an
   explicit lower-assurance recovery plan before C8 UI freeze.
 - **September 18:** if the first denial/recovery journey is incomplete, reduce
   variant breadth and record an issue-owned recovery plan.
@@ -562,14 +562,14 @@ At checkpoint close, record:
 
 ## Current status (September 8 reconciliation)
 
-| Checkpoint | Status | Current qualification |
-| --- | --- | --- |
-| C0-C5 | Prior gates passed | Retain their recorded evidence and supported-runtime limits. |
-| C6 | In progress | Exact GitHub and grant slices exist; broader containment, credential renewal and integrated acceptance remain open. WebAuthn is deferred by ADR-0058. |
-| C7 | In progress | Local risk/continuation composition and real research success exist; complete live forbidden-request denial/recovery and the evaluation report remain open. |
-| C8 | Partially implemented | Portal, preview, grant and bounded worker components exist; coherent live judge acceptance, lifecycle/audit and ordinary access remain incomplete. |
-| C9 | Evidence incomplete | Existing negative tests are retained; the showcased live chain, repeated outcomes and final claims review remain. |
-| C10-C11 | Pending | Release candidate and submission gates have not passed. |
+| Checkpoint | Status                | Current qualification                                                                                                                                       |
+| ---------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| C0-C5      | Prior gates passed    | Retain their recorded evidence and supported-runtime limits.                                                                                                |
+| C6         | In progress           | Exact GitHub and grant slices exist; broader containment, credential renewal and integrated acceptance remain open. WebAuthn is deferred by ADR-0058.       |
+| C7         | In progress           | Local risk/continuation composition and real research success exist; complete live forbidden-request denial/recovery and the evaluation report remain open. |
+| C8         | Partially implemented | Portal, preview, grant and bounded worker components exist; coherent live judge acceptance, lifecycle/audit and ordinary access remain incomplete.          |
+| C9         | Evidence incomplete   | Existing negative tests are retained; the showcased live chain, repeated outcomes and final claims review remain.                                           |
+| C10-C11    | Pending               | Release candidate and submission gates have not passed.                                                                                                     |
 
 Use the current handoff for source identity and the latest completed experiment.
 A dated ledger row cannot establish current deployment or upgrade assurance.

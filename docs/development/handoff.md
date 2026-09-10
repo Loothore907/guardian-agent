@@ -60,7 +60,9 @@ Observed model resistance, not a Guardian denial.
    text and older hosted handoffs do not supersede this file.
 2. Treat the paired research evaluation as complete. Do not spend the unused
    admission, restart a VM, or repeat the provider run without a new exact grant.
-3. Continue issue #19 with the delivery plan's first work package: inspect the
+3. Continue issue #19 under the
+   [approved denial/recovery session plan](session-plan-2026-09-09-denial-recovery.md)
+   with the delivery plan's first work package: inspect the
    forbidden-request/continuation contract, close audit/lifecycle and minimized
    diagnostic gaps, and instrument a complete local denial/recovery journey.
    Prepare exact live-evaluation scope afterward. Ordinary judge HTTPS, delayed

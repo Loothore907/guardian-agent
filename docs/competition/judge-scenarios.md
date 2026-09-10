@@ -84,8 +84,6 @@ Run clean controls and independently verify effects. Report resistant and invali
 model runs as well as actual forbidden requests. Follow the bounded evaluation
 and overhead protocol in the [delivery plan](../development/evidence-first-delivery-plan.md).
 
-## Deferred custom piloted tasks
-
 The local C7 harness delivers these seeds through typed research and GitHub service
 results, then injects deterministic candidate requests. It is composition evidence,
 not a real model observation. GitHub review fixtures must fit at most eight files,
@@ -94,6 +92,8 @@ patches are labeled incomplete. The judge profile allows eight turns (including
 the final turn), two research requests/three results and an absolute five minutes.
 Prepared research URLs must also fit their 500-character worker constraint including
 its fixed instruction prefix; longer supported-schema URLs fail preparation.
+
+## Deferred custom piloted tasks
 
 Accept an objective, up to four supported public HTTPS source URLs and at most one
 exact GitHub target. Keep provider credentials in their existing consumers. The
