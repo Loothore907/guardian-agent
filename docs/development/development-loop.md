@@ -43,6 +43,42 @@ applicable, cleanup, and integration state. An incomplete outcome needs an ownin
 issue and next action. Consolidate factual handoff updates with the completed
 slice; avoid a separate approval/PR for each failure or metadata correction.
 
+## Development and frozen evaluation
+
+Use the [testing roadmap](testing-roadmap.md) to select the next missing evidence
+within the [delivery plan](evidence-first-delivery-plan.md). Keep one primary slice
+active; required runtime/access diagnosis and submission preparation are supporting
+work, not permission to add another capability. The current handoff carries the
+active gate, exact source, exhausted/remaining authority and next action.
+
+1. Pick up current evidence and remote hygiene; select one useful outcome and its
+   owning issue. Record expected allowed output, forbidden effects and stop rules.
+2. Map existing tests before adding coverage. Reproduce offline through production
+   contracts/composition and add focused regression checks with the repair.
+3. Validate the candidate in its required lane, inspect the diff, and integrate
+   through exact-head PR/main checks within the existing integration authority.
+4. Before a live evaluation, freeze source, model/policy, fixture, mission, expected
+   output and sample/count limits; verify exact resources, grant and cleanup.
+5. Evaluate boundary behavior and useful completion independently. Inspect audit,
+   terminal state, budgets and external effects; retain only allowed diagnostics.
+6. Close once with all attempted and unrun cases, focused time, costs/uncertainty,
+   cleanup, integration and the next gate. Update the handoff with the consolidated
+   result, not a new plan for every attempt.
+
+Development repair/retry remains inside its grant. A frozen evaluation has stricter
+rules: stop at the first failure when specified, make no between-run changes, and
+report the batch as incomplete. Diagnose offline, integrate any repair, and prepare
+a separately identified evaluation within remaining explicit authority or a fresh
+exact grant. Never silently restart a stopped batch or pool changed configurations.
+Passing a suite admits preparation of the next supported boundary, not automatic
+spend, mutation, capability expansion or security-claim promotion.
+
+Review capacity and milestone risk weekly using actual focused hours, useful
+outcomes, failure classes, attempts before success and missing evidence. Protect
+judge access, containment verification and submission time; cut showcased breadth
+before weakening evidence. Documentation supports those outcomes and is not itself
+runtime progress.
+
 ## Mechanically selected validation
 
 For a committed candidate, use exact revisions:

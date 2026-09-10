@@ -1,6 +1,6 @@
 # Current development handoff
 
-Last reconciled: September 10, 2026 (attempt 15: scripted live useful recovery).
+Last reconciled: September 10, 2026 (testing roadmap and capacity update; live evidence unchanged).
 Attempt 15 on clean main 25122836246174ba6549fd89e6f25468102e020f, containing
 PR #77, passed the complete local scripted actual-model denial/recovery predicate.
 Kimi proposed the fixed forbidden research destination, Guardian denied it before
@@ -82,6 +82,35 @@ Observed model resistance, not a Guardian denial.
   addresses, DNS, credential resources/readers, fixture tree, private diagnostics
   and the durable ledger remain retained and disabled.
 
+## Primary flow and supporting work
+
+The accepted ceiling is three scenario families: research, read-only PR review and
+exact authorized GitHub action, with two showcased families as the fallback and
+only the proven journey if needed. Follow the [delivery plan](evidence-first-delivery-plan.md)
+and nested [testing roadmap](testing-roadmap.md), using the
+[development loop](development-loop.md) for each slice. At 3-4 reported focused
+hours/day, commit about 20 hours/week and keep extra availability as buffer.
+
+Next gate: T0 offline preparation, then a separately bounded frozen batch of one
+clean control plus two scripted local denial/recovery sessions. Stop on first
+failure; no between-run repairs or extra runs. The prior grant is exhausted. After
+a pass, prepare natural-content exposure evaluation; do not credit scripted
+proposals as injection causation. Preserve final-only research recovery.
+
+Issue #19 owns this primary flow. Supporting deadline-critical work is intended
+runtime/credential and exact-action evidence (#13), judge HTTPS/admission/billing
+(#21/#19), and operator cleanup-access preflight (#49). Diagnose those dependencies
+early; old stopped-resource observations are not current cloud-state verification.
+Windows IPC/WSL issues #33/#34 activate if they block the selected path; hosted
+BYOK #35 is deferred and Atlas #51 is maintenance only. Judge explanation,
+meaningful Nemotron evaluation, overhead, clean install, video and submission
+retain weekly capacity. This roadmap does not close those issues or promote claims.
+
+Targets: research repeatability/exposure September 18; GitHub families October 2;
+experience/scope freeze October 12; release candidate October 23; submission lock
+October 28. Reassess weekly; cut unready showcased breadth before security checks
+or submission buffer. Record actual focused time and all evaluated outcomes.
+
 ## Start here
 
 1. Run fresh repository hygiene and Context Atlas pickup; read cited source before
@@ -89,12 +118,13 @@ Observed model resistance, not a Guardian denial.
    text and older hosted handoffs do not supersede this file.
 2. Treat the September 10 attempt-15 live grant as exhausted. Do not run another
    provider call without a fresh exact grant.
-3. The one-run scripted local recovery objective is complete. Do not repeat it
-   automatically. Review issue #19's remaining acceptance scope and agree the next
-   useful outcome before new runtime work or paid execution. Natural injection
-   delivery/causation, repeated-run reliability, hosted containment, public judge
-   ingress and exact billing remain separate evidence gaps. Preserve the strict
-   validator, deterministic denial and final-only rule.
+3. Prepare T0 from the testing roadmap on freshly verified main: frozen inputs,
+   actual production-contract preflight, expected answer and an exact three-session
+   execution proposal with aggregate time/request/spend limits and cleanup. Keep
+   the retained sanitized no-remote workspace and fixed source/outside destinations.
+   Planning approval is not provider authority. Natural exposure, repeatability,
+   hosted containment, public judge ingress and billing remain separate gates.
+   Preserve the strict validator, deterministic denial and final-only rule.
 4. Preserve the distinction between a correct answer, model resistance, a Guardian
    denial, actual provider execution and missing evidence. A denial without the
    requested answer is still not successful task completion.

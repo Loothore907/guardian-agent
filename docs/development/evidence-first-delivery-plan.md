@@ -16,16 +16,38 @@ must not promise to bypass provider-required login or another harness's approval
 The September 8 [paired research evaluation](evidence/2026-09-08-paired-release-research-evaluation.md)
 completed as Observed evidence. Its successful injected run had no unauthorized
 request or Guardian denial. Its first injected attempt failed on invalid output.
-The local C7 loop and scenario tests exist; the complete live denial/recovery chain,
-general audit coverage, correct terminal authority state, ordinary judge HTTPS and
-broader C6/C7 acceptance remain. Historic completed tests need gap review, not
-automatic reimplementation or repeated credential enrollment.
+September 10 attempt 15 subsequently completed one scripted local actual-model
+denial/recovery journey with a useful cited answer, unchanged denial counters,
+no forbidden dispatch or retry, ten contiguous audit events and completed durable
+state. This is not natural injection causation, repeated reliability or hosted
+Enforced evidence. See the [current report](evidence/2026-09-10-live-denial-recovery-evaluation.md).
+Ordinary judge HTTPS, intended-host verification, billing and broader C6/C7
+acceptance remain. Historic completed tests need gap review, not automatic
+reimplementation or repeated credential enrollment.
+
+## September 10 scope and capacity decision
+
+The primary flow is development and testing across three existing scenario families:
+research, read-only PR review and exact authorized GitHub action. Deepen cross-cutting
+coverage before adding capabilities. Target one verified reference deployment and
+keep current providers, native worker and bounded judge profile. Two showcased
+families are the fallback; retain only the proven journey if necessary to protect
+verification and submission. No scope reduction retroactively completes C6/C7.
+
+The owner reports roughly 3-4 focused hours/day, or 21-28 hours/week if maintained
+daily. Retain a conservative 20-hour weekly commitment: approximately 12 hours for
+core development/tests, 5 for integration/runtime/access/evidence, and 3 for judge
+and submission preparation. Extra availability is recovery buffer, not new scope.
+Review actual hours and bottlenecks weekly; unattended waits are not focused work.
+The [testing roadmap](testing-roadmap.md) defines gates, coverage, sampling, daily
+flow, ownership and the next exact execution boundary. It is subordinate to this
+delivery plan and does not grant paid execution.
 
 ## Delivery order
 
 | Target in 2026 | Outcome | Exit evidence |
 | --- | --- | --- |
-| September 18 | One complete research recovery journey | Eligible forbidden request denied before provider dispatch; same session produces the required facts/citation; terminal state, audit and timing agree |
+| September 18 | Research repeatability and natural-content exposure evaluation | One scripted journey already passed; frozen clean-plus-two-scripted batch passes; natural-content delivery and model outcome separately recorded; useful answer, boundary, audit and terminal checks agree |
 | October 2 | Read-only PR and exact-action substitution variants | Review completes without merge; substitution fails and only the authorized unchanged target can merge; remote states independently checked |
 | October 12 | Coherent judge experience and scope freeze | Reliable intended access, honest consent/assurance display, repeatable evidence and measured overhead; short rehearsal understood by a new viewer |
 | October 23 | Release candidate | Clean install, applicable full checks, protected runtime evidence, access plan, source/claims alignment and timed video |
@@ -38,7 +60,14 @@ needs an issue-owned recovery decision. Do not wait until October to discover an
 unusable denial/continuation contract. Retain relevant C6-C9 security gates even
 when engineering crosses their component boundaries.
 
-## First work package
+## Completed foundation and next work package
+
+The local foundation in steps 1-3 below is evidenced through the September 10
+attempt-15 success; the broader live/hosted work in steps 4-5 remains a gap checklist.
+Do not restart the completed local work. The immediate
+next slice is T0 in the [testing roadmap](testing-roadmap.md): offline preparation
+for one clean control plus two frozen scripted recovery runs, stop on first
+failure, no between-run tweaks. Live execution requires the fresh exact grant.
 
 1. Inspect current dispatch, result contracts and scenario envelope. Verify the
    worker can express the forbidden typed candidate, it reaches deterministic
@@ -139,7 +168,7 @@ cloud inference are offline. Reassess reuse of existing security components afte
 this slice using hands-on fit and maintenance evidence, without an infrastructure
 migration on the demonstration's critical path.
 
-## Adoption session scope
+## Historical September 8 adoption session scope
 
 Repository: `Loothore907/guardian-agent`, issue #19. The documentation revision
 uses `codex/19-evidence-first-roadmap` from reviewed main `ebcefdf84bc7`.

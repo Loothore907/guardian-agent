@@ -1,17 +1,20 @@
 # Development Roadmap
 
-Current direction: September 8, 2026, [ADR-0058](../adr/0058-evidence-first-competition-scope.md).
+Current direction: September 10, 2026, refining the three-family scope in
+[ADR-0058](../adr/0058-evidence-first-competition-scope.md).
 Use the [evidence-first delivery plan](evidence-first-delivery-plan.md) for ordered
 work, evidence requirements and overhead measurement; use [handoff.md](handoff.md)
 for current evidence and operational state. These replace older dated pickup
 sequences. Historical evidence and grants do not authorize new execution.
 
-The clean and paired hostile-source research journeys completed as Observed
-evidence. The successful hostile-source run recorded model resistance, with no
-unauthorized request or Guardian denial. Local portal and bounded continuation
-work is implemented; the next deliverable is one complete attempted violation,
-enforced rejection and useful same-session completion. C6/C7 remain open for their
-acceptance gates. Hosted audit/lifecycle and ordinary HTTPS gaps remain explicit.
+The September 10 attempt-15 scripted local actual-model journey passed denial,
+no-dispatch, useful same-session recovery and audit/terminal checks. Natural
+retrieved-content injection causation, repeated reliability and hosted Enforced
+assurance remain unproven. The next deliverable is a frozen clean control plus two
+scripted recovery runs, after offline preparation and an exact execution grant.
+Use the [testing roadmap](testing-roadmap.md) for coverage, staged gates, the dev/test
+loop and supporting issue ownership. C6/C7 remain open; runtime verification,
+judge HTTPS, billing and submission work stay on the critical path.
 
 The competition uses the current native worker and exact launch-bound grants.
 General harness adapters, custom-task breadth and WebAuthn ceremony implementation
@@ -22,7 +25,12 @@ honestly. This planning update does not change runtime controls or assurance.
 
 **Weekly capacity** means the focused hours the project owner can realistically contribute in an average week. It converts an effort estimate into a calendar forecast. For example, a 20-hour checkpoint requires roughly one week at 20 focused hours per week or four weeks at 5 focused hours per week.
 
-The planning baseline is **20 focused hours per week**, accepted on August 29, 2026. Additional capacity is schedule buffer, not permission to add optional scope.
+On September 10 the owner reported approximately **3-4 focused hours per day**,
+or 21-28 hours/week if maintained daily. Keep **20 committed hours per week** as a
+conservative forecast: about 12 for core development/testing, 5 for integration,
+runtime/access and evidence, and 3 for judge/submission preparation. Reallocate
+weekly using actual effort and bottlenecks. Additional availability is recovery
+buffer, not permission to add optional scope or an expectation of daily work.
 Record actual focused effort from C2 onward and recalibrate dates after C4. C0 and
 C1 were completed before session-level time capture began, so their actual effort
 is intentionally recorded as unavailable rather than reconstructed. Do not count
@@ -54,7 +62,7 @@ binding, redaction and honest assurance throughout this sequence:
 
 | Target in 2026 | Required outcome                                                                                        |
 | -------------- | ------------------------------------------------------------------------------------------------------- |
-| September 18   | One research exposure/request/denial/completion chain, correct audit/lifecycle and stage timing         |
+| September 18   | Research repeatability batch and natural-content exposure evaluation; useful output, boundary, audit and terminal evidence |
 | October 2      | Read-only PR and approved-action substitution variants, repeated controls and independent effect checks |
 | October 12     | Coherent judge access, consent, audit and measured overhead; experience and scope freeze                |
 | October 23     | Clean-install release candidate, required checks, access plan and timed video                           |
@@ -62,7 +70,10 @@ binding, redaction and honest assurance throughout this sequence:
 
 These accepted targets govern delivery across C6-C9; the older component target
 dates below are historical reference. Finish the first complete journey before
-adding variants. If it slips, reduce showcased variants before weakening evidence.
+adding variants. Three families are the ceiling, two the fallback; if necessary,
+show only the proven journey. If it slips, reduce showcased variants before
+weakening evidence. Freeze capabilities October 12; later work is fixes, regression
+and packaging unless an explicit schedule decision changes scope.
 Keep operator authentication, audit/lifecycle, provider diagnostics and relevant
 containment work on the path when needed to make the next result trustworthy.
 Defer optional custom tasks, local-model changes, new providers, multi-hour goals
