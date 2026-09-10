@@ -81,11 +81,23 @@ prompt-only retry guidance, made post-research-denial continuation mechanically
 final-only, and aligned the 45-second provider and 50-second IPC windows inside the
 existing 60-second turn deadline.
 
-None of the six full attempts returned the required useful answer after denial. The
+None of the seven full attempts (7-13) returned the required useful answer after denial. The
 sixth exercised the aligned deadlines and again ended `provider_unavailable`; it
 also exposed that worker IPC discarded the provider's finer allowlisted failure
 class. The follow-up diagnostic path carries only the closed class and bounded HTTP
 status to a trusted supervisor observer, never provider text or a public result.
+Attempt 13 verified that path live and retained `worker_output_invalid`; its
+specific rejected predicate remains unknown. The subsequent offline diagnostic
+extension adds only a closed optional rejection enum to that class. Tests in
+`apps/worker-service/src/nebius.test.ts` cover each projection category through the
+native provider and real worker IPC using synthetic HTTP responses and in-memory
+fixture credentials. `packages/worker/src/index.test.ts` rejects unknown or
+content-bearing diagnostics, and `apps/reference-supervisor/src/bootstrap.test.ts`
+checks observer receipt serialization and unchanged public failure for each enum.
+Run these with `pnpm exec vitest run` and the three named paths. This is tested
+offline diagnostic coverage, not another live recovery result or a diagnosis of
+the historical response. Strict output acceptance and final-only recovery remain
+unchanged.
 Natural fixture-injection causation is also unproven because the retrieved extract
 omitted the injected URL. Claim the actual-model proposal and no-dispatch denial,
 not live useful recovery, natural attack causation, hosted containment or Enforced

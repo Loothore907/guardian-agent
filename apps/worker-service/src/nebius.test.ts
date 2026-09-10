@@ -1,8 +1,20 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { DEFAULT_NEBIUS_WORKER_SELECTION } from "@guardian/contracts";
+import {
+  DEFAULT_NEBIUS_WORKER_SELECTION,
+  WorkerProviderDiagnosticSchema,
+  WorkerProjectionRejectionSchema,
+  WorkerTurnIpcResponseSchema,
+  type WorkerProjectionRejection,
+} from "@guardian/contracts";
 import { InMemoryCredentialStore } from "@guardian/credential-store";
-import { createWorkerToolResult, createWorkerTurnEnvelope } from "@guardian/worker";
+import {
+  createWorkerToolResult,
+  createWorkerTurnEnvelope,
+  createWorkerIpcCredentials,
+  LocalWorkerIpcClient,
+} from "@guardian/worker";
+import { startWorkerService } from "./index.js";
 
 import {
   NativeWorkerProviderError,
@@ -351,6 +363,137 @@ describe("Nebius native worker provider", () => {
     });
     expect(diagnostics).toEqual([{ kind: "http_error", status: 400 }]);
     expect(JSON.stringify(diagnostics)).not.toContain(secret);
+  });
+
+  it("carries only closed projection reasons through provider and real worker IPC", async () => {
+    const answer =
+      "Version 3.0 releases October 1. Upgrade to version 2.4. Source: fixtures.agentic-guardian.com/v1/release/injection";
+    const outcome = { kind: "final_response", response: answer };
+    const base = {
+      id: "offline_projection",
+      model: nativeWorkerBoundary.model,
+      choices: [{ finish_reason: "stop", message: { content: JSON.stringify(outcome) } }],
+    };
+    const choice = (content: unknown, finish_reason = "stop") => ({
+      ...base,
+      choices: [{ finish_reason, message: { content } }],
+    });
+    const cases: readonly [WorkerProjectionRejection, unknown][] = [
+      ["response_shape_invalid", null],
+      ["model_mismatch", { ...base, model: "private-provider-value" }],
+      ["choices_invalid", { ...base, choices: [] }],
+      ["choice_shape_invalid", { ...base, choices: [null] }],
+      ["message_shape_invalid", { ...base, choices: [{ message: null }] }],
+      ["completion_length", choice(JSON.stringify(outcome), "length")],
+      ["completion_not_stop", choice(JSON.stringify(outcome), "private-provider-value")],
+      ["content_not_string", choice(null)],
+      ["request_id_invalid", { ...base, id: null }],
+      ["content_json_invalid", choice("private-provider-value")],
+      [
+        "outcome_schema_invalid",
+        choice(JSON.stringify({ ...outcome, "private-provider-value": true })),
+      ],
+      [
+        "outcome_schema_invalid",
+        choice(JSON.stringify({ kind: "final_response", summary: answer })),
+      ],
+      [
+        "outcome_credential_like",
+        choice(JSON.stringify({ ...outcome, response: "token=private-provider-value" })),
+      ],
+      [
+        "outcome_transport_disallowed",
+        choice(
+          JSON.stringify({ ...outcome, response: "https://private-provider-value.example/path" }),
+        ),
+      ],
+    ];
+    expect(new Set(cases.map(([rejection]) => rejection))).toEqual(
+      new Set(WorkerProjectionRejectionSchema.options),
+    );
+    expect(projectNebiusWorkerResponse(base, nativeWorkerBoundary.model).outcome).toEqual(outcome);
+    // A typed research URL is still accepted; the final-response URL rule has not widened.
+    const research = {
+      kind: "tool_request",
+      request: {
+        name: "guardian.research",
+        arguments: { sourceUrl: "https://fixture.example.org/update" },
+      },
+    };
+    expect(
+      projectNebiusWorkerResponse(choice(JSON.stringify(research)), nativeWorkerBoundary.model)
+        .outcome,
+    ).toEqual(research);
+    const credentialStore = new InMemoryCredentialStore();
+    await credentialStore.write(
+      nativeWorkerBoundary.credential,
+      new TextEncoder().encode("private-provider-value"),
+    );
+    for (const [rejection, response] of cases) {
+      const diagnostics: unknown[] = [];
+      const provider = new NebiusNativeWorkerProvider({
+        credentialStore,
+        fetch: vi.fn<typeof fetch>(() =>
+          Promise.resolve(
+            new Response(JSON.stringify(response), {
+              status: 200,
+              headers: { "content-type": "application/json" },
+            }),
+          ),
+        ),
+        onDiagnostic: (diagnostic) => diagnostics.push(diagnostic),
+      });
+      const exactTurn = turn();
+      const credentials = createWorkerIpcCredentials();
+      const server = await startWorkerService(
+        { schemaVersion: 1, serviceKind: "worker_turn", ...credentials, turn: exactTurn },
+        provider,
+        {
+          now: () => "2026-09-01T00:00:10.000Z",
+        },
+      );
+      try {
+        const client = new LocalWorkerIpcClient({
+          ...credentials,
+          sessionId: exactTurn.sessionId,
+          turnId: exactTurn.turnId,
+          turnNumber: exactTurn.turnNumber,
+          turnDigest: exactTurn.turnDigest,
+        });
+        const diagnostic = { kind: "worker_output_invalid", rejection };
+        await expect(client.run("2026-09-01T00:00:10.000Z")).rejects.toMatchObject({
+          reason: "provider_unavailable",
+          providerDiagnostic: diagnostic,
+        });
+        expect(diagnostics).toEqual([diagnostic]);
+        expect(JSON.stringify(diagnostics)).not.toContain("private-provider-value");
+      } finally {
+        await server.close();
+      }
+    }
+  });
+
+  it("rejects unknown, misplaced and content-bearing projection diagnostics", () => {
+    expect(
+      WorkerProviderDiagnosticSchema.safeParse({ kind: "worker_output_invalid" }).success,
+    ).toBe(true);
+    const diagnostic = { kind: "worker_output_invalid", rejection: "completion_length" };
+    for (const value of [
+      { ...diagnostic, rejection: "private-provider-value" },
+      { ...diagnostic, detail: "private-provider-value" },
+      { ...diagnostic, path: ["private-provider-value"] },
+      { ...diagnostic, status: 200 },
+      { ...diagnostic, kind: "transport_failure" },
+    ])
+      expect(WorkerProviderDiagnosticSchema.safeParse(value).success).toBe(false);
+    expect(
+      WorkerTurnIpcResponseSchema.safeParse({
+        schemaVersion: 1,
+        ok: false,
+        error: "provider_malformed",
+        providerDiagnostic: diagnostic,
+      }).success,
+    ).toBe(false);
   });
 
   it("fails closed on malformed, extra-field, credential-like, or model-mismatched output", () => {

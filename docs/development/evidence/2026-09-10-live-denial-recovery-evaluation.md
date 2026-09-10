@@ -161,6 +161,31 @@ not infer the actual predicate from elapsed time or synthetic examples, retain r
 provider output, change recovery wording, relax validation or widen authority to
 make the test pass. Any additional live evaluation needs a fresh bounded grant.
 
+## Offline projection diagnostic extension
+
+The subsequent approved offline work adds an optional closed `rejection` enum
+within `worker_output_invalid`. It distinguishes response shape, model mismatch,
+choices, choice/message shape, completion length versus other non-stop finish,
+non-string content, request ID, content JSON, outcome schema, credential-like
+outcome and disallowed transport content. The prior class-only form remains
+accepted. Projection checks retain their fail-closed behavior; only the private
+diagnostic becomes more specific. No raw provider values or validator errors are
+retained, and neither the prompt nor final-only recovery is changed.
+
+The native-provider test sends synthetic responses for all 13 categories through
+the actual provider and worker IPC service/client with fixture credentials. It
+also accepts a useful domain/path-cited answer and a typed research URL. Contract
+and IPC near-miss checks reject unknown categories, misplaced categories and extra
+content. Supervisor tests serialize every category to the private observer receipt
+and keep the public failure generic. These tests are reproducible with
+`pnpm exec vitest run apps/worker-service/src/nebius.test.ts packages/worker/src/index.test.ts apps/reference-supervisor/src/bootstrap.test.ts`.
+
+This extension made no provider call. It cannot recover attempt 13's missing raw
+response or identify its exact failing predicate. A future run needs a fresh exact
+grant and reviewed integrated source. The diagnostic is a first applicable failed
+predicate, not proof of a root cause; unknown or malformed responses still fail
+closed rather than being repaired or coerced into acceptance.
+
 ## Current claim boundary
 
 Claim only scripted actual-model forbidden-request generation and Guardian's

@@ -177,6 +177,7 @@ export const WorkerOutcomeSchema = z
   ])
   .refine((outcome) => !containsCredentialLikeValue(outcome), {
     message: "worker outcome cannot contain credential-like material",
+    params: { workerRejection: "credential_like" },
   })
   .refine(
     (outcome) =>
@@ -189,6 +190,7 @@ export const WorkerOutcomeSchema = z
       ),
     {
       message: "worker outcome cannot contain arbitrary URLs or headers",
+      params: { workerRejection: "transport_disallowed" },
     },
   );
 export type WorkerOutcome = DeepReadonly<z.infer<typeof WorkerOutcomeSchema>>;
@@ -617,6 +619,23 @@ export const WorkerTurnIpcFailureReasonSchema = z.enum([
 ]);
 export type WorkerTurnIpcFailureReason = z.infer<typeof WorkerTurnIpcFailureReasonSchema>;
 
+export const WorkerProjectionRejectionSchema = z.enum([
+  "response_shape_invalid",
+  "model_mismatch",
+  "choices_invalid",
+  "choice_shape_invalid",
+  "message_shape_invalid",
+  "completion_length",
+  "completion_not_stop",
+  "content_not_string",
+  "request_id_invalid",
+  "content_json_invalid",
+  "outcome_schema_invalid",
+  "outcome_credential_like",
+  "outcome_transport_disallowed",
+]);
+export type WorkerProjectionRejection = z.infer<typeof WorkerProjectionRejectionSchema>;
+
 export const WorkerProviderDiagnosticSchema = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("transport_failure") }),
   z.strictObject({
@@ -624,7 +643,10 @@ export const WorkerProviderDiagnosticSchema = z.discriminatedUnion("kind", [
     status: z.number().int().min(100).max(599),
   }),
   z.strictObject({ kind: z.literal("response_envelope_invalid") }),
-  z.strictObject({ kind: z.literal("worker_output_invalid") }),
+  z.strictObject({
+    kind: z.literal("worker_output_invalid"),
+    rejection: WorkerProjectionRejectionSchema.optional(),
+  }),
   z.strictObject({ kind: z.literal("credential_or_internal_failure") }),
 ]);
 export type WorkerProviderDiagnostic = DeepReadonly<z.infer<typeof WorkerProviderDiagnosticSchema>>;
