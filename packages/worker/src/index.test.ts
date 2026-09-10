@@ -269,6 +269,11 @@ describe("one-use worker IPC", () => {
       ...firstTurnWithoutDigest,
       turnId: "77777777-7777-4777-8777-777777777777",
       turnNumber: 2,
+      continuation: {
+        kind: "bounded_v1",
+        maxTurns: 4,
+        deadline: firstTurn.expiresAt,
+      },
       startsAt: "2026-09-01T00:00:20.000Z",
       allowedTools: [],
       remainingBudget: toolResult.remainingBudget,
@@ -285,7 +290,7 @@ describe("one-use worker IPC", () => {
         },
         secondTurn,
       ),
-    ).toThrow(/one tool request/u);
+    ).toThrow(/bound catalog/u);
   });
 
   it("returns an exact-bound bounded final response and rejects replay", async () => {
