@@ -96,6 +96,7 @@ describe("Nebius native worker provider", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [endpoint, init] = fetchMock.mock.calls[0] ?? [];
     expect(endpoint).toBe(nativeWorkerBoundary.endpoint);
+    expect(nativeWorkerBoundary.timeoutMs).toBe(45_000);
     expect(init?.redirect).toBe("error");
     expect(new Headers(init?.headers).get("authorization")).toBe(`Bearer ${secret}`);
     expect(typeof init?.body).toBe("string");

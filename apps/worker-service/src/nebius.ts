@@ -15,7 +15,7 @@ import type { CredentialStore } from "@guardian/credential-store";
 
 const NEBIUS_CHAT_COMPLETIONS_ENDPOINT = "https://api.tokenfactory.nebius.com/v1/chat/completions";
 const MAXIMUM_PROVIDER_RESPONSE_BYTES = 128 * 1_024;
-const DEFAULT_PROVIDER_TIMEOUT_MS = 20_000;
+const DEFAULT_PROVIDER_TIMEOUT_MS = 45_000;
 
 export class NativeWorkerProviderError extends Error {
   constructor() {
@@ -444,6 +444,7 @@ export class NebiusNativeWorkerProvider {
 
 export const nativeWorkerBoundary = {
   endpoint: NEBIUS_CHAT_COMPLETIONS_ENDPOINT,
+  timeoutMs: DEFAULT_PROVIDER_TIMEOUT_MS,
   modelPolicyId: DEFAULT_GUARDIAN_MODEL_POLICY.policyId,
   modelPolicyVersion: DEFAULT_GUARDIAN_MODEL_POLICY.version,
   model: DEFAULT_GUARDIAN_MODEL_POLICY.nativeWorker.modelId,
