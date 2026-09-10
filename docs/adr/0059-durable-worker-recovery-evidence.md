@@ -52,6 +52,14 @@ The aligned inner deadlines preserve the same outer deadline and fail-closed
 behavior while allowing the larger context a useful completion window. Live useful
 completion remains unproven until a newly authorized evaluation succeeds.
 
+A subsequent aligned-deadline run still returned generic `provider_unavailable`.
+The provider already classified failures into a closed diagnostic set, but one-use
+worker IPC discarded that classification. Provider-unavailable IPC failures may now
+include only that validated enum and a bounded numeric HTTP status where applicable.
+The trusted supervisor may observe it for private evaluation evidence. Provider
+text, response bodies, headers, arbitrary error strings and credentials remain
+excluded, and neither the worker nor the public result receives it.
+
 For bounded continuation, a contract-valid final response must cross a new exact
 completion boundary. The supervisor binds the final turn ID and digest plus a digest
 of its validated result. The authority store atomically appends useful-completion
@@ -73,6 +81,9 @@ unchanged.
 - A contained research denial now narrows the next turn to `final_response`; prompt
   wording is advisory, while the empty catalog and output validation enforce the
   restriction.
+- Provider-unavailable evidence can distinguish the allowlisted transport, HTTP,
+  response-envelope, worker-output and credential/internal classes without carrying
+  raw provider diagnostics across the worker process boundary.
 - The deterministic service-child journey is reproducible evidence for local
   composition only. It does not show that a live model generated the forbidden
   request, that a paid provider was contacted, or that hosted containment is

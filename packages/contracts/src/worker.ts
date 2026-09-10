@@ -617,6 +617,18 @@ export const WorkerTurnIpcFailureReasonSchema = z.enum([
 ]);
 export type WorkerTurnIpcFailureReason = z.infer<typeof WorkerTurnIpcFailureReasonSchema>;
 
+export const WorkerProviderDiagnosticSchema = z.discriminatedUnion("kind", [
+  z.strictObject({ kind: z.literal("transport_failure") }),
+  z.strictObject({
+    kind: z.literal("http_error"),
+    status: z.number().int().min(100).max(599),
+  }),
+  z.strictObject({ kind: z.literal("response_envelope_invalid") }),
+  z.strictObject({ kind: z.literal("worker_output_invalid") }),
+  z.strictObject({ kind: z.literal("credential_or_internal_failure") }),
+]);
+export type WorkerProviderDiagnostic = DeepReadonly<z.infer<typeof WorkerProviderDiagnosticSchema>>;
+
 export const WorkerTurnIpcRequestSchema = z.strictObject({
   schemaVersion: ContractVersionSchema,
   capability: OpaqueIdSchema,
@@ -637,18 +649,33 @@ export const WorkerTurnResultSchema = z.strictObject({
 });
 export type WorkerTurnResult = DeepReadonly<z.infer<typeof WorkerTurnResultSchema>>;
 
-export const WorkerTurnIpcResponseSchema = z.discriminatedUnion("ok", [
-  z.strictObject({
-    schemaVersion: ContractVersionSchema,
-    ok: z.literal(true),
-    result: WorkerTurnResultSchema,
-  }),
-  z.strictObject({
-    schemaVersion: ContractVersionSchema,
-    ok: z.literal(false),
-    error: WorkerTurnIpcFailureReasonSchema,
-  }),
-]);
+export const WorkerTurnIpcResponseSchema = z
+  .discriminatedUnion("ok", [
+    z.strictObject({
+      schemaVersion: ContractVersionSchema,
+      ok: z.literal(true),
+      result: WorkerTurnResultSchema,
+    }),
+    z.strictObject({
+      schemaVersion: ContractVersionSchema,
+      ok: z.literal(false),
+      error: WorkerTurnIpcFailureReasonSchema,
+      providerDiagnostic: WorkerProviderDiagnosticSchema.optional(),
+    }),
+  ])
+  .superRefine((response, context) => {
+    if (
+      !response.ok &&
+      response.providerDiagnostic !== undefined &&
+      response.error !== "provider_unavailable"
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["providerDiagnostic"],
+        message: "provider diagnostics require a provider-unavailable failure",
+      });
+    }
+  });
 export type WorkerTurnIpcResponse = DeepReadonly<z.infer<typeof WorkerTurnIpcResponseSchema>>;
 
 export const WorkerServiceProcessConfigSchema = z

@@ -81,11 +81,15 @@ prompt-only retry guidance, made post-research-denial continuation mechanically
 final-only, and aligned the 45-second provider and 50-second IPC windows inside the
 existing 60-second turn deadline.
 
-None of the five full attempts returned the required useful answer after denial;
-the final aligned-deadline source has not received another live run. Natural
-fixture-injection causation is also unproven because the retrieved extract omitted
-the injected URL. Claim the actual-model proposal and no-dispatch denial, not live
-useful recovery, natural attack causation, hosted containment or Enforced assurance.
+None of the six full attempts returned the required useful answer after denial. The
+sixth exercised the aligned deadlines and again ended `provider_unavailable`; it
+also exposed that worker IPC discarded the provider's finer allowlisted failure
+class. The follow-up diagnostic path carries only the closed class and bounded HTTP
+status to a trusted supervisor observer, never provider text or a public result.
+Natural fixture-injection causation is also unproven because the retrieved extract
+omitted the injected URL. Claim the actual-model proposal and no-dispatch denial,
+not live useful recovery, natural attack causation, hosted containment or Enforced
+assurance.
 
 ## KC hosted gate (2026-09-07)
 

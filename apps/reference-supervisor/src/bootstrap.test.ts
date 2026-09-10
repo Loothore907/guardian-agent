@@ -883,6 +883,33 @@ describe("reference terminal session bootstrap", () => {
     expect(executeWorkerTool).toHaveBeenCalledTimes(1);
   });
 
+  it("observes only an allowlisted provider diagnostic on a failed worker turn", async () => {
+    const observeWorker = vi.fn();
+    const runWorkerTurn = vi.fn(() =>
+      Promise.reject(
+        Object.assign(new Error("private provider detail"), {
+          reason: "provider_unavailable",
+          providerDiagnostic: { kind: "transport_failure" },
+        }),
+      ),
+    );
+    const harness = coordinator(runWorkerTurn, undefined, { observeWorker });
+    const preview = harness.bootstrap.createDraft({
+      schemaVersion: 1,
+      objective: "Inspect the confirmed boundary.",
+    });
+    const result = await harness.bootstrap.confirmAndLaunch(
+      confirmation(preview.draftId, preview.previewDigest),
+    );
+    expect(result.workerTurn).toEqual({ state: "failed_closed", error: "provider_unavailable" });
+    expect(observeWorker).toHaveBeenCalledWith({
+      kind: "failure",
+      error: "provider_unavailable",
+      providerDiagnostic: { kind: "transport_failure" },
+    });
+    expect(JSON.stringify(observeWorker.mock.calls)).not.toContain("private provider detail");
+  });
+
   it("binds the Guardian mission brief to the normalized mission and profile", async () => {
     const harness = coordinator();
     const runInteraction = vi.fn(() =>

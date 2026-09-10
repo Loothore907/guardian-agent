@@ -18,6 +18,7 @@ import {
   WorkerRuntimeToolRequestSchema,
   WorkerTurnEnvelopeSchema,
   WorkerTurnEnvelopeWithoutDigestSchema,
+  WorkerProviderDiagnosticSchema,
   WorkerTurnIpcFailureReasonSchema,
   WorkerTurnIpcRequestSchema,
   WorkerTurnIpcResponseSchema,
@@ -27,6 +28,7 @@ import {
   type WorkerToolExecutionEnvelope,
   type WorkerToolResult,
   type WorkerTurnEnvelope,
+  type WorkerProviderDiagnostic,
   type WorkerTurnIpcFailureReason,
   type WorkerTurnIpcRequest,
   type WorkerTurnResult,
@@ -415,10 +417,19 @@ export class LocalWorkerIpcServer {
       const parsed = WorkerTurnIpcFailureReasonSchema.safeParse(
         typeof error === "object" && error !== null && "reason" in error ? error.reason : undefined,
       );
+      const providerDiagnostic = WorkerProviderDiagnosticSchema.safeParse(
+        typeof error === "object" && error !== null && "providerDiagnostic" in error
+          ? error.providerDiagnostic
+          : undefined,
+      );
+      const failure = parsed.success ? parsed.data : "provider_unavailable";
       writeResponse(socket, {
         schemaVersion: 1,
         ok: false,
-        error: parsed.success ? parsed.data : "provider_unavailable",
+        error: failure,
+        ...(failure === "provider_unavailable" && providerDiagnostic.success
+          ? { providerDiagnostic: providerDiagnostic.data }
+          : {}),
       });
       return;
     }
@@ -443,11 +454,13 @@ export class LocalWorkerIpcServer {
 
 export class WorkerIpcError extends Error {
   readonly reason: WorkerTurnIpcFailureReason;
+  readonly providerDiagnostic: WorkerProviderDiagnostic | undefined;
 
-  constructor(reason: WorkerTurnIpcFailureReason) {
+  constructor(reason: WorkerTurnIpcFailureReason, providerDiagnostic?: WorkerProviderDiagnostic) {
     super(`worker service failed: ${reason}`);
     this.name = "WorkerIpcError";
     this.reason = reason;
+    this.providerDiagnostic = providerDiagnostic;
   }
 }
 
@@ -496,7 +509,7 @@ export class LocalWorkerIpcClient {
       const response = WorkerTurnIpcResponseSchema.parse(
         JSON.parse(await responsePromise) as unknown,
       );
-      if (!response.ok) throw new WorkerIpcError(response.error);
+      if (!response.ok) throw new WorkerIpcError(response.error, response.providerDiagnostic);
       return response.result;
     } catch (error) {
       if (error instanceof WorkerIpcError) throw error;
