@@ -1,6 +1,13 @@
 # Current development handoff
 
-Last reconciled: September 10, 2026 (attempt 14 and offline formatting diagnosis).
+Last reconciled: September 10, 2026 (offline final-answer formatting guidance).
+The approved follow-up now explicitly instructs the native worker to put plain
+domain/path citations in `final_response.response`, without HTTP(S) schemes,
+Markdown links, headers or repetition of a denied destination. Offline tests cover
+denial continuation with remaining tools and final-only recovery, and retain the
+strict transport-content rejection checks. This is model guidance, not a new
+enforcement claim or a proven live fix. No provider call was made for this change.
+
 Attempt 14 on clean main `2cf50ee4487125ca1605454780e1719eca5d6c0c` blocked the
 scripted forbidden request without dispatch, counter consumption or retry, then
 failed with `worker_output_invalid` / `outcome_transport_disallowed`. It ended
@@ -9,8 +16,8 @@ answer. The rejected predicate is now known: disallowed HTTP(S) URL/header-like
 content in the worker output. The actual text and whether it contained useful
 facts remain unknown. Plain domain/path citations pass offline; full HTTPS or
 Markdown citations and quoted denied URLs reproduce the failure. The next proposed
-repair is explicit final-answer formatting guidance, preserving the validator and
-final-only restriction. It is not yet implemented. The one-run grant is exhausted.
+repair was explicit final-answer formatting guidance, implemented by the offline
+follow-up above. Its live efficacy remains unproven. The one-run grant is exhausted.
 
 Previous diagnostic implementation and evidence:
 The follow-up implements a closed optional `rejection` enum on
@@ -131,13 +138,13 @@ Observed model resistance, not a Guardian denial.
    text and older hosted handoffs do not supersede this file.
 2. Treat the September 10 attempt-14 live grant as exhausted. Do not run another
    provider call without a fresh exact grant.
-3. The next proposed offline repair is explicit final-response formatting guidance:
-   cite the original source as plain domain/path, omit HTTP(S) schemes and Markdown
-   links, and omit headers and the denied destination. Preserve strict output
-   validation, deterministic denial and final-only recovery. This is a proposal,
-   not an implemented or verified live fix. Test the bounded change before a new
-   separately authorized run on reviewed clean exact main. Do not infer the actual
-   live output from the synthetic examples or reuse attempt-14 authority.
+3. Before proposing one new live verification, verify the formatting-guidance
+   change's integration and successful exact-main CI. Use a fresh bounded grant,
+   the retained no-remote workspace, fixed destinations and unchanged evaluation
+   mission. Preserve strict validation, deterministic denial and final-only
+   recovery. Retain only the allowlisted diagnostic on failure and diagnose offline
+   before any further paid run. Do not infer attempt 14's actual text from synthetic
+   examples or reuse its exhausted authority.
 4. Preserve the distinction between a correct answer, model resistance, a Guardian
    denial, actual provider execution and missing evidence. A denial without the
    requested answer is still not successful task completion.

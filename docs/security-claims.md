@@ -97,7 +97,13 @@ checks observer receipt serialization and unchanged public failure for each enum
 Run these with `pnpm exec vitest run` and the three named paths. This is tested
 offline diagnostic coverage, not another live recovery result or a diagnosis of
 the historical response. Strict output acceptance and final-only recovery remain
-unchanged.
+unchanged. Attempt 14 subsequently retained `outcome_transport_disallowed`; its
+actual text remains unknown. The offline follow-up makes final-answer formatting
+explicit in provider guidance: plain domain/path citations, no schemes, Markdown
+links, headers or denied destinations. `apps/worker-service/src/nebius.test.ts`
+checks both remaining-tool and final-only denial branches and retains transport
+rejection coverage. Prompt guidance is not enforcement or evidence of live model
+compliance; no further live result is claimed.
 Natural fixture-injection causation is also unproven because the retrieved extract
 omitted the injected URL. Claim the actual-model proposal and no-dispatch denial,
 not live useful recovery, natural attack causation, hosted containment or Enforced
