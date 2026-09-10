@@ -1,4 +1,6 @@
 import { createConnection } from "node:net";
+import { once } from "node:events";
+import { setTimeout as delay } from "node:timers/promises";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -98,6 +100,140 @@ function client(
 }
 
 describe("one-use worker IPC", () => {
+  it("allows a response beyond the framing timeout but bounds trickled incomplete requests", async () => {
+    const slow = await serverWith(
+      async () => {
+        await delay(21_000);
+        return {
+          providerRequestId: "slow_valid_response",
+          outcome: { kind: "final_response", response: "Inspection complete." },
+        };
+      },
+      { now: () => "2026-09-01T00:00:10.000Z" },
+    );
+    const stalledHandler = vi.fn();
+    const stalled = await serverWith(stalledHandler, {
+      now: () => "2026-09-01T00:00:10.000Z",
+    });
+    const socket = createConnection(stalled.credentials.endpoint);
+    await once(socket, "connect");
+    const framingErrors: string[] = [];
+    socket.on("error", (error: NodeJS.ErrnoException) => {
+      framingErrors.push(error.code ?? "unknown");
+    });
+    // Linux may reset a socket with an unread partial frame; Windows may close
+    // it normally. Both must close without ever invoking the handler.
+    const closed = new Promise<void>((resolveClosed) =>
+      socket.once("close", () => resolveClosed()),
+    );
+    socket.write('{"');
+    const trickle = setInterval(() => socket.write("x"), 4_000);
+    try {
+      await Promise.all([
+        expect(
+          client(slow.credentials, slow.exactTurn, { timeoutMs: 50_000 }).run(
+            "2026-09-01T00:00:10.000Z",
+          ),
+        ).resolves.toMatchObject({ outcome: { kind: "final_response" } }),
+        closed,
+      ]);
+      expect(stalledHandler).not.toHaveBeenCalled();
+      expect(framingErrors.every((code) => code === "ECONNRESET" || code === "EPIPE")).toBe(true);
+    } finally {
+      clearInterval(trickle);
+      socket.destroy();
+    }
+  }, 30_000);
+
+  it.each(["resolve", "reject"] as const)(
+    "expires an in-flight request and discards its late %s without allowing reuse",
+    async (settlement) => {
+      const handler = vi.fn(async () => {
+        await delay(300);
+        if (settlement === "reject") throw new Error("private late provider error");
+        return {
+          providerRequestId: "late_response",
+          outcome: { kind: "final_response" as const, response: "Late answer." },
+        };
+      });
+      const harness = await serverWith(handler, {
+        now: () => "2026-09-01T00:00:59.800Z",
+      });
+      await expect(
+        client(harness.credentials, harness.exactTurn).run("2026-09-01T00:00:59.800Z"),
+      ).rejects.toMatchObject({ reason: "expired", providerDiagnostic: undefined });
+      await delay(150);
+      await expect(
+        client(harness.credentials, harness.exactTurn).run("2026-09-01T00:00:59.800Z"),
+      ).rejects.toMatchObject({ reason: "turn_consumed" });
+      expect(handler).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it("rechecks the service clock before publishing a result", async () => {
+    let now = "2026-09-01T00:00:10.000Z";
+    const harness = await serverWith(
+      () => {
+        now = "2026-09-01T00:01:00.000Z";
+        return Promise.resolve({
+          providerRequestId: "expired_clock",
+          outcome: { kind: "final_response", response: "Late answer." },
+        });
+      },
+      { now: () => now },
+    );
+    await expect(
+      client(harness.credentials, harness.exactTurn).run("2026-09-01T00:00:10.000Z"),
+    ).rejects.toMatchObject({ reason: "expired" });
+  });
+
+  it("bounds an incomplete request by turn expiry before invoking a handler", async () => {
+    const handler = vi.fn();
+    const harness = await serverWith(handler, {
+      now: () => "2026-09-01T00:00:59.800Z",
+    });
+    const socket = createConnection({ path: harness.credentials.endpoint, allowHalfOpen: true });
+    socket.setEncoding("utf8");
+    let response = "";
+    socket.on("data", (chunk: string) => (response += chunk));
+    await once(socket, "end");
+    const lateWriteErrors: string[] = [];
+    socket.on("error", (error: NodeJS.ErrnoException) => {
+      lateWriteErrors.push(error.code ?? "unknown");
+    });
+    // Even a peer that keeps its write half open cannot complete a frame after
+    // the absolute deadline and invoke the handler using a lagging wall clock.
+    socket.write(
+      `${JSON.stringify({
+        schemaVersion: 1,
+        capability: harness.credentials.capability,
+        sessionId: harness.exactTurn.sessionId,
+        turnId: harness.exactTurn.turnId,
+        turnNumber: harness.exactTurn.turnNumber,
+        turnDigest: harness.exactTurn.turnDigest,
+        requestedAt: "2026-09-01T00:00:59.800Z",
+      })}\n`,
+    );
+    await delay(25);
+    socket.destroy();
+    expect(lateWriteErrors.every((code) => code === "EPIPE" || code === "ECONNRESET")).toBe(true);
+    expect(JSON.parse(response)).toMatchObject({ ok: false, error: "expired" });
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it("classifies IPC transport failure without exposing socket error details", async () => {
+    const harness = await serverWith(vi.fn(), {
+      now: () => "2026-09-01T00:00:10.000Z",
+    });
+    await harness.server.close();
+    await expect(
+      client(harness.credentials, harness.exactTurn).run("2026-09-01T00:00:10.000Z"),
+    ).rejects.toMatchObject({
+      reason: "provider_unavailable",
+      providerDiagnostic: { kind: "transport_failure" },
+    });
+  });
+
   it("binds the exact executable request, sanitized result, and one-result turn", () => {
     const firstTurn = turn();
     const request = { name: "guardian.session_status" as const, arguments: {} };

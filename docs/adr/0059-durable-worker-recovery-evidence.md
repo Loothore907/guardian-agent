@@ -52,6 +52,13 @@ The aligned inner deadlines preserve the same outer deadline and fail-closed
 behavior while allowing the larger context a useful completion window. Live useful
 completion remains unproven until a newly authorized evaluation succeeds.
 
+September 10 T1 correction: the server socket still retained a separate 20-second
+idle timeout, so the provider/client alignment alone did not remove every shorter
+cutoff. Worker IPC now separates the absolute request-framing limit from the
+authenticated handler's turn deadline and rejects late results. This repairs a
+reproduced local mechanism; it does not identify the historical provider failure.
+See [the T1 evidence](../development/evidence/2026-09-10-t1-ipc-deadline.md).
+
 A subsequent aligned-deadline run still returned generic `provider_unavailable`.
 The provider already classified failures into a closed diagnostic set, but one-use
 worker IPC discarded that classification. Provider-unavailable IPC failures may now

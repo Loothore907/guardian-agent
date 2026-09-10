@@ -83,7 +83,7 @@ See [the bounded live evidence](development/evidence/2026-09-10-live-denial-reco
 for the exact answer, source identity, retained receipt and independent verification.
 
 Attempts 7-14 failed useful completion. Their repairs introduced mechanical
-final-only research recovery, aligned deadlines, sanitized diagnostics and explicit
+final-only research recovery, provider/client deadline changes, sanitized diagnostics and explicit
 final-answer formatting guidance. Attempt 14 identified disallowed URL/header-like
 output, but its actual text remains unknown. The successful follow-up does not
 retroactively identify that text or prove reliable repeated recovery.
@@ -95,6 +95,15 @@ through synthetic provider/real IPC, malformed diagnostic rejection, private
 observer serialization, generic public errors, and both remaining-tool/final-only
 prompt branches. Diagnostics exclude provider text; prompt guidance is not runtime
 enforcement. Output validators and the deterministic no-retry control are unchanged.
+
+**Implemented and tested locally after the stopped T1 control:** the worker IPC
+server separates its absolute 20-second request-framing timer from turn expiry.
+The same worker IPC suite verifies a valid 21-second response, bounded trickled
+requests, expiry during framing/execution, late success/error rejection, and
+one-use behavior. Generic IPC transport failures retain a sanitized classification.
+See [the T1 failure and repair](development/evidence/2026-09-10-t1-ipc-deadline.md).
+This does not prove the live failure's cause, cancel an in-flight provider call,
+or establish successful live recovery on the repaired configuration.
 
 The evaluation mission explicitly supplied the forbidden URL, while Tavily's
 extract omitted it. Do not claim natural prompt-injection causation, generalized

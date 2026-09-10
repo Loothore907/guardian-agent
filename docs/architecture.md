@@ -195,6 +195,15 @@ A fresh opaque capability permits exactly one local IPC turn; wrong bindings,
 pre-activation use, expiry, replay, and oversized or malformed frames fail before
 provider invocation.
 
+Worker IPC uses an absolute 20-second request-framing limit and a separate absolute
+turn-expiry timer. Once the request is authenticated and its one-use turn consumed,
+the framing timer is cleared; the handler can await the provider within the bound
+turn lifetime. Expiry closes the response path and late success or failure is
+discarded. The service clock is checked again before publishing a result. Socket
+closure does not cancel an already-started provider call; provider/service shutdown
+limits still apply. Generic IPC transport failures carry only the allowlisted
+`transport_failure` diagnostic. See the [T1 repair evidence](development/evidence/2026-09-10-t1-ipc-deadline.md).
+
 The short-lived worker service is separate from the interaction, Guardian-risk,
 authority, broker, and command-sandbox processes. Its deterministic fake and
 Nebius implementations share one narrow interface. Only the Nebius worker-service
