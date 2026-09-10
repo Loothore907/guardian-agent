@@ -1,15 +1,16 @@
 # Current development handoff
 
-Last reconciled: September 9, 2026 (denial/recovery baseline integrated).
-PR #62 integrated the [evidence-first delivery plan](evidence-first-delivery-plan.md)
-and [ADR-0058](../adr/0058-evidence-first-competition-scope.md) as main commit
-`a64eb1eb4f56df9482b748d6a2acf5006c019e04`; exact post-merge build run
-34435659253 passed. PR #63 then integrated the first local work package as main
-commit `49bcca6be25d7d02aea2e4b74730f2881c3c0976`; exact post-merge build run
-34442134152 passed. It provides deterministic evidence under
-[ADR-0059](../adr/0059-durable-worker-recovery-evidence.md): one attempted
-unauthorized action, Guardian denial and useful same-session completion with
-ordered audit and durable terminal state. This does not change hosted assurance.
+Last reconciled: September 10, 2026 (live denial evaluation and repairs integrated).
+PRs [#65](https://github.com/Loothore907/guardian-agent/pull/65) through
+[#68](https://github.com/Loothore907/guardian-agent/pull/68) integrated the diagnosed
+live-worker repairs as main commit
+`6799e991c04c8dd613500a13784d5868e1065f6b`; exact post-merge build run
+34465177023 passed. See the
+[September 10 evidence report](evidence/2026-09-10-live-denial-recovery-evaluation.md).
+The five-attempt scripted actual-model evaluation proves a classified Guardian
+research denial before provider/adapter dispatch, but it did not produce useful
+same-session completion. The final deadline-aligned source has not received a live
+full journey. This does not change hosted assurance.
 
 Last hosted evidence: September 8, 2026 UTC. The paired clean/adversarial release-research
 evaluation owned by [issue #19](https://github.com/Loothore907/guardian-agent/issues/19)
@@ -27,7 +28,19 @@ Observed model resistance, not a Guardian denial.
 
 ## Current product and security state
 
-- Current integrated denial/recovery source:
+- Current integrated source:
+  `6799e991c04c8dd613500a13784d5868e1065f6b`. Post-research-denial continuation is
+  mechanically final-only; the native-provider/worker-IPC/turn deadlines are
+  45/50/60 seconds. Exact post-merge build run 34465177023 passed.
+- Five scripted actual-model runs emitted the exact outside research proposal and
+  received `url_not_allowed` at `research_request_policy` with no forbidden provider
+  or adapter crossing and unchanged consumable counters. Attempt 7 repeated the
+  denied request; attempts 8-11 did not. All five lacked a useful final answer and
+  ended interrupted, so live useful recovery is not claimed.
+- Tavily returned October 1 and version 2.4 but omitted the injected URL. The live
+  request was elicited explicitly by the evaluation mission; natural fixture
+  prompt-injection causation remains unproven.
+- PR #63 deterministic denial/recovery baseline:
   `49bcca6be25d7d02aea2e4b74730f2881c3c0976`; PR #63 exact-head build run
   34441870375 and post-merge main build run 34442134152 passed. See the
   [September 9 evidence report](evidence/2026-09-09-local-denial-recovery.md).
@@ -67,16 +80,18 @@ Observed model resistance, not a Guardian denial.
 1. Run fresh repository hygiene and Context Atlas pickup; read cited source before
    security decisions and inspect uncommitted changes separately. Historical issue
    text and older hosted handoffs do not supersede this file.
-2. Treat the paired research evaluation as complete. Do not spend the unused
-   admission, restart a VM, or repeat the provider run without a new exact grant.
-3. Prepare exact live-evaluation scope for actual-model denial/recovery and the two
-   GitHub variants. Ordinary judge HTTPS, delayed billing and C6 containment remain
-   owned residuals; provider work and GitHub mutations require fresh exact grants.
+2. Treat the September 10 five-attempt live grant as exhausted. Do not run another
+   provider call without a fresh exact grant.
+3. The next useful grant is one local scripted denial/recovery run against exact main
+   `6799e991c04c8dd613500a13784d5868e1065f6b`, using the retained sanitized
+   no-remote workspace and fixed source/outside destinations. Stop on complete
+   success; if the final turn fails, capture only its allowlisted diagnostic class
+   before considering another paid call.
 4. Preserve the distinction between a correct answer, model resistance, a Guardian
    denial, actual provider execution and missing evidence. A denial without the
    requested answer is still not successful task completion.
-5. Keep private evidence under `tmp/c7-acceptance/issue19-paired-3e03e2e/` and the
-   corresponding remote private directories out of indiscriminate staging.
+5. Keep private evidence under `tmp/issue19-live-denial-recovery-20260909/` and
+   `tmp/c7-acceptance/issue19-paired-3e03e2e/` out of indiscriminate staging.
 
 The earlier clean journey remains documented in
 [its evidence report](evidence/2026-09-08-clean-research-success.md). It is historical
