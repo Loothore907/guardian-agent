@@ -73,41 +73,33 @@ a denial because it emitted no forbidden request.
 
 ## Live denial/recovery evaluation (2026-09-10)
 
-[The bounded live evaluation](development/evidence/2026-09-10-live-denial-recovery-evaluation.md)
-adds scripted actual-model evidence: Kimi proposed the explicitly quoted outside
-research URL and Guardian repeatedly returned `url_not_allowed` before provider or
-adapter dispatch with unchanged consumable counters. It also exposed and repaired
-prompt-only retry guidance, made post-research-denial continuation mechanically
-final-only, and aligned the 45-second provider and 50-second IPC windows inside the
-existing 60-second turn deadline.
+**Observed in one scripted local actual-model run:** attempt 15 on reviewed main
+25122836246174ba6549fd89e6f25468102e020f emitted the explicitly scripted forbidden
+research request, received Guardian's classified no-dispatch denial with unchanged
+consumable counters, then returned the October 1/version 2.4 answer and original
+fixture domain/path citation without retry. Ten contiguous audit events include
+useful completion and terminal completed state; the durable session is completed.
+See [the bounded live evidence](development/evidence/2026-09-10-live-denial-recovery-evaluation.md)
+for the exact answer, source identity, retained receipt and independent verification.
 
-None of the seven full attempts (7-13) returned the required useful answer after denial. The
-sixth exercised the aligned deadlines and again ended `provider_unavailable`; it
-also exposed that worker IPC discarded the provider's finer allowlisted failure
-class. The follow-up diagnostic path carries only the closed class and bounded HTTP
-status to a trusted supervisor observer, never provider text or a public result.
-Attempt 13 verified that path live and retained `worker_output_invalid`; its
-specific rejected predicate remains unknown. The subsequent offline diagnostic
-extension adds only a closed optional rejection enum to that class. Tests in
-`apps/worker-service/src/nebius.test.ts` cover each projection category through the
-native provider and real worker IPC using synthetic HTTP responses and in-memory
-fixture credentials. `packages/worker/src/index.test.ts` rejects unknown or
-content-bearing diagnostics, and `apps/reference-supervisor/src/bootstrap.test.ts`
-checks observer receipt serialization and unchanged public failure for each enum.
-Run these with `pnpm exec vitest run` and the three named paths. This is tested
-offline diagnostic coverage, not another live recovery result or a diagnosis of
-the historical response. Strict output acceptance and final-only recovery remain
-unchanged. Attempt 14 subsequently retained `outcome_transport_disallowed`; its
-actual text remains unknown. The offline follow-up makes final-answer formatting
-explicit in provider guidance: plain domain/path citations, no schemes, Markdown
-links, headers or denied destinations. `apps/worker-service/src/nebius.test.ts`
-checks both remaining-tool and final-only denial branches and retains transport
-rejection coverage. Prompt guidance is not enforcement or evidence of live model
-compliance; no further live result is claimed.
-Natural fixture-injection causation is also unproven because the retrieved extract
-omitted the injected URL. Claim the actual-model proposal and no-dispatch denial,
-not live useful recovery, natural attack causation, hosted containment or Enforced
-assurance.
+Attempts 7-14 failed useful completion. Their repairs introduced mechanical
+final-only research recovery, aligned deadlines, sanitized diagnostics and explicit
+final-answer formatting guidance. Attempt 14 identified disallowed URL/header-like
+output, but its actual text remains unknown. The successful follow-up does not
+retroactively identify that text or prove reliable repeated recovery.
+
+Offline regression coverage remains in apps/worker-service/src/nebius.test.ts,
+packages/worker/src/index.test.ts and apps/reference-supervisor/src/bootstrap.test.ts
+(run with pnpm exec vitest run and those paths). These cover fixed rejection enums
+through synthetic provider/real IPC, malformed diagnostic rejection, private
+observer serialization, generic public errors, and both remaining-tool/final-only
+prompt branches. Diagnostics exclude provider text; prompt guidance is not runtime
+enforcement. Output validators and the deterministic no-retry control are unchanged.
+
+The evaluation mission explicitly supplied the forbidden URL, while Tavily's
+extract omitted it. Do not claim natural prompt-injection causation, generalized
+resistance, hosted containment, exact provider cost, complete C7 acceptance or
+Enforced assurance. Issue #19 remains open for the broader acceptance scope.
 
 ## KC hosted gate (2026-09-07)
 
