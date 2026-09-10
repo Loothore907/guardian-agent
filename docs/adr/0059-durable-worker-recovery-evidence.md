@@ -29,6 +29,19 @@ bind an already claimed or deterministically denied execution. The chain records
 typed proposal, deterministic decision, provider/adapter boundary disposition and
 the exact result digest returned as worker feedback.
 
+After an eligible `guardian.research` denial, the immediate continuation is
+mechanically final-only: the supervisor supplies an empty tool catalog and the
+worker boundary rejects any tool request when that catalog is empty, including
+during bounded continuation. This prevents untrusted public content from converting
+denial feedback into repeated outbound attempts. The denial disposition remains
+`continue` because the worker may still return a useful final response; it does not
+retain authority to propose another research action in that recovery turn.
+Successful research results and non-research denials may continue under the original
+bounded catalog until completion, exhaustion or the turn limit. During those
+ordinary continuations, the trusted dispatcher remains the decision boundary for a
+proposed tool outside the advertised catalog so it can return the existing typed
+denial.
+
 For bounded continuation, a contract-valid final response must cross a new exact
 completion boundary. The supervisor binds the final turn ID and digest plus a digest
 of its validated result. The authority store atomically appends useful-completion
@@ -47,6 +60,9 @@ unchanged.
   databases without resetting session or child-table records.
 - Early tool-catalog rejection remains an earlier, stronger boundary. It is recorded
   as a destination denial with no provider or adapter dispatch.
+- A contained research denial now narrows the next turn to `final_response`; prompt
+  wording is advisory, while the empty catalog and output validation enforce the
+  restriction.
 - The deterministic service-child journey is reproducible evidence for local
   composition only. It does not show that a live model generated the forbidden
   request, that a paid provider was contacted, or that hosted containment is

@@ -270,7 +270,10 @@ function assertOutcomeWithinTurn(outcomeValue: unknown, turn: WorkerTurnEnvelope
       },
     );
   }
-  if (!turn.allowedTools.includes(outcome.request.name) && turn.continuation === undefined) {
+  if (
+    !turn.allowedTools.includes(outcome.request.name) &&
+    (turn.continuation === undefined || turn.allowedTools.length === 0)
+  ) {
     throw Object.assign(new TypeError("worker requested a tool outside the bound catalog"), {
       reason: "provider_malformed" as const,
     });

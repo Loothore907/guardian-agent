@@ -1212,7 +1212,7 @@ function continuationResult(
   });
 }
 describe("C7 bounded continuation", () => {
-  it("continues after eligible denial, binds history, and produces a final answer", async () => {
+  it("continues after eligible non-research denial, binds history, and finishes", async () => {
     const turns: WorkerTurnEnvelope[] = [];
     const harness = coordinator(
       async (t) => {

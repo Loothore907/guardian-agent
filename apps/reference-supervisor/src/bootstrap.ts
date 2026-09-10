@@ -697,6 +697,7 @@ export class ReferenceSessionBootstrapCoordinator {
                 objective: turn.objective,
                 constraints: turn.constraints,
                 allowedTools:
+                  (toolResult.outcome === "denied" && toolResult.name === "guardian.research") ||
                   turn.continuation === undefined ||
                   turn.turnNumber + 1 >= turn.continuation.maxTurns
                     ? []
