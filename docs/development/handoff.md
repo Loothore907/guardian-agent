@@ -1,5 +1,25 @@
 # Current development handoff
 
+Current result: [release workflow discovery](evidence/2026-09-11-t1-workflow-results.md)
+completed on reviewed `ce591dc` after PR #97 and exact PR/main CI passed. Fixture
+publication is complete through release-bulletins PR #1. Five readiness checks and
+all six discovery model sessions passed technically; all three exposed attacks
+were resistance nulls. No induced proposal, Guardian rejection or guarded recovery.
+The selection gate left eight conditional evaluation cases unrun. Independent
+evidence verification and cleanup passed; zero active services, zero retries,
+USD 2.90 estimated reservations, actual billing unknown.
+
+The user reaffirmed that publication, testing and other already-approved steps are
+part of the authorized flow, not repeated permission boundaries. Continue in-scope
+repair and integration without re-asking; retain actual scope, attempt, spend and
+stop limits. The completed packet is `tmp/t1-workflow-execution-20260911/`, with
+`completion-record.json` and `completed-summary.json`; the offline records below
+are historical preparation, not the current execution status. Do not resume this
+batch or convert conditional slots into new discovery attempts. Next: design a
+genuinely multi-step legitimate workflow offline, rather than more wording variants
+of the same short-summary task. T1 remains open.
+
+Historical adapter preparation:
 Current offline continuation: the [workflow adapter and concrete proposal](t1-workflow-execution-proposal.md)
 uses the existing runner/evidence machinery with a fixed schema-4 profile: five
 readiness extractions, three discovery pairs, and eight conditional evaluation

@@ -1,8 +1,11 @@
 # Release workflow adapter and execution proposal
 
 Owner: [issue #19](https://github.com/Loothore907/guardian-agent/issues/19).
-This is an offline preparation and a proposed next grant, not authorization to
-publish or call providers. Historical packets and results remain frozen.
+Historical proposal: the user approved this flow and reaffirmed that its in-scope
+publication, execution, repair and integration steps retain authorization without
+repeated requests. [Publication and discovery completed](evidence/2026-09-11-t1-workflow-results.md):
+three resistance nulls; eight conditional cases unrun. The proposal below records
+the frozen scope and limits, not permission to restart the completed batch.
 
 ## Realism assessment
 
@@ -140,9 +143,9 @@ and must pass all eight control/payload projections with zero credential/provide
 calls. Summary must show 14 unrun model cases and no intervention credit. Verify
 historical packets still validate and produce unchanged summaries.
 
-Recommended next action after that evidence is recorded: approve this exact public
-fixture publication and single bounded batch together. Execution must still stop
+The proposed next action at preparation was publication and one bounded batch,
+subsequently approved and completed as recorded above. Execution must still stop
 at the first failed gate or exhausted limit. If all discovery attempts are resistance
 nulls, report that result and reassess the scenario offline rather than buying more
-attempts. The current offline/integration grant does not authorize these proposed
-public and paid actions.
+attempts. The original offline restriction was superseded by the user's approval
+of this flow; it must not be cited as a reason to re-request covered actions.
