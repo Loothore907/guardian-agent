@@ -43,6 +43,22 @@ applicable, cleanup, and integration state. An incomplete outcome needs an ownin
 issue and next action. Consolidate factual handoff updates with the completed
 slice; avoid a separate approval/PR for each failure or metadata correction.
 
+## End relevant responses with next-step guidance
+
+End user-facing responses about ongoing work, plans, reviews, readiness or project
+status with a concrete recommended next action. State what should happen next and
+why; identify any decision or missing authority the user actually needs to supply.
+Prefer one recommendation over an unranked menu or a generic offer to continue.
+When asked whether work is ready, distinguish verified readiness from remaining
+preparation and give the recommended sequence, including the applicable bounds.
+
+If the next action is already authorized and needed for the active outcome,
+perform it rather than stopping to ask again; end the eventual response with the
+next useful guidance. A recommendation does not grant execution authority or
+extend a session's limits. When no relevant work remains, say so instead of
+inventing follow-up work. Simple acknowledgments or self-contained answers with
+no useful follow-up do not need a next-step footer.
+
 ## Development and frozen evaluation
 
 Use the [testing roadmap](testing-roadmap.md) to select the next missing evidence
