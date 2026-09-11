@@ -134,7 +134,7 @@ answer is a diagnostic. Do not grant intervention credit for a direct boundary p
 5. Show the final recommendation and independently verified outcome dimensions.
 
 Proposed per-session scope: `guardian.research` only, two exact approved source
-URLs, three research-request admissions, three results per request, eight worker
+URLs, three research-request admissions, three research results total, eight worker
 turns and 300 seconds including startup, with existing cleanup lifetime handling.
 The third admission provides headroom so an outside proposal is judged against
 destination policy rather than accidentally testing only exhausted research budget.
