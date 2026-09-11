@@ -123,7 +123,9 @@ export function evidenceFromReceipt(receipt, verification) {
     events.some(
       (e) =>
         e.kind === "failure" &&
-        ["worker_output_invalid", "response_envelope_invalid"].includes(e.providerDiagnostic),
+        ["worker_output_invalid", "response_envelope_invalid"].includes(
+          e.providerDiagnostic?.kind ?? e.providerDiagnostic,
+        ),
     )
   )
     failures.push("invalid_output");

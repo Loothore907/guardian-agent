@@ -1,0 +1,368 @@
+import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
+import { lstat, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { resolve, relative, join } from "node:path";
+import { pathToFileURL } from "node:url";
+import { aggregateRuns } from "./t1-intervention.mjs";
+import { attackMatrix } from "./t1-attack-matrix.mjs";
+import {
+  makePacket,
+  validatePacket,
+  grantTemplate,
+  validateGrant,
+  executionCase,
+  selectFamily,
+  sha256,
+} from "./t1-execution-packet.mjs";
+
+const workspaceRelative = "tmp/issue19-live-denial-recovery-20260909/workspace-source";
+const runnerFiles = [
+  "t1-execution.mjs",
+  "t1-execution-packet.mjs",
+  "t1-execution-live.mjs",
+  "t1-execution-evidence.mjs",
+  "t1-execution-observer.mjs",
+  "t1-intervention.mjs",
+  "t1-receipt.mjs",
+  "t1-attack-matrix.mjs",
+  "research-exposure.mjs",
+  "research-exposure-replay.mjs",
+];
+const git = (cwd, ...args) =>
+  execFileSync("git", ["-C", cwd, ...args], {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  }).trim();
+const json = (value) => JSON.stringify(value, null, 2) + "\n";
+async function boundedRead(file) {
+  const stat = await lstat(file);
+  assert(
+    stat.isFile() && !stat.isSymbolicLink() && stat.size <= 1000000,
+    "invalid packet artifact",
+  );
+  return readFile(file);
+}
+const load = async (file) => JSON.parse(await boundedRead(file));
+export async function runtimeManifest(projectRoot) {
+  const files = {};
+  async function walk(directory) {
+    for (const entry of (await readdir(directory)).sort()) {
+      const path = join(directory, entry),
+        stat = await lstat(path);
+      assert(!stat.isSymbolicLink(), "runtime symlink is unsupported");
+      if (stat.isDirectory()) await walk(path);
+      else if (stat.isFile())
+        files[relative(projectRoot, path).replaceAll("\\", "/")] = sha256(await readFile(path));
+    }
+  }
+  for (const parent of ["apps", "packages"])
+    for (const name of (await readdir(resolve(projectRoot, parent))).sort()) {
+      const dist = resolve(projectRoot, parent, name, "dist");
+      const stat = await lstat(dist).catch((error) => {
+        if (error.code === "ENOENT") return null;
+        throw error;
+      });
+      if (stat !== null) {
+        assert(stat.isDirectory() && !stat.isSymbolicLink());
+        await walk(dist);
+      }
+    }
+  assert(Object.keys(files).length > 0, "build the reviewed source before freezing");
+  for (const name of runnerFiles)
+    files[`scripts/${name}`] = sha256(await boundedRead(resolve(projectRoot, "scripts", name)));
+  return files;
+}
+export async function preparePacket(root, projectRoot, fixtureCommit = null) {
+  assert.equal(git(projectRoot, "status", "--porcelain"), "", "prepare from a clean candidate");
+  const workspace = resolve(projectRoot, workspaceRelative);
+  assert.equal(git(workspace, "remote"), "", "workspace has remotes");
+  assert.equal(git(workspace, "status", "--porcelain"), "", "workspace is dirty");
+  const packet = makePacket({
+    sourceHead: git(projectRoot, "rev-parse", "HEAD"),
+    workspaceCommit: git(workspace, "rev-parse", "HEAD"),
+    fixtureCommit,
+  });
+  const runtime = await runtimeManifest(projectRoot);
+  await mkdir(root); // Preserve every previous prepared/frozen packet.
+  await writeFile(resolve(root, "packet.json"), json(packet), { flag: "wx" });
+  await writeFile(resolve(root, "runtime.json"), json(runtime), { flag: "wx" });
+  for (const f of attackMatrix)
+    for (const kind of ["control", "injection"])
+      await writeFile(resolve(root, `${f.id}-${kind}.html`), f[kind], { flag: "wx" });
+  const publication = resolve(root, "publication", "fixtures", "t1-matrix-v1");
+  await mkdir(publication, { recursive: true });
+  for (const f of attackMatrix.slice(1))
+    await writeFile(resolve(publication, `${f.id}.html`), f.injection, { flag: "wx" });
+  await writeFile(
+    resolve(root, "grant-template.json"),
+    json(grantTemplate(sha256(json(packet)), sha256(json(runtime)), sha256(resolve(root)))),
+    { flag: "wx" },
+  );
+  return {
+    sourceHead: packet.sourceHead,
+    fixtures: 12,
+    publicationFiles: 5,
+    credentialReads: 0,
+    providerCalls: 0,
+    liveReady: false,
+    remaining:
+      fixtureCommit === null
+        ? ["publication identity", "explicit live grant"]
+        : ["explicit live grant"],
+  };
+}
+export async function gateExecution(root, projectRoot, ordinal, now = new Date().toISOString()) {
+  const packetBytes = await boundedRead(resolve(root, "packet.json"));
+  const packet = validatePacket(JSON.parse(packetBytes), true);
+  const packetDigest = sha256(packetBytes);
+  const runtimeBytes = await boundedRead(resolve(root, "runtime.json"));
+  const runtimeDigest = sha256(runtimeBytes);
+  const grantBytes = await boundedRead(resolve(root, "approved-grant.json"));
+  const grant = JSON.parse(grantBytes),
+    grantDigest = sha256(grantBytes);
+  assert.equal(git(projectRoot, "status", "--porcelain"), "", "tracked source changed");
+  assert.equal(git(projectRoot, "rev-parse", "HEAD"), packet.sourceHead);
+  assert.equal(git(projectRoot, "rev-parse", "origin/main"), packet.sourceHead);
+  assert.deepEqual(
+    await runtimeManifest(projectRoot),
+    JSON.parse(runtimeBytes),
+    "built runtime or runner changed",
+  );
+  const workspace = resolve(projectRoot, workspaceRelative);
+  assert.equal(git(workspace, "rev-parse", "HEAD"), packet.workspaceCommit);
+  assert.equal(git(workspace, "status", "--porcelain"), "");
+  assert.equal(git(workspace, "remote"), "");
+  for (const f of packet.fixtures)
+    for (const kind of ["control", "injection"])
+      assert.equal(sha256(await boundedRead(resolve(root, f[`${kind}File`]))), f[`${kind}Sha256`]);
+  const existing = (await readdir(root)).filter((name) => /^case-/u.test(name)).sort();
+  assert.equal(existing.length, ordinal - 1, "case already used or predecessor missing");
+  const receipts = [];
+  for (let n = 1; n < ordinal; n++) {
+    const path = resolve(root, `case-${String(n).padStart(2, "0")}`);
+    const record = await load(resolve(path, "verified.json"));
+    const expectedCase = executionCase(packet, n, receipts);
+    for (const [key, value] of Object.entries(expectedCase))
+      assert.deepEqual(record[key], value, "predecessor configuration changed");
+    assert.equal(record.packetSha256, packetDigest);
+    assert.equal(record.grantSha256, grantDigest);
+    assert.equal(record.sourceHead, packet.sourceHead);
+    assert(
+      Number.isFinite(Date.parse(record.completedAt)) &&
+        Date.parse(now) >= Date.parse(record.completedAt),
+      "clock moved behind predecessor",
+    );
+    assert.equal(record.receiptSha256, sha256(await boundedRead(resolve(path, "receipt.json"))));
+    assert.equal(record.predecessorSha256, n === 1 ? null : sha256(json(receipts.at(-1))));
+    receipts.push(record);
+  }
+  const testCase = executionCase(packet, ordinal, receipts);
+  if (ordinal > 18)
+    assert.deepEqual(
+      await load(resolve(root, "evaluation-selection.json")),
+      {
+        family: packet.fixtures[selectFamily(receipts.slice(0, 17))].id,
+        discoverySha256: sha256(json(receipts.slice(0, 17))),
+        packetSha256: packetDigest,
+      },
+      "frozen selection changed",
+    );
+  const startedAt = receipts[0]?.batchStartedAt ?? now;
+  validateGrant(grant, {
+    packetDigest,
+    runtimeDigest,
+    rootDigest: sha256(resolve(root)),
+    now,
+    startedAt,
+  });
+  const reserve = receipts.reduce((sum, r) => sum + r.estimatedUsd, testCase.estimatedUsd);
+  assert(reserve <= packet.limits.estimatedUsd + 1e-9);
+  const phaseReserve = receipts
+    .filter((r) => r.phase === testCase.phase)
+    .reduce((sum, r) => sum + r.estimatedUsd, testCase.estimatedUsd);
+  assert(phaseReserve <= packet.limits[`${testCase.phase}Usd`] + 1e-9);
+  return {
+    packet,
+    grant,
+    packetDigest,
+    runtimeDigest,
+    grantDigest,
+    workspace,
+    testCase,
+    startedAt,
+    receipts,
+  };
+}
+export async function runCase(root, projectRoot, ordinal) {
+  const gate = await gateExecution(root, projectRoot, ordinal);
+  const { packet, grant, testCase, receipts } = gate;
+  const directory = resolve(root, `case-${String(ordinal).padStart(2, "0")}`);
+  await mkdir(directory); // This slot remains consumed even after a crash/failure.
+  const common = {
+    ...testCase,
+    packetSha256: gate.packetDigest,
+    grantSha256: gate.grantDigest,
+    sourceHead: packet.sourceHead,
+    batchStartedAt: gate.startedAt,
+    predecessorSha256: receipts.length === 0 ? null : sha256(json(receipts.at(-1))),
+  };
+  if (ordinal === 18)
+    await writeFile(
+      resolve(root, "evaluation-selection.json"),
+      json({
+        family: packet.fixtures[selectFamily(receipts)].id,
+        discoverySha256: sha256(json(receipts)),
+        packetSha256: gate.packetDigest,
+      }),
+      { flag: "wx" },
+    );
+  let receipt = { ...common, startedAt: new Date().toISOString() },
+    verified;
+  try {
+    assert.equal(sha256(await boundedRead(resolve(root, "approved-grant.json"))), gate.grantDigest);
+    validateGrant(grant, {
+      packetDigest: gate.packetDigest,
+      runtimeDigest: gate.runtimeDigest,
+      rootDigest: sha256(resolve(root)),
+      now: new Date().toISOString(),
+      startedAt: gate.startedAt,
+    });
+    const live = await import("./t1-execution-live.mjs");
+    if (testCase.phase === "readiness") {
+      receipt = {
+        ...receipt,
+        ...(await live.runReadiness(testCase)),
+        completedAt: new Date().toISOString(),
+      };
+      verified = { continuePhase: receipt.continuePhase, exposure: receipt.exposure };
+    } else {
+      receipt = {
+        ...receipt,
+        ...(await live.runModel(packet, testCase, {
+          root: directory,
+          projectRoot,
+          workspace: gate.workspace,
+          expiresAt: grant.expiresAt,
+        })),
+      };
+    }
+  } catch {
+    receipt.failure ??= "case_failed_closed";
+    receipt.continuePhase = false;
+  }
+  receipt.completedAt ??= new Date().toISOString();
+  await writeFile(resolve(directory, "receipt.json"), json(receipt), { flag: "wx" });
+  if (testCase.phase !== "readiness") {
+    try {
+      const { verifyStoredModel } = await import("./t1-execution-evidence.mjs");
+      verified = await verifyStoredModel(directory, receipt, testCase, projectRoot);
+    } catch {
+      verified = { continuePhase: false, failure: "independent_verification_unavailable" };
+    }
+  }
+  const record = {
+    ...common,
+    ...verified,
+    completedAt: receipt.completedAt,
+    continuePhase: verified?.continuePhase === true && receipt.failure === undefined,
+    receiptSha256: sha256(json(receipt)),
+  };
+  await writeFile(resolve(directory, "verified.json"), json(record), { flag: "wx" });
+  return record;
+}
+export async function summarizePacket(root) {
+  const packetBytes = await boundedRead(resolve(root, "packet.json"));
+  const packet = validatePacket(JSON.parse(packetBytes));
+  const packetDigest = sha256(packetBytes);
+  const records = new Map();
+  const used = new Set(
+    (await readdir(root)).filter((n) => /^case-\d{2}$/u.test(n)).map((n) => Number(n.slice(5))),
+  );
+  for (const n of used) {
+    const file = resolve(root, `case-${String(n).padStart(2, "0")}`, "verified.json");
+    const record = await load(file).catch((error) => {
+      if (error.code === "ENOENT") return null;
+      throw error;
+    });
+    if (record !== null) records.set(n, record);
+  }
+  const completeDiscovery = Array.from({ length: 17 }, (_, i) => records.get(i + 1));
+  const selected = completeDiscovery.every((r) => r?.continuePhase)
+    ? selectFamily(completeDiscovery)
+    : null;
+  const runs = [];
+  for (let n = 8; n <= 25; n++) {
+    if (records.get(n)?.evidence) {
+      runs.push(records.get(n).evidence);
+      continue;
+    }
+    const phase = n <= 17 ? "discovery" : "evaluation";
+    const family =
+      n <= 17
+        ? packet.fixtures[Math.floor((n - 8) / 2)].id
+        : n >= 24
+          ? "structured-instruction"
+          : selected === null
+            ? "unselected"
+            : packet.fixtures[selected].id;
+    runs.push({
+      schemaVersion: 2,
+      id: String(n),
+      configuration: `${packetDigest}:${phase}:${family}`,
+      flow: "natural",
+      attempted: used.has(n),
+      injection: n % 2 === 1,
+      valid: false,
+      exposed: false,
+      usefulAnswer: false,
+      durablyCompleted: false,
+      neutralAuthority: false,
+      sameSession: false,
+      classifiedFeedback: false,
+      noRetry: false,
+      budgetVerified: false,
+      auditVerified: false,
+      effectsVerified: false,
+      cleanupVerified: false,
+      proposals: [],
+      failures: used.has(n) ? ["missing_evidence"] : [],
+    });
+  }
+  return {
+    schemaVersion: 3,
+    readiness: {
+      attempted: [...used].filter((n) => n <= 7).length,
+      verified: [...records.values()].filter((r) => r.phase === "readiness" && r.continuePhase)
+        .length,
+      planned: 7,
+    },
+    selectedFamily: selected === null ? null : packet.fixtures[selected].id,
+    modelResults: aggregateRuns(runs),
+    evaluationQuotaMet:
+      [19, 21, 23].every((n) => records.get(n)?.result?.complete === true) &&
+      [18, 20, 22].every((n) => records.get(n)?.continuePhase === true),
+    billedUsd: null,
+  };
+}
+export async function main(args = process.argv.slice(2)) {
+  const [command, directory, value] = args;
+  assert(
+    directory && args.length <= 3 && ["prepare", "run", "summary"].includes(command),
+    "usage: prepare DIRECTORY [FIXTURE_COMMIT] | run DIRECTORY ORDINAL | summary DIRECTORY",
+  );
+  const root = resolve(directory),
+    projectRoot = process.cwd();
+  const result =
+    command === "prepare"
+      ? await preparePacket(root, projectRoot, value ?? null)
+      : command === "summary"
+        ? await summarizePacket(root)
+        : await runCase(root, projectRoot, Number(value));
+  console.log(json(result));
+  if (command === "run" && !result.continuePhase) process.exitCode = 1;
+}
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href)
+  main().catch(() => {
+    console.error("T1 packet operation failed closed; inspect the bounded local artifacts.");
+    process.exitCode = 1;
+  });

@@ -46,7 +46,7 @@
     "test:demo-reset-plan": "node --test scripts/demo-reset-plan.test.mjs",
     "test:linux-platform": "node --test scripts/linux-c6-permissions.test.mjs",
     "test:reference-runtime": "pnpm build && node --test scripts/reference-runtime.test.mjs",
-    "test:research-exposure": "node --test scripts/research-exposure.test.mjs scripts/t1-intervention.test.mjs",
+    "test:research-exposure": "node --test scripts/research-exposure.test.mjs scripts/t1-intervention.test.mjs scripts/t1-execution.test.mjs",
     "test:sqlite-spike": "node --test spikes/sqlite-authority/spike.test.mjs",
     "test:session-enforcement": "node --test spikes/enforced-session/spike.test.mjs",
     "typecheck": "tsc -b --pretty false",

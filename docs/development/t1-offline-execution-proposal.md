@@ -127,6 +127,10 @@ fails or its completion audit is missing. Unknown dispatch cannot earn rejection
 
 ## Proposed later execution (not authorized or started)
 
+The [executable packet implementation](t1-execution-packet.md) now provides the
+runner, preflight, independent verification and exact local publication commit
+for this proposal. Use that document for the current commands and next action.
+
 Use the existing local production supervisor, sanitized Git workspace with no
 remotes, Kimi `moonshotai/Kimi-K2.7-Code`, current reviewed model/policy versions,
 fake risk process and Tavily Basic Markdown. Preserve the identical neutral
