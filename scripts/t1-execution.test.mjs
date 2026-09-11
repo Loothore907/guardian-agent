@@ -16,6 +16,7 @@ import {
   selectFamily,
   canContinue,
   modelDeadlines,
+  phaseLayout,
 } from "./t1-execution-packet.mjs";
 import { classifyRequest, createObserver } from "./t1-execution-observer.mjs";
 import { verifyModelEvidence } from "./t1-execution-evidence.mjs";
@@ -430,89 +431,223 @@ test("phase continuation distinguishes resistance null from absent exposure and 
   assert(!canContinue({ ...result, resistance: false }, v, true));
 });
 
-test("filesystem gate rejects a missing grant, changed artifacts and reused slots before live import", async () => {
-  const temporary = await mkdtemp(join(tmpdir(), "guardian-t1-packet-test-"));
-  const root = resolve(temporary, "repo"),
-    output = resolve(temporary, "packet");
-  const git = (directory, ...args) =>
-    execFileSync("git", ["-C", directory, ...args], {
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "pipe"],
-    }).trim();
-  const initialize = (directory) => {
-    git(directory, "init", "-b", "main");
-    git(directory, "add", ".");
-    git(
-      directory,
-      "-c",
-      "user.name=Packet Test",
-      "-c",
-      "user.email=packet@example.test",
-      "commit",
-      "-m",
-      "test fixture",
-    );
-  };
-  try {
-    await mkdir(resolve(root, "scripts"), { recursive: true });
-    await mkdir(resolve(root, "apps", "fixture", "dist"), { recursive: true });
-    await mkdir(resolve(root, "packages"));
-    await writeFile(resolve(root, ".gitignore"), "tmp/\napps/*/dist/\n");
-    for (const name of [
-      "t1-execution.mjs",
-      "t1-execution-packet.mjs",
-      "t1-execution-live.mjs",
-      "t1-execution-evidence.mjs",
-      "t1-execution-observer.mjs",
-      "t1-intervention.mjs",
-      "t1-receipt.mjs",
-      "t1-attack-matrix.mjs",
-      "research-exposure.mjs",
-      "research-exposure-replay.mjs",
-    ])
-      await writeFile(resolve(root, "scripts", name), "export {};\n");
-    const built = resolve(root, "apps", "fixture", "dist", "main.js");
-    await writeFile(built, "export {};\n");
-    initialize(root);
-    git(root, "update-ref", "refs/remotes/origin/main", git(root, "rev-parse", "HEAD"));
-    const workspace = resolve(root, "tmp/issue19-live-denial-recovery-20260909/workspace-source");
-    await mkdir(workspace, { recursive: true });
-    await writeFile(resolve(workspace, "README.md"), "synthetic workspace\n");
-    initialize(workspace);
-    await preparePacket(output, root, "c".repeat(40));
-    const summary = await summarizePacket(output);
-    assert.equal(summary.readiness.attempted, 0);
-    assert.equal(
-      summary.modelResults.configurations.reduce((n, c) => n + c.unrun, 0),
-      18,
-    );
-    await assert.rejects(gateExecution(output, root, 1, clock.now));
-    const preparedGrant = JSON.parse(
-      await readFile(resolve(output, "grant-template.json"), "utf8"),
-    );
-    const approved = {
-      ...preparedGrant,
-      authorized: true,
-      acceptsUnmeteredBilling: true,
-      notBefore: clock.now,
-      expiresAt: grant.expiresAt,
+for (const schemaVersion of [3, 4])
+  test(`schema ${schemaVersion} filesystem gate rejects a missing grant, changed artifacts and reused slots before live import`, async () => {
+    const temporary = await mkdtemp(join(tmpdir(), "guardian-t1-packet-test-"));
+    const root = resolve(temporary, "repo"),
+      output = resolve(temporary, "packet");
+    const git = (directory, ...args) =>
+      execFileSync("git", ["-C", directory, ...args], {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+      }).trim();
+    const initialize = (directory) => {
+      git(directory, "init", "-b", "main");
+      git(directory, "add", ".");
+      git(
+        directory,
+        "-c",
+        "user.name=Packet Test",
+        "-c",
+        "user.email=packet@example.test",
+        "commit",
+        "-m",
+        "test fixture",
+      );
     };
-    await writeFile(resolve(output, "approved-grant.json"), JSON.stringify(approved));
-    assert.equal((await gateExecution(output, root, 1, clock.now)).testCase.phase, "readiness");
-    const file = resolve(output, "direct-override-injection.html"),
-      original = await readFile(file);
-    await writeFile(file, "changed");
-    await assert.rejects(gateExecution(output, root, 1, clock.now));
-    await writeFile(file, original);
-    await writeFile(built, "changed");
-    await assert.rejects(gateExecution(output, root, 1, clock.now));
-    await writeFile(built, "export {};\n");
-    await mkdir(resolve(output, "case-01"));
-    await assert.rejects(gateExecution(output, root, 1, clock.now));
-    await assert.rejects(gateExecution(output, root, 2, clock.now));
-  } finally {
-    assert.equal(dirname(temporary), resolve(tmpdir()));
-    assert(basename(temporary).startsWith("guardian-t1-packet-test-"));
-    await rm(temporary, { recursive: true, force: true });
+    try {
+      await mkdir(resolve(root, "scripts"), { recursive: true });
+      await mkdir(resolve(root, "apps", "fixture", "dist"), { recursive: true });
+      await mkdir(resolve(root, "packages"));
+      await writeFile(resolve(root, ".gitignore"), "tmp/\napps/*/dist/\n");
+      for (const name of [
+        "t1-execution.mjs",
+        "t1-execution-packet.mjs",
+        "t1-evaluation-shared.mjs",
+        "t1-workflow-scenario.mjs",
+        "t1-execution-live.mjs",
+        "t1-execution-evidence.mjs",
+        "t1-execution-observer.mjs",
+        "t1-intervention.mjs",
+        "t1-receipt.mjs",
+        "t1-attack-matrix.mjs",
+        "research-exposure.mjs",
+        "research-exposure-replay.mjs",
+      ])
+        await writeFile(resolve(root, "scripts", name), "export {};\n");
+      const built = resolve(root, "apps", "fixture", "dist", "main.js");
+      await writeFile(built, "export {};\n");
+      initialize(root);
+      git(root, "update-ref", "refs/remotes/origin/main", git(root, "rev-parse", "HEAD"));
+      const workspace = resolve(root, "tmp/issue19-live-denial-recovery-20260909/workspace-source");
+      await mkdir(workspace, { recursive: true });
+      await writeFile(resolve(workspace, "README.md"), "synthetic workspace\n");
+      initialize(workspace);
+      await preparePacket(output, root, "c".repeat(40), schemaVersion);
+      const summary = await summarizePacket(output);
+      assert.equal(summary.readiness.attempted, 0);
+      assert.equal(
+        summary.modelResults.configurations.reduce((n, c) => n + c.unrun, 0),
+        schemaVersion === 4 ? 14 : 18,
+      );
+      await assert.rejects(gateExecution(output, root, 1, clock.now));
+      const preparedGrant = JSON.parse(
+        await readFile(resolve(output, "grant-template.json"), "utf8"),
+      );
+      const approved = {
+        ...preparedGrant,
+        authorized: true,
+        acceptsUnmeteredBilling: true,
+        notBefore: clock.now,
+        expiresAt: grant.expiresAt,
+      };
+      await writeFile(resolve(output, "approved-grant.json"), JSON.stringify(approved));
+      assert.equal((await gateExecution(output, root, 1, clock.now)).testCase.phase, "readiness");
+      const file = resolve(
+          output,
+          schemaVersion === 4 ? "queue-gate-injection.html" : "direct-override-injection.html",
+        ),
+        original = await readFile(file);
+      await writeFile(file, "changed");
+      await assert.rejects(gateExecution(output, root, 1, clock.now));
+      await writeFile(file, original);
+      await writeFile(built, "changed");
+      await assert.rejects(gateExecution(output, root, 1, clock.now));
+      await writeFile(built, "export {};\n");
+      if (schemaVersion === 4) {
+        const p = JSON.parse(await readFile(resolve(output, "packet.json"), "utf8"));
+        const predecessors = [];
+        for (let ordinal = 1; ordinal <= 11; ordinal++) {
+          const directory = resolve(output, `case-${String(ordinal).padStart(2, "0")}`);
+          await mkdir(directory);
+          const receiptBytes = JSON.stringify({ synthetic: true });
+          const record = {
+            ...executionCase(p, ordinal, predecessors),
+            packetSha256: approved.packetSha256,
+            grantSha256: sha256(JSON.stringify(approved)),
+            sourceHead: p.sourceHead,
+            completedAt: clock.now,
+            batchStartedAt: clock.now,
+            receiptSha256: sha256(receiptBytes),
+            predecessorSha256:
+              ordinal === 1 ? null : sha256(JSON.stringify(predecessors.at(-1), null, 2) + "\n"),
+            continuePhase: true,
+            result: { complete: false },
+          };
+          await writeFile(resolve(directory, "receipt.json"), receiptBytes);
+          await writeFile(resolve(directory, "verified.json"), JSON.stringify(record));
+          predecessors.push(record);
+        }
+        await assert.rejects(gateExecution(output, root, 12, clock.now), /no qualifying discovery/);
+        predecessors[10].result.complete = true;
+        await writeFile(
+          resolve(output, "case-11", "verified.json"),
+          JSON.stringify(predecessors[10]),
+        );
+        const selectedGate = await gateExecution(output, root, 12, clock.now);
+        assert.equal(selectedGate.testCase.family, "citation-check");
+        const directory = resolve(output, "case-12");
+        await mkdir(directory);
+        const record = {
+          ...predecessors[10],
+          ...selectedGate.testCase,
+          predecessorSha256: sha256(JSON.stringify(predecessors[10], null, 2) + "\n"),
+        };
+        await writeFile(resolve(directory, "receipt.json"), JSON.stringify({ synthetic: true }));
+        await writeFile(resolve(directory, "verified.json"), JSON.stringify(record));
+        const selection = {
+          family: "queue-gate",
+          discoverySha256: sha256(JSON.stringify(predecessors, null, 2) + "\n"),
+          packetSha256: approved.packetSha256,
+        };
+        await writeFile(resolve(output, "evaluation-selection.json"), JSON.stringify(selection));
+        await assert.rejects(
+          gateExecution(output, root, 13, clock.now),
+          /frozen selection changed/,
+        );
+        selection.family = "citation-check";
+        await writeFile(resolve(output, "evaluation-selection.json"), JSON.stringify(selection));
+        assert.equal(
+          (await gateExecution(output, root, 13, clock.now)).testCase.family,
+          "citation-check",
+        );
+        return;
+      }
+      await mkdir(resolve(output, "case-01"));
+      await assert.rejects(gateExecution(output, root, 1, clock.now));
+      await assert.rejects(gateExecution(output, root, 2, clock.now));
+    } finally {
+      assert.equal(dirname(temporary), resolve(tmpdir()));
+      assert(basename(temporary).startsWith("guardian-t1-packet-test-"));
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+
+test("workflow profile binds neutral immutable sources, lower budgets, discovery selection and untouched holdout", () => {
+  const workflow = makePacket({ ...packet, schemaVersion: 4 });
+  validatePacket(workflow, true);
+  assert.deepEqual(phaseLayout(workflow), {
+    readiness: 5,
+    discoveryEnd: 11,
+    evaluationStart: 12,
+    total: 19,
+  });
+  assert.equal(workflow.objective, packet.objective);
+  assert.equal(workflow.limits.modelSessions, 14);
+  assert.equal(workflow.limits.workerCalls, 112);
+  assert.equal(workflow.limits.extractionAttempts, 33);
+  for (const f of workflow.fixtures) {
+    assert.match(
+      f.injectionUrl,
+      /^https:\/\/raw\.githubusercontent\.com\/Loothore907\/release-bulletins\/[a-f0-9]{40}\/release\/bulletin-\d+\.html$/,
+    );
+    assert.equal(f.controlUrl, workflow.fixtures[0].controlUrl);
+    assert.equal(f.controlSha256, workflow.fixtures[0].controlSha256);
   }
+  for (const change of [
+    { scenario: "other" },
+    { limits: packet.limits },
+    { fixtures: packet.fixtures },
+  ])
+    assert.throws(() => validatePacket({ ...workflow, ...change }));
+  assert.throws(() => makePacket({ ...workflow, schemaVersion: 5 }));
+  const workflowGrant = {
+    ...grant,
+    ...grantTemplate(clock.packetDigest, clock.runtimeDigest, clock.rootDigest, workflow),
+    authorized: true,
+    acceptsUnmeteredBilling: true,
+    notBefore: grant.notBefore,
+    expiresAt: grant.expiresAt,
+  };
+  validateGrant(workflowGrant, { ...clock, packet: workflow });
+  assert.throws(() => validateGrant(grant, { ...clock, packet: workflow }));
+  assert.throws(() => validateGrant(workflowGrant, clock));
+  const receipts = [];
+  for (let ordinal = 1; ordinal <= 11; ordinal++)
+    receipts.push({
+      ...executionCase(workflow, ordinal, receipts),
+      continuePhase: true,
+      result: { complete: false },
+    });
+  assert.equal(selectFamily(receipts, workflow), null);
+  assert.throws(() => executionCase(workflow, 12, receipts), /no qualifying discovery/);
+  assert(!receipts.filter((r) => r.phase === "discovery").some((r) => r.family === "handoff-card"));
+  receipts[8].result.complete = true; // Second discovery attack qualifies.
+  receipts[10].result.complete = true; // Later qualification does not change selection.
+  assert.equal(selectFamily(receipts, workflow), 1);
+  for (let ordinal = 12; ordinal <= 19; ordinal++)
+    receipts.push({ ...executionCase(workflow, ordinal, receipts), continuePhase: true });
+  assert(receipts.slice(11, 17).every((r) => r.family === "compatibility-record"));
+  assert(receipts.slice(17).every((r) => r.family === "handoff-card"));
+  assert.equal(receipts.filter((r) => r.phase === "discovery").length, 6);
+  assert.equal(receipts.filter((r) => r.phase !== "readiness" && r.injection).length, 7);
+  assert(Math.abs(receipts.reduce((sum, r) => sum + r.estimatedUsd, 0) - 6.9) < 1e-9);
+  assert.throws(() => executionCase(workflow, 20, receipts));
+  assert.throws(() =>
+    executionCase(
+      workflow,
+      13,
+      receipts.slice(0, 12).map((r, i) => (i === 11 ? { ...r, continuePhase: false } : r)),
+    ),
+  );
 });

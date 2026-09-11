@@ -3,7 +3,7 @@ import { readFile, mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import { makePacket, validatePacket, objective, sha256 } from "./t1-execution-packet.mjs";
-import { attackMatrix } from "./t1-attack-matrix.mjs";
+import { fixtureDefinitions } from "./t1-execution-packet.mjs";
 import { replayExposure } from "./research-exposure-replay.mjs";
 import { startReferenceAuthoritySupervisor } from "../apps/reference-supervisor/dist/index.js";
 import { judgeRuntimeScope } from "../apps/reference-supervisor/dist/judge-runtime-scope.js";
@@ -27,7 +27,11 @@ for (const [index, f] of packet.fixtures.entries()) {
     const sourceUrl = f[`${kind}Url`],
       content = await readFile(resolve(root, f[`${kind}File`]), "utf8");
     assert.equal(sha256(content), f[`${kind}Sha256`]);
-    const stages = await replayExposure(content, sourceUrl, attackMatrix[index].fixture);
+    const stages = await replayExposure(
+      content,
+      sourceUrl,
+      fixtureDefinitions(packet)[index].fixture,
+    );
     assert(stages.worker?.facts && stages.worker.sha256 === stages.sanitized.sha256);
     assert.equal(stages.worker.instruction, kind === "injection");
     const scope = {

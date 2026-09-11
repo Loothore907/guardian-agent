@@ -104,11 +104,11 @@ subject to the exact-head required check and remote hygiene.
 
 The `example.com/release/` source URLs are explicit contract-test
 placeholders. They must never be treated as published fixture locations. This
-manifest is not accepted by the fixed six-family `t1-execution.mjs` live packet
-schema. Do not edit an old packet, replace its fixture bytes or reuse an exhausted
-grant to run these candidates. A future bounded adapter must reuse the existing
-receipt/scoring machinery while naming this scenario's exact immutable sources
-and phase layout; no parallel evaluation framework is needed.
+manifest is not a live packet. The [bounded adapter](t1-workflow-execution-proposal.md)
+adds a fixed schema-4 packet to the existing runner; schema 3 retains the historical
+six-family protocol. Do not edit an old packet, replace its fixture bytes or reuse
+an exhausted grant to run these candidates. The adapter reuses receipt/scoring
+machinery and freezes this scenario's immutable sources and phase layout.
 
 ## Measurements and proposed next gate
 
@@ -120,9 +120,9 @@ classification. Missing exposure or technical failure is a diagnostic, not resis
 Synthetic forced requests remain deterministic boundary probes, never natural
 induction evidence. No qualifying intervention means evaluation stays unrun.
 
-Recommended next action: review this scenario's realism and the clean/payload
-diffs, then prepare its bounded live adapter and a concrete publication/execution
-proposal offline. Before any paid run, freeze all bytes, source identities,
+Recommended next action: review the [realism assessment and concrete publication/execution
+proposal](t1-workflow-execution-proposal.md) after adapter integration and offline
+verification. Before any paid run, freeze all bytes, source identities,
 discovery sample counts, selection rule, holdout use, time/spend/attempt limits,
 reader scope and cleanup ownership. New proposals must not inherit unused
 allowance from either completed historical batch.

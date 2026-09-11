@@ -4,7 +4,6 @@ import { lstat, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { resolve, relative, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { aggregateRuns } from "./t1-intervention.mjs";
-import { attackMatrix } from "./t1-attack-matrix.mjs";
 import {
   makePacket,
   validatePacket,
@@ -13,12 +12,16 @@ import {
   executionCase,
   selectFamily,
   sha256,
+  fixtureDefinitions,
+  phaseLayout,
 } from "./t1-execution-packet.mjs";
 
 const workspaceRelative = "tmp/issue19-live-denial-recovery-20260909/workspace-source";
 const runnerFiles = [
   "t1-execution.mjs",
   "t1-execution-packet.mjs",
+  "t1-evaluation-shared.mjs",
+  "t1-workflow-scenario.mjs",
   "t1-execution-live.mjs",
   "t1-execution-evidence.mjs",
   "t1-execution-observer.mjs",
@@ -72,7 +75,7 @@ export async function runtimeManifest(projectRoot) {
     files[`scripts/${name}`] = sha256(await boundedRead(resolve(projectRoot, "scripts", name)));
   return files;
 }
-export async function preparePacket(root, projectRoot, fixtureCommit = null) {
+export async function preparePacket(root, projectRoot, fixtureCommit = null, schemaVersion = 3) {
   assert.equal(git(projectRoot, "status", "--porcelain"), "", "prepare from a clean candidate");
   const workspace = resolve(projectRoot, workspaceRelative);
   assert.equal(git(workspace, "remote"), "", "workspace has remotes");
@@ -81,26 +84,43 @@ export async function preparePacket(root, projectRoot, fixtureCommit = null) {
     sourceHead: git(projectRoot, "rev-parse", "HEAD"),
     workspaceCommit: git(workspace, "rev-parse", "HEAD"),
     fixtureCommit,
+    schemaVersion,
   });
   const runtime = await runtimeManifest(projectRoot);
   await mkdir(root); // Preserve every previous prepared/frozen packet.
   await writeFile(resolve(root, "packet.json"), json(packet), { flag: "wx" });
   await writeFile(resolve(root, "runtime.json"), json(runtime), { flag: "wx" });
-  for (const f of attackMatrix)
+  const definitions = fixtureDefinitions(packet);
+  for (const f of definitions)
     for (const kind of ["control", "injection"])
       await writeFile(resolve(root, `${f.id}-${kind}.html`), f[kind], { flag: "wx" });
-  const publication = resolve(root, "publication", "fixtures", "t1-matrix-v1");
+  const publication =
+    schemaVersion === 4
+      ? resolve(root, "publication", "release")
+      : resolve(root, "publication", "fixtures", "t1-matrix-v1");
   await mkdir(publication, { recursive: true });
-  for (const f of attackMatrix.slice(1))
-    await writeFile(resolve(publication, `${f.id}.html`), f.injection, { flag: "wx" });
+  if (schemaVersion === 4) {
+    await writeFile(
+      resolve(root, "publication", definitions[0].sourcePaths.control.slice(1)),
+      definitions[0].control,
+      { flag: "wx" },
+    );
+    for (const f of definitions)
+      await writeFile(resolve(root, "publication", f.sourcePaths.injection.slice(1)), f.injection, {
+        flag: "wx",
+      });
+  } else {
+    for (const f of definitions.slice(1))
+      await writeFile(resolve(publication, `${f.id}.html`), f.injection, { flag: "wx" });
+  }
   await writeFile(
     resolve(root, "grant-template.json"),
-    json(grantTemplate(sha256(json(packet)), sha256(json(runtime)), sha256(resolve(root)))),
+    json(grantTemplate(sha256(json(packet)), sha256(json(runtime)), sha256(resolve(root)), packet)),
     { flag: "wx" },
   );
   return {
     sourceHead: packet.sourceHead,
-    fixtures: 12,
+    fixtures: definitions.length * 2,
     publicationFiles: 5,
     credentialReads: 0,
     providerCalls: 0,
@@ -157,18 +177,20 @@ export async function gateExecution(root, projectRoot, ordinal, now = new Date()
     receipts.push(record);
   }
   const testCase = executionCase(packet, ordinal, receipts);
-  if (ordinal > 18)
+  const { discoveryEnd, evaluationStart } = phaseLayout(packet);
+  if (ordinal > evaluationStart)
     assert.deepEqual(
       await load(resolve(root, "evaluation-selection.json")),
       {
-        family: packet.fixtures[selectFamily(receipts.slice(0, 17))].id,
-        discoverySha256: sha256(json(receipts.slice(0, 17))),
+        family: packet.fixtures[selectFamily(receipts.slice(0, discoveryEnd), packet)].id,
+        discoverySha256: sha256(json(receipts.slice(0, discoveryEnd))),
         packetSha256: packetDigest,
       },
       "frozen selection changed",
     );
   const startedAt = receipts[0]?.batchStartedAt ?? now;
   validateGrant(grant, {
+    packet,
     packetDigest,
     runtimeDigest,
     rootDigest: sha256(resolve(root)),
@@ -206,11 +228,11 @@ export async function runCase(root, projectRoot, ordinal) {
     batchStartedAt: gate.startedAt,
     predecessorSha256: receipts.length === 0 ? null : sha256(json(receipts.at(-1))),
   };
-  if (ordinal === 18)
+  if (ordinal === phaseLayout(packet).evaluationStart)
     await writeFile(
       resolve(root, "evaluation-selection.json"),
       json({
-        family: packet.fixtures[selectFamily(receipts)].id,
+        family: packet.fixtures[selectFamily(receipts, packet)].id,
         discoverySha256: sha256(json(receipts)),
         packetSha256: gate.packetDigest,
       }),
@@ -221,6 +243,7 @@ export async function runCase(root, projectRoot, ordinal) {
   try {
     assert.equal(sha256(await boundedRead(resolve(root, "approved-grant.json"))), gate.grantDigest);
     validateGrant(grant, {
+      packet,
       packetDigest: gate.packetDigest,
       runtimeDigest: gate.runtimeDigest,
       rootDigest: sha256(resolve(root)),
@@ -231,7 +254,7 @@ export async function runCase(root, projectRoot, ordinal) {
     if (testCase.phase === "readiness") {
       receipt = {
         ...receipt,
-        ...(await live.runReadiness(testCase)),
+        ...(await live.runReadiness(testCase, packet)),
         completedAt: new Date().toISOString(),
       };
       verified = { continuePhase: receipt.continuePhase, exposure: receipt.exposure };
@@ -286,22 +309,23 @@ export async function summarizePacket(root) {
     });
     if (record !== null) records.set(n, record);
   }
-  const completeDiscovery = Array.from({ length: 17 }, (_, i) => records.get(i + 1));
+  const { readiness, discoveryEnd, evaluationStart, total } = phaseLayout(packet);
+  const completeDiscovery = Array.from({ length: discoveryEnd }, (_, i) => records.get(i + 1));
   const selected = completeDiscovery.every((r) => r?.continuePhase)
-    ? selectFamily(completeDiscovery)
+    ? selectFamily(completeDiscovery, packet)
     : null;
   const runs = [];
-  for (let n = 8; n <= 25; n++) {
+  for (let n = readiness + 1; n <= total; n++) {
     if (records.get(n)?.evidence) {
       runs.push(records.get(n).evidence);
       continue;
     }
-    const phase = n <= 17 ? "discovery" : "evaluation";
+    const phase = n <= discoveryEnd ? "discovery" : "evaluation";
     const family =
-      n <= 17
-        ? packet.fixtures[Math.floor((n - 8) / 2)].id
-        : n >= 24
-          ? "structured-instruction"
+      n <= discoveryEnd
+        ? packet.fixtures[Math.floor((n - readiness - 1) / 2)].id
+        : n >= total - 1
+          ? packet.fixtures.at(-1).id
           : selected === null
             ? "unselected"
             : packet.fixtures[selected].id;
@@ -329,32 +353,41 @@ export async function summarizePacket(root) {
     });
   }
   return {
-    schemaVersion: 3,
+    schemaVersion: packet.schemaVersion,
     readiness: {
-      attempted: [...used].filter((n) => n <= 7).length,
+      attempted: [...used].filter((n) => n <= readiness).length,
       verified: [...records.values()].filter((r) => r.phase === "readiness" && r.continuePhase)
         .length,
-      planned: 7,
+      planned: readiness,
     },
     selectedFamily: selected === null ? null : packet.fixtures[selected].id,
     modelResults: aggregateRuns(runs),
     evaluationQuotaMet:
-      [19, 21, 23].every((n) => records.get(n)?.result?.complete === true) &&
-      [18, 20, 22].every((n) => records.get(n)?.continuePhase === true),
+      [1, 3, 5].every(
+        (offset) => records.get(evaluationStart + offset)?.result?.complete === true,
+      ) &&
+      [0, 2, 4].every((offset) => records.get(evaluationStart + offset)?.continuePhase === true),
     billedUsd: null,
   };
 }
 export async function main(args = process.argv.slice(2)) {
   const [command, directory, value] = args;
   assert(
-    directory && args.length <= 3 && ["prepare", "run", "summary"].includes(command),
-    "usage: prepare DIRECTORY [FIXTURE_COMMIT] | run DIRECTORY ORDINAL | summary DIRECTORY",
+    directory &&
+      args.length <= 3 &&
+      ["prepare", "prepare-workflow", "run", "summary"].includes(command),
+    "usage: prepare|prepare-workflow DIRECTORY [FIXTURE_COMMIT] | run DIRECTORY ORDINAL | summary DIRECTORY",
   );
   const root = resolve(directory),
     projectRoot = process.cwd();
   const result =
-    command === "prepare"
-      ? await preparePacket(root, projectRoot, value ?? null)
+    command === "prepare" || command === "prepare-workflow"
+      ? await preparePacket(
+          root,
+          projectRoot,
+          value ?? null,
+          command === "prepare-workflow" ? 4 : 3,
+        )
       : command === "summary"
         ? await summarizePacket(root)
         : await runCase(root, projectRoot, Number(value));

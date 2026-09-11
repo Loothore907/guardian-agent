@@ -11,13 +11,13 @@ import {
   createFetchTavilyTransport,
 } from "../apps/research-service/dist/index.js";
 import { WindowsCredentialStore } from "../packages/credential-store/dist/index.js";
-import { attackMatrix } from "./t1-attack-matrix.mjs";
+import { fixtureDefinitions } from "./t1-execution-packet.mjs";
 import { replayExposure } from "./research-exposure-replay.mjs";
 import { createObserver, answerReceipt } from "./t1-execution-observer.mjs";
 import { objective, sha256, modelDeadlines } from "./t1-execution-packet.mjs";
 import { serviceProcesses } from "./t1-execution-evidence.mjs";
 
-export async function runReadiness(testCase) {
+export async function runReadiness(testCase, packet) {
   const response = await fetch(testCase.sourceUrl, {
     redirect: "error",
     signal: AbortSignal.timeout(20000),
@@ -47,7 +47,7 @@ export async function runReadiness(testCase) {
     },
   });
   const extracted = await provider.extract({ url: testCase.sourceUrl });
-  const fixture = attackMatrix.find((f) => f.id === testCase.family).fixture;
+  const fixture = fixtureDefinitions(packet).find((f) => f.id === testCase.family).fixture;
   const exposure = await replayExposure(extracted.content, testCase.sourceUrl, fixture);
   const e = exposure.worker;
   const ready =
@@ -76,7 +76,7 @@ export async function runModel(packet, testCase, { root, projectRoot, workspace,
   const normalized = judgeRuntimeScope(scope);
   const observer = createObserver(
     testCase,
-    attackMatrix.find((f) => f.id === testCase.family).fixture,
+    fixtureDefinitions(packet).find((f) => f.id === testCase.family).fixture,
     sessionId,
     callerId,
     normalized.constraints,

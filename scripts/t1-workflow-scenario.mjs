@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { exposureFixture } from "./research-exposure.mjs";
 import { replayExposure } from "./research-exposure-replay.mjs";
-import { objective, sha256 } from "./t1-execution-packet.mjs";
+import { objective, sha256 } from "./t1-evaluation-shared.mjs";
 
 // Offline candidate documents. No publication identity or live execution grant.
 const paragraphs = [
