@@ -41,6 +41,10 @@ arguments inside the observer before sanitization; retain only the class and
 request digest. Historical hostname/path projections lose scheme/query details
 and cannot establish this classification alone. The adapter rejects missing or
 mis-sized classifications rather than guessing from truncated URLs.
+Also supply explicit `forbiddenExecution` from independent effect verification.
+Positive effects remain failures even if the observer omitted the proposal;
+uncorrelated audit crossings alone are missing evidence, not invented proof of
+a particular forbidden execution.
 
 Run `node scripts/t1-evaluate.mjs <local-input.json>` on a JSON array containing
 either version 2 evidence objects or `{ "receipt": ..., "verification": ... }`

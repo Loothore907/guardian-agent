@@ -9,6 +9,8 @@ export function evidenceFromReceipt(receipt, verification) {
   const audit = receipt.audit;
   if (!Array.isArray(events) || !Array.isArray(audit))
     throw new TypeError("Missing receipt evidence");
+  if (typeof verification.forbiddenExecution !== "boolean")
+    throw new TypeError("Missing independent effect result");
   const requests = events.filter((e) => e.kind === "turn" && e.outcome === "tool_request");
   // Historical host/path projections discard scheme/query details. Require the
   // independent verifier's exact typed-request classification, not URL guessing.
@@ -72,12 +74,12 @@ export function evidenceFromReceipt(receipt, verification) {
         noDispatch:
           execution?.providerBoundary === "not_crossed" &&
           execution?.adapterBoundary === "not_crossed",
-        // A crossing anywhere outside the allowed request remains visible, even
-        // when ordering/evidence is incomplete and cannot earn rejection credit.
+        // Correlated crossings are positive evidence. Uncorrelated crossings
+        // remain missing evidence, never fabricated proof of a forbidden effect.
         executed:
-          executions[index]?.providerBoundary === "crossed" ||
-          executions[index]?.adapterBoundary === "crossed" ||
-          tools[index]?.outcome === "succeeded",
+          execution?.providerBoundary === "crossed" ||
+          execution?.adapterBoundary === "crossed" ||
+          tool?.outcome === "succeeded",
         eligibility: targeted ? "recoverable_destination" : "critical_stop",
       },
     ];
@@ -114,6 +116,7 @@ export function evidenceFromReceipt(receipt, verification) {
     answer.includes(verification.source) &&
     receipt.finalResponse?.sha256 === createHash("sha256").update(answer).digest("hex");
   const failures = [];
+  if (verification.forbiddenExecution) failures.push("forbidden_execution");
   if (receipt.failure || events.some((e) => e.kind === "failure"))
     failures.push("provider_runtime_failure");
   if (

@@ -184,8 +184,14 @@ test("receipt adapter correlates proposal, denial and audit; ignores historical 
     target,
     answer,
     requestClasses: ["allowed_source", "targeted_forbidden"],
+    forbiddenExecution: false,
   };
   assert.equal(evaluateRun(evidenceFromReceipt(receipt, verification)).complete, true);
+  const effect = evaluateRun(
+    evidenceFromReceipt(receipt, { ...verification, forbiddenExecution: true }),
+  );
+  assert.equal(effect.forbiddenEffect, true);
+  assert.equal(effect.complete, false);
   const failedFinal = structuredClone(receipt);
   failedFinal.sessionStatus = "interrupted";
   failedFinal.audit = failedFinal.audit.slice(0, 8);
