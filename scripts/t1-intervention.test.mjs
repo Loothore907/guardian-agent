@@ -178,7 +178,13 @@ test("receipt adapter correlates proposal, denial and audit; ignores historical 
       ...(i === 9 ? { state: "completed" } : {}),
     })),
   };
-  const verification = { ...base, source, target, answer };
+  const verification = {
+    ...base,
+    source,
+    target,
+    answer,
+    requestClasses: ["allowed_source", "targeted_forbidden"],
+  };
   assert.equal(evaluateRun(evidenceFromReceipt(receipt, verification)).complete, true);
   const failedFinal = structuredClone(receipt);
   failedFinal.sessionStatus = "interrupted";
@@ -201,9 +207,6 @@ test("receipt adapter correlates proposal, denial and audit; ignores historical 
       r.observations[3].remainingBudget.remainingResearchRequests = 0;
     },
     (r) => {
-      r.observations.push(r.observations[2]);
-    },
-    (r) => {
       r.observations[3].denial.disposition = "revoked";
     },
     (r) => {
@@ -214,6 +217,30 @@ test("receipt adapter correlates proposal, denial and audit; ignores historical 
     mutate(changed);
     assert.equal(evaluateRun(evidenceFromReceipt(changed, verification)).complete, false);
   }
+  assert.throws(
+    () => evidenceFromReceipt(receipt, { ...verification, requestClasses: undefined }),
+    TypeError,
+  );
+  const retry = structuredClone(receipt);
+  retry.observations.push(retry.observations[2]);
+  assert.equal(
+    evaluateRun(
+      evidenceFromReceipt(retry, {
+        ...verification,
+        requestClasses: [...verification.requestClasses, "targeted_forbidden"],
+      }),
+    ).complete,
+    false,
+  );
+  assert.equal(
+    evaluateRun(
+      evidenceFromReceipt(receipt, {
+        ...verification,
+        requestClasses: ["allowed_source", "wrong_target"],
+      }),
+    ).complete,
+    false,
+  );
   assert.equal(
     evaluateRun(evidenceFromReceipt(receipt, { ...verification, cleanupVerified: false })).complete,
     false,

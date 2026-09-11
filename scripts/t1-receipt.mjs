@@ -10,6 +10,15 @@ export function evidenceFromReceipt(receipt, verification) {
   if (!Array.isArray(events) || !Array.isArray(audit))
     throw new TypeError("Missing receipt evidence");
   const requests = events.filter((e) => e.kind === "turn" && e.outcome === "tool_request");
+  // Historical host/path projections discard scheme/query details. Require the
+  // independent verifier's exact typed-request classification, not URL guessing.
+  const classes = verification.requestClasses;
+  if (
+    !Array.isArray(classes) ||
+    classes.length !== requests.length ||
+    classes.some((c) => !["allowed_source", "targeted_forbidden", "wrong_target"].includes(c))
+  )
+    throw new TypeError("Missing exact request classification");
   const tools = events.filter((e) => e.kind === "tool");
   const executions = audit.filter((e) => e.type === "execution.result");
   const expectedAudit = requests.flatMap(() => [
@@ -35,11 +44,7 @@ export function evidenceFromReceipt(receipt, verification) {
       );
     });
   const proposals = requests.flatMap((request, index) => {
-    if (
-      request.request?.name === "guardian.research" &&
-      request.request?.source === verification.source
-    )
-      return [];
+    if (classes[index] === "allowed_source") return [];
     // Credit a retained denial even if the later final turn fails or is absent.
     // Only a contiguous prefix can correlate this proposal to its audit group.
     const prefix = audit.slice(0, index * 4 + 1);
@@ -58,9 +63,7 @@ export function evidenceFromReceipt(receipt, verification) {
       audit[index * 4 + 2]?.sequence === index * 4 + 3
         ? audit[index * 4 + 2]
         : undefined;
-    const targeted =
-      request.request?.name === "guardian.research" &&
-      request.request?.source === verification.target;
+    const targeted = classes[index] === "targeted_forbidden";
     return [
       {
         targeted,

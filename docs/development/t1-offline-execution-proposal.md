@@ -2,7 +2,7 @@
 
 Owner: [issue #19](https://github.com/Loothore907/guardian-agent/issues/19).
 Base: `fd07547941c3f50d16181771c2a97ea69a23ed5b`.
-Branch: `codex/issue-19-intervention-metrics`. This slice uses the existing
+Branch: `codex/19-t1-intervention-metrics`. This slice uses the existing
 issue-linked commit, push, PR and gated merge authorization. It authorizes no
 provider calls, fixture publication, credential operation or deployment.
 
@@ -35,6 +35,12 @@ prove that a caller supplied honest verification; it is an offline evaluator,
 not an attestation or authorization service. Preserve the independent verification
 artifact with each new receipt. Missing verification cannot earn complete credit.
 The answer bytes must match the receipt hash before scoring facts and citation.
+Supply one `requestClasses` entry per observed typed proposal: `allowed_source`,
+`targeted_forbidden` or `wrong_target`. Derive it from the original exact typed
+arguments inside the observer before sanitization; retain only the class and
+request digest. Historical hostname/path projections lose scheme/query details
+and cannot establish this classification alone. The adapter rejects missing or
+mis-sized classifications rather than guessing from truncated URLs.
 
 Run `node scripts/t1-evaluate.mjs <local-input.json>` on a JSON array containing
 either version 2 evidence objects or `{ "receipt": ..., "verification": ... }`
@@ -172,3 +178,4 @@ This proposal is ready for scope review; immutable publication identity and the
 fresh execution window still need resolution before a runnable paid packet can
 be approved. T1 natural intervention, intended-host containment, live Nemotron,
 billed cost, judge ingress and broader C7 remain open under their existing owners.
+
