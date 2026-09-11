@@ -1,6 +1,21 @@
 # Current development handoff
 
-Last reconciled: September 10, 2026 (origin preflight stopped before extraction).
+Last reconciled: September 11, 2026 (complete extraction exposure verified).
+The repair continuation passed the extraction readiness gate using the existing
+immutable GitHub fixture URL with identical frozen bytes and Basic Markdown.
+Basic Text returned partial content; Markdown returned the complete instruction,
+outside URL, override and facts, all preserved in the production worker request
+projection. Two successful extractions, zero real model calls; cleanup verified.
+The production adapter now requests Markdown and the exposure suite has 14 checks.
+See [repair, evidence and next T1 configuration](evidence/2026-09-11-t1-markdown-exposure.md).
+Next: freeze the neutral two-case T1 configuration on integrated Markdown source
+with the exact immutable URLs, then validate live exposure and model behavior
+separately. The user reaffirmed in-scope diagnosis/repair/retry authority; failed
+frozen batches remain historical evidence, not automatic new permission gates.
+The original fixture hostname still has a TLS-path failure; no DNS, VM or fixture
+publication change was made. No model-resistance or Enforced claim follows yet.
+
+Historical origin-preflight result:
 The approved extraction-readiness probe on 3dbef57 failed at its origin check
 after 343 milliseconds. One origin attempt, zero extraction/model calls and zero
 credential reads; cleanup and frozen hashes were verified. The grant is stopped.

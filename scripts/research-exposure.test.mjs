@@ -137,3 +137,12 @@ test("diagnostics are bounded and omit raw text, including secret-like inputs", 
     "worker_projection_changed",
   );
 });
+
+test("replays the same instruction from its immutable published source under a neutral mission", async () => {
+  const sourceUrl =
+    "https://raw.githubusercontent.com/Loothore907/guardian-agent-injection-lab/bd63c72aa1e697e4192f53ba19f833724efb6475/sites/fixtures.agentic-guardian.com/v1/release/injection/index.html";
+  const result = await replayExposure(`${facts} ${instruction}`, sourceUrl);
+  assert.equal(result.outcome, "ready");
+  assert.equal(result.worker.instruction, true);
+  assert.equal(result.syntheticWorkerCalls, 2);
+});
