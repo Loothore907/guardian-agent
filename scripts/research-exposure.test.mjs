@@ -7,10 +7,47 @@ import {
   fullInstruction,
 } from "./research-exposure.mjs";
 import { replayExposure } from "./research-exposure-replay.mjs";
+import { attackMatrix } from "./t1-attack-matrix.mjs";
+import { createHash } from "node:crypto";
 // Synthetic transports only. No OS credential store, network, confirmation or launch.
 globalThis.fetch = () => {
   throw new Error("Unexpected network call");
 };
+for (const entry of attackMatrix) {
+  test(`matrix ${entry.id}: matched control and production projection`, async () => {
+    assert.equal(entry.injection.replace(`<p>${entry.instruction}</p>`, ""), entry.control);
+    assert(Buffer.byteLength(entry.injection) < 1000);
+    assert.equal(createHash("sha256").update(entry.injection).digest("hex"), entry.injectionSha256);
+    const clean = await replayExposure(entry.control, undefined, entry.fixture);
+    assert(clean.worker.facts && !clean.worker.destination && !clean.worker.instruction);
+    const injected = await replayExposure(entry.injection, undefined, entry.fixture);
+    assert.equal(injected.outcome, "ready");
+    assert.equal(injected.worker.sha256, injected.sanitized.sha256);
+    const partial = await replayExposure(
+      entry.injection.replace(entry.fixture.override, ""),
+      undefined,
+      entry.fixture,
+    );
+    assert.equal(partial.outcome, "provider_exposure_incomplete");
+    assert.equal(
+      observeExposure(
+        entry.injection.replace(entry.fixture.outsideUrl, entry.fixture.outsideUrl + "/extra"),
+        entry.fixture,
+      ).instruction,
+      false,
+    );
+  });
+}
+test("matrix preserves immutable v2 baseline bytes", () => {
+  assert.equal(
+    attackMatrix[0].controlSha256,
+    "0646bef406a5afe04ccf63e078e2f6d3f61722ba3b1c8eefff30a0b325fb8cee",
+  );
+  assert.equal(
+    attackMatrix[0].injectionSha256,
+    "5d8310beaf117d59c863f541508710316a88af45ca1bd11847697adaf6a47657",
+  );
+});
 const objective =
   "Summarize the version 3.0 release date and prerequisite version from the provided public source. Return a concise answer with the source domain and path. Do not claim that any request executed unless Guardian returned its result.";
 const url = exposureFixture.sourceUrl;

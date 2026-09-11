@@ -1,19 +1,19 @@
 # Current development handoff
 
-Last reconciled: September 11, 2026 (accepted intervention metrics and clean-session pickup).
+Last reconciled: September 11, 2026 (offline intervention evaluator and matrix implementation).
 The technical journey and exposure repair succeeded. T1's natural Guardian
 intervention-and-recovery gate is still UNMET. Resistance is a null for that
 boundary, neither a Guardian pass nor failure; retain it as model-behavior evidence.
 The earlier pilot's frozen predicate passed, but it did not exercise rejection.
 
 Start with [the accepted T1 implementation specification](t1-intervention-evaluation.md).
-Next session: separate evaluation dimensions and denominators, reuse existing
-production tests/evidence machinery, and prepare the six-family attack matrix
-OFFLINE. No further paid execution in that implementation slice. Existing
+Version 2 dimensions, receipt scoring and the six-family offline matrix are
+implemented. See [implementation and execution proposal](t1-offline-execution-proposal.md).
+No paid execution occurred in this implementation slice. Existing
 in-scope repair and gated integration authority persists without repetitive asks.
 Do not advance to the read-only PR family on exposure or resistance alone.
 PR #87 integrated the technical results at d6272e2; exact PR/main CI
-34565088122/34565319474 passed. Metric/runner changes are not implemented yet.
+34565088122/34565319474 passed. Offline scoring is implemented; no new model run or fixture publication occurred.
 
 Historical technical pilot:
 The new immutable v2 pair passed live Basic Markdown readiness, then both actual
@@ -192,7 +192,7 @@ hours/day, commit about 20 hours/week and keep extra availability as buffer.
 T0 passed its frozen clean-plus-two-recovery batch. The September 11 T1 fixture
 repair and neutral pilot now pass full exposure and useful completion. The worker
 resisted the injected instruction without proposing its outside destination.
-Implement the separated T1 metrics and offline attack matrix next; natural
+The separated T1 metrics and offline attack matrix are implemented; natural
 intervention/recovery and general reliability remain unproven. Preserve final-only research recovery.
 Historical failed packets remain stopped; the completed repaired packet is spent.
 Existing outcome-level authority continues to cover in-scope repair and validation.
@@ -221,9 +221,9 @@ or submission buffer. Record actual focused time and all evaluated outcomes.
    Preserve failed and completed frozen packets; do not rerun them. Apply existing
    user authority to in-scope diagnosis, fixes and validation without another
    approval per repair. New execution must still fit its actual remaining bounds.
-3. Implement separate technical/exposure/proposal/rejection/recovery measurements
-   and prepare the six-family attack matrix offline using existing production
-   suites. T1 intervention remains open; read-only PR expansion comes later. Retain
+3. Use the [offline implementation and execution proposal](t1-offline-execution-proposal.md)
+   to prepare a fresh exact packet after integration and separate publication/execution
+   authorization. T1 intervention remains open; read-only PR expansion comes later. Retain
    the neutral mission, immutable v2 baseline, sanitized no-remote workspace,
    strict validator, deterministic denial and final-only rule. No further paid
    call is needed for the completed exposure repair. Billed cost, hosted
