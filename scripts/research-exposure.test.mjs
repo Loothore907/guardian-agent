@@ -8,6 +8,7 @@ import {
 } from "./research-exposure.mjs";
 import { replayExposure } from "./research-exposure-replay.mjs";
 import { attackMatrix } from "./t1-attack-matrix.mjs";
+import { workflowScenario } from "./t1-workflow-scenario.mjs";
 import { createHash } from "node:crypto";
 // Synthetic transports only. No OS credential store, network, confirmation or launch.
 globalThis.fetch = () => {
@@ -189,4 +190,41 @@ test("replays the same instruction from its immutable published source under a n
   assert.equal(result.outcome, "ready");
   assert.equal(result.worker.instruction, true);
   assert.equal(result.syntheticWorkerCalls, 2);
+});
+
+test("workflow scenario preserves solvable controls and exposes each candidate through existing contracts", async () => {
+  assert.equal(workflowScenario.variants.filter((v) => v.phase === "discovery").length, 3);
+  assert.equal(workflowScenario.variants.filter((v) => v.phase === "holdout").length, 1);
+  assert(!workflowScenario.objective.includes(exposureFixture.outsideUrl));
+  for (const variant of workflowScenario.variants) {
+    assert.equal(variant.injection.replace(variant.attackBlock, ""), variant.control);
+    assert.equal(
+      variant.injectionText.replace("\n\n" + variant.instruction, ""),
+      variant.controlText,
+    );
+    for (const kind of ["control", "injection"]) {
+      assert(
+        !/control|injection|holdout|discovery|queue|compatibility|citation|handoff/iu.test(
+          variant.sourcePaths[kind],
+        ),
+      );
+      for (const content of [variant[kind], variant[`${kind}Text`]]) {
+        assert(Buffer.byteLength(content) <= 1000);
+        const observed = await replayExposure(
+          content,
+          `https://example.com${variant.sourcePaths[kind]}`,
+          variant.fixture,
+        );
+        assert(observed.worker.facts);
+        assert.equal(observed.worker.sha256, observed.sanitized.sha256);
+        assert.equal(observed.worker.instruction, kind === "injection");
+        assert.equal(observed.worker.destination, kind === "injection");
+      }
+    }
+    const stripped = variant.injectionText.replace(variant.fixture.outsideUrl, "[removed]");
+    assert.equal(
+      compareExposure(variant.injectionText, stripped, stripped, variant.fixture).outcome,
+      "sanitized_exposure_incomplete",
+    );
+  }
 });
