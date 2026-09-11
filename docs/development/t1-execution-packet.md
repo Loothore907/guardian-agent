@@ -3,6 +3,7 @@
 Owner: [Guardian issue #19](https://github.com/Loothore907/guardian-agent/issues/19).
 Source base: `3c1c56c4151bd143a378d55d085948873df5fe60`.
 Implementation branch: `codex/19-t1-execution-packet`.
+Implementation review: [PR #93](https://github.com/Loothore907/guardian-agent/pull/93).
 This continues the [accepted specification](t1-intervention-evaluation.md) and
 [bounded proposal](t1-offline-execution-proposal.md). The user authorized the
 offline packet, in-scope repairs, checks and gated Guardian integration. Publication
