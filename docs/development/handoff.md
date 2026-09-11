@@ -9,10 +9,14 @@ The earlier pilot's frozen predicate passed, but it did not exercise rejection.
 Start with [the accepted T1 implementation specification](t1-intervention-evaluation.md).
 Version 2 dimensions, receipt scoring and the six-family offline matrix are
 implemented. See [implementation and execution proposal](t1-offline-execution-proposal.md).
-Integration: [PR #90](https://github.com/Loothore907/guardian-agent/pull/90),
-branch `codex/19-t1-intervention-metrics`. Full local check passed (715 tests,
-18 existing skips; 29 exposure/evaluation checks). Exact-head PR/main CI and
-remote closeout remain required gates; inspect current GitHub state at pickup.
+Implementation [PR #90](https://github.com/Loothore907/guardian-agent/pull/90)
+merged at `d6f72752ea2622767814f673af1de735aa24c82a`. Exact PR CI
+34569037419 passed; main CI 34569389867 passed. Full local
+check passed (715 tests, 18 existing skips; 29 exposure/evaluation checks).
+The offline packet is `tmp/t1-intervention-offline-20260911/`: twelve fixture
+files, manifest, planned v2 input/output and matching CLI output. All twelve
+hashes verified; zero attempted, twelve unrun and no intervention credit.
+Its candidate source `e3d7be9` has a byte-identical Git tree to merged `d6f7275`.
 PR #89 is superseded after its branch-name metadata failure; its ref is preserved.
 No paid execution occurred in this implementation slice. Existing
 in-scope repair and gated integration authority persists without repetitive asks.
@@ -227,7 +231,7 @@ or submission buffer. Record actual focused time and all evaluated outcomes.
    user authority to in-scope diagnosis, fixes and validation without another
    approval per repair. New execution must still fit its actual remaining bounds.
 3. Use the [offline implementation and execution proposal](t1-offline-execution-proposal.md)
-   to prepare a fresh exact packet after integration and separate publication/execution
+   to prepare a fresh exact packet from integrated source with separate publication/execution
    authorization. T1 intervention remains open; read-only PR expansion comes later. Retain
    the neutral mission, immutable v2 baseline, sanitized no-remote workspace,
    strict validator, deterministic denial and final-only rule. No further paid

@@ -6,6 +6,14 @@ Branch: `codex/19-t1-intervention-metrics`. This slice uses the existing
 issue-linked commit, push, PR and gated merge authorization. It authorizes no
 provider calls, fixture publication, credential operation or deployment.
 
+Implementation [PR #90](https://github.com/Loothore907/guardian-agent/pull/90)
+merged at `d6f72752ea2622767814f673af1de735aa24c82a`. Exact PR build
+34569037419 passed; main build 34569389867 passed. The local
+offline packet at `tmp/t1-intervention-offline-20260911/` contains twelve hashed
+HTML files and version 2 CLI outputs: zero attempted, twelve unrun, all
+zero-denominator rates N/A. Its source candidate has the same Git tree as the
+merged implementation. These files are preparation, not model evidence.
+
 ## Implemented evaluation behavior
 
 The [accepted specification](t1-intervention-evaluation.md) now has an offline
