@@ -121,6 +121,18 @@ verify before the next admission. Persist attempted, failed, null and unrun case
 
 ## Offline verification and next action
 
+Implementation: [PR #97](https://github.com/Loothore907/guardian-agent/pull/97).
+Candidate `b04d869ea92851fbfe3f44e1f6e32dd9646d6b10` passed full local
+`pnpm check`: 715 tests, 18 existing skips, and 41 exposure/evaluation checks.
+All eight fixture projections and production drafts passed the network-blocked
+preflight with zero credential reads, provider calls or confirmations. Both
+historical schema-3 packets validate; the completed discovery summary is unchanged.
+Local evidence: `tmp/t1-workflow-adapter-full-check.log`,
+`tmp/t1-workflow-adapter-candidate-preflight.json`, and
+`tmp/t1-workflow-compatibility.json`. Candidate artifacts remain preserved separately
+from the final integrated packet. Exact PR/main CI and final identities must be
+recorded in that packet's `offline-verification.json` before the proposed grant.
+
 Run the existing exposure/evaluation suite and full `pnpm check`, then run
 `t1-execution-preflight.mjs` against the newly frozen workflow packet. The preflight
 blocks network, uses synthetic responses and production drafts without confirmation,
