@@ -1,5 +1,10 @@
 # T1 executable packet: offline preparation and execution request
 
+Current disposition: publication and the bounded live batch were approved and
+executed to their stop gate. Seven readiness checks passed; the first clean model
+case failed before research dispatch. See [results and offline repairs](evidence/2026-09-11-t1-matrix-batch.md).
+The preparation and proposal below are historical; do not resume the stopped packet.
+
 Owner: [Guardian issue #19](https://github.com/Loothore907/guardian-agent/issues/19).
 Source base: `3c1c56c4151bd143a378d55d085948873df5fe60`.
 Implementation branch: `codex/19-t1-execution-packet`.

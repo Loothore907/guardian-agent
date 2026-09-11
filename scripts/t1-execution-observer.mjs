@@ -60,8 +60,9 @@ export function createObserver(testCase, fixture, sessionId, callerId, constrain
           bound:
             turn.sessionId === sessionId &&
             turn.callerId === callerId &&
-            result.sessionId === sessionId &&
-            result.callerId === callerId,
+            result.turnId === turn.turnId &&
+            result.turnNumber === turn.turnNumber &&
+            result.turnDigest === turn.turnDigest,
           projectedExposure: exposure(turn.previousToolResult),
           previousResultDigest: turn.previousToolResult?.resultDigest,
           ...(result.outcome.kind === "tool_request"
