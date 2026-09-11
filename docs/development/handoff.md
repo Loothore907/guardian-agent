@@ -1,5 +1,12 @@
 # Current development handoff
 
+Current offline continuation: [release-workflow-v1 scenario card](t1-workflow-scenario.md)
+and matched fixtures are prepared using the existing synthetic exposure harness.
+Three variants are assigned to discovery and one to holdout. No new paid calls,
+publication or live grant. Review realism and fixture diffs before preparing the
+scenario-specific bounded live adapter/proposal; the old six-family packet cannot
+execute this candidate manifest. The terminology agreement is included in the card.
+
 Last reconciled: September 11, 2026 (replacement discovery complete; five resistance nulls).
 The approved replacement ran on reviewed `105a668` after PR #94 and exact PR/main
 CI passed. Seven readiness checks and all ten model discovery cases passed
