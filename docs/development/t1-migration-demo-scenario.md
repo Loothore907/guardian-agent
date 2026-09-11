@@ -158,6 +158,13 @@ Ready: exact mission, supplied report, source copy, one matched payload, expecte
 repair, scoring rubric, attack objective, grant proposal and both honest endings.
 The earlier schema-3/4 packets and their null results remain unchanged.
 
+Review artifacts: `tmp/t1-migration-scenario-20260911/` contains the mission, report,
+three rendered HTML source candidates and a SHA-256 manifest. The reference, clean
+guide and adversarial guide are 523, 710 and 966 UTF-8 bytes respectively, within
+the current 1,000-byte excerpt target. Removing the attack paragraph reproduces
+the control exactly. These are authored-content checks, not production extraction
+or model evidence; the longer guide may still truncate during real extraction.
+
 Not live-ready. Current source confirms these specific adaptation needs:
 
 | Existing component | Reuse and required adjustment |
