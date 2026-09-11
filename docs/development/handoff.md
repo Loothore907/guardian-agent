@@ -1,6 +1,21 @@
 # Current development handoff
 
-Last reconciled: September 11, 2026 (neutral T1 pilot passed after fixture repair).
+Last reconciled: September 11, 2026 (accepted intervention metrics and clean-session pickup).
+The technical journey and exposure repair succeeded. T1's natural Guardian
+intervention-and-recovery gate is still UNMET. Resistance is a null for that
+boundary, neither a Guardian pass nor failure; retain it as model-behavior evidence.
+The earlier pilot's frozen predicate passed, but it did not exercise rejection.
+
+Start with [the accepted T1 implementation specification](t1-intervention-evaluation.md).
+Next session: separate evaluation dimensions and denominators, reuse existing
+production tests/evidence machinery, and prepare the six-family attack matrix
+OFFLINE. No further paid execution in that implementation slice. Existing
+in-scope repair and gated integration authority persists without repetitive asks.
+Do not advance to the read-only PR family on exposure or resistance alone.
+PR #87 integrated the technical results at d6272e2; exact PR/main CI
+34565088122/34565319474 passed. Metric/runner changes are not implemented yet.
+
+Historical technical pilot:
 The new immutable v2 pair passed live Basic Markdown readiness, then both actual
 model cases passed on reviewed main `04e88e6ca73fb88412d5bce95ce87f9ff1580d77`.
 Control: 25.739 seconds. Injection: 24.251 seconds, full attack exposure and a
@@ -12,8 +27,8 @@ The old short control failed extraction; fixture-lab PR #1 adds identical neutra
 context to both v2 pages at `b55002fae134718fd1103cbd377ae3c19b426a4a`. Old fixtures
 and failed packets remain unchanged. Runtime Markdown repair is integrated by
 PR #86; exact PR/main CI 34563256682/34563479865 passed before this pilot.
-Next under #19: finish the existing T1 deterministic coverage/gap review, then
-prepare the read-only PR family. No further paid calls are needed for this repair.
+The earlier proposed move toward the read-only PR family is superseded by the
+intervention specification above. Preserve the useful journey baseline.
 Existing user authorization covers in-scope fixes and verification; a stopped
 frozen packet does not require repetitive approval for a separate repair.
 
@@ -177,8 +192,8 @@ hours/day, commit about 20 hours/week and keep extra availability as buffer.
 T0 passed its frozen clean-plus-two-recovery batch. The September 11 T1 fixture
 repair and neutral pilot now pass full exposure and useful completion. The worker
 resisted the injected instruction without proposing its outside destination.
-Complete the deterministic T1 coverage/gap map next; natural causation of a denial
-and general reliability remain unproven. Preserve final-only research recovery.
+Implement the separated T1 metrics and offline attack matrix next; natural
+intervention/recovery and general reliability remain unproven. Preserve final-only research recovery.
 Historical failed packets remain stopped; the completed repaired packet is spent.
 Existing outcome-level authority continues to cover in-scope repair and validation.
 
@@ -201,12 +216,14 @@ or submission buffer. Record actual focused time and all evaluated outcomes.
 1. Run fresh repository hygiene and Context Atlas pickup; read cited source before
    security decisions and inspect uncommitted changes separately. Historical issue
    text and older hosted handoffs do not supersede this file.
-2. Read the [verified T1 report](evidence/2026-09-11-t1-verified-results.md).
+2. Read the [accepted T1 specification](t1-intervention-evaluation.md), then the
+   [historical technical report](evidence/2026-09-11-t1-verified-results.md).
    Preserve failed and completed frozen packets; do not rerun them. Apply existing
    user authority to in-scope diagnosis, fixes and validation without another
    approval per repair. New execution must still fit its actual remaining bounds.
-3. Finish the offline T1 research near-miss coverage map using existing production
-   suites, then prepare the read-only PR family from the testing roadmap. Retain
+3. Implement separate technical/exposure/proposal/rejection/recovery measurements
+   and prepare the six-family attack matrix offline using existing production
+   suites. T1 intervention remains open; read-only PR expansion comes later. Retain
    the neutral mission, immutable v2 baseline, sanitized no-remote workspace,
    strict validator, deterministic denial and final-only rule. No further paid
    call is needed for the completed exposure repair. Billed cost, hosted

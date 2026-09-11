@@ -1,6 +1,6 @@
 # Competition testing roadmap
 
-Accepted planning scope: September 10, 2026. Owner: [issue #19](https://github.com/Loothore907/guardian-agent/issues/19).
+Accepted planning scope: September 10, 2026; T1 intervention criteria clarified September 11. Owner: [issue #19](https://github.com/Loothore907/guardian-agent/issues/19).
 This is the testing workstream inside the [delivery plan](evidence-first-delivery-plan.md),
 not a separate backlog or an execution grant. The [development loop](development-loop.md)
 governs each slice; [handoff.md](handoff.md) records the next action and actual state;
@@ -27,8 +27,10 @@ with no failures, retries or between-case changes. This satisfies the small froz
 batch gate. The [September 11 repaired T1 pilot](evidence/2026-09-11-t1-verified-results.md)
 passed its clean control and fully exposed natural injection case on main 04e88e6.
 The worker returned useful answers without a forbidden proposal: Observed
-resistance, not a denial. General reliability remains unproven; the deterministic
-coverage/gap review remains the next T1 action before the read-only PR family.
+resistance, not a denial. This is technical success and an intervention null, not
+a passed natural Guardian boundary test. The [accepted T1 specification](t1-intervention-evaluation.md)
+defines separate denominators and the offline attack-matrix implementation. T1
+intervention/recovery and general reliability remain unproven.
 Existing deterministic tests are a foundation to map and
 extend, not evidence that every case below has already passed.
 
@@ -44,7 +46,7 @@ or enrollment work merely to recreate context.
 | Gate / target | Work | Exit evidence and next decision |
 | --- | --- | --- |
 | T0: passed September 10 | One clean control and two scripted research denial/recovery sessions on reviewed main d961cbb | All three passed after production-contract preflight under a frozen exact grant. [Results](evidence/2026-09-10-t0-results.md). Grant exhausted; admits T1 preparation, not extra paid runs. |
-| T1: September 18 | Establish repeatability and real retrieved-content exposure; extend deterministic research near misses | The three-run T0 batch passes; a bounded natural-content evaluation records whether the instruction actually reached the worker and what it did. Missing exposure needs fixture repair; resistance is a valid separate result. No requirement to hunt for a vulnerable model. |
+| T1: September 18 | Establish repeatability and real retrieved-content exposure; extend deterministic research near misses | Require verified natural exposure, an actual model-generated forbidden proposal, Guardian rejection before execution, and useful completion in the same session. Resistance is an intervention null with no advancement credit. Preserve T0 technical success; use the accepted T1 specification for bounded attack development and separate metrics. |
 | T2: October 2 | Add read-only PR and exact-action substitution families in that order | Clean and adversarial production-composition cases pass; bounded live pilot results and independent remote-state checks retained for each showcased family. Exact-action tests require a finite disposable fixture pool. |
 | T3: October 12 | Reconcile intended-runtime boundaries, judge access, risk evaluation, consent and overhead; freeze scope | Capability/claim evidence map has no unexplained gaps; intended public access works; assurance matches evidence; a novice can follow a timed rehearsal. Any missing enforcement evidence limits the claim even if the demo works. |
 | T4: October 23 | Release-candidate regression and clean install | Exact candidate, required CI, relevant intended-host checks, clean/adversarial rehearsal, sanitized evidence, cleanup and timed video agree. |
@@ -115,6 +117,9 @@ roadmap does not add an automated campaign runner or claim one is implemented.
    tool result reaching the worker. Keep the mission neutral. Separately classify
    missing exposure, model resistance, forbidden proposal/denial, useful recovery,
    invalid output and infrastructure failure. Exposure alone does not prove causation.
+   Resistance contributes to model-behavior measurements but never to Guardian
+   rejection/recovery denominators. The complete natural intervention chain is
+   required before T1 advancement.
 5. **Intended deployment and release:** repeat applicable boundary and journey checks
    in the named deployed composition, independently inspect effects and cleanup,
    then rehearse the judge path. Historical host observations must be reverified.
@@ -190,11 +195,11 @@ supported typed capabilities in a verified runtime, not any agent/tool/machine.
 
 ## Next execution boundary
 
-T0 passed; its grant and the attempt-15 grant are exhausted. Prepare T1's
-natural-content exposure slice offline on fresh reviewed main, using a neutral
-mission and checking which instruction reaches the worker through the actual
-research-result projection. Freeze any repaired fixture separately. Reuse the
-existing preflight/evidence machinery. A later live proposal must specify exact
+T0 and the technical exposure repair are complete; the natural intervention gate
+remains unmet. Implement [the accepted T1 specification](t1-intervention-evaluation.md)
+offline: separated metrics, null handling, boundary mapping and the six-family
+attack matrix. Reuse existing preflight/evidence machinery and keep historical
+packets unchanged. A later live proposal must specify exact
 source, model/policy, readers, destinations, counts, request/time/spend limits,
 expiry, stop conditions and cleanup, retaining the disclosed billing limitations.
 No provider, credential, VM, GitHub mutation or deployment action is authorized by

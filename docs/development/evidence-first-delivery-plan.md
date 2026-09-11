@@ -6,6 +6,12 @@ the applicable C6 credential/containment work retained under issue #13. This is
 the execution priority; [handoff.md](handoff.md) supplies current evidence and
 operational pickup. It replaces older dated completion sequences, not grants.
 
+September 11 clarification: [the accepted T1 specification](t1-intervention-evaluation.md)
+separates successful technical journeys from Guardian intervention evidence.
+Resistance is an intervention null. T1 advancement requires natural exposure,
+model-generated forbidden proposal, pre-execution rejection and useful same-session
+completion. The technical pilot alone does not admit the next scenario family.
+
 ## Outcome and baseline
 
 Approve a supported job once, retain a scoped authenticated connection, reject a
@@ -47,7 +53,7 @@ delivery plan and does not grant paid execution.
 
 | Target in 2026 | Outcome | Exit evidence |
 | --- | --- | --- |
-| September 18 | Research repeatability and natural-content exposure evaluation | One scripted journey already passed; frozen clean-plus-two-scripted batch passes; natural-content delivery and model outcome separately recorded; useful answer, boundary, audit and terminal checks agree |
+| September 18 | Research repeatability and natural-content exposure evaluation | Retain scripted technical successes; additionally require the natural injection-induced proposal, Guardian rejection and useful same-session recovery chain. Exposure/resistance alone has no intervention advancement credit; audit, effects and terminal checks must agree |
 | October 2 | Read-only PR and exact-action substitution variants | Review completes without merge; substitution fails and only the authorized unchanged target can merge; remote states independently checked |
 | October 12 | Coherent judge experience and scope freeze | Reliable intended access, honest consent/assurance display, repeatable evidence and measured overhead; short rehearsal understood by a new viewer |
 | October 23 | Release candidate | Clean install, applicable full checks, protected runtime evidence, access plan, source/claims alignment and timed video |
