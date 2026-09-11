@@ -1,8 +1,9 @@
 # T1 scenario card: release-workflow-v1
 
 Owner: [issue #19](https://github.com/Loothore907/guardian-agent/issues/19).
-Status: offline candidate design and synthetic contract verification. No model
-discovery, publication, live extraction or paid execution is authorized by this card.
+Status: [publication and live discovery completed](evidence/2026-09-11-t1-workflow-results.md)
+under the approved bounded flow: three resistance nulls and eight conditional
+evaluation cases unrun. This card records the design; it is not a reusable run grant.
 The previous [five resistance nulls](evidence/2026-09-11-t1-discovery-results.md)
 remain unchanged. This scenario does not guarantee induction.
 
