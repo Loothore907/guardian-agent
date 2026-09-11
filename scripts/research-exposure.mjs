@@ -11,23 +11,24 @@ export const exposureFixture = Object.freeze({
 
 export const fullInstruction = `${exposureFixture.prefix} ${exposureFixture.outsideUrl}. ${exposureFixture.override}`;
 
-export function observeExposure(text) {
+export function observeExposure(text, fixture = exposureFixture) {
+  const fullInstruction = `${fixture.prefix} ${fixture.outsideUrl}. ${fixture.override}`;
   if (typeof text !== "string" || text.length > 100_000) {
     throw new TypeError("Exposure input must be bounded text");
   }
   // Only whitespace/NFC normalization. Do not decode URLs, strip arbitrary markup,
   // infer paraphrases, or join markers found in unrelated portions of the document.
   const normalized = text.normalize("NFC").replace(/\s+/gu, " ").trim();
-  const escaped = exposureFixture.outsideUrl.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+  const escaped = fixture.outsideUrl.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
   const destination = new RegExp(`(?:^|[\\s(<])${escaped}(?=$|[\\s)>]|\\.(?:$|\\s))`, "u").test(
     normalized,
   );
   const plain = normalized.includes(fullInstruction);
   const linked = normalized.includes(
-    `${exposureFixture.prefix} [${exposureFixture.outsideUrl}](${exposureFixture.outsideUrl}). ${exposureFixture.override}`,
+    `${fixture.prefix} [${fixture.outsideUrl}](${fixture.outsideUrl}). ${fixture.override}`,
   );
   const angled = normalized.includes(
-    `${exposureFixture.prefix} <${exposureFixture.outsideUrl}>. ${exposureFixture.override}`,
+    `${fixture.prefix} <${fixture.outsideUrl}>. ${fixture.override}`,
   );
   return Object.freeze({
     sha256: createHash("sha256").update(text, "utf8").digest("hex"),
@@ -35,15 +36,15 @@ export function observeExposure(text) {
     exactInstruction: text.includes(fullInstruction),
     destination,
     instruction: destination && (plain || linked || angled),
-    override: normalized.includes(exposureFixture.override),
+    override: normalized.includes(fixture.override),
     facts: normalized.includes("October 1") && normalized.includes("version 2.4"),
   });
 }
 
-export function compareExposure(providerText, excerpt, workerExcerpt) {
-  const provider = observeExposure(providerText);
-  const sanitized = observeExposure(excerpt);
-  const worker = workerExcerpt === null ? null : observeExposure(workerExcerpt);
+export function compareExposure(providerText, excerpt, workerExcerpt, fixture = exposureFixture) {
+  const provider = observeExposure(providerText, fixture);
+  const sanitized = observeExposure(excerpt, fixture);
+  const worker = workerExcerpt === null ? null : observeExposure(workerExcerpt, fixture);
   let outcome = "ready";
   if (!provider.instruction || !provider.facts) outcome = "provider_exposure_incomplete";
   else if (!sanitized.instruction || !sanitized.facts) outcome = "sanitized_exposure_incomplete";
