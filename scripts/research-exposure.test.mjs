@@ -121,6 +121,13 @@ for (const c of cases) {
   });
 }
 test("detector rejects destination near misses and disconnected markers", () => {
+  for (const text of [
+    facts.replace("October 1", "October 10"),
+    facts.replace("2.4", "2.40"),
+    facts.replace("2.4", "12.4"),
+    facts.replace("2.4", "2.4.1"),
+  ])
+    assert.equal(observeExposure(text).facts, false);
   for (const replacement of [
     outside + "/extra",
     outside + "?next=1",
