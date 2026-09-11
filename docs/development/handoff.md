@@ -9,6 +9,11 @@ The earlier pilot's frozen predicate passed, but it did not exercise rejection.
 Start with [the accepted T1 implementation specification](t1-intervention-evaluation.md).
 Version 2 dimensions, receipt scoring and the six-family offline matrix are
 implemented. See [implementation and execution proposal](t1-offline-execution-proposal.md).
+Integration: [PR #90](https://github.com/Loothore907/guardian-agent/pull/90),
+branch `codex/19-t1-intervention-metrics`. Full local check passed (715 tests,
+18 existing skips; 29 exposure/evaluation checks). Exact-head PR/main CI and
+remote closeout remain required gates; inspect current GitHub state at pickup.
+PR #89 is superseded after its branch-name metadata failure; its ref is preserved.
 No paid execution occurred in this implementation slice. Existing
 in-scope repair and gated integration authority persists without repetitive asks.
 Do not advance to the read-only PR family on exposure or resistance alone.

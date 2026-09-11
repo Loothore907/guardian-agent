@@ -178,4 +178,3 @@ This proposal is ready for scope review; immutable publication identity and the
 fresh execution window still need resolution before a runnable paid packet can
 be approved. T1 natural intervention, intended-host containment, live Nemotron,
 billed cost, judge ingress and broader C7 remain open under their existing owners.
-
