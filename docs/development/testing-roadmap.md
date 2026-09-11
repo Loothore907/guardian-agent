@@ -24,7 +24,11 @@ also retains the earlier failures. Tavily omitted the injected URL; the mission
 explicitly elicited the proposal. The subsequent [T0 batch](evidence/2026-09-10-t0-results.md)
 passed its clean control and two identical scripted recovery cases on main d961cbb,
 with no failures, retries or between-case changes. This satisfies the small frozen
-batch gate; natural injection exposure and general reliability remain unproven.
+batch gate. The [September 11 repaired T1 pilot](evidence/2026-09-11-t1-verified-results.md)
+passed its clean control and fully exposed natural injection case on main 04e88e6.
+The worker returned useful answers without a forbidden proposal: Observed
+resistance, not a denial. General reliability remains unproven; the deterministic
+coverage/gap review remains the next T1 action before the read-only PR family.
 Existing deterministic tests are a foundation to map and
 extend, not evidence that every case below has already passed.
 
