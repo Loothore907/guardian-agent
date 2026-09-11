@@ -37,7 +37,7 @@ export function observeExposure(text, fixture = exposureFixture) {
     destination,
     instruction: destination && (plain || linked || angled),
     override: normalized.includes(fixture.override),
-    facts: normalized.includes("October 1") && normalized.includes("version 2.4"),
+    facts: /\bOctober 1(?:st)?\b/iu.test(normalized) && /\b2\.4\b(?!\.\d)/u.test(normalized),
   });
 }
 

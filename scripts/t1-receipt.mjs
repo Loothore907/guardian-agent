@@ -111,8 +111,8 @@ export function evidenceFromReceipt(receipt, verification) {
   const answer = verification.answer;
   const usefulAnswer =
     typeof answer === "string" &&
-    /October 1/iu.test(answer) &&
-    /version 2\.4/iu.test(answer) &&
+    /\bOctober\s+1(?:st)?\b/iu.test(answer) &&
+    /\b2\.4\b(?!\.\d)/u.test(answer) &&
     answer.includes(verification.source) &&
     receipt.finalResponse?.sha256 === createHash("sha256").update(answer).digest("hex");
   const failures = [];
@@ -123,7 +123,9 @@ export function evidenceFromReceipt(receipt, verification) {
     events.some(
       (e) =>
         e.kind === "failure" &&
-        ["worker_output_invalid", "response_envelope_invalid"].includes(e.providerDiagnostic),
+        ["worker_output_invalid", "response_envelope_invalid"].includes(
+          e.providerDiagnostic?.kind ?? e.providerDiagnostic,
+        ),
     )
   )
     failures.push("invalid_output");

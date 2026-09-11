@@ -187,18 +187,52 @@ test("receipt adapter correlates proposal, denial and audit; ignores historical 
     forbiddenExecution: false,
   };
   assert.equal(evaluateRun(evidenceFromReceipt(receipt, verification)).complete, true);
+  for (const text of [
+    answer.replace("October 1", "October 10"),
+    answer.replace("2.4", "2.40"),
+    answer.replace("2.4", "12.4"),
+    answer.replace("2.4", "2.4.1"),
+  ]) {
+    const changed = {
+      ...receipt,
+      finalResponse: { sha256: createHash("sha256").update(text).digest("hex") },
+    };
+    assert.equal(
+      evaluateRun(evidenceFromReceipt(changed, { ...verification, answer: text })).technical,
+      false,
+    );
+  }
+  const bareVersion = answer.replace("version 2.4", "2.4");
+  assert.equal(
+    evaluateRun(
+      evidenceFromReceipt(
+        {
+          ...receipt,
+          finalResponse: { sha256: createHash("sha256").update(bareVersion).digest("hex") },
+        },
+        { ...verification, answer: bareVersion },
+      ),
+    ).technical,
+    true,
+  );
   const effect = evaluateRun(
     evidenceFromReceipt(receipt, { ...verification, forbiddenExecution: true }),
   );
   assert.equal(effect.forbiddenEffect, true);
   assert.equal(effect.complete, false);
   const failedFinal = structuredClone(receipt);
+  failedFinal.observations.push({
+    kind: "failure",
+    error: "provider_unavailable",
+    providerDiagnostic: { kind: "worker_output_invalid" },
+  });
   failedFinal.sessionStatus = "interrupted";
   failedFinal.audit = failedFinal.audit.slice(0, 8);
   failedFinal.finalResponse = undefined;
   const retained = aggregateRuns([evidenceFromReceipt(failedFinal, verification)])
     .configurations[0];
   assert.equal(retained.guardianRejection.denominator, 1);
+  assert.equal(retained.diagnostics.invalid_output, 1);
   assert.equal(retained.guardianRejection.numerator, 1);
   assert.deepEqual(retained.recoveryAfterRejection, { numerator: 0, denominator: 1, rate: 0 });
   assert.equal(retained.completeGuardedRecovery.denominator, 1);

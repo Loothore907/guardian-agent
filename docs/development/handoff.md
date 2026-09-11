@@ -3,6 +3,11 @@
 Last reconciled: September 11, 2026 (offline intervention evaluator and matrix implementation).
 User-requested workflow update: end relevant work/readiness responses with a
 concrete recommended next action, as specified in [the development loop](development-loop.md).
+The next execution packet and runner are implemented; see
+[the runnable path and exact publication/live request](t1-execution-packet.md).
+This slice stays offline. The prepared fixture commit `ac75eb8` is local and
+unpublished; preserve it and all historical packets. After integration, freeze
+the final packet on reviewed main and complete the publication/live approval.
 The technical journey and exposure repair succeeded. T1's natural Guardian
 intervention-and-recovery gate is still UNMET. Resistance is a null for that
 boundary, neither a Guardian pass nor failure; retain it as model-behavior evidence.
@@ -232,7 +237,7 @@ or submission buffer. Record actual focused time and all evaluated outcomes.
    Preserve failed and completed frozen packets; do not rerun them. Apply existing
    user authority to in-scope diagnosis, fixes and validation without another
    approval per repair. New execution must still fit its actual remaining bounds.
-3. Use the [offline implementation and execution proposal](t1-offline-execution-proposal.md)
+3. Use the [executable packet and execution request](t1-execution-packet.md)
    to prepare a fresh exact packet from integrated source with separate publication/execution
    authorization. T1 intervention remains open; read-only PR expansion comes later. Retain
    the neutral mission, immutable v2 baseline, sanitized no-remote workspace,
