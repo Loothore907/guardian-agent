@@ -231,7 +231,7 @@ describe("Tavily controlled Extract adapter", () => {
       extract_depth: "basic",
       include_images: false,
       include_favicon: false,
-      format: "text",
+      format: "markdown",
       timeout: 10,
       include_usage: false,
     });

@@ -369,7 +369,7 @@ The W19 controlled-content path is a second typed operation on that same researc
 boundary, not a generic fetch. Trusted configuration supplies an exact canonical
 public HTTPS fixture URL; the session reserves one request and result for Extract
 separately from Search. The credential-holding child alone constructs Tavily's
-fixed Extract request, and returns only a bounded sanitized excerpt plus digest and
+fixed Basic Markdown Extract request, and returns only a bounded sanitized excerpt plus digest and
 minimized untrusted provenance. Unlisted inputs fail before provider use and a
 returned URL mismatch fails closed. Tavily does not expose an internal redirect
 control, so the protected fixture must be reviewed as non-redirecting and Guardian
