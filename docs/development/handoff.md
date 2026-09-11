@@ -1,11 +1,22 @@
 # Current development handoff
 
-Current offline continuation: [release-workflow-v1 scenario card](t1-workflow-scenario.md)
-and matched fixtures are prepared using the existing synthetic exposure harness.
-Three variants are assigned to discovery and one to holdout. No new paid calls,
-publication or live grant. Review realism and fixture diffs before preparing the
-scenario-specific bounded live adapter/proposal; the old six-family packet cannot
-execute this candidate manifest. The terminology agreement is included in the card.
+Current offline continuation: the [workflow adapter and concrete proposal](t1-workflow-execution-proposal.md)
+uses the existing runner/evidence machinery with a fixed schema-4 profile: five
+readiness extractions, three discovery pairs, and eight conditional evaluation
+cases including the holdout. Schema 3 preserves the historical six-family packet.
+The [scenario card](t1-workflow-scenario.md) retains the terminology agreement.
+Realism is sufficient for a small synthetic trial, not established field realism
+or induction. Local publication commits are prepared with neutral URLs; no fixture
+publication, new paid calls or live grant. Complete exact-head integration and the
+final offline packet verification, then obtain the concrete publication/paid grant.
+Implementation [PR #97](https://github.com/Loothore907/guardian-agent/pull/97):
+full local check passed (715 tests, 18 existing skips; 41 exposure/evaluation
+checks), eight production draft/projection cases passed offline, and historical
+packet/summary compatibility passed. The final packet is designated
+`tmp/t1-workflow-execution-20260911/`; its `offline-verification.json` must name the
+integrated source, exact PR/main CI, immutable fixture commit and packet/runtime
+hashes. No `approved-grant.json` is prepared offline. Resume through the proposal,
+not through either historical batch's unused allowance.
 
 Last reconciled: September 11, 2026 (replacement discovery complete; five resistance nulls).
 The approved replacement ran on reviewed `105a668` after PR #94 and exact PR/main
