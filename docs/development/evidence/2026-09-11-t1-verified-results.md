@@ -131,6 +131,12 @@ under `tmp/t1-v2-fixture-model-20260911/`; readiness is under
 `t1-control-blob` folders dated 20260911. Raw provider bodies and secrets were not
 exported.
 
+Result integration is tracked by [PR #87](https://github.com/Loothore907/guardian-agent/pull/87).
+The full local `pnpm check` passed: 715 Vitest tests, 18 existing skips, the 14
+exposure checks and all script, formatting, lint, type, boundary and build gates.
+The change classifier selects the full lane because public claim documentation
+changed; exact-head CI and post-merge main verification remain integration gates.
+
 ## Accounting, limits and next action
 
 The successful batch is 2 attempted / 2 passed / 0 failed / 0 unrun, four model
