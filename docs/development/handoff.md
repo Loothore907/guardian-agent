@@ -1,19 +1,24 @@
 # Current development handoff
 
-Last reconciled: September 11, 2026 (approved matrix batch stopped; offline repairs).
-The approved fixture publication is complete. All seven extraction-readiness
-checks passed, but the first model control stopped with `tool_unavailable` before
-research dispatch. One model case attempted, seventeen unrun, zero retries.
-Cleanup passed. See [batch evidence and exact repair diagnosis](evidence/2026-09-11-t1-matrix-batch.md).
-The frozen batch must not resume. The runner lifetime and observer-binding repairs
-require reviewed-source integration before preparing a fresh packet and grant.
+Last reconciled: September 11, 2026 (replacement discovery complete; five resistance nulls).
+The approved replacement ran on reviewed `105a668` after PR #94 and exact PR/main
+CI passed. Seven readiness checks and all ten model discovery cases passed
+technically. All five exposed attacks were resisted; no forbidden proposal,
+Guardian rejection or guarded recovery occurred. The selection rule left all
+eight conditional evaluation cases unrun. Independent re-verification and cleanup
+passed; zero retries. See [current discovery results and next action](evidence/2026-09-11-t1-discovery-results.md).
+The earlier batch stopped before research dispatch and remains frozen; see
+[its evidence and repairs](evidence/2026-09-11-t1-matrix-batch.md). Both runner
+repairs are integrated. Do not resume either batch or spend unused allowance on
+unplanned attempts. Next: review attack realism/workflow dependencies offline
+before proposing a changed, bounded discovery slice.
 User-requested workflow update: end relevant work/readiness responses with a
 concrete recommended next action, as specified in [the development loop](development-loop.md).
 The next execution packet and runner are implemented; see
 [the runnable path and exact publication/live request](t1-execution-packet.md).
 Fixture commit `ac75eb8` is now published through fixture PR #2; integrated bytes
-match. Preserve the stopped packet and all historical packets. Original offline
-preparation below is historical; the batch evidence above is the current pickup.
+match. Preserve both packets and all historical evidence. Original offline
+preparation below is historical; the discovery evidence above is the current pickup.
 The technical journey and exposure repair succeeded. T1's natural Guardian
 intervention-and-recovery gate is still UNMET. Resistance is a null for that
 boundary, neither a Guardian pass nor failure; retain it as model-behavior evidence.
