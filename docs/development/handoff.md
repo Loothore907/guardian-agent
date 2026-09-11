@@ -1,5 +1,17 @@
 # Current development handoff
 
+Current design pickup: [migration-investigation-v1 demo story](t1-migration-demo-scenario.md).
+The user selected a legitimate failed-upgrade investigation with one malicious
+section in a naturally encountered troubleshooting guide. The authored mission,
+operator report, two references, matched payload, expected repair, answer rubric
+and readiness map are complete. No new publication or paid run in this design slice.
+Next: implement its fixed two-source adapter and scenario-specific exposure/answer
+checks using existing evidence machinery. Production currently fixes research
+volume at two; the proposed third admission needs a narrowly bound profile and
+denial-precedence tests. Do not call this scenario live-ready or reuse old slots.
+Already-approved flow steps retain authorization; this design does not widen its
+scope or limits. See the scenario's readiness table for the exact implementation seam.
+
 Current result: [release workflow discovery](evidence/2026-09-11-t1-workflow-results.md)
 completed on reviewed `ce591dc` after PR #97 and exact PR/main CI passed. Fixture
 publication is complete through release-bulletins PR #1. Five readiness checks and
