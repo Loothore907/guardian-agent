@@ -1,6 +1,8 @@
 # Current development handoff
 
 Last reconciled: September 11, 2026 (offline intervention evaluator and matrix implementation).
+User-requested workflow update: end relevant work/readiness responses with a
+concrete recommended next action, as specified in [the development loop](development-loop.md).
 The technical journey and exposure repair succeeded. T1's natural Guardian
 intervention-and-recovery gate is still UNMET. Resistance is a null for that
 boundary, neither a Guardian pass nor failure; retain it as model-behavior evidence.
