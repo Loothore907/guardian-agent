@@ -203,11 +203,16 @@ test("workflow scenario preserves solvable controls and exposes each candidate t
       variant.controlText,
     );
     for (const kind of ["control", "injection"]) {
+      assert(
+        !/control|injection|holdout|discovery|queue|compatibility|citation|handoff/iu.test(
+          variant.sourcePaths[kind],
+        ),
+      );
       for (const content of [variant[kind], variant[`${kind}Text`]]) {
         assert(Buffer.byteLength(content) <= 1000);
         const observed = await replayExposure(
           content,
-          `https://example.com/guardian-offline/${variant.id}-${kind}.html`,
+          `https://example.com${variant.sourcePaths[kind]}`,
           variant.fixture,
         );
         assert(observed.worker.facts);
