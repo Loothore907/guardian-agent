@@ -1,5 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { randomUUID } from "node:crypto";
+import {
+  WorkerTurnResultSchema,
+  CredentialStoreResearchServiceProcessConfigSchema,
+} from "../packages/contracts/dist/index.js";
+import { createResearchIpcCredentials } from "../packages/research/dist/index.js";
+import { createAuthorityIpcEndpoint } from "../packages/authority-client/dist/index.js";
 import {
   makePacket,
   validatePacket,
@@ -8,6 +15,7 @@ import {
   executionCase,
   selectFamily,
   canContinue,
+  modelDeadlines,
 } from "./t1-execution-packet.mjs";
 import { classifyRequest, createObserver } from "./t1-execution-observer.mjs";
 import { verifyModelEvidence } from "./t1-execution-evidence.mjs";
@@ -163,7 +171,7 @@ test("production digest observer feeds independent verification; denial failure 
     const req = request(n === 1 ? c.sourceUrl : packet.outsideUrl);
     const turn = {
       ...binding,
-      turnId: `turn-${n}`,
+      turnId: randomUUID(),
       turnDigest: `${n}`.repeat(64),
       turnNumber: n,
       objective,
@@ -173,13 +181,16 @@ test("production digest observer feeds independent verification; denial failure 
     observer.observe({
       kind: "turn",
       turn,
-      result: {
-        ...binding,
+      result: WorkerTurnResultSchema.parse({
+        providerRequestId: `fixture-request-${n}`,
+        turnId: turn.turnId,
+        turnNumber: n,
+        turnDigest: turn.turnDigest,
         outcome:
           n === 3
             ? { kind: "final_response", response: "unused" }
             : { kind: "tool_request", request: req },
-      },
+      }),
     });
     if (n === 3) break;
     prior = {
@@ -295,6 +306,109 @@ test("production digest observer feeds independent verification; denial failure 
   const denial = verifyModelEvidence(receipt, failed, c, undefined, true);
   assert(denial.result.rejected && !denial.result.recovered && !denial.continuePhase);
 });
+test("model setup fits production research authority lifetime without extending the run deadline", () => {
+  const startedAt = "2026-09-11T07:50:52.844Z",
+    grantExpiresAt = "2026-09-11T09:50:07.633Z";
+  const deadlines = modelDeadlines(startedAt, grantExpiresAt);
+  assert.equal(Date.parse(deadlines.stopAt) - Date.parse(startedAt), 300000);
+  assert.equal(Date.parse(deadlines.authorityExpiresAt) - Date.parse(startedAt), 360000);
+  assert.throws(() => modelDeadlines(startedAt, deadlines.stopAt));
+  const sessionId = randomUUID(),
+    callerId = randomUUID();
+  const config = {
+    schemaVersion: 1,
+    serviceKind: "tavily_research",
+    credentialStore: {
+      schemaVersion: 1,
+      custodyProfile: "byok",
+      location: {
+        schemaVersion: 1,
+        custodyProfile: "byok",
+        pool: "personal",
+        runtime: "windows",
+        storeTarget: "windows_credential_manager",
+      },
+    },
+    research: {
+      schemaVersion: 1,
+      ...createResearchIpcCredentials(),
+      sessionId,
+      callerId,
+      missionId: randomUUID(),
+      missionVersion: 1,
+      profileId: randomUUID(),
+      profileVersion: 1,
+      policyVersion: 1,
+      startsAt: "2026-09-11T07:51:08.359Z",
+      expiresAt: "2026-09-11T07:56:08.359Z",
+      scope: {
+        allowedDomains: ["example.com"],
+        maxResultsPerRequest: 3,
+        remainingRequests: 2,
+        remainingResults: 3,
+        requiredTerms: ["public"],
+      },
+    },
+    authority: {
+      schemaVersion: 1,
+      endpoint: createAuthorityIpcEndpoint(),
+      binding: {
+        schemaVersion: 1,
+        capability: randomUUID(),
+        callerRole: "research_service",
+        callerId,
+        sessionId,
+        allowedOperations: ["research.reserve", "research.settle", "context.append_exposures"],
+        issuedAt: startedAt,
+        expiresAt: deadlines.stopAt,
+      },
+    },
+  };
+  assert.equal(CredentialStoreResearchServiceProcessConfigSchema.safeParse(config).success, false);
+  config.authority.binding.expiresAt = deadlines.authorityExpiresAt;
+  assert.equal(CredentialStoreResearchServiceProcessConfigSchema.safeParse(config).success, true);
+  config.research.expiresAt = new Date(Date.parse(deadlines.authorityExpiresAt) + 1).toISOString();
+  assert.equal(CredentialStoreResearchServiceProcessConfigSchema.safeParse(config).success, false);
+});
+
+test("observer binds production turn results and rejects mismatched turn identity", () => {
+  const turn = {
+    sessionId: randomUUID(),
+    callerId: randomUUID(),
+    turnId: randomUUID(),
+    turnNumber: 1,
+    turnDigest: "a".repeat(64),
+    objective,
+    constraints: [],
+  };
+  const result = WorkerTurnResultSchema.parse({
+    providerRequestId: "fixture-request",
+    turnId: turn.turnId,
+    turnNumber: turn.turnNumber,
+    turnDigest: turn.turnDigest,
+    outcome: { kind: "final_response", response: "Release is October 1; prerequisite is 2.4." },
+  });
+  const observer = createObserver({}, attackMatrix[0].fixture, turn.sessionId, turn.callerId, []);
+  observer.observe({ kind: "turn", turn, result });
+  assert.equal(observer.observations.at(-1).bound, true);
+  for (const change of [
+    { turnId: randomUUID() },
+    { turnNumber: 2 },
+    { turnDigest: "b".repeat(64) },
+  ]) {
+    observer.observe({
+      kind: "turn",
+      turn,
+      result: WorkerTurnResultSchema.parse({ ...result, ...change }),
+    });
+    assert.equal(observer.observations.at(-1).bound, false);
+  }
+  for (const change of [{ sessionId: randomUUID() }, { callerId: randomUUID() }]) {
+    observer.observe({ kind: "turn", turn: { ...turn, ...change }, result });
+    assert.equal(observer.observations.at(-1).bound, false);
+  }
+});
+
 test("phase continuation distinguishes resistance null from absent exposure and incomplete recovery", () => {
   const v = {
     exposureReady: true,

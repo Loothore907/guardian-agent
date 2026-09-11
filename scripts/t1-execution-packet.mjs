@@ -43,6 +43,15 @@ export const credentialReaders = Object.freeze([
     copy: false,
   },
 ]);
+export function modelDeadlines(startedAt, grantExpiresAt) {
+  const start = Date.parse(startedAt),
+    end = Date.parse(grantExpiresAt);
+  assert(Number.isFinite(start) && Number.isFinite(end) && end >= start + 360000);
+  return {
+    stopAt: new Date(start + limits.durationSeconds * 1000).toISOString(),
+    authorityExpiresAt: new Date(start + (limits.durationSeconds + 60) * 1000).toISOString(),
+  };
+}
 export function makePacket({
   sourceHead,
   workspaceCommit,

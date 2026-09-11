@@ -14,7 +14,7 @@ import { WindowsCredentialStore } from "../packages/credential-store/dist/index.
 import { attackMatrix } from "./t1-attack-matrix.mjs";
 import { replayExposure } from "./research-exposure-replay.mjs";
 import { createObserver, answerReceipt } from "./t1-execution-observer.mjs";
-import { objective, sha256 } from "./t1-execution-packet.mjs";
+import { objective, sha256, modelDeadlines } from "./t1-execution-packet.mjs";
 import { serviceProcesses } from "./t1-execution-evidence.mjs";
 
 export async function runReadiness(testCase) {
@@ -91,6 +91,7 @@ export async function runModel(packet, testCase, { root, projectRoot, workspace,
   };
   let supervisor, timer, answer;
   try {
+    const deadlines = modelDeadlines(receipt.startedAt, expiresAt);
     supervisor = await startReferenceAuthoritySupervisor(
       {
         sessionId,
@@ -99,9 +100,7 @@ export async function runModel(packet, testCase, { root, projectRoot, workspace,
         projectRoot: workspace,
         workspaceRoots: [resolve(root, "workspaces")],
         issuedAt: receipt.startedAt,
-        expiresAt: new Date(
-          Math.min(Date.parse(receipt.startedAt) + 300000, Date.parse(expiresAt)),
-        ).toISOString(),
+        expiresAt: deadlines.authorityExpiresAt,
       },
       {
         workerMode: "nebius_native",
@@ -110,12 +109,16 @@ export async function runModel(packet, testCase, { root, projectRoot, workspace,
         observeWorker: observer.observe,
       },
     );
-    timer = setTimeout(() => {
-      receipt.failure = "session_deadline";
-      void supervisor.close().catch(() => {
-        receipt.failure = "cleanup_failed";
-      });
-    }, 300000);
+    timer = setTimeout(
+      () => {
+        receipt.failure = "session_deadline";
+        void supervisor.close().catch(() => {
+          receipt.failure = "cleanup_failed";
+        });
+      },
+      Math.max(0, Date.parse(deadlines.stopAt) - Date.now()),
+    );
+    assert(Date.now() < Date.parse(deadlines.stopAt), "setup exhausted model deadline");
     const preview = supervisor.bootstrap.createDraft({ schemaVersion: 1, objective });
     assert.deepEqual(preview.workerTools, ["guardian.research"]);
     assert.deepEqual(preview.permissions, normalized.permissions);
