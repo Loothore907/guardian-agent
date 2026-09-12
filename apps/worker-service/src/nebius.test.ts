@@ -125,31 +125,7 @@ describe("Nebius native worker provider", () => {
     };
     expect(request).toMatchObject({
       model: nativeWorkerBoundary.model,
-      response_format: {
-        type: "json_schema",
-        json_schema: {
-          name: "guardian_worker_outcome",
-          strict: true,
-          schema: {
-            oneOf: [
-              {
-                type: "object",
-                additionalProperties: false,
-                required: ["kind", "response"],
-                properties: {
-                  kind: { const: "final_response" },
-                  response: { type: "string", minLength: 1, maxLength: 8_000 },
-                },
-              },
-              {
-                type: "object",
-                additionalProperties: false,
-                required: ["kind", "request"],
-              },
-            ],
-          },
-        },
-      },
+      response_format: { type: "json_object" },
     });
     expect(request.messages[0]?.content).toContain('"kind":{"const":"final_response"}');
     expect(request.messages[0]?.content).toContain('"name":{"const":"guardian.local_command"}');
@@ -555,6 +531,42 @@ describe("Nebius native worker provider", () => {
         providerDiagnostic: diagnostic,
       }).success,
     ).toBe(false);
+  });
+
+  it("offers rejected model text only to an explicit evaluation capture hook", async () => {
+    const credentialStore = new InMemoryCredentialStore();
+    await credentialStore.write(
+      nativeWorkerBoundary.credential,
+      new TextEncoder().encode("worker-provider-capture-fixture"),
+    );
+    const rejected = JSON.stringify({
+      kind: "final_response",
+      summary: "A deliberately invalid evaluation result.",
+    });
+    const captured: string[] = [];
+    const provider = new NebiusNativeWorkerProvider({
+      credentialStore,
+      fetch: () =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({
+              id: "capture_fixture",
+              model: nativeWorkerBoundary.model,
+              choices: [{ finish_reason: "stop", message: { content: rejected } }],
+            }),
+            { status: 200, headers: { "content-type": "application/json" } },
+          ),
+        ),
+      onRejectedOutput: (output) => captured.push(output),
+    });
+
+    await expect(provider.runTurn(turn())).rejects.toMatchObject({
+      providerDiagnostic: {
+        kind: "worker_output_invalid",
+        rejection: "outcome_schema_invalid",
+      },
+    });
+    expect(captured).toEqual([rejected]);
   });
 
   it("fails closed on malformed, extra-field, credential-like, or model-mismatched output", () => {

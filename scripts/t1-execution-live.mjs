@@ -109,6 +109,7 @@ export async function runModel(packet, testCase, { root, projectRoot, workspace,
         riskProcess: "fake",
         judgeScope: scope,
         observeWorker: observer.observe,
+        evaluationRejectedWorkerOutputPath: resolve(root, "rejected-provider-output.txt"),
       },
     );
     timer = setTimeout(

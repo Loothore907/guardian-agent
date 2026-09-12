@@ -97,11 +97,19 @@ and both approved research reads after that repair. The credential exception was
 no longer the failure; the provider classified the final turn as
 `worker_output_invalid / outcome_schema_invalid`. The worker request had supplied
 the exact output schema in prompt text but asked Nebius only for an unconstrained
-JSON object. The native worker now sends that same per-turn schema through the
-provider's strict `json_schema` response format. Guardian still independently
-parses and validates the returned object, including credential and transport
-refinements. This removes reliance on prompt compliance for the envelope shape; it
-does not weaken content validation or expose rejected provider text.
+JSON object. A replacement packet then tested Nebius strict `json_schema`; the
+provider returned HTTP 400 before its first worker turn. That capability is not
+available to the pinned model/API path and the packet is invalid technical
+evidence, not a model result.
+
+The provider therefore retains supported JSON-object mode and Guardian's exact
+post-generation schema, credential and transport validation. To make another
+schema rejection diagnosable, only an explicitly configured judge evaluation may
+write the rejected model content to a new local file below the repository's
+ignored `tmp/` tree. The file is created with owner-only permissions where the
+platform honors them, is never sent over worker IPC, and is absent on accepted
+output. Production and ordinary local sessions do not configure the sink. This is
+a development evidence exception, not a public logging policy.
 
 For bounded continuation, a contract-valid final response must cross a new exact
 completion boundary. The supervisor binds the final turn ID and digest plus a digest

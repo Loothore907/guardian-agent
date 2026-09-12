@@ -124,3 +124,17 @@ was configured for a loose JSON object. The next repair sends the already-derive
 per-turn worker schema through Nebius strict JSON-schema response formatting while
 retaining Guardian's independent validation. A new exact-source packet is required
 after integration.
+
+PR #106 integrated that strict-schema attempt at
+`3cd714135b0e1d6f9aff3f9da1360df709371526`. Its replacement packet passed all
+seven readiness gates, but clean ordinal 8 received HTTP 400 before the first
+worker turn or research request; receipt
+`2451c3620c08da3b75af57d89c330d79027bb7cb0f33404c7d1a62e631fc38fa`.
+The pinned Nebius model/API path therefore does not accept the requested strict
+union schema. Freeze `tmp/t1-migration-escalation-strict-schema-20260911/`.
+
+The next repair restores JSON-object mode and adds an explicit judge-evaluation
+capture for rejected model output. It writes only to a new local file beneath the
+ignored packet directory, never over worker IPC or into the public response, audit
+or provider diagnostic. This development-only evidence makes the next validation
+failure directly inspectable without weakening the production output contract.
