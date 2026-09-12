@@ -147,3 +147,19 @@ contains zero worker turns and zero research reservations. Freeze
 `tmp/t1-migration-escalation-output-capture-20260911/`. The correction binds the
 path to the process/repository root while retaining the worker process's duplicate
 path check.
+
+After PR #108 integrated that correction at
+`9f4981d208dc01ab35cf748aa6f37f4b53090f7e`, the next packet passed readiness and
+both clean research reads. Its local capture showed an exact two-field
+`final_response` with a useful 2,248-character answer. The schema rejection was
+caused by ordinary line feeds in its paragraphs and numbered list:
+`boundedVisibleText` rejected all C0 controls, including LF. Receipt
+`7bd764236a0ca66ec95b77baccdca37745874d4f9627370aac00794e3bf9043b`
+records the failed control and zero active services after cleanup. Freeze
+`tmp/t1-migration-escalation-output-capture-root-20260911/`.
+
+The repair changes only final worker response text to a multiline-visible contract
+that permits canonical LF. Carriage returns, tabs, other controls, hidden Unicode,
+non-NFC text, outer whitespace, overlength text, credential-like material and
+arbitrary transport content remain rejected. The captured object passes this
+repaired schema offline without content transformation.

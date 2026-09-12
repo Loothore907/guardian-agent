@@ -111,6 +111,17 @@ platform honors them, is never sent over worker IPC, and is absent on accepted
 output. Production and ordinary local sessions do not configure the sink. This is
 a development evidence exception, not a public logging policy.
 
+That capture recovered the next clean control's exact rejected object. It had only
+the required `kind` and `response` fields, and its 2,248-character response was a
+useful migration diagnosis. The base `boundedVisibleText` contract rejected its
+ordinary line feeds before the credential and transport refinements ran. Final
+worker responses now use a dedicated multiline-visible contract: canonical LF is
+allowed for paragraphs and lists; carriage returns, tabs, other C0/C1 controls,
+hidden Unicode, non-NFC text, outer whitespace and the existing length bound still
+fail closed. Other bounded text fields retain the single-line contract. Replaying
+the captured object through the repaired schema succeeds without altering its
+content.
+
 For bounded continuation, a contract-valid final response must cross a new exact
 completion boundary. The supervisor binds the final turn ID and digest plus a digest
 of its validated result. The authority store atomically appends useful-completion
