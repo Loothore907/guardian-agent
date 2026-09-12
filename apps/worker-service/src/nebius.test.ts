@@ -485,7 +485,11 @@ describe("Nebius native worker provider", () => {
           turnNumber: exactTurn.turnNumber,
           turnDigest: exactTurn.turnDigest,
         });
-        const diagnostic = { kind: "worker_output_invalid", rejection };
+        const diagnostic = {
+          kind: "worker_output_invalid",
+          rejection,
+          ...(rejection === "outcome_credential_like" ? { credentialCategory: "token" } : {}),
+        };
         await expect(client.run("2026-09-01T00:00:10.000Z")).rejects.toMatchObject({
           reason: "provider_unavailable",
           providerDiagnostic: diagnostic,
@@ -502,12 +506,20 @@ describe("Nebius native worker provider", () => {
     expect(
       WorkerProviderDiagnosticSchema.safeParse({ kind: "worker_output_invalid" }).success,
     ).toBe(true);
+    expect(
+      WorkerProviderDiagnosticSchema.safeParse({
+        kind: "worker_output_invalid",
+        rejection: "outcome_credential_like",
+        credentialCategory: "authorization",
+      }).success,
+    ).toBe(true);
     const diagnostic = { kind: "worker_output_invalid", rejection: "completion_length" };
     for (const value of [
       { ...diagnostic, rejection: "private-provider-value" },
       { ...diagnostic, detail: "private-provider-value" },
       { ...diagnostic, path: ["private-provider-value"] },
       { ...diagnostic, status: 200 },
+      { ...diagnostic, credentialCategory: "token" },
       { ...diagnostic, kind: "transport_failure" },
     ])
       expect(WorkerProviderDiagnosticSchema.safeParse(value).success).toBe(false);

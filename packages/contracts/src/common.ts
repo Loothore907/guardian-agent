@@ -29,13 +29,56 @@ export function boundedVisibleText(maxLength: number) {
     .refine((value) => !containsHiddenOrControlUnicode(value), "hidden Unicode is not allowed");
 }
 
+export const SecretLikeMaterialCategorySchema = z.enum([
+  "api_key",
+  "authorization",
+  "bearer",
+  "password",
+  "secret",
+  "token",
+  "github_token",
+  "aws_access_key",
+  "private_key",
+]);
+export type SecretLikeMaterialCategory = z.infer<typeof SecretLikeMaterialCategorySchema>;
+
+const CREDENTIAL_ASSIGNMENT =
+  /\b(api[_-]?key|authorization|bearer|password|secret|token)\b\s*[:=]\s*\S+/iu;
+
+export function secretLikeMaterialCategory(value: string): SecretLikeMaterialCategory | null {
+  const assignment = CREDENTIAL_ASSIGNMENT.exec(value)?.[1]?.toLowerCase().replace("-", "_");
+  if (assignment !== undefined) {
+    return SecretLikeMaterialCategorySchema.parse(assignment);
+  }
+  if (/\bgh[pousr]_[A-Za-z0-9]{20,}\b/u.test(value)) return "github_token";
+  if (/\bAKIA[A-Z0-9]{16}\b/u.test(value)) return "aws_access_key";
+  if (/-----BEGIN [A-Z ]+ PRIVATE KEY-----/u.test(value)) return "private_key";
+  return null;
+}
+
 export function containsSecretLikeMaterial(value: string): boolean {
-  return (
-    /\b(?:api[_-]?key|authorization|bearer|password|secret|token)\b\s*[:=]\s*\S+/iu.test(value) ||
-    /\bgh[pousr]_[A-Za-z0-9]{20,}\b/u.test(value) ||
-    /\bAKIA[A-Z0-9]{16}\b/u.test(value) ||
-    /-----BEGIN [A-Z ]+ PRIVATE KEY-----/u.test(value)
-  );
+  return secretLikeMaterialCategory(value) !== null;
+}
+
+// Final answers sometimes describe an intentionally absent credential or approval
+// with a status label. Remove only a closed set of complete, explicitly negative
+// assignments before applying the ordinary secret detector. A trailing word keeps
+// the entire assignment subject to rejection, so a safe prefix cannot mask data.
+const EXPLICITLY_SAFE_CREDENTIAL_STATUS =
+  /\b(?:api[_-]?key|authorization|bearer|password|secret|token)\b\s*[:=]\s*(?:\*\*|__)?(?:none|absent|missing|unavailable|unset|unknown|redacted|pending|outstanding|required|denied|declined|not(?:[ _-]+yet)?[ _-]+(?:granted|authorized|provided|available|set|configured|present)|(?:still|operator[ _-]+confirmation|operator[ _-]+approval|user[ _-]+confirmation|user[ _-]+approval)[ _-]+required)(?:\*\*|__)?(?=$|[\r\n;,.!?])/giu;
+
+export function withoutExplicitlySafeCredentialStatuses(value: string): string {
+  return value.replace(EXPLICITLY_SAFE_CREDENTIAL_STATUS, "");
+}
+
+export function containsSecretLikeOutcomeMaterial(value: string): boolean {
+  return secretLikeOutcomeMaterialCategory(value) !== null;
+}
+
+export function secretLikeOutcomeMaterialCategory(
+  value: string,
+): SecretLikeMaterialCategory | null {
+  return secretLikeMaterialCategory(withoutExplicitlySafeCredentialStatuses(value));
 }
 
 export function boundedCredentialSafeText(maxLength: number) {
