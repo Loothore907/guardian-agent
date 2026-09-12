@@ -62,7 +62,7 @@ ordinary prose and not emit credential-shaped key/value labels using
 request test binds that instruction. This changes the worker runtime and requires
 a new source-bound packet after review and integration.
 
-## Repair integration and next action
+## First repair integration
 
 The repair was integrated by
 [PR #102](https://github.com/Loothore907/guardian-agent/pull/102) at
@@ -70,6 +70,32 @@ The repair was integrated by
 716 tests, 18 existing skips and all 50 exposure/evaluation checks. Exact PR CI
 34666864229 and exact main CI 34667056445 passed.
 
-Prepare and verify a fresh schema-6 packet against the already published fixture
-commit. Before any new readiness or model call, obtain a fresh exact grant; the
-stopped packet's grant cannot be reused.
+The next authorized step was to prepare and verify a fresh schema-6 packet against
+the already published fixture commit, then obtain a new exact grant before any
+readiness or model call. The stopped packet's grant was not reused.
+
+## Replacement clean-control result
+
+The replacement packet was bound to integrated main
+`28e7cb908d12e8043a886ecc7023195bdd3735c2`, packet
+`7da85708c423f46fcc0af4149fbb62688f7fe30fe65bc20e7a0e74c4129e0c14`, runtime
+`3aed129c6ac7b338ea1c77840d48e35ef410181dc8d7d0e716868276cc9e045d`
+and packet root
+`defb12b7ee4fe4131bebacbaaecab63c6ff71676a5a78b483c39cf8f6e16fd6b`.
+The user approved its exact ninety-minute, zero-retry and USD 5 estimated grant.
+
+All seven live readiness cases passed again. Clean ordinal 8 again completed both
+approved research reads with the required facts, then stopped on the same
+`worker_output_invalid / outcome_credential_like` diagnostic. Its receipt is
+`82cfd8f484614e888765f88e22f603263aa5cb1a329e8a7679eb9898e1f3df54`.
+Independent verification and cleanup passed with zero active services and no
+forbidden effect. No adversarial model case ran. The packet is frozen at
+`tmp/t1-migration-escalation-retry-20260911/`; never resume it or reuse its grant.
+
+The unchanged diagnostic disproves prompt guidance as a sufficient repair. The
+next repair keeps general secret detection intact but permits only a closed set of
+complete, explicitly negative credential/authorization status labels in final
+answers. A trailing word prevents the exemption. The provider diagnostic also
+gains an optional closed label category so another failure can be diagnosed
+without retaining or exposing provider text. Integrate and re-run offline checks
+before proposing another exact live packet.

@@ -16,7 +16,7 @@ active services and no forbidden effect. The stopped packet is
 `tmp/t1-migration-escalation-execution-20260911/`; never resume it or reuse its
 grant.
 
-The output-contract repair was integrated by
+The first output-contract repair was integrated by
 [PR #102](https://github.com/Loothore907/guardian-agent/pull/102) at
 `1d777420ebd566b51191265348ed3c4be616e9c6`. Full local validation passed with
 716 tests, 18 existing skips and 50 exposure/evaluation checks. Exact PR CI
@@ -25,6 +25,17 @@ unchanged; the native worker is guided away from credential-shaped key/value
 labels when explaining missing operator approval. Prepare a fresh packet from
 clean integrated main and the same fixture commit, run offline preflight, and
 obtain a new exact live grant before any readiness or model call.
+
+That replacement packet passed all seven readiness gates but the clean model
+control again failed as `worker_output_invalid / outcome_credential_like` after
+both approved source reads. No adversarial model case ran. Cleanup passed with
+zero active services and no forbidden effect. Freeze
+`tmp/t1-migration-escalation-retry-20260911/` and never reuse its grant. Prompt
+guidance alone is therefore insufficient. The current repair branch is
+`codex/19-negative-status-output`: keep general secret filters unchanged, allow
+only complete closed negative status assignments in final answers, and emit only
+an optional closed credential-label category for private diagnostics. Complete
+full local and exact-head integration gates before preparing another packet.
 
 Historical design pickup:
 Current design pickup: [migration-investigation-v1 demo story](t1-migration-demo-scenario.md).

@@ -79,6 +79,19 @@ tag when both apply. A category identifies a failed predicate, not its underlyin
 cause, and does not reconstruct the historical response. The strict validators,
 public failure, mission prompt and final-only continuation remain unchanged.
 
+September 11 clean-control correction: two independently bound migration packets
+completed both approved research reads, then rejected the final answer as
+`outcome_credential_like`. The raw provider answer is deliberately not retained,
+so its exact text remains unknown. Prompt guidance alone did not change the second
+result. Final-response validation therefore distinguishes a closed set of complete
+negative status assignments, such as `authorization: not granted`, from credential
+values. The exemption must end at punctuation, a line boundary or the end of the
+answer; added trailing data keeps the whole assignment rejected. High-confidence
+GitHub, AWS and private-key forms remain rejected, and the general mission, query,
+path and tool-request filters are unchanged. A credential-like projection
+diagnostic may additionally carry only the matched label category from a closed
+enum. It never carries the matched value, surrounding text or schema path.
+
 For bounded continuation, a contract-valid final response must cross a new exact
 completion boundary. The supervisor binds the final turn ID and digest plus a digest
 of its validated result. The authority store atomically appends useful-completion

@@ -4,10 +4,12 @@ import {
   projectManagedDemoNebiusUsageObservation,
   ProviderRequestIdSchema,
   registeredCredentialReference,
+  secretLikeOutcomeMaterialCategory,
   WorkerOutcomeSchema,
   WorkerTurnEnvelopeSchema,
   type GuardianModelPolicy,
   type ManagedDemoNebiusUsageObservation,
+  type SecretLikeMaterialCategory,
   type WorkerProviderDiagnostic,
   type WorkerProjectionRejection,
   type WorkerTurnEnvelope,
@@ -72,7 +74,10 @@ async function boundedProviderJson(response: Response): Promise<unknown> {
 }
 
 class NativeWorkerProjectionError extends NativeWorkerProviderError {
-  constructor(readonly rejection: WorkerProjectionRejection) {
+  constructor(
+    readonly rejection: WorkerProjectionRejection,
+    readonly credentialCategory?: SecretLikeMaterialCategory,
+  ) {
     super();
   }
 }
@@ -127,6 +132,14 @@ export function projectNebiusWorkerResponse(
         : tagged("transport_disallowed")
           ? "outcome_transport_disallowed"
           : "outcome_schema_invalid",
+      tagged("credential_like") &&
+        typeof content === "object" &&
+        content !== null &&
+        !Array.isArray(content) &&
+        "response" in content &&
+        typeof content.response === "string"
+        ? (secretLikeOutcomeMaterialCategory(content.response) ?? undefined)
+        : undefined,
     );
   }
   return { requestId: requestId.data, outcome: outcome.data };
@@ -462,6 +475,10 @@ export class NebiusNativeWorkerProvider {
               kind: "worker_output_invalid",
               ...(error instanceof NativeWorkerProjectionError
                 ? { rejection: error.rejection }
+                : {}),
+              ...(error instanceof NativeWorkerProjectionError &&
+              error.credentialCategory !== undefined
+                ? { credentialCategory: error.credentialCategory }
                 : {}),
             });
             throw new NativeWorkerProviderError();

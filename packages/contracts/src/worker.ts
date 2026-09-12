@@ -3,13 +3,17 @@ import { z } from "zod";
 import {
   addDuplicateIssue,
   boundedCredentialSafeText,
+  boundedVisibleText,
   containsSecretLikeMaterial,
+  containsSecretLikeOutcomeMaterial,
   ContractVersionSchema,
   type DeepReadonly,
   OpaqueIdSchema,
+  SecretLikeMaterialCategorySchema,
   Sha256DigestSchema,
   TimestampSchema,
   VersionNumberSchema,
+  withoutExplicitlySafeCredentialStatuses,
 } from "./common.js";
 import {
   LocalCommandRequestSchema,
@@ -168,26 +172,34 @@ export const WorkerOutcomeSchema = z
   .discriminatedUnion("kind", [
     z.strictObject({
       kind: z.literal("final_response"),
-      response: boundedCredentialSafeText(8_000),
+      response: boundedVisibleText(8_000),
     }),
     z.strictObject({
       kind: z.literal("tool_request"),
       request: WorkerToolRequestSchema,
     }),
   ])
-  .refine((outcome) => !containsCredentialLikeValue(outcome), {
-    message: "worker outcome cannot contain credential-like material",
-    params: { workerRejection: "credential_like" },
-  })
   .refine(
     (outcome) =>
-      !containsArbitraryTransportValue(
-        outcome.kind === "tool_request" &&
-          outcome.request.name === "guardian.research" &&
-          "sourceUrl" in outcome.request.arguments
-          ? { ...outcome, request: { ...outcome.request, arguments: {} } }
-          : outcome,
-      ),
+      outcome.kind === "final_response"
+        ? !containsSecretLikeOutcomeMaterial(outcome.response)
+        : !containsCredentialLikeValue(outcome),
+    {
+      message: "worker outcome cannot contain credential-like material",
+      params: { workerRejection: "credential_like" },
+    },
+  )
+  .refine(
+    (outcome) =>
+      outcome.kind === "final_response"
+        ? !containsArbitraryTransportValue(
+            withoutExplicitlySafeCredentialStatuses(outcome.response),
+          )
+        : !containsArbitraryTransportValue(
+            outcome.request.name === "guardian.research" && "sourceUrl" in outcome.request.arguments
+              ? { ...outcome, request: { ...outcome.request, arguments: {} } }
+              : outcome,
+          ),
     {
       message: "worker outcome cannot contain arbitrary URLs or headers",
       params: { workerRejection: "transport_disallowed" },
@@ -636,19 +648,34 @@ export const WorkerProjectionRejectionSchema = z.enum([
 ]);
 export type WorkerProjectionRejection = z.infer<typeof WorkerProjectionRejectionSchema>;
 
-export const WorkerProviderDiagnosticSchema = z.discriminatedUnion("kind", [
-  z.strictObject({ kind: z.literal("transport_failure") }),
-  z.strictObject({
-    kind: z.literal("http_error"),
-    status: z.number().int().min(100).max(599),
-  }),
-  z.strictObject({ kind: z.literal("response_envelope_invalid") }),
-  z.strictObject({
-    kind: z.literal("worker_output_invalid"),
-    rejection: WorkerProjectionRejectionSchema.optional(),
-  }),
-  z.strictObject({ kind: z.literal("credential_or_internal_failure") }),
-]);
+export const WorkerProviderDiagnosticSchema = z
+  .discriminatedUnion("kind", [
+    z.strictObject({ kind: z.literal("transport_failure") }),
+    z.strictObject({
+      kind: z.literal("http_error"),
+      status: z.number().int().min(100).max(599),
+    }),
+    z.strictObject({ kind: z.literal("response_envelope_invalid") }),
+    z.strictObject({
+      kind: z.literal("worker_output_invalid"),
+      rejection: WorkerProjectionRejectionSchema.optional(),
+      credentialCategory: SecretLikeMaterialCategorySchema.optional(),
+    }),
+    z.strictObject({ kind: z.literal("credential_or_internal_failure") }),
+  ])
+  .superRefine((diagnostic, context) => {
+    if (
+      diagnostic.kind === "worker_output_invalid" &&
+      diagnostic.credentialCategory !== undefined &&
+      diagnostic.rejection !== "outcome_credential_like"
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "credential category requires a credential-like outcome rejection",
+        path: ["credentialCategory"],
+      });
+    }
+  });
 export type WorkerProviderDiagnostic = DeepReadonly<z.infer<typeof WorkerProviderDiagnosticSchema>>;
 
 export const WorkerTurnIpcRequestSchema = z.strictObject({

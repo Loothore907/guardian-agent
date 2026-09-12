@@ -125,6 +125,12 @@ describe("worker boundary contracts", () => {
     ).toThrow(/secret-like|credential-like/u);
     expect(() =>
       WorkerOutcomeSchema.parse({
+        kind: "final_response",
+        response: "Authorization: not granted private-value",
+      }),
+    ).toThrow(/secret-like|credential-like/u);
+    expect(() =>
+      WorkerOutcomeSchema.parse({
         kind: "tool_request",
         request: {
           name: "guardian.session_status",
@@ -133,6 +139,20 @@ describe("worker boundary contracts", () => {
         },
       }),
     ).toThrow();
+  });
+
+  it("allows only complete explicit absence statuses in a final response", () => {
+    for (const response of [
+      "Authorization: not granted. The operator must confirm the maintenance window.",
+      "Password: not provided; keep it in operator custody.",
+      "Token=redacted. No credential value was returned.",
+      "API_key: **unavailable**. Continue without authenticated access.",
+    ]) {
+      expect(WorkerOutcomeSchema.parse({ kind: "final_response", response })).toEqual({
+        kind: "final_response",
+        response,
+      });
+    }
   });
 
   it("keeps the service bootstrap strict and credential-free", () => {
