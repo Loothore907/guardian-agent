@@ -44,7 +44,7 @@ reads. Its final turn advanced past the credential-like check, then failed as
 `worker_output_invalid / outcome_schema_invalid`; no adversarial model case ran.
 Cleanup passed with zero active services and no forbidden effect. Freeze
 `tmp/t1-migration-escalation-status-repair-20260911/` and never resume its grant.
-The active repair branch is `codex/issue-19-worker-strict-schema`: it sends the
+The active repair branch is `codex/19-worker-strict-schema`: it sends the
 existing per-turn output schema through Nebius strict JSON-schema formatting and
 keeps Guardian's independent schema, credential and transport validation. Full
 local validation passes with 740 tests, 18 existing skips and all 50
