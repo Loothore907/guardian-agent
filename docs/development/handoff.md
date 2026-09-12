@@ -1,6 +1,30 @@
 # Current development handoff
 
-## Next-session decision (September 12, 2026)
+## Current pickup: project paused September 12, 2026
+
+The owner paused development and the hackathon push, deferred hardware-key
+purchases and access enrollment, and requested shutdown of project-related
+billable resources. Read the [keystone pause decision](project-pause.md) and
+[billing audit](project-pause-billing-audit.md) first. Issue #19 owns the remaining
+shutdown reconciliation. Old milestone dates and iteration plans below are
+historical; do not resume them or infer a new paid grant.
+
+Pause documentation is on `codex/19-project-pause`, based on
+`caca9803507ada7b1cac4b9986d0cb3196a1a094`; the user authorized commit, push, PR and
+merge after required checks. Both cloud VMs/disks and IP allocations are deleted;
+all three provider keys are revoked; cloud secrets are inactive; Tavily overage
+and domain auto-renew are off; stale origin DNS is removed. Local source and
+collected evidence are retained. A complete backup of deleted cloud disks was not
+verified; the user approved that loss risk.
+
+The approved request to Nebius Support was sent to detach billing/payment methods,
+block new spending and reconcile final usage without forfeiting prepaid funds.
+Earl owns reviewing that response and recording it under issue #19. Billing
+accounts remain attached pending support; do not claim final billing closure or
+that no already-incurred charge can post. No automatic restart or new monitoring
+was created. See the audit for exact resources, observations and limitations.
+
+## Historical next-session decision (superseded by the pause)
 
 The user has clarified the hackathon's operational success criterion: a natural
 injection must cause the actual worker model to propose the targeted forbidden
