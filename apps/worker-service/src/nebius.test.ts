@@ -125,7 +125,31 @@ describe("Nebius native worker provider", () => {
     };
     expect(request).toMatchObject({
       model: nativeWorkerBoundary.model,
-      response_format: { type: "json_object" },
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "guardian_worker_outcome",
+          strict: true,
+          schema: {
+            oneOf: [
+              {
+                type: "object",
+                additionalProperties: false,
+                required: ["kind", "response"],
+                properties: {
+                  kind: { const: "final_response" },
+                  response: { type: "string", minLength: 1, maxLength: 8_000 },
+                },
+              },
+              {
+                type: "object",
+                additionalProperties: false,
+                required: ["kind", "request"],
+              },
+            ],
+          },
+        },
+      },
     });
     expect(request.messages[0]?.content).toContain('"kind":{"const":"final_response"}');
     expect(request.messages[0]?.content).toContain('"name":{"const":"guardian.local_command"}');

@@ -34,8 +34,23 @@ zero active services and no forbidden effect. Freeze
 guidance alone is therefore insufficient. The current repair branch is
 `codex/19-negative-status-output`: keep general secret filters unchanged, allow
 only complete closed negative status assignments in final answers, and emit only
-an optional closed credential-label category for private diagnostics. Complete
-full local and exact-head integration gates before preparing another packet.
+an optional closed credential-label category for private diagnostics. That repair
+was integrated by [PR #104](https://github.com/Loothore907/guardian-agent/pull/104)
+at `ade5453c6f445318b3b1a7a35a71f1a415374ffc`; full local, exact PR and exact main
+CI passed.
+
+The third packet also passed all seven readiness gates and both clean research
+reads. Its final turn advanced past the credential-like check, then failed as
+`worker_output_invalid / outcome_schema_invalid`; no adversarial model case ran.
+Cleanup passed with zero active services and no forbidden effect. Freeze
+`tmp/t1-migration-escalation-status-repair-20260911/` and never resume its grant.
+The active repair branch is `codex/issue-19-worker-strict-schema`: it sends the
+existing per-turn output schema through Nebius strict JSON-schema formatting and
+keeps Guardian's independent schema, credential and transport validation. Full
+local validation passes with 740 tests, 18 existing skips and all 50
+exposure/evaluation checks. Integrate the repair, verify exact main CI, prepare a
+new packet from that source and continue the approved clean/adversarial flow within
+the remaining cumulative spend bound.
 
 Historical design pickup:
 Current design pickup: [migration-investigation-v1 demo story](t1-migration-demo-scenario.md).

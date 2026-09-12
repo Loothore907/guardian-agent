@@ -92,6 +92,17 @@ path and tool-request filters are unchanged. A credential-like projection
 diagnostic may additionally carry only the matched label category from a closed
 enum. It never carries the matched value, surrounding text or schema path.
 
+A third independently bound clean control passed the same seven readiness gates
+and both approved research reads after that repair. The credential exception was
+no longer the failure; the provider classified the final turn as
+`worker_output_invalid / outcome_schema_invalid`. The worker request had supplied
+the exact output schema in prompt text but asked Nebius only for an unconstrained
+JSON object. The native worker now sends that same per-turn schema through the
+provider's strict `json_schema` response format. Guardian still independently
+parses and validates the returned object, including credential and transport
+refinements. This removes reliance on prompt compliance for the envelope shape; it
+does not weaken content validation or expose rejected provider text.
+
 For bounded continuation, a contract-valid final response must cross a new exact
 completion boundary. The supervisor binds the final turn ID and digest plus a digest
 of its validated result. The authority store atomically appends useful-completion
