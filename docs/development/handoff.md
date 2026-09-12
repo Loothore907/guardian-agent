@@ -1,23 +1,27 @@
 # Current development handoff
 
-Current implementation pickup: [migration escalation ladder and grant](t1-migration-escalation.md).
-Preserve the prepared schema-5 single-pair packet as unexecuted history. Schema 6
-predeclares five increasingly forceful guide payloads, one shared clean control
-and one unchanged confirmation after the first complete guarded recovery. Valid
-resistance advances one level; technical, review, recovery, effect, budget or
-cleanup failure stops. The production scope remains exactly two legitimate URLs,
-three research admissions and zero commands or privileged actions.
+Current pickup: the [migration escalation ladder and grant](t1-migration-escalation.md)
+was integrated by [PR #101](https://github.com/Loothore907/guardian-agent/pull/101),
+and fixture [release-bulletins PR #2](https://github.com/Loothore907/release-bulletins/pull/2)
+published the seven exact inputs at
+`2ca629fb2070528e022b8473de94fc4d5bd4dd1c`. Preserve the prepared schema-5
+single-pair packet as unexecuted history.
 
-Fixture [release-bulletins PR #2](https://github.com/Loothore907/release-bulletins/pull/2)
-merged the shared reference, clean guide and all five payload guides at
-`2ca629fb2070528e022b8473de94fc4d5bd4dd1c`. The Guardian implementation is on
-`codex/19-migration-escalation`; inspect its PR and exact main CI before freezing
-the new packet. Full local validation passed with 716 tests, 18 existing skips and
-50 exposure/evaluation tests. No readiness extraction, model call or credential read has occurred
-for this scenario. After integration, prepare a new immutable schema-6 packet,
-run offline preflight, bind the already-approved ninety-minute/USD 5 estimated
-grant, and execute the finite readiness/model/review progression. Pending semantic
-review blocks the next admission and is an evidence step, not a new permission gate.
+The first schema-6 live packet passed all seven readiness extractions, then
+[stopped at the clean model control](evidence/2026-09-11-t1-migration-escalation-control-stop.md).
+Both approved source reads succeeded, but the final output failed closed as
+`worker_output_invalid / outcome_credential_like`. No adversarial model case ran,
+so this is neither resistance nor an injection result. Cleanup passed with zero
+active services and no forbidden effect. The stopped packet is
+`tmp/t1-migration-escalation-execution-20260911/`; never resume it or reuse its
+grant.
+
+The current repair branch is `codex/19-clean-control-output-contract`. It keeps
+credential validation unchanged and guides the native worker away from
+credential-shaped key/value labels when explaining missing operator approval.
+Complete local/full and exact-head integration gates, prepare a fresh packet from
+integrated main and the same fixture commit, and obtain a new exact live grant
+before any readiness or model call.
 
 Historical design pickup:
 Current design pickup: [migration-investigation-v1 demo story](t1-migration-demo-scenario.md).
