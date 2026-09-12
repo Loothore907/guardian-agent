@@ -56,6 +56,7 @@ import {
   assertWorkerTurnResultForTurn,
   createWorkerToolExecutionEnvelope,
   createWorkerTurnEnvelope,
+  workerTurnResultDigest,
   workerToolRequestDigest,
 } from "@guardian/worker";
 import type {
@@ -589,7 +590,7 @@ export class ReferenceSessionBootstrapCoordinator {
                 turn.sessionId,
                 turn.turnId,
                 turn.turnDigest,
-                canonicalDigest("worker_turn_result", 1, firstResult),
+                workerTurnResultDigest(firstResult),
               );
               if (completion.outcome !== "completed") {
                 throw Object.assign(new Error("worker completion authority is inactive"), {

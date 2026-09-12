@@ -122,6 +122,14 @@ fail closed. Other bounded text fields retain the single-line contract. Replayin
 the captured object through the repaired schema succeeds without altering its
 content.
 
+That schema repair exposed a second multiline boundary: durable completion still
+passed the accepted result directly to the global canonical JSON digest, whose
+string invariant rejects LF. Completion result digests now validate the exact
+worker result, hash final-response UTF-8 bytes with their byte length, and
+canonicalize that fixed projection with the remaining turn binding. The global
+canonical-string rule remains unchanged, while any response-byte change changes
+the durable completion digest.
+
 For bounded continuation, a contract-valid final response must cross a new exact
 completion boundary. The supervisor binds the final turn ID and digest plus a digest
 of its validated result. The authority store atomically appends useful-completion

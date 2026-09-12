@@ -15,6 +15,7 @@ import {
   createWorkerToolExecutionEnvelope,
   createWorkerToolResult,
   createWorkerTurnEnvelope,
+  workerTurnResultDigest,
   workerToolRequestDigest,
 } from "./index.js";
 
@@ -98,6 +99,31 @@ function client(
     ...overrides,
   });
 }
+
+describe("worker result digests", () => {
+  it("binds an exact multiline final response without passing its line feeds to canonical JSON", () => {
+    const exactTurn = turn();
+    const result = {
+      providerRequestId: "multiline_response",
+      turnId: exactTurn.turnId,
+      turnNumber: exactTurn.turnNumber,
+      turnDigest: exactTurn.turnDigest,
+      outcome: {
+        kind: "final_response" as const,
+        response: "Summary\n\n1. First finding\n2. Second finding",
+      },
+    };
+
+    expect(workerTurnResultDigest(result)).toMatch(/^[a-f0-9]{64}$/u);
+    expect(workerTurnResultDigest(result)).toBe(workerTurnResultDigest(structuredClone(result)));
+    expect(
+      workerTurnResultDigest({
+        ...result,
+        outcome: { ...result.outcome, response: `${result.outcome.response}.` },
+      }),
+    ).not.toBe(workerTurnResultDigest(result));
+  });
+});
 
 describe("one-use worker IPC", () => {
   it("allows a response beyond the framing timeout but bounds trickled incomplete requests", async () => {

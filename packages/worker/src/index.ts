@@ -212,6 +212,21 @@ export function assertExactWorkerToolResult(resultValue: unknown): WorkerToolRes
   return result;
 }
 
+export function workerTurnResultDigest(resultValue: unknown): string {
+  const result = WorkerTurnResultSchema.parse(resultValue);
+  const outcome =
+    result.outcome.kind === "final_response"
+      ? {
+          kind: result.outcome.kind,
+          response: {
+            byteLength: Buffer.byteLength(result.outcome.response, "utf8"),
+            sha256: createHash("sha256").update(result.outcome.response, "utf8").digest("hex"),
+          },
+        }
+      : result.outcome;
+  return canonicalDigest("worker.turn_result", 1, { ...result, outcome });
+}
+
 function capabilitiesMatch(actual: string, expected: string): boolean {
   const actualBytes = Buffer.from(actual, "utf8");
   const expectedBytes = Buffer.from(expected, "utf8");
