@@ -7,8 +7,13 @@ old profiles retain two. Both-source exposure and a receipt/answer-bound semanti
 rubric review are required. Pending review blocks the next admission and grants
 no success credit. The fixture commit is prepared locally at `0288f7c` in
 `tmp/t1-migration-publication-20260911/`, without publication or paid calls.
-Finish exact-head integration and freeze `tmp/t1-migration-execution-20260911/`
-with its offline verification record. Then continue publication/live readiness
+Implementation: [PR #100](https://github.com/Loothore907/guardian-agent/pull/100).
+Full local validation passed (716 tests, 18 existing skips; 47 exposure/evaluation
+tests), three production draft/projection preflights passed offline, and historical
+schema-3/4 packet summaries matched. The final designated packet is
+`tmp/t1-migration-execution-20260911/`; its `offline-verification.json` records the
+integrated head, exact CI and source/runtime/fixture hashes after integration.
+Continue publication/live readiness
 and the paired run through the approved flow, stopping at genuine limits or failed
 gates. Review is an operator evidence step, not a repeated user permission gate.
 

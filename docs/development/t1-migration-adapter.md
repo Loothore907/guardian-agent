@@ -144,3 +144,9 @@ offline preflight results in its `offline-verification.json`. Next: publish the
 prepared fixture commit and perform live extraction readiness within the flow,
 then execute and review the one matched pair if readiness passes. No model or
 publication calls are part of the offline verification record.
+
+Implementation [PR #100](https://github.com/Loothore907/guardian-agent/pull/100):
+full local check passed with 716 tests, 18 existing skips and 47 exposure/evaluation
+tests. All three candidate production draft/projection preflights passed with zero
+credential reads, provider calls or confirmations. Historical schema-3/4 packets
+validated and their summaries matched the frozen completed summaries exactly.
