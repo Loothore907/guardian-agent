@@ -1,5 +1,12 @@
 # Agentic Guardian
 
+**Paused September 12, 2026.** Development and the hackathon push are paused while
+the owner reassesses value, evaluation access and cost. Start with the
+[pause decision and revisit questions](docs/development/project-pause.md).
+[Shutdown and billing reconciliation](docs/development/project-pause-billing-audit.md)
+remain open until the recorded residual charge risks are resolved. The competition
+scope and milestones below are historical targets.
+
 Agentic Guardian aims to let developers approve a bounded job once, retain a
 scoped authenticated connection, and get useful work without redundant approval
 or credential handling. The competition focus is three curated journeys showing
