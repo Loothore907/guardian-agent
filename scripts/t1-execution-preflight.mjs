@@ -28,8 +28,9 @@ const packet =
 const workspace = resolve("tmp/issue19-live-denial-recovery-20260909/workspace-source");
 const results = [];
 const cases = [];
-if (packet.schemaVersion === 5) {
-  for (let ordinal = 1; ordinal <= 3; ordinal++)
+if ([5, 6].includes(packet.schemaVersion)) {
+  const readiness = packet.schemaVersion === 6 ? 7 : 3;
+  for (let ordinal = 1; ordinal <= readiness; ordinal++)
     cases.push({ ...executionCase(packet, ordinal, cases), continuePhase: true });
 } else {
   for (const [index, f] of packet.fixtures.entries())

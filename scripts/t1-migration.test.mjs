@@ -24,6 +24,8 @@ import {
   migrationControl,
   migrationAttack,
   migrationFixture,
+  migrationEscalationDefinitions,
+  migrationEscalationPayloads,
   referenceFixture,
   rubric,
   reviewTemplate,
@@ -44,6 +46,12 @@ globalThis.fetch = () => {
 };
 const packet = makePacket({
   schemaVersion: 5,
+  sourceHead: "a".repeat(40),
+  workspaceCommit: "b".repeat(40),
+  fixtureCommit: "c".repeat(40),
+});
+const escalationPacket = makePacket({
+  schemaVersion: 6,
   sourceHead: "a".repeat(40),
   workspaceCommit: "b".repeat(40),
   fixtureCommit: "c".repeat(40),
@@ -104,6 +112,93 @@ test("migration packet freezes one pair, exact two-source identities and narrow 
     ),
     "wrong_target",
   );
+});
+test("migration escalation freezes five payloads and advances only through resistance", () => {
+  validatePacket(escalationPacket, true);
+  assert.deepEqual(phaseLayout(escalationPacket), {
+    readiness: 7,
+    discoveryEnd: 13,
+    evaluationStart: 14,
+    total: 14,
+  });
+  assert.equal(escalationPacket.fixtures.length, 5);
+  assert.equal(escalationPacket.limits.modelSessions, 7);
+  assert.equal(escalationPacket.limits.workerCalls, 56);
+  assert.equal(escalationPacket.limits.extractionAttempts, 28);
+  assert.equal(escalationPacket.limits.totalSeconds, 5400);
+  assert.equal(escalationPacket.limits.estimatedUsd, 5);
+  assert.equal(new Set(escalationPacket.fixtures.map((f) => f.injectionUrl)).size, 5);
+  assert(escalationPacket.fixtures.every((f) => f.controlUrl === escalationPacket.fixtures[0].controlUrl));
+
+  const rows = [];
+  for (let ordinal = 1; ordinal <= 8; ordinal++)
+    rows.push({ ...executionCase(escalationPacket, ordinal, rows), continuePhase: true });
+  assert.deepEqual(
+    rows.map((row) => [row.phase, row.injection, row.confirmation]),
+    [
+      ["readiness", false, false],
+      ["readiness", false, false],
+      ["readiness", true, false],
+      ["readiness", true, false],
+      ["readiness", true, false],
+      ["readiness", true, false],
+      ["readiness", true, false],
+      ["discovery", false, false],
+    ],
+  );
+  rows.push({
+    ...executionCase(escalationPacket, 9, rows),
+    continuePhase: true,
+    result: { complete: false },
+  });
+  assert.equal(executionCase(escalationPacket, 10, rows).family, escalationPacket.fixtures[1].id);
+  rows.push({
+    ...executionCase(escalationPacket, 10, rows),
+    continuePhase: true,
+    result: { complete: true },
+  });
+  const confirmation = executionCase(escalationPacket, 11, rows);
+  assert(confirmation.confirmation);
+  assert.equal(confirmation.family, escalationPacket.fixtures[1].id);
+  rows.push({ ...confirmation, continuePhase: true, result: { complete: true } });
+  assert.throws(() => executionCase(escalationPacket, 12, rows), /escalation is complete/);
+
+  const resisted = [];
+  for (let ordinal = 1; ordinal <= 8; ordinal++)
+    resisted.push({ ...executionCase(escalationPacket, ordinal, resisted), continuePhase: true });
+  for (let ordinal = 9; ordinal <= 13; ordinal++)
+    resisted.push({
+      ...executionCase(escalationPacket, ordinal, resisted),
+      continuePhase: true,
+      result: { complete: false },
+    });
+  assert.throws(
+    () => executionCase(escalationPacket, 14, resisted),
+    /all escalation levels are complete/,
+  );
+});
+test("migration escalation fixtures remain matched, bounded and projection-complete", async () => {
+  assert.equal(migrationEscalationDefinitions.length, migrationEscalationPayloads.length);
+  for (const [index, definition] of migrationEscalationDefinitions.entries()) {
+    const attackParagraph = `<p>${migrationEscalationPayloads[index].prefix} ${outsideUrl}. ${migrationEscalationPayloads[index].override}</p>`;
+    assert.equal(definition.injection.replace(attackParagraph, ""), migrationControl);
+    assert(Buffer.byteLength(definition.injection) <= 1000);
+    const predecessors = [];
+    for (let ordinal = 1; ordinal <= index + 3; ordinal++)
+      predecessors.push({
+        ...executionCase(escalationPacket, ordinal, predecessors),
+        continuePhase: true,
+      });
+    const c = predecessors.at(-1);
+    const result = await replayExposure(
+      definition.injection,
+      c.sourceUrl,
+      fixtureForCase(escalationPacket, c),
+      scopeForCase(escalationPacket, c),
+    );
+    assert(result.worker.facts && result.worker.instruction);
+    assert.equal(result.worker.sha256, result.sanitized.sha256);
+  }
 });
 test("authored fixtures match the scenario and preserve repair facts through production projections", async () => {
   const doc = await readFile(

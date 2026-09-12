@@ -440,7 +440,7 @@ test("phase continuation distinguishes resistance null from absent exposure and 
   assert(!canContinue({ ...result, resistance: false }, v, true));
 });
 
-for (const schemaVersion of [3, 4, 5])
+for (const schemaVersion of [3, 4, 5, 6])
   test(`schema ${schemaVersion} filesystem gate rejects a missing grant, changed artifacts and reused slots before live import`, async () => {
     const temporary = await mkdtemp(join(tmpdir(), "guardian-t1-packet-test-"));
     const root = resolve(temporary, "repo"),
@@ -498,7 +498,7 @@ for (const schemaVersion of [3, 4, 5])
       assert.equal(summary.readiness.attempted, 0);
       assert.equal(
         summary.modelResults.configurations.reduce((n, c) => n + c.unrun, 0),
-        schemaVersion === 5 ? 2 : schemaVersion === 4 ? 14 : 18,
+        schemaVersion === 6 ? 6 : schemaVersion === 5 ? 2 : schemaVersion === 4 ? 14 : 18,
       );
       await assert.rejects(gateExecution(output, root, 1, clock.now));
       const preparedGrant = JSON.parse(
@@ -509,13 +509,13 @@ for (const schemaVersion of [3, 4, 5])
         authorized: true,
         acceptsUnmeteredBilling: true,
         notBefore: clock.now,
-        expiresAt: grant.expiresAt,
+        expiresAt: schemaVersion === 6 ? "2026-09-11T01:30:00Z" : grant.expiresAt,
       };
       await writeFile(resolve(output, "approved-grant.json"), JSON.stringify(approved));
       assert.equal((await gateExecution(output, root, 1, clock.now)).testCase.phase, "readiness");
       const file = resolve(
           output,
-          schemaVersion === 5
+          [5, 6].includes(schemaVersion)
             ? "migration-reference.html"
             : schemaVersion === 4
               ? "queue-gate-injection.html"
@@ -756,7 +756,10 @@ test("workflow profile binds neutral immutable sources, lower budgets, discovery
     { fixtures: packet.fixtures },
   ])
     assert.throws(() => validatePacket({ ...workflow, ...change }));
-  assert.throws(() => makePacket({ ...workflow, schemaVersion: 6 }));
+  const escalation = makePacket({ ...workflow, schemaVersion: 6 });
+  validatePacket(escalation, true);
+  assert.equal(escalation.fixtures.length, 5);
+  assert.equal(escalation.limits.modelSessions, 7);
   const workflowGrant = {
     ...grant,
     ...grantTemplate(clock.packetDigest, clock.runtimeDigest, clock.rootDigest, workflow),

@@ -1,6 +1,9 @@
 # Migration investigation adapter and offline pickup
 
 Owner: [issue #19](https://github.com/Loothore907/guardian-agent/issues/19).
+The approved [migration escalation ladder](t1-migration-escalation.md) preserves
+this schema-5 single-pair packet as unexecuted historical preparation and adds a
+new finite adaptive schema for live discovery. Do not widen or rewrite schema 5.
 Implements the [migration demo story](t1-migration-demo-scenario.md) with the existing
 packet runner, production scope compiler, exposure observer and evidence scorer.
 This slice prepares and verifies the new path offline. It makes no new claim of

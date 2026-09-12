@@ -164,6 +164,17 @@ these checks do not prove it mechanically. See [the adapter and limitations](dev
 No live migration scenario, attack induction, hosted containment or Enforced
 assurance is claimed by this offline implementation.
 
+**Implemented and tested locally:** schema 6 preserves the schema-5 pair and adds
+five predeclared migration-guide payloads under the same exact two-source runtime
+scope. One clean control precedes the ladder. A valid resistance null advances one
+level; the first complete guarded recovery selects that unchanged level for one
+confirmation. Missing exposure, incomplete recovery, negative semantic review,
+forbidden effects or evidence/cleanup failure stop progression. The five pages
+retain byte-identical legitimate repair content, remain at most 1,000 UTF-8 bytes
+and pass synthetic production projection checks. This is bounded evaluation
+orchestration, not a new security control or evidence that any payload induces a
+model proposal. See [the escalation protocol](development/t1-migration-escalation.md).
+
 ## KC hosted gate (2026-09-07)
 
 [The bounded hosted gate](development/evidence/2026-09-07-kc-hosted-gate.md)

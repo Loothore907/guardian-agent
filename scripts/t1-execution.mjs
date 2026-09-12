@@ -97,19 +97,22 @@ export async function preparePacket(root, projectRoot, fixtureCommit = null, sch
     for (const kind of ["control", "injection"])
       await writeFile(resolve(root, `${f.id}-${kind}.html`), f[kind], { flag: "wx" });
   const publication =
-    schemaVersion === 5
+    [5, 6].includes(schemaVersion)
       ? resolve(root, "publication", "migration")
       : schemaVersion === 4
         ? resolve(root, "publication", "release")
         : resolve(root, "publication", "fixtures", "t1-matrix-v1");
   await mkdir(publication, { recursive: true });
-  if (schemaVersion === 5) {
+  if ([5, 6].includes(schemaVersion)) {
     await writeFile(resolve(root, packet.reference.file), migrationReference, { flag: "wx" });
-    for (const [number, content] of [
+    const files = [
       [11, migrationReference],
       [24, definitions[0].control],
-      [25, definitions[0].injection],
-    ])
+      ...(schemaVersion === 6
+        ? definitions.map((definition, index) => [25 + index, definition.injection])
+        : [[25, definitions[0].injection]]),
+    ];
+    for (const [number, content] of files)
       await writeFile(resolve(publication, `reference-${number}.html`), content, { flag: "wx" });
   } else if (schemaVersion === 4) {
     await writeFile(
@@ -132,8 +135,8 @@ export async function preparePacket(root, projectRoot, fixtureCommit = null, sch
   );
   return {
     sourceHead: packet.sourceHead,
-    fixtures: schemaVersion === 5 ? 3 : definitions.length * 2,
-    publicationFiles: schemaVersion === 5 ? 3 : 5,
+    fixtures: schemaVersion === 6 ? 7 : schemaVersion === 5 ? 3 : definitions.length * 2,
+    publicationFiles: schemaVersion === 6 ? 7 : schemaVersion === 5 ? 3 : 5,
     credentialReads: 0,
     providerCalls: 0,
     liveReady: false,
@@ -173,7 +176,7 @@ export async function gateExecution(
   for (const f of packet.fixtures)
     for (const kind of ["control", "injection"])
       assert.equal(sha256(await boundedRead(resolve(root, f[`${kind}File`]))), f[`${kind}Sha256`]);
-  if (packet.schemaVersion === 5)
+  if ([5, 6].includes(packet.schemaVersion))
     assert.equal(
       sha256(await boundedRead(resolve(root, packet.reference.file))),
       packet.reference.sha256,
@@ -184,7 +187,11 @@ export async function gateExecution(
     ordinal - (reviewing ? 0 : 1),
     "case already used or predecessor missing",
   );
-  if (reviewing) assert(packet.schemaVersion === 5 && ordinal >= 4 && ordinal <= 5);
+  if (reviewing)
+    assert(
+      [5, 6].includes(packet.schemaVersion) && ordinal > phaseLayout(packet).readiness,
+      "review is outside a migration model case",
+    );
   const receipts = [];
   for (let n = 1; n < ordinal; n++) {
     const path = resolve(root, `case-${String(n).padStart(2, "0")}`);
@@ -201,7 +208,7 @@ export async function gateExecution(
       "clock moved behind predecessor",
     );
     assert.equal(record.receiptSha256, sha256(await boundedRead(resolve(path, "receipt.json"))));
-    if (packet.schemaVersion === 5 && record.phase !== "readiness")
+    if ([5, 6].includes(packet.schemaVersion) && record.phase !== "readiness")
       assert.equal(
         record.reviewSha256,
         sha256(await boundedRead(resolve(path, "answer-review.json"))),
@@ -212,7 +219,7 @@ export async function gateExecution(
   }
   const testCase = executionCase(packet, ordinal, receipts);
   const { discoveryEnd, evaluationStart } = phaseLayout(packet);
-  if (ordinal > evaluationStart)
+  if (packet.schemaVersion !== 6 && ordinal > evaluationStart)
     assert.deepEqual(
       await load(resolve(root, "evaluation-selection.json")),
       {
@@ -262,7 +269,7 @@ export async function runCase(root, projectRoot, ordinal) {
     batchStartedAt: gate.startedAt,
     predecessorSha256: receipts.length === 0 ? null : sha256(json(receipts.at(-1))),
   };
-  if (ordinal === phaseLayout(packet).evaluationStart)
+  if (packet.schemaVersion !== 6 && ordinal === phaseLayout(packet).evaluationStart)
     await writeFile(
       resolve(root, "evaluation-selection.json"),
       json({
@@ -325,7 +332,7 @@ export async function runCase(root, projectRoot, ordinal) {
     receiptSha256: sha256(json(receipt)),
   };
   if (
-    packet.schemaVersion === 5 &&
+    [5, 6].includes(packet.schemaVersion) &&
     testCase.phase !== "readiness" &&
     receipt.failure === undefined &&
     receipt.finalResponse?.sha256
@@ -397,6 +404,124 @@ export async function summarizePacket(root) {
     if (record !== null) records.set(n, record);
   }
   const { readiness, discoveryEnd, evaluationStart, total } = phaseLayout(packet);
+  if (packet.schemaVersion === 6) {
+    const placeholder = (testCase, attempted, id = String(testCase.ordinal)) => ({
+      schemaVersion: 2,
+      id,
+      configuration: `${packetDigest}:discovery:${testCase.family}`,
+      flow: "natural",
+      attempted,
+      injection: testCase.injection,
+      valid: false,
+      exposed: false,
+      usefulAnswer: false,
+      durablyCompleted: false,
+      neutralAuthority: false,
+      sameSession: false,
+      classifiedFeedback: false,
+      noRetry: false,
+      budgetVerified: false,
+      auditVerified: false,
+      effectsVerified: false,
+      cleanupVerified: false,
+      proposals: [],
+      failures: attempted ? ["missing_evidence"] : [],
+    });
+    const modelCases = [];
+    const runs = [];
+    for (const ordinal of [...used].filter((n) => n > readiness).sort((a, b) => a - b)) {
+      const record = records.get(ordinal);
+      if (record?.evidence) {
+        modelCases.push(record);
+        runs.push(record.evidence);
+      } else {
+        const predecessors = Array.from({ length: ordinal - 1 }, (_, i) => records.get(i + 1));
+        if (predecessors.every(Boolean)) {
+          const testCase = executionCase(packet, ordinal, predecessors);
+          modelCases.push(testCase);
+          runs.push(placeholder(testCase, true));
+        }
+      }
+    }
+    if (!used.has(readiness + 1)) {
+      runs.push(
+        placeholder(
+          {
+            ordinal: readiness + 1,
+            family: packet.fixtures[0].id,
+            injection: false,
+          },
+          false,
+        ),
+      );
+    }
+    for (const [index, fixture] of packet.fixtures.entries())
+      if (!modelCases.some((testCase) => testCase.injection && !testCase.confirmation && testCase.family === fixture.id))
+        runs.push(
+          placeholder(
+            {
+              ordinal: readiness + 2 + index,
+              family: fixture.id,
+              injection: true,
+            },
+            false,
+            `unrun-level-${index + 1}`,
+          ),
+        );
+    const selectedRecord = modelCases.find(
+      (record) => !record.confirmation && record.injection && record.result?.complete === true,
+    );
+    const confirmationRecord = modelCases.find((record) => record.confirmation);
+    if (selectedRecord && !confirmationRecord)
+      runs.push(
+        placeholder(
+          {
+            ordinal: Math.min(total, (modelCases.at(-1)?.ordinal ?? readiness + 1) + 1),
+            family: selectedRecord.family,
+            injection: true,
+          },
+          false,
+          "confirmation-unrun",
+        ),
+      );
+    const attemptedLevels = new Set(
+      modelCases
+        .filter((record) => record.injection && !record.confirmation)
+        .map((record) => record.family),
+    );
+    const finalizedLevels = new Set(
+      modelCases
+        .filter(
+          (record) =>
+            record.injection && !record.confirmation && record.result !== undefined,
+        )
+        .map((record) => record.family),
+    );
+    return {
+      schemaVersion: packet.schemaVersion,
+      pendingReview: [...used].filter((n) => n > readiness && !records.has(n)),
+      readiness: {
+        attempted: [...used].filter((n) => n <= readiness).length,
+        verified: [...records.values()].filter(
+          (record) => record.phase === "readiness" && record.continuePhase,
+        ).length,
+        planned: readiness,
+      },
+      escalation: {
+        attemptedLevels: attemptedLevels.size,
+        plannedLevels: packet.fixtures.length,
+        selectedFamily: selectedRecord?.family ?? null,
+        confirmationAttempted: confirmationRecord !== undefined,
+        progressionComplete:
+          confirmationRecord?.result !== undefined || finalizedLevels.size === packet.fixtures.length,
+      },
+      selectedFamily: selectedRecord?.family ?? null,
+      modelResults: aggregateRuns(runs),
+      evaluationQuotaMet:
+        selectedRecord?.result?.complete === true && confirmationRecord?.result?.complete === true,
+      billedUsd: null,
+    };
+  }
   const completeDiscovery = Array.from({ length: discoveryEnd }, (_, i) => records.get(i + 1));
   const selected = completeDiscovery.every((r) => r?.continuePhase)
     ? selectFamily(completeDiscovery, packet)
@@ -441,7 +566,7 @@ export async function summarizePacket(root) {
   }
   return {
     schemaVersion: packet.schemaVersion,
-    ...(packet.schemaVersion === 5
+    ...([5, 6].includes(packet.schemaVersion)
       ? { pendingReview: [...used].filter((n) => n >= 4 && !records.has(n)) }
       : {}),
     readiness: {
@@ -465,20 +590,36 @@ export async function main(args = process.argv.slice(2)) {
   assert(
     directory &&
       args.length <= 3 &&
-      ["prepare", "prepare-workflow", "prepare-migration", "run", "review", "summary"].includes(
+      [
+        "prepare",
+        "prepare-workflow",
+        "prepare-migration",
+        "prepare-migration-escalation",
+        "run",
+        "review",
+        "summary",
+      ].includes(
         command,
       ),
-    "usage: prepare|prepare-workflow|prepare-migration DIRECTORY [FIXTURE_COMMIT] | run|review DIRECTORY ORDINAL | summary DIRECTORY",
+    "usage: prepare|prepare-workflow|prepare-migration|prepare-migration-escalation DIRECTORY [FIXTURE_COMMIT] | run|review DIRECTORY ORDINAL | summary DIRECTORY",
   );
   const root = resolve(directory),
     projectRoot = process.cwd();
   const result =
-    command === "prepare" || command === "prepare-workflow" || command === "prepare-migration"
+    ["prepare", "prepare-workflow", "prepare-migration", "prepare-migration-escalation"].includes(
+      command,
+    )
       ? await preparePacket(
           root,
           projectRoot,
           value ?? null,
-          command === "prepare-migration" ? 5 : command === "prepare-workflow" ? 4 : 3,
+          command === "prepare-migration-escalation"
+            ? 6
+            : command === "prepare-migration"
+              ? 5
+              : command === "prepare-workflow"
+                ? 4
+                : 3,
         )
       : command === "summary"
         ? await summarizePacket(root)
