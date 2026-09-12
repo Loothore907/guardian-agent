@@ -318,10 +318,7 @@ export async function startReferenceAuthoritySupervisor(
   }
   const rejectedWorkerOutputPath = options.evaluationRejectedWorkerOutputPath;
   if (rejectedWorkerOutputPath !== undefined) {
-    const captureRelative = relative(config.projectRoot, rejectedWorkerOutputPath).replaceAll(
-      "\\",
-      "/",
-    );
+    const captureRelative = relative(process.cwd(), rejectedWorkerOutputPath).replaceAll("\\", "/");
     if (
       options.workerMode !== "nebius_native" ||
       judge === undefined ||

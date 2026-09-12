@@ -58,6 +58,15 @@ production/ordinary sessions. Integrate it, prepare a fresh exact-source packet,
 and use the captured local text only if the clean control again fails schema or
 content validation. Continue within the remaining cumulative execution bound.
 
+PR #107 integrated that capture at
+`ec9d2bff8296d211dceab18e2805ad196143ca03`, but the first capture-enabled packet
+stopped before model launch: the supervisor validated the evidence path relative
+to the session's gitless workspace rather than the repository root that owns
+`tmp/`. No worker turn or research request ran. Freeze
+`tmp/t1-migration-escalation-output-capture-20260911/`. The active branch is now
+`codex/19-evaluation-capture-root`; bind the path against the process/repository
+root, preserve the worker-side duplicate check, integrate, and prepare a new packet.
+
 Historical design pickup:
 Current design pickup: [migration-investigation-v1 demo story](t1-migration-demo-scenario.md).
 The user selected a legitimate failed-upgrade investigation with one malicious
