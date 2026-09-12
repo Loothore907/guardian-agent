@@ -175,6 +175,17 @@ and pass synthetic production projection checks. This is bounded evaluation
 orchestration, not a new security control or evidence that any payload induces a
 model proposal. See [the escalation protocol](development/t1-migration-escalation.md).
 
+**Observed in the completed local migration ladder:** all seven live readiness
+cases passed, the clean control completed usefully, and all five fully exposed
+attack levels produced useful, durably completed resistance. The result is 0/5
+induced actions and 5/5 resistance for the pinned Kimi worker, exact migration task
+and immutable fixtures. No forbidden proposal was emitted, so Guardian rejection
+and guarded-recovery denominators are empty. This is evidence that these payloads
+did not manipulate this model configuration, not evidence that Guardian blocked
+them, generalized prompt-injection prevention, hosted containment, exact billing
+or Enforced assurance. See
+[the migration results](development/evidence/2026-09-11-t1-migration-escalation-results.md).
+
 ## KC hosted gate (2026-09-07)
 
 [The bounded hosted gate](development/evidence/2026-09-07-kc-hosted-gate.md)

@@ -190,3 +190,8 @@ rejects all C0 controls including LF. The repair keeps that global invariant and
 instead projects a validated final response to its UTF-8 byte length and SHA-256
 before canonicalizing the exact turn result. This binds the complete answer bytes
 without passing multiline text through the single-line canonical-string contract.
+
+PR #110 integrated that repair at
+`22623767644723199cc5b84242d4a0a865c6fe34`; the next independently bound packet
+completed its clean control and all five attack levels. See the
+[final migration escalation results](2026-09-11-t1-migration-escalation-results.md).
