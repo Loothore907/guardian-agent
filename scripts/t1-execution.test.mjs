@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { randomUUID } from "node:crypto";
+import { DatabaseSync } from "node:sqlite";
+import { migrationTrace } from "./t1-migration-test-fixture.mjs";
+import { reviewTemplate, rubric } from "./t1-migration-scenario.mjs";
 import {
   WorkerTurnResultSchema,
   CredentialStoreResearchServiceProcessConfigSchema,
@@ -24,7 +27,13 @@ import { attackMatrix } from "./t1-attack-matrix.mjs";
 import { workerToolRequestDigest } from "../packages/worker/dist/index.js";
 import { observeExposure } from "./research-exposure.mjs";
 import { sha256, objective } from "./t1-execution-packet.mjs";
-import { gateExecution, preparePacket, summarizePacket } from "./t1-execution.mjs";
+import {
+  gateExecution,
+  preparePacket,
+  summarizePacket,
+  finalizeReview,
+  runCase,
+} from "./t1-execution.mjs";
 import { mkdtemp, mkdir, readFile, writeFile, rm } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
@@ -431,7 +440,7 @@ test("phase continuation distinguishes resistance null from absent exposure and 
   assert(!canContinue({ ...result, resistance: false }, v, true));
 });
 
-for (const schemaVersion of [3, 4])
+for (const schemaVersion of [3, 4, 5])
   test(`schema ${schemaVersion} filesystem gate rejects a missing grant, changed artifacts and reused slots before live import`, async () => {
     const temporary = await mkdtemp(join(tmpdir(), "guardian-t1-packet-test-"));
     const root = resolve(temporary, "repo"),
@@ -465,6 +474,7 @@ for (const schemaVersion of [3, 4])
         "t1-execution-packet.mjs",
         "t1-evaluation-shared.mjs",
         "t1-workflow-scenario.mjs",
+        "t1-migration-scenario.mjs",
         "t1-execution-live.mjs",
         "t1-execution-evidence.mjs",
         "t1-execution-observer.mjs",
@@ -488,7 +498,7 @@ for (const schemaVersion of [3, 4])
       assert.equal(summary.readiness.attempted, 0);
       assert.equal(
         summary.modelResults.configurations.reduce((n, c) => n + c.unrun, 0),
-        schemaVersion === 4 ? 14 : 18,
+        schemaVersion === 5 ? 2 : schemaVersion === 4 ? 14 : 18,
       );
       await assert.rejects(gateExecution(output, root, 1, clock.now));
       const preparedGrant = JSON.parse(
@@ -505,7 +515,11 @@ for (const schemaVersion of [3, 4])
       assert.equal((await gateExecution(output, root, 1, clock.now)).testCase.phase, "readiness");
       const file = resolve(
           output,
-          schemaVersion === 4 ? "queue-gate-injection.html" : "direct-override-injection.html",
+          schemaVersion === 5
+            ? "migration-reference.html"
+            : schemaVersion === 4
+              ? "queue-gate-injection.html"
+              : "direct-override-injection.html",
         ),
         original = await readFile(file);
       await writeFile(file, "changed");
@@ -514,6 +528,138 @@ for (const schemaVersion of [3, 4])
       await writeFile(built, "changed");
       await assert.rejects(gateExecution(output, root, 1, clock.now));
       await writeFile(built, "export {};\n");
+      if (schemaVersion === 5) {
+        const p = JSON.parse(await readFile(resolve(output, "packet.json"), "utf8"));
+        const predecessors = [];
+        for (let ordinal = 1; ordinal <= 4; ordinal++) {
+          const directory = resolve(output, `case-${String(ordinal).padStart(2, "0")}`);
+          await mkdir(directory);
+          const record = {
+            ...executionCase(p, ordinal, predecessors),
+            packetSha256: approved.packetSha256,
+            grantSha256: sha256(JSON.stringify(approved)),
+            sourceHead: p.sourceHead,
+            startedAt: clock.now,
+            completedAt: clock.now,
+            batchStartedAt: clock.now,
+            predecessorSha256:
+              ordinal === 1 ? null : sha256(JSON.stringify(predecessors.at(-1), null, 2) + "\n"),
+            continuePhase: ordinal < 4,
+          };
+          const bytes = JSON.stringify(record);
+          await writeFile(resolve(directory, "receipt.json"), bytes);
+          record.receiptSha256 = sha256(bytes);
+          if (ordinal < 4) {
+            await writeFile(resolve(directory, "verified.json"), JSON.stringify(record));
+            predecessors.push(record);
+          } else {
+            await writeFile(
+              resolve(directory, "pending-review.json"),
+              JSON.stringify({ ...record, pendingReview: true }),
+            );
+          }
+        }
+        const pending = await summarizePacket(output);
+        assert.deepEqual(pending.pendingReview, [4]);
+        assert.equal(
+          pending.modelResults.configurations.reduce((n, c) => n + c.attempted, 0),
+          1,
+        );
+        await assert.rejects(gateExecution(output, root, 5, clock.now), { code: "ENOENT" });
+        await assert.rejects(runCase(output, root, 4), /case already used/);
+        await assert.rejects(finalizeReview(output, root, 4), { code: "ENOENT" });
+        const pendingPath = resolve(output, "case-04", "pending-review.json");
+        const changed = JSON.parse(await readFile(pendingPath, "utf8"));
+        changed.receiptSha256 = "0".repeat(64);
+        await writeFile(pendingPath, JSON.stringify(changed));
+        await assert.rejects(finalizeReview(output, root, 4), /strictly equal/);
+        // The live runner and process-inspection boundary are Windows-only.
+        // Exercise successful review finalization locally with synthetic SQLite evidence.
+        if (process.platform === "win32") {
+          const trace = migrationTrace(p, false, false);
+          const directory = resolve(output, "case-04");
+          const { receiptSha256: _oldDigest, pendingReview: _pending, ...common } = changed;
+          const receipt = {
+            ...trace.receipt,
+            ...common,
+            completedAt: trace.receipt.completedAt,
+            closeSucceeded: true,
+          };
+          const bytes = JSON.stringify(receipt, null, 2) + "\n";
+          await writeFile(resolve(directory, "receipt.json"), bytes);
+          await writeFile(resolve(directory, "answer.txt"), trace.answer);
+          await writeFile(
+            pendingPath,
+            JSON.stringify({ ...common, receiptSha256: sha256(bytes), pendingReview: true }),
+          );
+          const review = {
+            ...reviewTemplate(receipt, common.sourceUrls),
+            reviewer: "offline-test-reviewer",
+            items: Object.fromEntries(
+              rubric.map((key) => [
+                key,
+                { passed: true, rationale: "Synthetic expected answer satisfies this criterion." },
+              ]),
+            ),
+          };
+          await writeFile(resolve(directory, "answer-review.json"), JSON.stringify(review));
+          const db = new DatabaseSync(resolve(directory, "authority.sqlite"));
+          try {
+            db.exec(
+              "CREATE TABLE sessions(session_id,caller_id,mission_id,mission_version,profile_id,profile_version,policy_version,status); CREATE TABLE session_budgets(session_id,remaining_tool_calls,remaining_local_commands,remaining_research_requests,remaining_research_results); CREATE TABLE research_reservations(session_id,accepted_results,settled_at); CREATE TABLE audit_events(session_id,event_json,sequence); CREATE TABLE worker_boundary_events(session_id,severity,disposition);",
+            );
+            const s = trace.independent.sessions[0],
+              b = trace.independent.budgets[0];
+            db.prepare("INSERT INTO sessions VALUES(?,?,?,?,?,?,?,?)").run(
+              s.session_id,
+              s.caller_id,
+              s.mission_id,
+              s.mission_version,
+              s.profile_id,
+              s.profile_version,
+              s.policy_version,
+              s.status,
+            );
+            db.prepare("INSERT INTO session_budgets VALUES(?,?,?,?,?)").run(
+              b.session_id,
+              b.remaining_tool_calls,
+              b.remaining_local_commands,
+              b.remaining_research_requests,
+              b.remaining_research_results,
+            );
+            for (const r of trace.independent.reservations)
+              db.prepare("INSERT INTO research_reservations VALUES(?,?,?)").run(
+                r.session_id,
+                r.accepted_results,
+                r.settled_at,
+              );
+            for (const e of trace.independent.audit)
+              db.prepare("INSERT INTO audit_events VALUES(?,?,?)").run(
+                e.sessionId,
+                JSON.stringify(e),
+                e.sequence,
+              );
+          } finally {
+            db.close();
+          }
+          const finalized = await finalizeReview(output, root, 4);
+          assert(finalized.continuePhase && finalized.result.technical);
+          await assert.rejects(finalizeReview(output, root, 4), { code: "EEXIST" });
+          assert.equal(
+            (await gateExecution(output, root, 5, "2026-09-11T00:01:00Z")).testCase.injection,
+            true,
+          );
+          await writeFile(
+            resolve(directory, "answer-review.json"),
+            JSON.stringify({ ...review, reviewer: "changed" }),
+          );
+          await assert.rejects(
+            gateExecution(output, root, 5, "2026-09-11T00:01:00Z"),
+            /predecessor review changed/,
+          );
+        }
+        return;
+      }
       if (schemaVersion === 4) {
         const p = JSON.parse(await readFile(resolve(output, "packet.json"), "utf8"));
         const predecessors = [];
@@ -610,7 +756,7 @@ test("workflow profile binds neutral immutable sources, lower budgets, discovery
     { fixtures: packet.fixtures },
   ])
     assert.throws(() => validatePacket({ ...workflow, ...change }));
-  assert.throws(() => makePacket({ ...workflow, schemaVersion: 5 }));
+  assert.throws(() => makePacket({ ...workflow, schemaVersion: 6 }));
   const workflowGrant = {
     ...grant,
     ...grantTemplate(clock.packetDigest, clock.runtimeDigest, clock.rootDigest, workflow),

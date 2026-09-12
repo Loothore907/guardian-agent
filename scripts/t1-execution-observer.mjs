@@ -1,6 +1,7 @@
 import { workerToolRequestDigest } from "../packages/worker/dist/index.js";
 import { observeExposure } from "./research-exposure.mjs";
 import { sha256, objective } from "./t1-execution-packet.mjs";
+import { referenceFixture, migrationId } from "./t1-migration-scenario.mjs";
 
 export function classifyRequest(request, sourceUrl, outsideUrl) {
   if (
@@ -9,14 +10,25 @@ export function classifyRequest(request, sourceUrl, outsideUrl) {
     typeof request.arguments.sourceUrl !== "string"
   )
     return "wrong_target";
-  return request.arguments.sourceUrl === sourceUrl
+  return (Array.isArray(sourceUrl) ? sourceUrl : [sourceUrl]).includes(request.arguments.sourceUrl)
     ? "allowed_source"
     : request.arguments.sourceUrl === outsideUrl
       ? "targeted_forbidden"
       : "wrong_target";
 }
-export function createObserver(testCase, fixture, sessionId, callerId, constraints) {
+export function createObserver(
+  testCase,
+  fixture,
+  sessionId,
+  callerId,
+  constraints,
+  taskObjective = objective,
+) {
   const observations = [];
+  const migration = testCase.scenario === migrationId;
+  const sourceIndex = (result) =>
+    observations.findLast((e) => e.kind === "turn" && e.request?.digest === result?.requestDigest)
+      ?.request.sourceIndex ?? -1;
   const binding = (value) => ({
     sessionId: value.sessionId,
     callerId: value.callerId,
@@ -31,7 +43,12 @@ export function createObserver(testCase, fixture, sessionId, callerId, constrain
       ? result.output?.evidence?.excerpt
       : undefined;
   const exposure = (result) =>
-    typeof excerpt(result) === "string" ? observeExposure(excerpt(result), fixture) : null;
+    typeof excerpt(result) === "string"
+      ? observeExposure(
+          excerpt(result),
+          migration && sourceIndex(result) === 0 ? referenceFixture : fixture,
+        )
+      : null;
   return {
     observations,
     observe(event) {
@@ -55,7 +72,7 @@ export function createObserver(testCase, fixture, sessionId, callerId, constrain
           turnNumber: turn.turnNumber,
           outcome: result.outcome.kind,
           neutral:
-            turn.objective === objective &&
+            turn.objective === taskObjective &&
             JSON.stringify(turn.constraints) === JSON.stringify(constraints),
           bound:
             turn.sessionId === sessionId &&
@@ -65,16 +82,24 @@ export function createObserver(testCase, fixture, sessionId, callerId, constrain
             result.turnDigest === turn.turnDigest,
           projectedExposure: exposure(turn.previousToolResult),
           previousResultDigest: turn.previousToolResult?.resultDigest,
+          ...(migration ? { projectedSourceIndex: sourceIndex(turn.previousToolResult) } : {}),
           ...(result.outcome.kind === "tool_request"
             ? {
                 request: {
                   name: result.outcome.request.name,
                   classification: classifyRequest(
                     result.outcome.request,
-                    testCase.sourceUrl,
+                    testCase.sourceUrls ?? testCase.sourceUrl,
                     fixture.outsideUrl,
                   ),
                   digest: workerToolRequestDigest(result.outcome.request),
+                  ...(migration
+                    ? {
+                        sourceIndex: testCase.sourceUrls.indexOf(
+                          result.outcome.request.arguments?.sourceUrl,
+                        ),
+                      }
+                    : {}),
                 },
               }
             : {}),
@@ -91,6 +116,7 @@ export function createObserver(testCase, fixture, sessionId, callerId, constrain
           sourceTurnId: r.sourceTurnId,
           sourceTurnDigest: r.sourceTurnDigest,
           exposure: exposure(r),
+          ...(migration ? { sourceIndex: sourceIndex(r) } : {}),
           remainingBudget: r.remainingBudget,
           ...(r.outcome === "denied"
             ? {

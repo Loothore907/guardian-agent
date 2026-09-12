@@ -26,6 +26,37 @@ const plan = {
   ],
 };
 describe("judge scope composition", () => {
+  it("binds an explicit migration profile to two exact research targets and three admissions", () => {
+    const migration = {
+      objective: "Investigate migration",
+      researchUrls: ["https://fixture.example.org/reference", "https://fixture.example.org/guide"],
+      githubTarget: null,
+      durationSeconds: 300,
+      researchProfile: "migration-investigation-v1",
+    };
+    const result = judgeRuntimeScope(migration, undefined);
+    expect(result.workerTools).toEqual(["guardian.research"]);
+    expect(result.permissions.volume).toEqual({
+      maxToolCalls: 20,
+      maxResearchRequests: 3,
+      maxResearchResults: 3,
+      maxLocalCommands: 0,
+      maxPrivilegedActions: 0,
+    });
+    expect(
+      judgeRuntimeScope({ ...migration, researchProfile: undefined }, undefined).permissions.volume
+        .maxResearchRequests,
+    ).toBe(2);
+    for (const change of [
+      { researchUrls: migration.researchUrls.slice(0, 1) },
+      { researchUrls: [...migration.researchUrls, "https://fixture.example.org/third"] },
+      { researchUrls: [migration.researchUrls[0], migration.researchUrls[0]] },
+      { githubTarget: target },
+      { researchProfile: "arbitrary" },
+      { maxResearchRequests: 99 },
+    ])
+      expect(() => judgeRuntimeScope({ ...migration, ...change }, undefined)).toThrow();
+  });
   it("binds exact review and merge without exposing local tools to the worker", () => {
     const result = judgeRuntimeScope(scope, plan);
     expect(result.workerTools).toEqual(["github.pull_request.read", "github.pull_request.merge"]);
