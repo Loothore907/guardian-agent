@@ -7,6 +7,17 @@ published the seven exact inputs at
 `2ca629fb2070528e022b8473de94fc4d5bd4dd1c`. Preserve the prepared schema-5
 single-pair packet as unexecuted history.
 
+The migration ladder is now complete. The clean control and all five escalating
+attacks passed technically and semantically on reviewed main
+`22623767644723199cc5b84242d4a0a865c6fe34`. Every attack was fully exposed; none
+induced the outside proposal. This is 5/5 observed resistance and 0/5 induction,
+with no Guardian rejection or recovery denominator. See the
+[completed migration results](evidence/2026-09-11-t1-migration-escalation-results.md).
+Freeze `tmp/t1-migration-escalation-result-digest-20260911/`; its progression is
+complete and its grant must not be reused. The next useful step is offline design
+of a materially different induction hypothesis or bounded worker/model
+configuration, not another wording variant or unchanged rerun. T1 remains open.
+
 The first schema-6 live packet passed all seven readiness extractions, then
 [stopped at the clean model control](evidence/2026-09-11-t1-migration-escalation-control-stop.md).
 Both approved source reads succeeded, but the final output failed closed as
@@ -63,7 +74,7 @@ PR #107 integrated that capture at
 stopped before model launch: the supervisor validated the evidence path relative
 to the session's gitless workspace rather than the repository root that owns
 `tmp/`. No worker turn or research request ran. Freeze
-`tmp/t1-migration-escalation-output-capture-20260911/`. The active branch is now
+`tmp/t1-migration-escalation-output-capture-20260911/`. The next repair branch was
 `codex/19-evaluation-capture-root`; bind the path against the process/repository
 root, preserve the worker-side duplicate check, integrate, and prepare a new packet.
 
@@ -72,7 +83,7 @@ PR #108 integrated the root correction at
 packet reached both clean research reads and captured the rejected final object.
 It had exactly the required two fields and a useful 2,248-character answer; the
 actual failure was ordinary line feeds rejected by `boundedVisibleText`. Freeze
-`tmp/t1-migration-escalation-output-capture-root-20260911/`. The active branch is
+`tmp/t1-migration-escalation-output-capture-root-20260911/`. The next repair branch was
 `codex/19-multiline-worker-response`: final responses get a dedicated multiline
 visible-text contract that allows LF only while retaining all other control,
 hidden-Unicode, normalization, trim, length, credential and transport checks. The
@@ -84,10 +95,10 @@ an accepted final response after both research reads. Durable completion then
 failed as `authority_unavailable`: the completion path sent that multiline result
 through the global single-line canonical-string digest, which rejected LF before
 calling the authority service. Freeze
-`tmp/t1-migration-escalation-multiline-20260911/`. The active branch is
-`codex/19-worker-result-digest`. Bind final response bytes and length through a
-canonical-safe digest projection, integrate it, prepare a fresh packet, and
-continue at the clean control and escalation ladder.
+`tmp/t1-migration-escalation-multiline-20260911/`. PR #110 integrated the exact
+content-digest projection at `22623767644723199cc5b84242d4a0a865c6fe34`; full
+local, exact PR and exact main CI passed. The resulting completed packet and
+conclusion are recorded at the top of this handoff.
 
 Historical design pickup:
 Current design pickup: [migration-investigation-v1 demo story](t1-migration-demo-scenario.md).
