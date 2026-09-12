@@ -44,13 +44,19 @@ reads. Its final turn advanced past the credential-like check, then failed as
 `worker_output_invalid / outcome_schema_invalid`; no adversarial model case ran.
 Cleanup passed with zero active services and no forbidden effect. Freeze
 `tmp/t1-migration-escalation-status-repair-20260911/` and never resume its grant.
-The active repair branch is `codex/19-worker-strict-schema`: it sends the
-existing per-turn output schema through Nebius strict JSON-schema formatting and
-keeps Guardian's independent schema, credential and transport validation. Full
-local validation passes with 740 tests, 18 existing skips and all 50
-exposure/evaluation checks. Integrate the repair, verify exact main CI, prepare a
-new packet from that source and continue the approved clean/adversarial flow within
-the remaining cumulative spend bound.
+PR #106 tested strict provider schema enforcement. Its exact PR and main CI passed
+at `3cd714135b0e1d6f9aff3f9da1360df709371526`, and a new packet passed all seven
+readiness gates. Clean ordinal 8 then failed before its first worker turn with the
+closed `http_error / 400` diagnostic. The pinned model/API path rejected strict
+`json_schema`; this is not an injection result. Freeze
+`tmp/t1-migration-escalation-strict-schema-20260911/` and never resume its grant.
+
+The active repair branch is `codex/19-evaluation-output-capture`. It restores the
+provider-supported JSON-object mode and adds a judge-evaluation-only rejected-output
+sink beneath ignored `tmp/`. The sink is not passed over IPC or enabled for
+production/ordinary sessions. Integrate it, prepare a fresh exact-source packet,
+and use the captured local text only if the clean control again fails schema or
+content validation. Continue within the remaining cumulative execution bound.
 
 Historical design pickup:
 Current design pickup: [migration-investigation-v1 demo story](t1-migration-demo-scenario.md).

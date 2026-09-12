@@ -89,6 +89,18 @@ function record(value: unknown, rejection: WorkerProjectionRejection): Record<st
   return value as Record<string, unknown>;
 }
 
+function providerMessageContent(value: unknown): string | undefined {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return undefined;
+  const choices = (value as Record<string, unknown>).choices;
+  if (!Array.isArray(choices) || choices.length !== 1) return undefined;
+  const choice: unknown = choices[0];
+  if (typeof choice !== "object" || choice === null || Array.isArray(choice)) return undefined;
+  const message: unknown = (choice as Record<string, unknown>).message;
+  if (typeof message !== "object" || message === null || Array.isArray(message)) return undefined;
+  const content: unknown = (message as Record<string, unknown>).content;
+  return typeof content === "string" ? content : undefined;
+}
+
 export function projectNebiusWorkerResponse(
   value: unknown,
   expectedModelId: string,
@@ -357,6 +369,7 @@ export class NebiusNativeWorkerProvider {
   readonly #timeoutMs: number;
   readonly #modelPolicy: GuardianModelPolicy;
   readonly #diagnostic: (diagnostic: NativeWorkerProviderDiagnostic) => void;
+  readonly #rejectedOutput: ((output: string) => void) | undefined;
   readonly #onUsage:
     ((usage: ManagedDemoNebiusUsageObservation) => void | Promise<void>) | undefined;
   readonly #now: () => string;
@@ -367,6 +380,7 @@ export class NebiusNativeWorkerProvider {
     readonly timeoutMs?: number;
     readonly modelPolicy?: GuardianModelPolicy;
     readonly onDiagnostic?: (diagnostic: NativeWorkerProviderDiagnostic) => void;
+    readonly onRejectedOutput?: (output: string) => void;
     readonly onUsage?: (usage: ManagedDemoNebiusUsageObservation) => void | Promise<void>;
     readonly now?: () => string;
   }) {
@@ -377,6 +391,7 @@ export class NebiusNativeWorkerProvider {
       options.modelPolicy ?? DEFAULT_GUARDIAN_MODEL_POLICY,
     );
     this.#diagnostic = options.onDiagnostic ?? (() => undefined);
+    this.#rejectedOutput = options.onRejectedOutput;
     this.#onUsage = options.onUsage;
     this.#now = options.now ?? (() => new Date().toISOString());
     if (!Number.isInteger(this.#timeoutMs) || this.#timeoutMs < 100 || this.#timeoutMs > 60_000) {
@@ -439,12 +454,7 @@ export class NebiusNativeWorkerProvider {
                   { role: "user", content: JSON.stringify(providerProjection(turn)) },
                 ],
                 response_format: {
-                  type: "json_schema",
-                  json_schema: {
-                    name: "guardian_worker_outcome",
-                    strict: true,
-                    schema: JSON.parse(outcomeGuidance) as unknown,
-                  },
+                  type: "json_object",
                 },
               }),
             });
@@ -476,6 +486,14 @@ export class NebiusNativeWorkerProvider {
           try {
             result = projectNebiusWorkerResponse(providerJson, selection.modelId);
           } catch (error) {
+            const rejectedOutput = providerMessageContent(providerJson);
+            if (rejectedOutput !== undefined && this.#rejectedOutput !== undefined) {
+              try {
+                this.#rejectedOutput(rejectedOutput);
+              } catch {
+                // Evaluation-only capture must never change provider behavior.
+              }
+            }
             report({
               kind: "worker_output_invalid",
               ...(error instanceof NativeWorkerProjectionError

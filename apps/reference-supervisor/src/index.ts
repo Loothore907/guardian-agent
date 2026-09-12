@@ -9,6 +9,7 @@ import {
   type ExactApproval,
 } from "@guardian/contracts";
 import { randomUUID } from "node:crypto";
+import { isAbsolute, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
@@ -268,6 +269,7 @@ export async function startReferenceAuthoritySupervisor(
     readonly judgeScope?: unknown;
     readonly observeWorker?: ReferenceSessionBootstrapOptions["observeWorker"];
     readonly githubClientId?: string;
+    readonly evaluationRejectedWorkerOutputPath?: string;
   } = {},
 ): Promise<ReferenceAuthoritySupervisor> {
   const judge =
@@ -313,6 +315,22 @@ export async function startReferenceAuthoritySupervisor(
   }
   if (typeof config.projectRoot !== "string" || config.projectRoot.length === 0) {
     throw new TypeError("supervisor project root is required");
+  }
+  const rejectedWorkerOutputPath = options.evaluationRejectedWorkerOutputPath;
+  if (rejectedWorkerOutputPath !== undefined) {
+    const captureRelative = relative(config.projectRoot, rejectedWorkerOutputPath).replaceAll(
+      "\\",
+      "/",
+    );
+    if (
+      options.workerMode !== "nebius_native" ||
+      judge === undefined ||
+      !isAbsolute(rejectedWorkerOutputPath) ||
+      !captureRelative.startsWith("tmp/") ||
+      captureRelative.includes("../")
+    ) {
+      throw new TypeError("evaluation worker output capture path is invalid");
+    }
   }
   const managedWorkspace = await ManagedSessionWorkspace.plan({
     sourceRoot: config.projectRoot,
@@ -617,6 +635,11 @@ export async function startReferenceAuthoritySupervisor(
           workerProcessMode === "nebius"
             ? credentialEnvironmentForStore(credentialStore, {
                 GUARDIAN_WORKER_PROVIDER: workerProcessMode,
+                ...(rejectedWorkerOutputPath === undefined
+                  ? {}
+                  : {
+                      GUARDIAN_EVALUATION_REJECTED_OUTPUT_PATH: rejectedWorkerOutputPath,
+                    }),
               })
             : { GUARDIAN_WORKER_PROVIDER: workerProcessMode },
       });

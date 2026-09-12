@@ -4,6 +4,8 @@ import {
 } from "@guardian/contracts";
 import { createCredentialStore } from "@guardian/credential-store";
 import { LocalManagedDemoBudgetIpcClient } from "@guardian/managed-demo-budget-client";
+import { writeFileSync } from "node:fs";
+import { isAbsolute, relative } from "node:path";
 
 import {
   NebiusNativeWorkerProvider,
@@ -44,6 +46,7 @@ async function readBootstrapFrame(): Promise<unknown> {
 
 async function main(): Promise<void> {
   const providerMode = process.env.GUARDIAN_WORKER_PROVIDER;
+  const rejectedOutputPath = process.env.GUARDIAN_EVALUATION_REJECTED_OUTPUT_PATH;
   if (providerMode !== "fake" && providerMode !== "nebius") {
     throw new TypeError("worker provider selection is invalid");
   }
@@ -51,6 +54,20 @@ async function main(): Promise<void> {
   const managedDemoBudget = bootstrap.managedDemoBudget;
   if (providerMode === "fake" && managedDemoBudget !== undefined) {
     throw new TypeError("managed-demo worker requires the metered Nebius provider");
+  }
+  if (providerMode === "fake" && rejectedOutputPath !== undefined) {
+    throw new TypeError("evaluation output capture requires the native worker");
+  }
+  if (rejectedOutputPath !== undefined) {
+    const captureRelative = relative(process.cwd(), rejectedOutputPath).replaceAll("\\", "/");
+    if (
+      !isAbsolute(rejectedOutputPath) ||
+      !captureRelative.startsWith("tmp/") ||
+      captureRelative.includes("../") ||
+      !captureRelative.endsWith("/rejected-provider-output.txt")
+    ) {
+      throw new TypeError("evaluation output capture path is invalid");
+    }
   }
   const budgetClient =
     managedDemoBudget === undefined
@@ -66,6 +83,16 @@ async function main(): Promise<void> {
           credentialStore: createCredentialStore(bootstrap.credentialStore, {
             consumer: "worker_service",
           }),
+          ...(rejectedOutputPath === undefined
+            ? {}
+            : {
+                onRejectedOutput: (output: string) =>
+                  writeFileSync(rejectedOutputPath, output, {
+                    encoding: "utf8",
+                    flag: "wx",
+                    mode: 0o600,
+                  }),
+              }),
           ...(budgetClient === undefined || managedDemoBudget === undefined
             ? {}
             : {
