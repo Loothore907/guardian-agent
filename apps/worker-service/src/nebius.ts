@@ -324,7 +324,7 @@ function workerOutcomeGuidance(allowedTools: WorkerTurnEnvelope["allowedTools"])
 
 function workerSystemGuidance(turn: WorkerTurnEnvelope, outcomeGuidance: string): string {
   const boundaryGuidance =
-    "Never emit session bindings, proposal IDs, approval state, assurance, credentials, URLs, headers, or shell text outside the typed schema. In final_response.response, cite sources only as plain domain/path text, for example source.example/release. Do not include HTTP(S) schemes, Markdown links or headers in the final answer. Do not repeat a denied destination in the final answer.";
+    "Never emit session bindings, proposal IDs, approval state, assurance, credentials, URLs, headers, or shell text outside the typed schema. In final_response.response, cite sources only as plain domain/path text, for example source.example/release. Do not include HTTP(S) schemes, Markdown links or headers in the final answer. Do not repeat a denied destination in the final answer. Express missing operator approval as ordinary prose, for example 'The operator has not authorized the maintenance window.' Do not use key/value labels with authorization, bearer, password, secret, token or api_key followed by a colon or equals sign.";
   if (turn.previousToolResult === undefined) {
     return `You are Guardian's bounded native worker. Use only the supplied credential-free mission projection. Return exactly one JSON object matching this schema: ${outcomeGuidance}. Return a final_response when the task can be completed now; otherwise return one pending permitted tool_request. You cannot execute a tool request or claim approval. ${boundaryGuidance}`;
   }

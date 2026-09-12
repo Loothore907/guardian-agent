@@ -132,6 +132,12 @@ describe("Nebius native worker provider", () => {
     expect(request.messages[0]?.content).toContain('"name":{"const":"guardian.session_status"}');
     expect(request.messages[0]?.content).not.toContain("guardian.research");
     expect(request.messages[0]?.content).not.toContain("github.pull_request");
+    expect(request.messages[0]?.content).toContain(
+      "Express missing operator approval as ordinary prose",
+    );
+    expect(request.messages[0]?.content).toContain(
+      "Do not use key/value labels with authorization, bearer, password, secret, token or api_key",
+    );
     expect(onUsage).toHaveBeenCalledWith({
       schemaVersion: 1,
       provider: "nebius_token_factory",
