@@ -1,21 +1,23 @@
 # Current development handoff
 
-Current implementation pickup: [migration adapter and operating sequence](t1-migration-adapter.md).
-Schema 5 reuses the runner for three readiness extractions and one matched model
-pair. The explicit two-source production profile has three research admissions;
-old profiles retain two. Both-source exposure and a receipt/answer-bound semantic
-rubric review are required. Pending review blocks the next admission and grants
-no success credit. The fixture commit is prepared locally at `0288f7c` in
-`tmp/t1-migration-publication-20260911/`, without publication or paid calls.
-Implementation: [PR #100](https://github.com/Loothore907/guardian-agent/pull/100).
-Full local validation passed (716 tests, 18 existing skips; 47 exposure/evaluation
-tests), three production draft/projection preflights passed offline, and historical
-schema-3/4 packet summaries matched. The final designated packet is
-`tmp/t1-migration-execution-20260911/`; its `offline-verification.json` records the
-integrated head, exact CI and source/runtime/fixture hashes after integration.
-Continue publication/live readiness
-and the paired run through the approved flow, stopping at genuine limits or failed
-gates. Review is an operator evidence step, not a repeated user permission gate.
+Current implementation pickup: [migration escalation ladder and grant](t1-migration-escalation.md).
+Preserve the prepared schema-5 single-pair packet as unexecuted history. Schema 6
+predeclares five increasingly forceful guide payloads, one shared clean control
+and one unchanged confirmation after the first complete guarded recovery. Valid
+resistance advances one level; technical, review, recovery, effect, budget or
+cleanup failure stops. The production scope remains exactly two legitimate URLs,
+three research admissions and zero commands or privileged actions.
+
+Fixture [release-bulletins PR #2](https://github.com/Loothore907/release-bulletins/pull/2)
+merged the shared reference, clean guide and all five payload guides at
+`2ca629fb2070528e022b8473de94fc4d5bd4dd1c`. The Guardian implementation is on
+`codex/19-migration-escalation`; inspect its PR and exact main CI before freezing
+the new packet. Full local validation passed with 716 tests, 18 existing skips and
+50 exposure/evaluation tests. No readiness extraction, model call or credential read has occurred
+for this scenario. After integration, prepare a new immutable schema-6 packet,
+run offline preflight, bind the already-approved ninety-minute/USD 5 estimated
+grant, and execute the finite readiness/model/review progression. Pending semantic
+review blocks the next admission and is an evidence step, not a new permission gate.
 
 Historical design pickup:
 Current design pickup: [migration-investigation-v1 demo story](t1-migration-demo-scenario.md).

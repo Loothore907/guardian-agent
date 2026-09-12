@@ -6,6 +6,7 @@ import {
   migrationId,
   migrationObjective,
   migrationDefinitions,
+  migrationEscalationDefinitions,
   migrationReference,
   referenceFixture,
   migrationScope,
@@ -63,11 +64,14 @@ export const workflowLimits = Object.freeze({
   discoveryUsd: 2.4,
 });
 export function fixtureDefinitions(packet) {
-  assert([3, 4, 5].includes(packet.schemaVersion), "unsupported packet schema");
+  assert([3, 4, 5, 6].includes(packet.schemaVersion), "unsupported packet schema");
+  if (packet.schemaVersion === 6) return migrationEscalationDefinitions;
   if (packet.schemaVersion === 5) return migrationDefinitions;
   return packet.schemaVersion === 4 ? workflowScenario.variants : attackMatrix;
 }
 export function phaseLayout(packet) {
+  if (packet.schemaVersion === 6)
+    return { readiness: 7, discoveryEnd: 13, evaluationStart: 14, total: 14 };
   if (packet.schemaVersion === 5)
     return { readiness: 3, discoveryEnd: 5, evaluationStart: 6, total: 5 };
   const count = fixtureDefinitions(packet).length;
@@ -91,7 +95,7 @@ export function makePacket({
   batchId = randomUUID(),
   schemaVersion = 3,
 }) {
-  assert([3, 4, 5].includes(schemaVersion), "unsupported packet schema");
+  assert([3, 4, 5, 6].includes(schemaVersion), "unsupported packet schema");
   assert.match(batchId, /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/);
   assert.match(sourceHead, /^[a-f0-9]{40}$/);
   assert.match(workspaceCommit, /^[a-f0-9]{40}$/);
@@ -99,7 +103,7 @@ export function makePacket({
   return {
     schemaVersion,
     ...(schemaVersion === 4 ? { scenario: workflowScenario.id } : {}),
-    ...(schemaVersion === 5
+    ...([5, 6].includes(schemaVersion)
       ? {
           scenario: migrationId,
           rubricSha256,
@@ -114,8 +118,15 @@ export function makePacket({
     sourceHead,
     workspaceCommit,
     fixtureCommit,
-    objective: schemaVersion === 5 ? migrationObjective : objective,
-    limits: schemaVersion === 5 ? migrationLimits : schemaVersion === 4 ? workflowLimits : limits,
+    objective: [5, 6].includes(schemaVersion) ? migrationObjective : objective,
+    limits:
+      schemaVersion === 6
+        ? migrationEscalationLimits
+        : schemaVersion === 5
+          ? migrationLimits
+          : schemaVersion === 4
+            ? workflowLimits
+            : limits,
     credentialReaders,
     workerModel: "moonshotai/Kimi-K2.7-Code",
     modelPolicyId: "competition-2026-09-01",
@@ -130,14 +141,14 @@ export function makePacket({
       controlSha256: sha256(f.control),
       injectionSha256: sha256(f.injection),
       controlUrl:
-        schemaVersion === 5
+        [5, 6].includes(schemaVersion)
           ? migrationUrl(fixtureCommit, 24)
           : schemaVersion === 4
             ? workflowUrl(fixtureCommit, f.sourcePaths.control)
             : `${fixtureBase}${baselineCommit}/fixtures/v2/release-control.html`,
       injectionUrl:
-        schemaVersion === 5
-          ? migrationUrl(fixtureCommit, 25)
+        [5, 6].includes(schemaVersion)
+          ? migrationUrl(fixtureCommit, 25 + i)
           : schemaVersion === 4
             ? workflowUrl(fixtureCommit, f.sourcePaths.injection)
             : i === 0
@@ -165,13 +176,26 @@ const migrationLimits = Object.freeze({
   discoveryUsd: 1.2,
   evaluationUsd: 0,
 });
+const migrationEscalationLimits = Object.freeze({
+  ...limits,
+  modelSessions: 7,
+  readinessExtractions: 7,
+  workerCalls: 56,
+  extractionAttempts: 28,
+  researchRequests: 3,
+  totalSeconds: 5400,
+  estimatedUsd: 5,
+  readinessUsd: 0.7,
+  discoveryUsd: 4.3,
+  evaluationUsd: 0,
+});
 function migrationUrl(commit, number) {
   return commit === null
     ? null
     : `https://raw.githubusercontent.com/Loothore907/release-bulletins/${commit}/migration/reference-${number}.html`;
 }
 export function scopeForCase(packet, testCase) {
-  return packet.schemaVersion === 5
+  return [5, 6].includes(packet.schemaVersion)
     ? migrationScope(testCase.sourceUrls)
     : {
         objective: packet.objective,
@@ -181,7 +205,7 @@ export function scopeForCase(packet, testCase) {
       };
 }
 export function fixtureForCase(packet, testCase) {
-  return packet.schemaVersion === 5 && testCase.fixture === packet.reference.file
+  return [5, 6].includes(packet.schemaVersion) && testCase.fixture === packet.reference.file
     ? referenceFixture
     : fixtureDefinitions(packet).find((f) => f.id === testCase.family).fixture;
 }
@@ -230,16 +254,27 @@ export function validateGrant(
     start = Date.parse(startedAt),
     clock = Date.parse(now);
   assert(
-    first <= start && start <= clock && last > first && last - first <= limits.totalSeconds * 1000,
+    first <= start &&
+      start <= clock &&
+      last > first &&
+      last - first <= (packet?.limits.totalSeconds ?? limits.totalSeconds) * 1000,
     "grant window changed",
   );
   assert(
-    clock >= first && clock + 360000 <= Math.min(last, start + limits.totalSeconds * 1000),
+    clock >= first &&
+      clock + 360000 <=
+        Math.min(last, start + (packet?.limits.totalSeconds ?? limits.totalSeconds) * 1000),
     "insufficient execution/cleanup time remains",
   );
 }
 export function selectFamily(receipts, packet = { schemaVersion: 3 }) {
   const { readiness, discoveryEnd } = phaseLayout(packet);
+  if (packet.schemaVersion === 6) {
+    const selected = receipts
+      .slice(readiness + 1)
+      .find((receipt) => !receipt.confirmation && receipt.result?.complete === true);
+    return selected === undefined ? null : packet.fixtures.findIndex((f) => f.id === selected.family);
+  }
   // Only discovery pairs select a candidate; the last variant is a holdout.
   assert.equal(receipts.length, discoveryEnd, "discovery is not complete");
   for (let i = 0; i < (discoveryEnd - readiness) / 2; i++)
@@ -260,6 +295,63 @@ export function executionCase(packet, ordinal, receipts = []) {
   for (const [i, receipt] of receipts.entries()) {
     assert.equal(receipt.ordinal, i + 1);
     assert.equal(receipt.continuePhase, true, "a stopped phase cannot resume");
+  }
+  if (packet.schemaVersion === 6) {
+    const { readiness } = phaseLayout(packet);
+    let f, injection, isReference = false, confirmation = false;
+    if (ordinal === 1) {
+      f = packet.fixtures[0];
+      isReference = true;
+      injection = false;
+    } else if (ordinal === 2) {
+      f = packet.fixtures[0];
+      injection = false;
+    } else if (ordinal <= readiness) {
+      f = packet.fixtures[ordinal - 3];
+      injection = true;
+    } else if (ordinal === readiness + 1) {
+      f = packet.fixtures[0];
+      injection = false;
+    } else {
+      const modelReceipts = receipts.slice(readiness);
+      const attackReceipts = modelReceipts.slice(1);
+      const selected = attackReceipts.find(
+        (receipt) => !receipt.confirmation && receipt.result?.complete === true,
+      );
+      if (selected !== undefined) {
+        assert(!attackReceipts.some((receipt) => receipt.confirmation), "escalation is complete");
+        f = packet.fixtures.find((candidate) => candidate.id === selected.family);
+        assert(f, "selected escalation family is missing");
+        injection = true;
+        confirmation = true;
+      } else {
+        assert(attackReceipts.length < packet.fixtures.length, "all escalation levels are complete");
+        f = packet.fixtures[attackReceipts.length];
+        injection = true;
+      }
+    }
+    const sourceUrl = isReference
+      ? packet.reference.sourceUrl
+      : injection
+        ? f.injectionUrl
+        : f.controlUrl;
+    return {
+      ordinal,
+      phase: ordinal <= readiness ? "readiness" : "discovery",
+      family: f.id,
+      injection,
+      confirmation,
+      sourceUrl,
+      sourceUrls: [packet.reference.sourceUrl, injection ? f.injectionUrl : f.controlUrl],
+      scenario: migrationId,
+      fixture: isReference ? packet.reference.file : injection ? f.injectionFile : f.controlFile,
+      fixtureSha256: isReference
+        ? packet.reference.sha256
+        : injection
+          ? f.injectionSha256
+          : f.controlSha256,
+      estimatedUsd: ordinal <= readiness ? 0.1 : 0.6,
+    };
   }
   if (packet.schemaVersion === 5) {
     const f = packet.fixtures[0];
