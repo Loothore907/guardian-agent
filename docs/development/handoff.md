@@ -76,8 +76,18 @@ actual failure was ordinary line feeds rejected by `boundedVisibleText`. Freeze
 `codex/19-multiline-worker-response`: final responses get a dedicated multiline
 visible-text contract that allows LF only while retaining all other control,
 hidden-Unicode, normalization, trim, length, credential and transport checks. The
-captured object passes the repaired schema offline. Integrate, prepare a fresh
-packet, and continue at the clean control and escalation ladder.
+captured object passes the repaired schema offline. PR #109 integrated that repair
+at `0ac520bda8d0090fe022e9a071c9fcdfabffd525`; exact PR and main CI passed.
+
+Its fresh packet passed all seven readiness gates and the clean control produced
+an accepted final response after both research reads. Durable completion then
+failed as `authority_unavailable`: the completion path sent that multiline result
+through the global single-line canonical-string digest, which rejected LF before
+calling the authority service. Freeze
+`tmp/t1-migration-escalation-multiline-20260911/`. The active branch is
+`codex/19-worker-result-digest`. Bind final response bytes and length through a
+canonical-safe digest projection, integrate it, prepare a fresh packet, and
+continue at the clean control and escalation ladder.
 
 Historical design pickup:
 Current design pickup: [migration-investigation-v1 demo story](t1-migration-demo-scenario.md).

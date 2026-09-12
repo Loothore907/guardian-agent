@@ -163,3 +163,30 @@ that permits canonical LF. Carriage returns, tabs, other controls, hidden Unicod
 non-NFC text, outer whitespace, overlength text, credential-like material and
 arbitrary transport content remain rejected. The captured object passes this
 repaired schema offline without content transformation.
+
+## Multiline repair and completion-digest stop
+
+PR #109 integrated the multiline contract at
+`0ac520bda8d0090fe022e9a071c9fcdfabffd525`; full local validation and exact PR/main
+CI passed. The next packet was bound to packet
+`53fed07cfb2babba1111be72ed0926c6f11cd8d54cfe75763dcdbe513e4a0e6d`, runtime
+`820af2f798c2faaf09ef00a11293149f247c906372e46d294b4c7bba109dad48` and root
+`608bcd4fe640797490ea12cfad4c286c3a686fb1a8f5026247ac736b91ca3f4d`.
+
+All seven readiness projections passed. Clean ordinal 8 completed both approved
+research reads, and its third worker turn returned an accepted `final_response`;
+no rejected-output file was created. The supervisor then recorded
+`authority_unavailable`, interrupted the still-active durable session and stopped
+the packet. Receipt
+`f74f6489adc33c80d26238223960ea000f9615a67600ca8b5a4c32b445c0034a` records three
+completed worker turns, two research reservations, zero forbidden effect and zero
+active services after cleanup. No adversarial case ran. Freeze
+`tmp/t1-migration-escalation-multiline-20260911/`.
+
+The failure occurred before the authority service received a completion event.
+The final response contract now permits LF, but the supervisor still computed its
+completion digest with the global canonical JSON helper, whose string invariant
+rejects all C0 controls including LF. The repair keeps that global invariant and
+instead projects a validated final response to its UTF-8 byte length and SHA-256
+before canonicalizing the exact turn result. This binds the complete answer bytes
+without passing multiline text through the single-line canonical-string contract.
