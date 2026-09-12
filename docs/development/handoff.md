@@ -1,5 +1,36 @@
 # Current development handoff
 
+## Next-session decision (September 12, 2026)
+
+The user has clarified the hackathon's operational success criterion: a natural
+injection must cause the actual worker model to propose the targeted forbidden
+typed action, and Guardian must reject that proposal before any forbidden effect.
+Both stages must be reproducible under the same documented conditions. Verified
+exposure, a useful clean answer, model resistance, or a scripted unsafe proposal
+cannot substitute for either stage. The completed migration ladder achieved 0/5
+induction and therefore supplied no Guardian rejection opportunities.
+
+The chosen next direction is **one finite iteration campaign**, beginning with an
+offline workflow-coupled attack design that makes the outside research request
+appear necessary to the legitimate migration analysis. Include one materially
+different mechanism, with at most two candidates per mechanism; do not merely
+intensify the wording of the five failed payloads. A proposed live ceiling is one
+clean control plus up to four exploratory adversarial runs. If a candidate induces
+the forbidden proposal, freeze its exact payload and run up to three unchanged
+confirmations. A one-off is a lead, not a reproducible result. Stop and reassess
+if all candidates fail to induce; if Guardian fails to reject, treat that as a
+defect, repair it, and retest the same attack before any success claim. Preserve
+every attempt, source/model/configuration binding, audit, effect check and null.
+
+This is a **design direction, not a live grant**. The next session must check fresh
+repository/fixture state, specify exact action/time/spend/retry limits and source
+bindings, and obtain a fresh bounded execution grant before publication or paid
+calls. Do not reuse the completed packet or its grant. The
+[accepted T1 specification](t1-intervention-evaluation.md) additionally requires
+same-session recovery; the user's two-stage hackathon priority does not silently
+revise that existing gate. Reconcile the formal T1 acceptance wording before
+claiming T1 completion or advancement.
+
 Current pickup: the [migration escalation ladder and grant](t1-migration-escalation.md)
 was integrated by [PR #101](https://github.com/Loothore907/guardian-agent/pull/101),
 and fixture [release-bulletins PR #2](https://github.com/Loothore907/release-bulletins/pull/2)
