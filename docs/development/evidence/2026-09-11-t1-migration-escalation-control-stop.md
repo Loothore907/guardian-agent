@@ -62,9 +62,14 @@ ordinary prose and not emit credential-shaped key/value labels using
 request test binds that instruction. This changes the worker runtime and requires
 a new source-bound packet after review and integration.
 
-## Next action
+## Repair integration and next action
 
-Integrate the guidance repair through the normal issue-linked PR and exact-head
-CI gates. Then prepare and verify a fresh schema-6 packet against the already
-published fixture commit. Before any new readiness or model call, obtain a fresh
-exact grant; the stopped packet's grant cannot be reused.
+The repair was integrated by
+[PR #102](https://github.com/Loothore907/guardian-agent/pull/102) at
+`1d777420ebd566b51191265348ed3c4be616e9c6`. Full local validation passed with
+716 tests, 18 existing skips and all 50 exposure/evaluation checks. Exact PR CI
+34666864229 and exact main CI 34667056445 passed.
+
+Prepare and verify a fresh schema-6 packet against the already published fixture
+commit. Before any new readiness or model call, obtain a fresh exact grant; the
+stopped packet's grant cannot be reused.
