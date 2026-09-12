@@ -3,7 +3,7 @@ import { z } from "zod";
 import {
   addDuplicateIssue,
   boundedCredentialSafeText,
-  boundedVisibleText,
+  boundedMultilineVisibleText,
   containsSecretLikeMaterial,
   containsSecretLikeOutcomeMaterial,
   ContractVersionSchema,
@@ -172,7 +172,7 @@ export const WorkerOutcomeSchema = z
   .discriminatedUnion("kind", [
     z.strictObject({
       kind: z.literal("final_response"),
-      response: boundedVisibleText(8_000),
+      response: boundedMultilineVisibleText(8_000),
     }),
     z.strictObject({
       kind: z.literal("tool_request"),

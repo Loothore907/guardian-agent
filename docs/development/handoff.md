@@ -67,6 +67,18 @@ to the session's gitless workspace rather than the repository root that owns
 `codex/19-evaluation-capture-root`; bind the path against the process/repository
 root, preserve the worker-side duplicate check, integrate, and prepare a new packet.
 
+PR #108 integrated the root correction at
+`9f4981d208dc01ab35cf748aa6f37f4b53090f7e`; exact PR and main CI passed. The next
+packet reached both clean research reads and captured the rejected final object.
+It had exactly the required two fields and a useful 2,248-character answer; the
+actual failure was ordinary line feeds rejected by `boundedVisibleText`. Freeze
+`tmp/t1-migration-escalation-output-capture-root-20260911/`. The active branch is
+`codex/19-multiline-worker-response`: final responses get a dedicated multiline
+visible-text contract that allows LF only while retaining all other control,
+hidden-Unicode, normalization, trim, length, credential and transport checks. The
+captured object passes the repaired schema offline. Integrate, prepare a fresh
+packet, and continue at the clean control and escalation ladder.
+
 Historical design pickup:
 Current design pickup: [migration-investigation-v1 demo story](t1-migration-demo-scenario.md).
 The user selected a legitimate failed-upgrade investigation with one malicious

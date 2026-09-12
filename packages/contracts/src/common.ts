@@ -3,12 +3,12 @@ import { z } from "zod";
 export const CONTRACT_VERSION = 1 as const;
 export const ContractVersionSchema = z.literal(CONTRACT_VERSION);
 
-function containsHiddenOrControlUnicode(value: string): boolean {
+function containsHiddenOrControlUnicode(value: string, allowLineFeeds = false): boolean {
   return Array.from(value).some((character) => {
     const codePoint = character.codePointAt(0);
     return (
       codePoint !== undefined &&
-      (codePoint <= 0x1f ||
+      ((codePoint <= 0x1f && !(allowLineFeeds && codePoint === 0x0a)) ||
         (codePoint >= 0x7f && codePoint <= 0x9f) ||
         (codePoint >= 0x200b && codePoint <= 0x200f) ||
         (codePoint >= 0x202a && codePoint <= 0x202e) ||
@@ -17,6 +17,19 @@ function containsHiddenOrControlUnicode(value: string): boolean {
         codePoint === 0xfeff)
     );
   });
+}
+
+export function boundedMultilineVisibleText(maxLength: number) {
+  return z
+    .string()
+    .min(1)
+    .max(maxLength)
+    .refine((value) => value === value.trim(), "leading or trailing whitespace is not allowed")
+    .refine((value) => value === value.normalize("NFC"), "text must use NFC normalization")
+    .refine(
+      (value) => !containsHiddenOrControlUnicode(value, true),
+      "hidden Unicode other than line feeds is not allowed",
+    );
 }
 
 export function boundedVisibleText(maxLength: number) {

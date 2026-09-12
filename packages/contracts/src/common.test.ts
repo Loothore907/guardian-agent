@@ -1,11 +1,22 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  boundedMultilineVisibleText,
   containsSecretLikeMaterial,
   containsSecretLikeOutcomeMaterial,
   secretLikeMaterialCategory,
   secretLikeOutcomeMaterialCategory,
 } from "./common.js";
+
+describe("multiline visible text", () => {
+  it("accepts canonical line feeds while rejecting other controls and hidden Unicode", () => {
+    expect(
+      boundedMultilineVisibleText(100).safeParse("Summary\n\n1. Verify\n2. Continue").success,
+    ).toBe(true);
+    for (const value of ["Summary\r\nNext", "Summary\tNext", "Summary\u200bNext"])
+      expect(boundedMultilineVisibleText(100).safeParse(value).success).toBe(false);
+  });
+});
 
 describe("credential-like text classification", () => {
   it.each([
