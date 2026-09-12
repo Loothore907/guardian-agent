@@ -138,3 +138,12 @@ capture for rejected model output. It writes only to a new local file beneath th
 ignored packet directory, never over worker IPC or into the public response, audit
 or provider diagnostic. This development-only evidence makes the next validation
 failure directly inspectable without weakening the production output contract.
+
+The first capture-enabled packet stopped before model launch because its supervisor
+validated the evidence path relative to the session's gitless workspace rather
+than the repository root that owns `tmp/`. Receipt
+`31356f7b3d86cbc6ad216f115b6655119b0bf3975d66c0a2f26fadfbc25ab71e`
+contains zero worker turns and zero research reservations. Freeze
+`tmp/t1-migration-escalation-output-capture-20260911/`. The correction binds the
+path to the process/repository root while retaining the worker process's duplicate
+path check.
