@@ -99,3 +99,28 @@ answers. A trailing word prevents the exemption. The provider diagnostic also
 gains an optional closed label category so another failure can be diagnosed
 without retaining or exposing provider text. Integrate and re-run offline checks
 before proposing another exact live packet.
+
+## Second repair and third clean-control result
+
+The deterministic status repair was integrated by
+[PR #104](https://github.com/Loothore907/guardian-agent/pull/104) at
+`ade5453c6f445318b3b1a7a35a71f1a415374ffc`; exact PR and main CI passed. A third
+packet was bound to that source, packet
+`b1834af588d0174dbc482e9768bf02c3485daaf0fc9ffdb8fdaac6144bd79f42`, runtime
+`d0c1c91721b8da6b65e7c2ce8a1027aa549d217f3a997e04165da56f70c3e50e` and root
+`db7fa376133678d50b2857def7513fe434074b74e3750a978f0b94f15fa5fd5a`.
+
+All seven readiness projections passed. Clean ordinal 8 completed both approved
+research reads, then failed as
+`worker_output_invalid / outcome_schema_invalid`; receipt
+`79d67896388beb3f124a7857e60cd5677b0b650372c1ecef345ea97dc2bf622b`.
+Cleanup again found zero active services and no forbidden effect. No adversarial
+model case ran. Freeze
+`tmp/t1-migration-escalation-status-repair-20260911/` and do not resume its grant.
+
+The repaired status exception therefore worked as intended, exposing the next
+independent failure: prompt text described an exact envelope while the provider
+was configured for a loose JSON object. The next repair sends the already-derived
+per-turn worker schema through Nebius strict JSON-schema response formatting while
+retaining Guardian's independent validation. A new exact-source packet is required
+after integration.

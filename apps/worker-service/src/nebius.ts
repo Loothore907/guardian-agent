@@ -439,7 +439,12 @@ export class NebiusNativeWorkerProvider {
                   { role: "user", content: JSON.stringify(providerProjection(turn)) },
                 ],
                 response_format: {
-                  type: "json_object",
+                  type: "json_schema",
+                  json_schema: {
+                    name: "guardian_worker_outcome",
+                    strict: true,
+                    schema: JSON.parse(outcomeGuidance) as unknown,
+                  },
                 },
               }),
             });
