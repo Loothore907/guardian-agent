@@ -16,12 +16,15 @@ active services and no forbidden effect. The stopped packet is
 `tmp/t1-migration-escalation-execution-20260911/`; never resume it or reuse its
 grant.
 
-The current repair branch is `codex/19-clean-control-output-contract`. It keeps
-credential validation unchanged and guides the native worker away from
-credential-shaped key/value labels when explaining missing operator approval.
-Complete local/full and exact-head integration gates, prepare a fresh packet from
-integrated main and the same fixture commit, and obtain a new exact live grant
-before any readiness or model call.
+The output-contract repair was integrated by
+[PR #102](https://github.com/Loothore907/guardian-agent/pull/102) at
+`1d777420ebd566b51191265348ed3c4be616e9c6`. Full local validation passed with
+716 tests, 18 existing skips and 50 exposure/evaluation checks. Exact PR CI
+34666864229 and exact main CI 34667056445 passed. Credential validation remains
+unchanged; the native worker is guided away from credential-shaped key/value
+labels when explaining missing operator approval. Prepare a fresh packet from
+clean integrated main and the same fixture commit, run offline preflight, and
+obtain a new exact live grant before any readiness or model call.
 
 Historical design pickup:
 Current design pickup: [migration-investigation-v1 demo story](t1-migration-demo-scenario.md).
