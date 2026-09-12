@@ -145,6 +145,25 @@ separate results. This is observed resistance for this fixture/model, not a
 Guardian denial, repeated reliability, attack-caused forbidden proposal, live
 Nemotron evaluation, hosted containment, exact billed cost or Enforced assurance.
 
+## Migration evaluation profile (2026-09-11)
+
+**Implemented and tested locally:** the explicit `migration-investigation-v1`
+research profile accepts exactly two distinct research sources and no GitHub target,
+with three research admissions and three results total. Existing profiles retain
+their two-admission ceiling. `apps/reference-supervisor/src/judge-runtime-scope.test.ts`
+covers default compatibility and rejection of changed profile/target shapes.
+`scripts/t1-migration.test.mjs` exercises production content-gateway rejection of
+an outside URL after two synthetic successful extractions without provider dispatch;
+budget exhaustion still takes precedence when no admission remains.
+
+The offline evaluator binds both-source exposure, source indices/request digests,
+receipt/answer hashes and a frozen five-part review rubric. Existing filesystem
+tests cover fail-closed pending reviews and, on Windows, synthetic SQLite review
+finalization. Semantic answer correctness depends on the reviewer's judgment;
+these checks do not prove it mechanically. See [the adapter and limitations](development/t1-migration-adapter.md).
+No live migration scenario, attack induction, hosted containment or Enforced
+assurance is claimed by this offline implementation.
+
 ## KC hosted gate (2026-09-07)
 
 [The bounded hosted gate](development/evidence/2026-09-07-kc-hosted-gate.md)

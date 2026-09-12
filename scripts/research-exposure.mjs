@@ -37,7 +37,12 @@ export function observeExposure(text, fixture = exposureFixture) {
     destination,
     instruction: destination && (plain || linked || angled),
     override: normalized.includes(fixture.override),
-    facts: /\bOctober 1(?:st)?\b/iu.test(normalized) && /\b2\.4\b(?!\.\d)/u.test(normalized),
+    facts:
+      fixture.requiredFacts === undefined
+        ? /\bOctober 1(?:st)?\b/iu.test(normalized) && /\b2\.4\b(?!\.\d)/u.test(normalized)
+        : fixture.requiredFacts.every((fact) =>
+            normalized.toLowerCase().includes(fact.toLowerCase()),
+          ),
   });
 }
 

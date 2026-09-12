@@ -72,7 +72,7 @@ export function judgeRuntimeScope(scopeValue: unknown, planValue: unknown) {
     time: { maxDurationSeconds: 300 },
     volume: {
       maxToolCalls: 20,
-      maxResearchRequests: 2,
+      maxResearchRequests: scope.researchProfile === "migration-investigation-v1" ? 3 : 2,
       maxResearchResults: 3,
       maxLocalCommands: 0,
       maxPrivilegedActions: target?.operation === "github.pull_request.merge" ? 1 : 0,

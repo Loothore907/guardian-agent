@@ -2,6 +2,15 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { attackMatrix } from "./t1-attack-matrix.mjs";
 import { workflowScenario } from "./t1-workflow-scenario.mjs";
+import {
+  migrationId,
+  migrationObjective,
+  migrationDefinitions,
+  migrationReference,
+  referenceFixture,
+  migrationScope,
+  rubricSha256,
+} from "./t1-migration-scenario.mjs";
 import { objective, sha256 } from "./t1-evaluation-shared.mjs";
 export { objective, sha256 } from "./t1-evaluation-shared.mjs";
 
@@ -54,10 +63,13 @@ export const workflowLimits = Object.freeze({
   discoveryUsd: 2.4,
 });
 export function fixtureDefinitions(packet) {
-  assert([3, 4].includes(packet.schemaVersion), "unsupported packet schema");
+  assert([3, 4, 5].includes(packet.schemaVersion), "unsupported packet schema");
+  if (packet.schemaVersion === 5) return migrationDefinitions;
   return packet.schemaVersion === 4 ? workflowScenario.variants : attackMatrix;
 }
 export function phaseLayout(packet) {
+  if (packet.schemaVersion === 5)
+    return { readiness: 3, discoveryEnd: 5, evaluationStart: 6, total: 5 };
   const count = fixtureDefinitions(packet).length;
   const readiness = count + 1;
   const discoveryEnd = readiness + (count - 1) * 2;
@@ -79,7 +91,7 @@ export function makePacket({
   batchId = randomUUID(),
   schemaVersion = 3,
 }) {
-  assert([3, 4].includes(schemaVersion), "unsupported packet schema");
+  assert([3, 4, 5].includes(schemaVersion), "unsupported packet schema");
   assert.match(batchId, /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/);
   assert.match(sourceHead, /^[a-f0-9]{40}$/);
   assert.match(workspaceCommit, /^[a-f0-9]{40}$/);
@@ -87,12 +99,23 @@ export function makePacket({
   return {
     schemaVersion,
     ...(schemaVersion === 4 ? { scenario: workflowScenario.id } : {}),
+    ...(schemaVersion === 5
+      ? {
+          scenario: migrationId,
+          rubricSha256,
+          reference: {
+            sourceUrl: migrationUrl(fixtureCommit, 11),
+            file: "migration-reference.html",
+            sha256: sha256(migrationReference),
+          },
+        }
+      : {}),
     batchId,
     sourceHead,
     workspaceCommit,
     fixtureCommit,
-    objective,
-    limits: schemaVersion === 4 ? workflowLimits : limits,
+    objective: schemaVersion === 5 ? migrationObjective : objective,
+    limits: schemaVersion === 5 ? migrationLimits : schemaVersion === 4 ? workflowLimits : limits,
     credentialReaders,
     workerModel: "moonshotai/Kimi-K2.7-Code",
     modelPolicyId: "competition-2026-09-01",
@@ -107,17 +130,21 @@ export function makePacket({
       controlSha256: sha256(f.control),
       injectionSha256: sha256(f.injection),
       controlUrl:
-        schemaVersion === 4
-          ? workflowUrl(fixtureCommit, f.sourcePaths.control)
-          : `${fixtureBase}${baselineCommit}/fixtures/v2/release-control.html`,
+        schemaVersion === 5
+          ? migrationUrl(fixtureCommit, 24)
+          : schemaVersion === 4
+            ? workflowUrl(fixtureCommit, f.sourcePaths.control)
+            : `${fixtureBase}${baselineCommit}/fixtures/v2/release-control.html`,
       injectionUrl:
-        schemaVersion === 4
-          ? workflowUrl(fixtureCommit, f.sourcePaths.injection)
-          : i === 0
-            ? `${fixtureBase}${baselineCommit}/fixtures/v2/release-injection.html`
-            : fixtureCommit === null
-              ? null
-              : `${fixtureBase}${fixtureCommit}/fixtures/t1-matrix-v1/${f.id}.html`,
+        schemaVersion === 5
+          ? migrationUrl(fixtureCommit, 25)
+          : schemaVersion === 4
+            ? workflowUrl(fixtureCommit, f.sourcePaths.injection)
+            : i === 0
+              ? `${fixtureBase}${baselineCommit}/fixtures/v2/release-injection.html`
+              : fixtureCommit === null
+                ? null
+                : `${fixtureBase}${fixtureCommit}/fixtures/t1-matrix-v1/${f.id}.html`,
     })),
   };
 }
@@ -125,6 +152,38 @@ function workflowUrl(commit, path) {
   return commit === null
     ? null
     : `https://raw.githubusercontent.com/Loothore907/release-bulletins/${commit}${path}`;
+}
+const migrationLimits = Object.freeze({
+  ...limits,
+  modelSessions: 2,
+  readinessExtractions: 3,
+  workerCalls: 16,
+  extractionAttempts: 9,
+  researchRequests: 3,
+  estimatedUsd: 2,
+  readinessUsd: 0.3,
+  discoveryUsd: 1.2,
+  evaluationUsd: 0,
+});
+function migrationUrl(commit, number) {
+  return commit === null
+    ? null
+    : `https://raw.githubusercontent.com/Loothore907/release-bulletins/${commit}/migration/reference-${number}.html`;
+}
+export function scopeForCase(packet, testCase) {
+  return packet.schemaVersion === 5
+    ? migrationScope(testCase.sourceUrls)
+    : {
+        objective: packet.objective,
+        researchUrls: [testCase.sourceUrl],
+        githubTarget: null,
+        durationSeconds: 300,
+      };
+}
+export function fixtureForCase(packet, testCase) {
+  return packet.schemaVersion === 5 && testCase.fixture === packet.reference.file
+    ? referenceFixture
+    : fixtureDefinitions(packet).find((f) => f.id === testCase.family).fixture;
 }
 export function validatePacket(packet, live = false) {
   assert.deepEqual(packet, makePacket(packet), "packet differs from the declared research slice");
@@ -201,6 +260,32 @@ export function executionCase(packet, ordinal, receipts = []) {
   for (const [i, receipt] of receipts.entries()) {
     assert.equal(receipt.ordinal, i + 1);
     assert.equal(receipt.continuePhase, true, "a stopped phase cannot resume");
+  }
+  if (packet.schemaVersion === 5) {
+    const f = packet.fixtures[0];
+    const injection = ordinal === 3 || ordinal === 5;
+    const isReference = ordinal === 1;
+    const sourceUrl = isReference
+      ? packet.reference.sourceUrl
+      : injection
+        ? f.injectionUrl
+        : f.controlUrl;
+    return {
+      ordinal,
+      phase: ordinal <= 3 ? "readiness" : "discovery",
+      family: f.id,
+      injection,
+      sourceUrl,
+      sourceUrls: [packet.reference.sourceUrl, injection ? f.injectionUrl : f.controlUrl],
+      scenario: migrationId,
+      fixture: isReference ? packet.reference.file : injection ? f.injectionFile : f.controlFile,
+      fixtureSha256: isReference
+        ? packet.reference.sha256
+        : injection
+          ? f.injectionSha256
+          : f.controlSha256,
+      estimatedUsd: ordinal <= 3 ? 0.1 : 0.6,
+    };
   }
   let phase, family, injection;
   if (ordinal <= readiness) {

@@ -4,6 +4,7 @@ import { lstat, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { resolve, relative, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { aggregateRuns } from "./t1-intervention.mjs";
+import { migrationReference, reviewTemplate } from "./t1-migration-scenario.mjs";
 import {
   makePacket,
   validatePacket,
@@ -22,6 +23,7 @@ const runnerFiles = [
   "t1-execution-packet.mjs",
   "t1-evaluation-shared.mjs",
   "t1-workflow-scenario.mjs",
+  "t1-migration-scenario.mjs",
   "t1-execution-live.mjs",
   "t1-execution-evidence.mjs",
   "t1-execution-observer.mjs",
@@ -95,11 +97,21 @@ export async function preparePacket(root, projectRoot, fixtureCommit = null, sch
     for (const kind of ["control", "injection"])
       await writeFile(resolve(root, `${f.id}-${kind}.html`), f[kind], { flag: "wx" });
   const publication =
-    schemaVersion === 4
-      ? resolve(root, "publication", "release")
-      : resolve(root, "publication", "fixtures", "t1-matrix-v1");
+    schemaVersion === 5
+      ? resolve(root, "publication", "migration")
+      : schemaVersion === 4
+        ? resolve(root, "publication", "release")
+        : resolve(root, "publication", "fixtures", "t1-matrix-v1");
   await mkdir(publication, { recursive: true });
-  if (schemaVersion === 4) {
+  if (schemaVersion === 5) {
+    await writeFile(resolve(root, packet.reference.file), migrationReference, { flag: "wx" });
+    for (const [number, content] of [
+      [11, migrationReference],
+      [24, definitions[0].control],
+      [25, definitions[0].injection],
+    ])
+      await writeFile(resolve(publication, `reference-${number}.html`), content, { flag: "wx" });
+  } else if (schemaVersion === 4) {
     await writeFile(
       resolve(root, "publication", definitions[0].sourcePaths.control.slice(1)),
       definitions[0].control,
@@ -120,8 +132,8 @@ export async function preparePacket(root, projectRoot, fixtureCommit = null, sch
   );
   return {
     sourceHead: packet.sourceHead,
-    fixtures: definitions.length * 2,
-    publicationFiles: 5,
+    fixtures: schemaVersion === 5 ? 3 : definitions.length * 2,
+    publicationFiles: schemaVersion === 5 ? 3 : 5,
     credentialReads: 0,
     providerCalls: 0,
     liveReady: false,
@@ -131,7 +143,13 @@ export async function preparePacket(root, projectRoot, fixtureCommit = null, sch
         : ["explicit live grant"],
   };
 }
-export async function gateExecution(root, projectRoot, ordinal, now = new Date().toISOString()) {
+export async function gateExecution(
+  root,
+  projectRoot,
+  ordinal,
+  now = new Date().toISOString(),
+  reviewing = false,
+) {
   const packetBytes = await boundedRead(resolve(root, "packet.json"));
   const packet = validatePacket(JSON.parse(packetBytes), true);
   const packetDigest = sha256(packetBytes);
@@ -155,8 +173,18 @@ export async function gateExecution(root, projectRoot, ordinal, now = new Date()
   for (const f of packet.fixtures)
     for (const kind of ["control", "injection"])
       assert.equal(sha256(await boundedRead(resolve(root, f[`${kind}File`]))), f[`${kind}Sha256`]);
+  if (packet.schemaVersion === 5)
+    assert.equal(
+      sha256(await boundedRead(resolve(root, packet.reference.file))),
+      packet.reference.sha256,
+    );
   const existing = (await readdir(root)).filter((name) => /^case-/u.test(name)).sort();
-  assert.equal(existing.length, ordinal - 1, "case already used or predecessor missing");
+  assert.equal(
+    existing.length,
+    ordinal - (reviewing ? 0 : 1),
+    "case already used or predecessor missing",
+  );
+  if (reviewing) assert(packet.schemaVersion === 5 && ordinal >= 4 && ordinal <= 5);
   const receipts = [];
   for (let n = 1; n < ordinal; n++) {
     const path = resolve(root, `case-${String(n).padStart(2, "0")}`);
@@ -173,6 +201,12 @@ export async function gateExecution(root, projectRoot, ordinal, now = new Date()
       "clock moved behind predecessor",
     );
     assert.equal(record.receiptSha256, sha256(await boundedRead(resolve(path, "receipt.json"))));
+    if (packet.schemaVersion === 5 && record.phase !== "readiness")
+      assert.equal(
+        record.reviewSha256,
+        sha256(await boundedRead(resolve(path, "answer-review.json"))),
+        "predecessor review changed",
+      );
     assert.equal(record.predecessorSha256, n === 1 ? null : sha256(json(receipts.at(-1))));
     receipts.push(record);
   }
@@ -290,6 +324,59 @@ export async function runCase(root, projectRoot, ordinal) {
     continuePhase: verified?.continuePhase === true && receipt.failure === undefined,
     receiptSha256: sha256(json(receipt)),
   };
+  if (
+    packet.schemaVersion === 5 &&
+    testCase.phase !== "readiness" &&
+    receipt.failure === undefined &&
+    receipt.finalResponse?.sha256
+  ) {
+    await writeFile(
+      resolve(directory, "answer-review-template.json"),
+      json(reviewTemplate(receipt, testCase.sourceUrls)),
+      { flag: "wx" },
+    );
+    const pending = { ...record, continuePhase: false, pendingReview: true };
+    await writeFile(resolve(directory, "pending-review.json"), json(pending), { flag: "wx" });
+    return pending;
+  }
+  await writeFile(resolve(directory, "verified.json"), json(record), { flag: "wx" });
+  return record;
+}
+export async function finalizeReview(root, projectRoot, ordinal) {
+  const directory = resolve(root, `case-${String(ordinal).padStart(2, "0")}`);
+  const receiptBytes = await boundedRead(resolve(directory, "receipt.json"));
+  const receipt = JSON.parse(receiptBytes);
+  const gate = await gateExecution(root, projectRoot, ordinal, receipt.startedAt, true);
+  const pending = await load(resolve(directory, "pending-review.json"));
+  const common = {
+    ...gate.testCase,
+    packetSha256: gate.packetDigest,
+    grantSha256: gate.grantDigest,
+    sourceHead: gate.packet.sourceHead,
+    batchStartedAt: gate.startedAt,
+    predecessorSha256: sha256(json(gate.receipts.at(-1))),
+  };
+  for (const [key, value] of Object.entries(common)) {
+    assert.deepEqual(receipt[key], value, "receipt configuration changed");
+    assert.deepEqual(pending[key], value, "pending configuration changed");
+  }
+  assert.equal(pending.pendingReview, true);
+  assert.equal(pending.receiptSha256, sha256(receiptBytes));
+  const reviewBytes = await boundedRead(resolve(directory, "answer-review.json"));
+  const { verifyStoredModel } = await import("./t1-execution-evidence.mjs");
+  const verified = await verifyStoredModel(directory, receipt, gate.testCase, projectRoot);
+  assert.equal(
+    sha256(await boundedRead(resolve(directory, "answer-review.json"))),
+    sha256(reviewBytes),
+  );
+  const record = {
+    ...common,
+    ...verified,
+    completedAt: receipt.completedAt,
+    continuePhase: verified.continuePhase === true && receipt.failure === undefined,
+    receiptSha256: sha256(receiptBytes),
+    reviewSha256: sha256(reviewBytes),
+  };
   await writeFile(resolve(directory, "verified.json"), json(record), { flag: "wx" });
   return record;
 }
@@ -354,6 +441,9 @@ export async function summarizePacket(root) {
   }
   return {
     schemaVersion: packet.schemaVersion,
+    ...(packet.schemaVersion === 5
+      ? { pendingReview: [...used].filter((n) => n >= 4 && !records.has(n)) }
+      : {}),
     readiness: {
       attempted: [...used].filter((n) => n <= readiness).length,
       verified: [...records.values()].filter((r) => r.phase === "readiness" && r.continuePhase)
@@ -375,24 +465,29 @@ export async function main(args = process.argv.slice(2)) {
   assert(
     directory &&
       args.length <= 3 &&
-      ["prepare", "prepare-workflow", "run", "summary"].includes(command),
-    "usage: prepare|prepare-workflow DIRECTORY [FIXTURE_COMMIT] | run DIRECTORY ORDINAL | summary DIRECTORY",
+      ["prepare", "prepare-workflow", "prepare-migration", "run", "review", "summary"].includes(
+        command,
+      ),
+    "usage: prepare|prepare-workflow|prepare-migration DIRECTORY [FIXTURE_COMMIT] | run|review DIRECTORY ORDINAL | summary DIRECTORY",
   );
   const root = resolve(directory),
     projectRoot = process.cwd();
   const result =
-    command === "prepare" || command === "prepare-workflow"
+    command === "prepare" || command === "prepare-workflow" || command === "prepare-migration"
       ? await preparePacket(
           root,
           projectRoot,
           value ?? null,
-          command === "prepare-workflow" ? 4 : 3,
+          command === "prepare-migration" ? 5 : command === "prepare-workflow" ? 4 : 3,
         )
       : command === "summary"
         ? await summarizePacket(root)
-        : await runCase(root, projectRoot, Number(value));
+        : command === "review"
+          ? await finalizeReview(root, projectRoot, Number(value))
+          : await runCase(root, projectRoot, Number(value));
   console.log(json(result));
-  if (command === "run" && !result.continuePhase) process.exitCode = 1;
+  if (["run", "review"].includes(command) && !result.continuePhase && !result.pendingReview)
+    process.exitCode = 1;
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href)
   main().catch(() => {

@@ -3,7 +3,12 @@ import { readFile, mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import { makePacket, validatePacket, objective, sha256 } from "./t1-execution-packet.mjs";
-import { fixtureDefinitions } from "./t1-execution-packet.mjs";
+import {
+  fixtureDefinitions,
+  executionCase,
+  scopeForCase,
+  fixtureForCase,
+} from "./t1-execution-packet.mjs";
 import { replayExposure } from "./research-exposure-replay.mjs";
 import { startReferenceAuthoritySupervisor } from "../apps/reference-supervisor/dist/index.js";
 import { judgeRuntimeScope } from "../apps/reference-supervisor/dist/judge-runtime-scope.js";
@@ -22,76 +27,88 @@ const packet =
     : original;
 const workspace = resolve("tmp/issue19-live-denial-recovery-20260909/workspace-source");
 const results = [];
-for (const [index, f] of packet.fixtures.entries()) {
-  for (const kind of ["control", "injection"]) {
-    const sourceUrl = f[`${kind}Url`],
-      content = await readFile(resolve(root, f[`${kind}File`]), "utf8");
-    assert.equal(sha256(content), f[`${kind}Sha256`]);
-    const stages = await replayExposure(
-      content,
-      sourceUrl,
-      fixtureDefinitions(packet)[index].fixture,
-    );
-    assert(stages.worker?.facts && stages.worker.sha256 === stages.sanitized.sha256);
-    assert.equal(stages.worker.instruction, kind === "injection");
-    const scope = {
-      objective,
-      researchUrls: [sourceUrl],
-      githubTarget: null,
-      durationSeconds: 300,
-    };
-    const expected = judgeRuntimeScope(scope);
-    const envelope = (outcome) => ({
-      id: "offline",
-      model: packet.workerModel,
-      choices: [{ finish_reason: "stop", message: { content: JSON.stringify(outcome) } }],
-    });
-    for (const url of [sourceUrl, packet.outsideUrl])
-      projectNebiusWorkerResponse(
-        envelope({
-          kind: "tool_request",
-          request: { name: "guardian.research", arguments: { sourceUrl: url } },
-        }),
-        packet.workerModel,
-      );
+const cases = [];
+if (packet.schemaVersion === 5) {
+  for (let ordinal = 1; ordinal <= 3; ordinal++)
+    cases.push({ ...executionCase(packet, ordinal, cases), continuePhase: true });
+} else {
+  for (const [index, f] of packet.fixtures.entries())
+    for (const kind of ["control", "injection"])
+      cases.push({
+        family: f.id,
+        sourceUrl: f[`${kind}Url`],
+        fixture: f[`${kind}File`],
+        fixtureSha256: f[`${kind}Sha256`],
+        injection: kind === "injection",
+        definition: fixtureDefinitions(packet)[index].fixture,
+      });
+}
+for (const testCase of cases) {
+  const kind = testCase.injection ? "injection" : "control";
+  const sourceUrl = testCase.sourceUrl,
+    content = await readFile(resolve(root, testCase.fixture), "utf8");
+  assert.equal(sha256(content), testCase.fixtureSha256);
+  const scope = scopeForCase(packet, testCase);
+  const objective = scope.objective;
+  const stages = await replayExposure(
+    content,
+    sourceUrl,
+    testCase.definition ?? fixtureForCase(packet, testCase),
+    scope,
+  );
+  assert(stages.worker?.facts && stages.worker.sha256 === stages.sanitized.sha256);
+  assert.equal(stages.worker.instruction, kind === "injection");
+  const expected = judgeRuntimeScope(scope);
+  const envelope = (outcome) => ({
+    id: "offline",
+    model: packet.workerModel,
+    choices: [{ finish_reason: "stop", message: { content: JSON.stringify(outcome) } }],
+  });
+  for (const url of [sourceUrl, packet.outsideUrl])
     projectNebiusWorkerResponse(
       envelope({
-        kind: "final_response",
-        response: `October 1. Upgrade to version 2.4. Source: ${new URL(sourceUrl).hostname}${new URL(sourceUrl).pathname}`,
+        kind: "tool_request",
+        request: { name: "guardian.research", arguments: { sourceUrl: url } },
       }),
       packet.workerModel,
     );
-    const directory = resolve(root, `draft-${randomUUID()}`);
-    await mkdir(directory);
-    let supervisor;
-    try {
-      const now = new Date().toISOString();
-      supervisor = await startReferenceAuthoritySupervisor(
-        {
-          sessionId: randomUUID(),
-          callerId: randomUUID(),
-          authorityStorePath: resolve(directory, "authority.sqlite"),
-          projectRoot: workspace,
-          workspaceRoots: [resolve(directory, "workspaces")],
-          issuedAt: now,
-          expiresAt: new Date(Date.now() + 300000).toISOString(),
-        },
-        { workerMode: "nebius_native", riskProcess: "fake", judgeScope: scope },
-      );
-      const preview = supervisor.bootstrap.createDraft({ schemaVersion: 1, objective });
-      assert.deepEqual(preview.permissions, expected.permissions);
-      assert.deepEqual(preview.workerTools, ["guardian.research"]);
-    } finally {
-      await supervisor?.close();
-    }
-    results.push({
-      family: f.id,
-      kind,
-      fixtureSha256: f[`${kind}Sha256`],
-      projection: "passed",
-      productionDraft: "passed",
-    });
+  projectNebiusWorkerResponse(
+    envelope({
+      kind: "final_response",
+      response: `October 1. Upgrade to version 2.4. Source: ${new URL(sourceUrl).hostname}${new URL(sourceUrl).pathname}`,
+    }),
+    packet.workerModel,
+  );
+  const directory = resolve(root, `draft-${randomUUID()}`);
+  await mkdir(directory);
+  let supervisor;
+  try {
+    const now = new Date().toISOString();
+    supervisor = await startReferenceAuthoritySupervisor(
+      {
+        sessionId: randomUUID(),
+        callerId: randomUUID(),
+        authorityStorePath: resolve(directory, "authority.sqlite"),
+        projectRoot: workspace,
+        workspaceRoots: [resolve(directory, "workspaces")],
+        issuedAt: now,
+        expiresAt: new Date(Date.now() + 300000).toISOString(),
+      },
+      { workerMode: "nebius_native", riskProcess: "fake", judgeScope: scope },
+    );
+    const preview = supervisor.bootstrap.createDraft({ schemaVersion: 1, objective });
+    assert.deepEqual(preview.permissions, expected.permissions);
+    assert.deepEqual(preview.workerTools, ["guardian.research"]);
+  } finally {
+    await supervisor?.close();
   }
+  results.push({
+    family: testCase.family,
+    kind,
+    fixtureSha256: testCase.fixtureSha256,
+    projection: "passed",
+    productionDraft: "passed",
+  });
 }
 console.log(
   JSON.stringify(

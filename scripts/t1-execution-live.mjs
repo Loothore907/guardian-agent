@@ -11,10 +11,10 @@ import {
   createFetchTavilyTransport,
 } from "../apps/research-service/dist/index.js";
 import { WindowsCredentialStore } from "../packages/credential-store/dist/index.js";
-import { fixtureDefinitions } from "./t1-execution-packet.mjs";
+import { fixtureForCase, scopeForCase } from "./t1-execution-packet.mjs";
 import { replayExposure } from "./research-exposure-replay.mjs";
 import { createObserver, answerReceipt } from "./t1-execution-observer.mjs";
-import { objective, sha256, modelDeadlines } from "./t1-execution-packet.mjs";
+import { sha256, modelDeadlines } from "./t1-execution-packet.mjs";
 import { serviceProcesses } from "./t1-execution-evidence.mjs";
 
 export async function runReadiness(testCase, packet) {
@@ -47,8 +47,13 @@ export async function runReadiness(testCase, packet) {
     },
   });
   const extracted = await provider.extract({ url: testCase.sourceUrl });
-  const fixture = fixtureDefinitions(packet).find((f) => f.id === testCase.family).fixture;
-  const exposure = await replayExposure(extracted.content, testCase.sourceUrl, fixture);
+  const fixture = fixtureForCase(packet, testCase);
+  const exposure = await replayExposure(
+    extracted.content,
+    testCase.sourceUrl,
+    fixture,
+    scopeForCase(packet, testCase),
+  );
   const e = exposure.worker;
   const ready =
     e !== null &&
@@ -67,19 +72,16 @@ export async function runModel(packet, testCase, { root, projectRoot, workspace,
   assert.deepEqual(serviceProcesses(projectRoot), [], "another evaluation service is active");
   const sessionId = randomUUID(),
     callerId = randomUUID();
-  const scope = {
-    objective,
-    researchUrls: [testCase.sourceUrl],
-    githubTarget: null,
-    durationSeconds: 300,
-  };
+  const scope = scopeForCase(packet, testCase);
+  const objective = packet.objective;
   const normalized = judgeRuntimeScope(scope);
   const observer = createObserver(
     testCase,
-    fixtureDefinitions(packet).find((f) => f.id === testCase.family).fixture,
+    fixtureForCase(packet, testCase),
     sessionId,
     callerId,
     normalized.constraints,
+    objective,
   );
   const receipt = {
     sessionId,

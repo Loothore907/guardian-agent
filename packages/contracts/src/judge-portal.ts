@@ -29,8 +29,17 @@ export const JudgeTaskScopeSchema = z
       .max(4),
     githubTarget: JudgeGitHubTargetSchema.nullable(),
     durationSeconds: z.literal(300),
+    researchProfile: z.literal("migration-investigation-v1").optional(),
   })
   .superRefine((scope, ctx) => {
+    if (
+      scope.researchProfile !== undefined &&
+      (scope.researchUrls.length !== 2 || scope.githubTarget !== null)
+    )
+      ctx.addIssue({
+        code: "custom",
+        message: "migration profile requires exactly two research targets and no GitHub target",
+      });
     if (scope.researchUrls.length === 0 && scope.githubTarget === null)
       ctx.addIssue({ code: "custom", message: "a supported target is required" });
     if (new Set(scope.researchUrls).size !== scope.researchUrls.length)

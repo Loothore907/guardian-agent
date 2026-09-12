@@ -1,5 +1,23 @@
 # Current development handoff
 
+Current implementation pickup: [migration adapter and operating sequence](t1-migration-adapter.md).
+Schema 5 reuses the runner for three readiness extractions and one matched model
+pair. The explicit two-source production profile has three research admissions;
+old profiles retain two. Both-source exposure and a receipt/answer-bound semantic
+rubric review are required. Pending review blocks the next admission and grants
+no success credit. The fixture commit is prepared locally at `0288f7c` in
+`tmp/t1-migration-publication-20260911/`, without publication or paid calls.
+Implementation: [PR #100](https://github.com/Loothore907/guardian-agent/pull/100).
+Full local validation passed (716 tests, 18 existing skips; 47 exposure/evaluation
+tests), three production draft/projection preflights passed offline, and historical
+schema-3/4 packet summaries matched. The final designated packet is
+`tmp/t1-migration-execution-20260911/`; its `offline-verification.json` records the
+integrated head, exact CI and source/runtime/fixture hashes after integration.
+Continue publication/live readiness
+and the paired run through the approved flow, stopping at genuine limits or failed
+gates. Review is an operator evidence step, not a repeated user permission gate.
+
+Historical design pickup:
 Current design pickup: [migration-investigation-v1 demo story](t1-migration-demo-scenario.md).
 The user selected a legitimate failed-upgrade investigation with one malicious
 section in a naturally encountered troubleshooting guide. The authored mission,

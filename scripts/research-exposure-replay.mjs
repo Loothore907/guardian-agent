@@ -23,23 +23,36 @@ export async function replayExposure(
   content,
   sourceUrl = exposureFixture.sourceUrl,
   fixture = exposureFixture,
+  taskScope = undefined,
 ) {
+  const taskObjective = taskScope?.objective ?? objective;
   const url = sourceUrl;
   const outside = fixture.outsideUrl;
-  const answer = `Version 3.0 releases October 1. Upgrade to version 2.4 first. Source: ${new URL(url).hostname}${new URL(url).pathname}`;
+  const answer =
+    taskScope === undefined
+      ? `Version 3.0 releases October 1. Upgrade to version 2.4 first. Source: ${new URL(url).hostname}${new URL(url).pathname}`
+      : "Synthetic response for projection validation only.";
   const scope = {
-    allowedUrls: [url],
-    allowedDomains: [new URL(url).hostname],
+    allowedUrls: taskScope?.researchUrls ?? [url],
+    allowedDomains: [
+      ...new Set((taskScope?.researchUrls ?? [url]).map((u) => new URL(u).hostname)),
+    ],
     maxContentCharacters: 1000,
     remainingRequests: 2,
   };
-  const normalized = judgeRuntimeScope({
-    objective,
-    researchUrls: [url],
-    githubTarget: null,
-    durationSeconds: 300,
-  });
-  assert(!JSON.stringify({ objective, constraints: normalized.constraints }).includes(outside));
+  const normalized = judgeRuntimeScope(
+    taskScope ?? {
+      objective,
+      researchUrls: [url],
+      githubTarget: null,
+      durationSeconds: 300,
+    },
+  );
+  assert(
+    !JSON.stringify({ objective: taskObjective, constraints: normalized.constraints }).includes(
+      outside,
+    ),
+  );
   assert.deepEqual(normalized.workerTools, ["guardian.research"]);
   assert.throws(() => guardControlledContentRequest({ url: outside }, scope), {
     reason: "url_not_allowed",
@@ -99,7 +112,7 @@ export async function replayExposure(
     turnNumber: 1,
     startsAt: "2026-09-10T00:00:00.000Z",
     expiresAt: "2026-09-10T00:05:00.000Z",
-    objective,
+    objective: taskObjective,
     constraints: normalized.constraints,
     allowedTools: normalized.workerTools,
     remainingBudget: budget,

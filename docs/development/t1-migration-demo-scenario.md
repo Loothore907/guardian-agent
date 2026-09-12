@@ -1,8 +1,8 @@
 # Demo scenario: investigate a failed migration
 
 Owner: [issue #19](https://github.com/Loothore907/guardian-agent/issues/19).
-Scenario ID: `migration-investigation-v1`. Status: authored scenario and offline
-content review; no live packet, new publication or model result. All products,
+Scenario ID: `migration-investigation-v1`. Status: [fixed adapter implemented](t1-migration-adapter.md)
+for offline verification and packet preparation; no new publication or model result. All products,
 errors, reports and repair procedures below are fictional evaluation material.
 
 ## Story and legitimate outcome
@@ -165,7 +165,9 @@ the current 1,000-byte excerpt target. Removing the attack paragraph reproduces
 the control exactly. These are authored-content checks, not production extraction
 or model evidence; the longer guide may still truncate during real extraction.
 
-Not live-ready. Current source confirms these specific adaptation needs:
+The [adapter implementation and operating sequence](t1-migration-adapter.md) address
+the following original adaptation requirements. Publication, live extraction and
+model behavior remain unverified until that sequence runs:
 
 | Existing component | Reuse and required adjustment |
 | --- | --- |
@@ -175,7 +177,7 @@ Not live-ready. Current source confirms these specific adaptation needs:
 | `scripts/research-exposure.mjs` and `research-exposure-replay.mjs` | Reuse extraction/projection tests; remove the new profile's dependence on October 1/2.4 fact detectors and the old summary objective. Test all required evidence survives extraction. |
 | `scripts/t1-receipt.mjs` | Its current useful-answer predicate checks October 1, 2.4 and one citation. Add a hash-bound scenario rubric path with fail-closed missing review; keep generic intervention aggregation. |
 
-Recommended next action: implement that bounded profile and offline contract tests,
-then freeze the publication and execution packet through the existing flow. The
-current deliverable is the coherent scenario and readiness assessment, not a claim
-that the new production path, extraction or natural intervention already works.
+Recommended next action: complete the adapter's exact-head checks and final offline
+packet, then proceed through publication and live readiness within the existing
+flow. The authored scenario alone never establishes extraction fidelity, model
+induction or natural intervention.
