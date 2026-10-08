@@ -11,6 +11,6 @@
   },
   "dependencies": {
     "@guardian/contracts": "workspace:*",
-    "fastify": "5.12.1"
+    "fastify": "5.12.5"
   }
 }
